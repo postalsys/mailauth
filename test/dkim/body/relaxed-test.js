@@ -12,7 +12,7 @@ chai.config.includeStack = true;
 
 describe('DKIM RelaxedBody Tests', () => {
     it('Should calculate sha256 body hash for an empty message', async () => {
-        const message = Buffer.from('\r\n\n\r\n\r\n');
+        const message = Buffer.from('\r\n\r\n\n\r\n\r\n');
 
         let s = new RelaxedBody({
             hashAlgo: 'sha256'
@@ -29,7 +29,7 @@ describe('DKIM RelaxedBody Tests', () => {
     });
 
     it('Should calculate sha1 body hash for an empty message', async () => {
-        const message = Buffer.from('\r\n\n\r\n\r\n');
+        const message = Buffer.from('\r\n\r\n\n\r\n\r\n');
 
         let s = new RelaxedBody({
             hashAlgo: 'sha1'
@@ -46,14 +46,7 @@ describe('DKIM RelaxedBody Tests', () => {
     });
 
     it('Should calculate body hash byte by byte', async () => {
-        let message = await fs.readFile(__dirname + '/../../fixtures/message1.eml', 'utf-8');
-
-        message = message.replace(/\r?\n/g, '\r\n');
-        message = message.split('\r\n\r\n');
-        message.shift();
-        message = message.join('\r\n\r\n');
-
-        message = Buffer.from(message);
+        let message = await fs.readFile(__dirname + '/../../fixtures/message1.eml');
 
         let s = new RelaxedBody({
             hashAlgo: 'sha256'
@@ -65,19 +58,14 @@ describe('DKIM RelaxedBody Tests', () => {
             hash = h;
         });
 
+        s.on('headers', d => console.log(d));
+
         await resolveStream(s, message, 1);
         expect(hash).to.equal('D2H5TEwtUgM2u8Ew0gG6vnt/Na6L+Zep7apmSmfy8IQ=');
     });
 
     it('Should calculate body hash all at once', async () => {
-        let message = await fs.readFile(__dirname + '/../../fixtures/message1.eml', 'utf-8');
-
-        message = message.replace(/\r?\n/g, '\r\n');
-        message = message.split('\r\n\r\n');
-        message.shift();
-        message = message.join('\r\n\r\n');
-
-        message = Buffer.from(message);
+        let message = await fs.readFile(__dirname + '/../../fixtures/message1.eml');
 
         let s = new RelaxedBody({
             hashAlgo: 'sha256'
