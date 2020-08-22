@@ -24,6 +24,7 @@
     "dependencies": {
         "eslint": "^7.7.0",
         "eslint-config-nodemailer": "^1.2.0",
-        "eslint-config-prettier": "^6.11.0"
+        "eslint-config-prettier": "^6.11.0",
+        "libmime": "^5.0.0"
     }
 }
