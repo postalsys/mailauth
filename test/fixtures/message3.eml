@@ -1,0 +1,1030 @@
+Delivered-To: andris.reinman@gmail.com
+Received: by 2002:a67:43c4:0:0:0:0:0 with SMTP id q187csp1639435vsa;
+        Sat, 22 Aug 2020 23:10:01 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJxAGL/W5y1R7y+jKlCL9M55fQKcwfobVmLkY1sIJpwnQambGA8brKElALk526EnJcxi9zP/
+X-Received: by 2002:a05:6402:1d25:: with SMTP id dh5mr164018edb.266.1598163001652;
+        Sat, 22 Aug 2020 23:10:01 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1598163001; cv=none;
+        d=google.com; s=arc-20160816;
+        b=0yLwszGnGkVrOegq59sDyI31/fslWuhR+Z5EicIeNZ4DkNHawiCOlLe7czXxmivr/n
+         rnpV/3/S/yS/sTyIOJB1LTs9o0XrgBB+MDr0IOlcee4kUSNKW+t8i04eh1Xp+RCq+2JF
+         P6vIE6ieNLld1hOEQB2gspcXqjbAFBqQpkZ84z6Z7m5pcG02H7cDEzigtEZnjqEorc6P
+         ImFbEFuPuk769SHyHgkPKpJ7CXUtfkrG7XULb18PQEiOA/uhHBK7kPJorDsSXLujgohh
+         HV2kxNiFfbO9umgp+GQVR7dPfyNU32TtCOFOWJC9I5K32Sa2lEF/riT9Pv6CMODCVinG
+         BRlA==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20160816;
+        h=list-unsubscribe:list-unsubscribe-post:mailcoach-send-uuid
+         :mime-version:to:from:subject:date:message-id:sender:dkim-signature
+         :dkim-signature;
+        bh=OK896LGJLCeF+9HEN36FfTVeJnYcvZgUye03g916ATM=;
+        b=y5mgJ6GBHTTnqfJwktkelJRzBwvuSN90CaGV9FhC1T3dbz3OmLtxnECnB8gWk7X2ft
+         9+2GQ81HCKXjilFkmhDI8UvlO9edZR5yJahX0q60FAHgeBo26jQP+JrTRapUP8aTLs3B
+         v+acMRMI4O1b9ykx2WS50puhZbtsDA3EsJx4eOxPedFwZVtl5SOi7TpFT1+sekeoMDAX
+         Rb8lCGniL3cCwDqksqsYcpntdka92PkK3roFOhzb1V6x/j116Q6KThplTt7rFhSavapC
+         mGrIgeg9/zrdD7//9kMtbuftIN1Uts6YISAgiyQVBzTYoVE45hsEGLPxVUi5zVzGoZ6F
+         g05w==
+ARC-Authentication-Results: i=1; mx.google.com;
+       dkim=pass header.i=@cronweekly.ma.ttias.be header.s=pic header.b=oFrqDlLJ;
+       dkim=pass header.i=@eu.mailgun.org header.s=krs header.b=Yzp5I6tL;
+       spf=pass (google.com: domain of bounce+474217.804f2-andris.reinman=gmail.com@cronweekly.ma.ttias.be designates 161.38.206.141 as permitted sender) smtp.mailfrom="bounce+474217.804f2-andris.reinman=gmail.com@cronweekly.ma.ttias.be"
+Return-Path: <bounce+474217.804f2-andris.reinman=gmail.com@cronweekly.ma.ttias.be>
+Received: from m206-141.mailgun.net (m206-141.mailgun.net. [161.38.206.141])
+        by mx.google.com with UTF8SMTPS id y15si4300295edu.119.2020.08.22.23.10.01
+        for <andris.reinman@gmail.com>
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Sat, 22 Aug 2020 23:10:01 -0700 (PDT)
+Received-SPF: pass (google.com: domain of bounce+474217.804f2-andris.reinman=gmail.com@cronweekly.ma.ttias.be designates 161.38.206.141 as permitted sender) client-ip=161.38.206.141;
+Authentication-Results: mx.google.com;
+       dkim=pass header.i=@cronweekly.ma.ttias.be header.s=pic header.b=oFrqDlLJ;
+       dkim=pass header.i=@eu.mailgun.org header.s=krs header.b=Yzp5I6tL;
+       spf=pass (google.com: domain of bounce+474217.804f2-andris.reinman=gmail.com@cronweekly.ma.ttias.be designates 161.38.206.141 as permitted sender) smtp.mailfrom="bounce+474217.804f2-andris.reinman=gmail.com@cronweekly.ma.ttias.be"
+DKIM-Signature: a=rsa-sha256; v=1; c=relaxed/relaxed; d=cronweekly.ma.ttias.be;
+ q=dns/txt; s=pic; t=1598163001; h=List-Unsubscribe:
+ List-Unsubscribe-Post: Content-Type: MIME-Version: To: From: Subject:
+ Date: Message-ID: Sender: X-Feedback-Id;
+ bh=OK896LGJLCeF+9HEN36FfTVeJnYcvZgUye03g916ATM=; b=oFrqDlLJaryzgN/lmDnCvYQc0cb/5YbpOAL9fWDZHZRmLqN5TgJHdIkJ6ehlfWBPqPqWkgiY
+ Ss6wX5LZemmuI5RMrUct9XM4hDSZZRMWAiSga7w70Ry7ARrKOLHDDZHNOhDNeIs1qM4P9XEF
+ MkEEWOIIQ+HDf/nCqK/sQ8lEX9rJ1hfIUt7MQiZ/1ZvAW/UD1Z2P5dutEAe07cC8Zadyz8PW
+ f3EofL7b8Jv+EwzU5vdsXiE0vep6R5+B+djAr68vD5Bdo2LhXKeHEL2ooxJt9ApFisgUsAER
+ 5j/S5MLV4SSY7OWcNeKlZuDnnYV5AFLdazZiJocwgIqAoUByvkDtug==
+DKIM-Signature: a=rsa-sha256; v=1; c=relaxed/relaxed; d=eu.mailgun.org; q=dns/txt;
+ s=krs; t=1598163001; h=List-Unsubscribe: List-Unsubscribe-Post:
+ Content-Type: MIME-Version: To: From: Subject: Date: Message-ID:
+ Sender: X-Feedback-Id; bh=OK896LGJLCeF+9HEN36FfTVeJnYcvZgUye03g916ATM=;
+ b=Yzp5I6tLYy10HMG/ArEp4Cjug57HAwIAIOrqIShsaLO6JW6d0MT8sHi6gV8bJ3lFRi6+metY
+ eLeuycCS6liO3r0DLunlAPwFtE+2OT6kPLM9oeKZRAmqESEFnT4zDKjGVoKzTfaZqIcbvBhI
+ fn5qyi5D4E74/BBN52B45DzT+0w=
+X-Feedback-Id: 5e1c71caf81e3cfda23f6a56:mailgun
+X-Mailgun-Sending-Ip: 161.38.206.141
+X-Mailgun-Sid: WyJiMWZiZCIsICJhbmRyaXMucmVpbm1hbkBnbWFpbC5jb20iLCAiODA0ZjIiXQ==
+Received: by luna.mailgun.net with HTTP; Sun, 23 Aug 2020 06:10:00 +0000
+Sender: m=ttias.be@cronweekly.ma.ttias.be
+Message-ID: <87756a6fb60afa0f161d77559b031506@swift.generated>
+Date: Sun, 23 Aug 2020 08:10:00 +0200
+Subject: cron.weekly issue #146: DNS, tunshell, i2p, umami & more
+From: Mattias Geniar <m@ttias.be>
+To: andris.reinman@gmail.com
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="_=_swift_1598163000_ca765d714ac11f4b53a5a1a6460bad06_=_"
+X-SMTPAPI: {"unique_args":{"send_uuid":"2d38dc55-c3de-4f54-8dc7-a38c4bca954c"}}
+X-MAILCOACH: 1
+mailcoach-send-uuid: 2d38dc55-c3de-4f54-8dc7-a38c4bca954c
+List-Unsubscribe-Post: List-Unsubscribe=One-Click
+List-Unsubscribe: <https://newsletter.ma.ttias.be/unsubscribe/63a3317e-3edd-491b-bf16-dcd7f411dd5d/2d38dc55-c3de-4f54-8dc7-a38c4bca954c>
+
+
+--_=_swift_1598163000_ca765d714ac11f4b53a5a1a6460bad06_=_
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+
+(View this issue in your browser: 
+https://ma.ttias.be/cronweekly/issue-146/?via=newsletter)
+
+------------------------------------------------------
+
+DNS, tunshell, i2p, umami & more
+ \_ issue #146 for Sunday, August 23, 2020
+
+
+Hi everyone! 👋
+
+Welcome to cron.weekly issue #146.
+
+A quick heads-up: I'm taking my final summer holiday break next week, so I'll 
+be back in your inbox on September 6th!
+
+Enjoy your warm cup of ☕️ and happy reading.
+
+
+News & general
+==============
+
+
+
+## Chromium’s impact on root DNS traffic
+ \_ https://blog.apnic.net/2020/08/21/chromiums-impact-on-root-dns-traffic/
+
+The Chromium browser is responsible for 50% of the DNS traffic on root 
+nameservers, all because of a feature to detect DNS interception. Wild!
+
+
+## Researchers Can Duplicate Keys from the Sounds They Make in Locks
+ \_ 
+https://kottke.org/20/08/researchers-can-duplicate-keys-from-the-sounds-they-make-in-locks
+
+This whole idea is just crazy, using commodity microphones (ie: smartphones) 
+researchers can now 3D-print a key just by the sound it made. 🤯
+
+
+## Debian turns 27!
+ \_ https://bits.debian.org/2020/08/debian-turns-27.html
+
+A week late, but still happy birthday Debian!
+
+
+## A free, once-weekly API Newsletter
+ \_ https://jsoniary.io/api-weekly
+
+We are two indie developers curating this free newsletter to keep you 
+informed about all things API. Our focus is on developers who are regularly 
+involved in building or integrating APIs. We bring you a list of free & paid 
+APIs for fetching data, links for in-depth tutorials, tools, and jobs for API 
+Developers. (Sponsored)
+
+
+Tools & Projects
+================
+
+
+
+## tracee
+ \_ https://github.com/aquasecurity/tracee
+
+Tracee is a lightweight, easy to use container tracing tool. After launching 
+the tool, it will start collecting traces of newly created containers.
+
+
+## archivy
+ \_ https://github.com/Uzay-G/archivy
+
+Archivy is a self-hosted knowledge repository that allows you to safely 
+preserve useful content that contributes to your knowledge bank.
+
+
+## tunshell
+ \_ https://github.com/TimeToogo/tunshell
+
+Tunshell is a simple and secure method to remote shell into ephemeral 
+environments such as deployment pipelines or serverless functions.
+
+
+## i2p
+ \_ https://github.com/i2p/i2p.i2p
+
+I2P is an anonymizing network, offering a simple layer that 
+identity-sensitive applications can use to securely communicate. All data is 
+wrapped with several layers of encryption, and the network is both 
+distributed and dynamic, with no trusted parties.
+
+
+## umami
+ \_ https://github.com/mikecao/umami
+
+Umami is a simple, fast, website analytics alternative to Google Analytics.
+
+
+## ytt
+ \_ https://github.com/k14s/ytt
+
+`ytt` is a YAML templating tool that works on YAML structure instead of text.
+
+
+## nginxconfig
+ \_ https://github.com/digitalocean/nginxconfig.io
+
+This is the repo of the Nginx configurator built by Digital Ocean ( 
+https://www.digitalocean.com/community/tools/nginx ). Very powerful with lots 
+of options.
+
+
+Guides & Tutorials
+==================
+
+
+
+## Moving from YouTube to PeerTube
+ \_ https://battlepenguin.com/tech/moving-from-youtube-to-peertube
+
+This was a good step-by-step guide on moving videos (with subtitles) to a 
+self-hosted PeerTube instance (which does P2P video streaming) using Docker.
+
+
+## Back To The Future: Unix Wildcards Gone Wild (2014)
+ \_ 
+https://www.defensecode.com/public/DefenseCode_Unix_WildCards_Gone_Wild.txt
+
+An oldie but a goodie: in Unix, wildcards can sometimes have some unintended 
+(for the user) consequences. This post gives a clear summary of the dangerous 
+cases and the results.
+
+
+## Set up a Secure and Highly Available etcd Cluster
+ \_ 
+https://thenewstack.io/tutorial-set-up-a-secure-and-highly-available-etcd-cluster/
+
+This guide explores how to configure a three-node `etcd` cluster that will be 
+used by a highly available, multinode K3s cluster.
+
+Did you like this issue?
+ Yes  => https://ma.ttias.be/cronweekly/loved-it/?issue=146
+ Nope => https://ma.ttias.be/cronweekly/expected-better/?issue=146
+
+Don't want this newsletter anymore? 
+https://newsletter.ma.ttias.be/unsubscribe/63a3317e-3edd-491b-bf16-dcd7f411dd5d/2d38dc55-c3de-4f54-8dc7-a38c4bca954c
+
+
+
+--_=_swift_1598163000_ca765d714ac11f4b53a5a1a6460bad06_=_
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: 8bit
+
+<html><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+"https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html 
+xmlns="https://www.w3.org/1999/xhtml" style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%; margin: 0 auto !important; padding: 0 
+!important; height: 100% !important; width: 100% !important;">
+<head style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;">
+
+<meta charset="utf-8" style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%;">
+  <meta name="viewport" content="width=device-width" 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;">
+  <meta name="x-apple-disable-message-reformatting" 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;">
+
+  <title style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 
+100%;">cron.weekly issue #146: DNS, tunshell, i2p, umami &amp; more</title>
+  <!-- The title tag shows in email notifications, like Android 4.4. -->
+  <!--[if mso]>
+        <style>
+            * {
+                font-family: sans-serif !important;
+            }
+        </style>
+  <![endif]-->
+
+  <style type="text/css" style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%;">
+        /* What it does: Remove spaces around the email design added by some 
+email clients. */
+        /* Beware: It can remove the padding / margin and add a background 
+color to the compose a reply window. */
+        html,
+        body {
+            margin: 0 auto !important;
+            padding: 0 !important;
+            height: 100% !important;
+            width: 100% !important;
+        }
+
+        /* What it does: Stops email clients resizing small text. */
+        * {
+            -ms-text-size-adjust: 100%;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        /* What is does: Centers email on Android 4.4 */
+        div[style*="margin: 16px 0"] {
+            margin:0 !important;
+        }
+
+        /* What it does: Stops Outlook from adding extra spacing to tables. */
+        table,
+        td {
+            mso-table-lspace: 0pt !important;
+            mso-table-rspace: 0pt !important;
+        }
+
+        /* What it does: Fixes webkit padding issue. Fix for Yahoo mail table 
+alignment bug.
+           Applies table-layout to the first 2 tables then removes for 
+anything nested deeper. */
+        table {
+            border-spacing: 0 !important;
+            border-collapse: collapse !important;
+            table-layout: fixed !important;
+            margin: 0 auto !important;
+        }
+        table table table {
+            table-layout: auto;
+        }
+
+        /* What it does: Uses a better rendering method when resizing images 
+in IE. */
+        img {
+            -ms-interpolation-mode:bicubic;
+        }
+
+        /* What it does: A work-around for iOS meddling in triggered links. */
+        .mobile-link--footer a,
+        a[x-apple-data-detectors] {
+            color:inherit !important;
+            text-decoration: underline !important;
+        }
+
+  </style>
+  <!-- Progressive Enhancements -->
+  <style type="text/css" style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%;">/* What it does: Hover styles for buttons */
+        .button-td,
+        .button-a {
+            transition: all 100ms ease-in;
+        }
+        .button-td:hover,
+        .button-a:hover {
+            background: #1a202c !important;
+            border-color: #1a202c !important;
+        }
+  </style>
+</head>
+<body bgcolor="#fff" style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%; padding: 0 !important; height: 100% 
+!important; width: 100% !important; margin: 0;" width="100%">
+  <center style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+width: 100%; background: #fff;">
+
+    <!-- Visually Hidden Preheader Text : BEGIN -->
+    <div style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+display: none; font-size: 1px; line-height: 1px; max-height: 0px; max-width: 
+0px; opacity: 0; overflow: hidden; mso-hide: all; font-family: sans-serif;">
+      News and tools for Linux sysadmins, open source users and web 
+developers.
+    </div>
+    <!-- Visually Hidden Preheader Text : END -->
+
+    <!--
+      Set the email width. Defined in two places:
+      1. max-width for all clients except Desktop Windows Outlook, allowing 
+the email to squish on narrow but never go wider than 730px.
+      2. MSO tags for Desktop Windows Outlook enforce a 730px width.
+    -->
+
+    <div style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+max-width: 730px; margin: auto;">
+      <!--[if mso]>
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" 
+width="600" align="center">
+          <tr>
+            <td>
+      <![endif]-->
+
+      <!-- Email Body : BEGIN -->
+      <table align="center" border="0" cellpadding="0" cellspacing="0" 
+role="presentation" style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%; mso-table-lspace: 0pt !important; 
+mso-table-rspace: 0pt !important; border-spacing: 0 !important; 
+border-collapse: collapse !important; table-layout: fixed !important; margin: 
+0 auto !important; max-width: 730px;" width="100%">
+        <!-- Hero Image, Flush : BEGIN -->
+        <tbody style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 
+100%;">
+          <tr style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 
+100%;">
+            <td bgcolor="#ffffff" style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%; mso-table-lspace: 0pt !important; 
+mso-table-rspace: 0pt !important; text-align: right; font-family: sans-serif; 
+font-size: 12px; mso-height-rule: exactly; color: #eeeeee; line-height: 
+45px;">
+<a href="https://ma.ttias.be/cronweekly/issue-146/" target="_blank" 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; color: 
+#ababab;">
+              Read this issue online »</a>
+            </td>
+          </tr>
+          <tr style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 
+100%;">
+            <td bgcolor="#90cdf4" style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%; mso-table-lspace: 0pt !important; 
+mso-table-rspace: 0pt !important; padding-top: 30px; padding-bottom: 20px; 
+font-family: sans-serif; font-size: 40px; mso-height-rule: exactly; 
+line-height: 40px; color: #1a202c; text-align: center; font-weight: 100;">
+              CRON.WEEKLY
+            </td>
+          </tr>
+          <tr style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 
+100%;">
+            <td bgcolor="#90cdf4" style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%; mso-table-lspace: 0pt !important; 
+mso-table-rspace: 0pt !important; padding: 20px; font-family: sans-serif; 
+font-size: 20px; mso-height-rule: exactly; line-height: 30px; color: #1a202c; 
+text-align: center; font-weight: 100;">
+              DNS, tunshell, i2p, umami &amp; more
+            </td>
+          </tr>
+          <tr style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 
+100%;">
+            <td valign="top" align="left" 
+background="https://ma.ttias.be/cronweekly/cronweekly_header_line_top.png" 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+mso-table-lspace: 0pt !important; mso-table-rspace: 0pt !important; 
+background-repeat: no-repeat; background-size: cover; padding: 30px; 
+background-position: bottom;"></td>
+          </tr>
+          <tr style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 
+100%;">
+            <td bgcolor="#ffffff" style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%; mso-table-lspace: 0pt !important; 
+mso-table-rspace: 0pt !important; padding-left: 10px; padding-top: 30px; 
+padding-bottom: 20px; font-family: sans-serif; font-size: 24px; 
+mso-height-rule: exactly; line-height: 20px; color: #1a202c; text-align: 
+left; font-style: italic;">
+              issue #146 for Sunday, August 23, 2020
+            </td>
+          </tr>
+          <tr style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 
+100%;">
+            <td bgcolor="#ffffff" style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%; mso-table-lspace: 0pt !important; 
+mso-table-rspace: 0pt !important;">
+              <table border="0" cellpadding="0" cellspacing="0" 
+role="presentation" width="100%" style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%; mso-table-lspace: 0pt !important; 
+mso-table-rspace: 0pt !important; border-spacing: 0 !important; 
+border-collapse: collapse !important; table-layout: fixed !important; margin: 
+0 auto !important;">
+                <tbody style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%;">
+                  <tr style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%;">
+                    <td style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%; mso-table-lspace: 0pt !important; 
+mso-table-rspace: 0pt !important; padding-left: 10px; padding-right: 10px; 
+padding-top: 20px; font-family: sans-serif; font-size: 16px; mso-height-rule: 
+exactly; line-height: 26px; color: #1a202c; font-weight: 100;">
+
+                        <!-- mail body -->
+
+                        <p style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%; font-family: 
+-apple-system,BlinkMacSystemFont,Segoe 
+UI,Roboto,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe 
+UI Symbol; margin-bottom: 1rem; margin-top: 1rem; line-height: 2; 
+font-weight: 300; color: #2d3748; font-size: 18px;">Hi everyone! 👋</p>
+<p style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: -apple-system,BlinkMacSystemFont,Segoe 
+UI,Roboto,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe 
+UI Symbol; margin-bottom: 1rem; margin-top: 1rem; line-height: 2; 
+font-weight: 300; color: #2d3748; font-size: 18px;">Welcome to cron.weekly 
+issue #146.</p>
+<p style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: -apple-system,BlinkMacSystemFont,Segoe 
+UI,Roboto,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe 
+UI Symbol; margin-bottom: 1rem; margin-top: 1rem; line-height: 2; 
+font-weight: 300; color: #2d3748; font-size: 18px;">A quick heads-up: I'm 
+taking my final summer holiday break next week, so I'll be back in your inbox 
+on September 6th!</p>
+<p style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: -apple-system,BlinkMacSystemFont,Segoe 
+UI,Roboto,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe 
+UI Symbol; margin-bottom: 1rem; margin-top: 1rem; line-height: 2; 
+font-weight: 300; color: #2d3748; font-size: 18px;">Enjoy your warm cup of 
+☕️ and happy reading.</p>
+<h1 style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: Helvetica; font-size: 33px; line-height: 1.1; display: block; 
+margin-top: 22px; margin-bottom: 22px; font-weight: 100;">News &amp; general 
+🗞</h1>
+<h2 style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: Helvetica; font-size: 20px; font-weight: 400; display: block; 
+margin-top: 30px; margin-bottom: 16px; line-height: 35px;"><a 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+border-bottom-color: #d69e2e; border-bottom-left-radius: 4px; 
+border-bottom-right-radius: 4px; border-bottom-style: solid; 
+border-bottom-width: 2px; color: #1a202c; padding-bottom: 1.6px; 
+padding-left: 0px; padding-right: 0px; padding-top: 1.6px; 
+text-decoration-line: none; line-height: 1.5em;" target="_blank" 
+href="https://blog.apnic.net/2020/08/21/chromiums-impact-on-root-dns-traffic/">Chromium’s 
+impact on root DNS traffic</a></h2>
+<p style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: -apple-system,BlinkMacSystemFont,Segoe 
+UI,Roboto,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe 
+UI Symbol; margin-bottom: 1rem; margin-top: 1rem; line-height: 2; 
+font-weight: 300; color: #2d3748; font-size: 18px;">The Chromium browser is 
+responsible for 50% of the DNS traffic on root nameservers, all because of a 
+feature to detect DNS interception. Wild!</p>
+<h2 style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: Helvetica; font-size: 20px; font-weight: 400; display: block; 
+margin-top: 30px; margin-bottom: 16px; line-height: 35px;"><a 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+border-bottom-color: #d69e2e; border-bottom-left-radius: 4px; 
+border-bottom-right-radius: 4px; border-bottom-style: solid; 
+border-bottom-width: 2px; color: #1a202c; padding-bottom: 1.6px; 
+padding-left: 0px; padding-right: 0px; padding-top: 1.6px; 
+text-decoration-line: none; line-height: 1.5em;" target="_blank" 
+href="https://kottke.org/20/08/researchers-can-duplicate-keys-from-the-sounds-they-make-in-locks">Researchers 
+Can Duplicate Keys from the Sounds They Make in Locks</a></h2>
+<p style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: -apple-system,BlinkMacSystemFont,Segoe 
+UI,Roboto,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe 
+UI Symbol; margin-bottom: 1rem; margin-top: 1rem; line-height: 2; 
+font-weight: 300; color: #2d3748; font-size: 18px;">This whole idea is just 
+crazy, using commodity microphones (ie: smartphones) researchers can now 
+3D-print a key just by the sound it made. 🤯</p>
+<h2 style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: Helvetica; font-size: 20px; font-weight: 400; display: block; 
+margin-top: 30px; margin-bottom: 16px; line-height: 35px;"><a 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+border-bottom-color: #d69e2e; border-bottom-left-radius: 4px; 
+border-bottom-right-radius: 4px; border-bottom-style: solid; 
+border-bottom-width: 2px; color: #1a202c; padding-bottom: 1.6px; 
+padding-left: 0px; padding-right: 0px; padding-top: 1.6px; 
+text-decoration-line: none; line-height: 1.5em;" target="_blank" 
+href="https://bits.debian.org/2020/08/debian-turns-27.html">Debian turns 
+27!</a></h2>
+<p style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: -apple-system,BlinkMacSystemFont,Segoe 
+UI,Roboto,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe 
+UI Symbol; margin-bottom: 1rem; margin-top: 1rem; line-height: 2; 
+font-weight: 300; color: #2d3748; font-size: 18px;">A week late, but still 
+happy birthday Debian!</p>
+<h2 style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: Helvetica; font-size: 20px; font-weight: 400; display: block; 
+margin-top: 30px; margin-bottom: 16px; line-height: 35px;"><a 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+border-bottom-color: #d69e2e; border-bottom-left-radius: 4px; 
+border-bottom-right-radius: 4px; border-bottom-style: solid; 
+border-bottom-width: 2px; color: #1a202c; padding-bottom: 1.6px; 
+padding-left: 0px; padding-right: 0px; padding-top: 1.6px; 
+text-decoration-line: none; line-height: 1.5em;" target="_blank" 
+href="https://jsoniary.io/api-weekly">A free, once-weekly API 
+Newsletter</a></h2>
+<p style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: -apple-system,BlinkMacSystemFont,Segoe 
+UI,Roboto,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe 
+UI Symbol; margin-bottom: 1rem; margin-top: 1rem; line-height: 2; 
+font-weight: 300; color: #2d3748; font-size: 18px;"><em 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;">We are 
+two indie developers curating this free newsletter to keep you informed about 
+all things API. Our focus is on developers who are regularly involved in 
+building or integrating APIs. We bring you a list of free &amp; paid APIs for 
+fetching data, links for in-depth tutorials, tools, and jobs for API 
+Developers.</em> <span style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%; background-color: #fefcbf; border-radius: 
+8px; border: 1px solid #faf089; box-sizing: border-box; color: rgb(45, 55, 
+72); display: inline; font-size: 14px; font-weight: 200; height: auto; 
+letter-spacing: normal; line-height: 17.5px; margin-left: 8px; 
+padding-bottom: 8px; padding-left: 8px; padding-right: 8px; padding-top: 4px; 
+margin-top: 4px;">Sponsored</span></p>
+<h1 style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: Helvetica; font-size: 33px; line-height: 1.1; display: block; 
+margin-top: 22px; margin-bottom: 22px; font-weight: 100;">Tools &amp; 
+Projects 🛠</h1>
+<h2 style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: Helvetica; font-size: 20px; font-weight: 400; display: block; 
+margin-top: 30px; margin-bottom: 16px; line-height: 35px;"><a 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+border-bottom-color: #d69e2e; border-bottom-left-radius: 4px; 
+border-bottom-right-radius: 4px; border-bottom-style: solid; 
+border-bottom-width: 2px; color: #1a202c; padding-bottom: 1.6px; 
+padding-left: 0px; padding-right: 0px; padding-top: 1.6px; 
+text-decoration-line: none; line-height: 1.5em;" target="_blank" 
+href="https://github.com/aquasecurity/tracee">tracee</a></h2>
+<p style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: -apple-system,BlinkMacSystemFont,Segoe 
+UI,Roboto,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe 
+UI Symbol; margin-bottom: 1rem; margin-top: 1rem; line-height: 2; 
+font-weight: 300; color: #2d3748; font-size: 18px;">Tracee is a lightweight, 
+easy to use container tracing tool. After launching the tool, it will start 
+collecting traces of newly created containers.</p>
+<h2 style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: Helvetica; font-size: 20px; font-weight: 400; display: block; 
+margin-top: 30px; margin-bottom: 16px; line-height: 35px;"><a 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+border-bottom-color: #d69e2e; border-bottom-left-radius: 4px; 
+border-bottom-right-radius: 4px; border-bottom-style: solid; 
+border-bottom-width: 2px; color: #1a202c; padding-bottom: 1.6px; 
+padding-left: 0px; padding-right: 0px; padding-top: 1.6px; 
+text-decoration-line: none; line-height: 1.5em;" target="_blank" 
+href="https://github.com/Uzay-G/archivy">archivy</a></h2>
+<p style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: -apple-system,BlinkMacSystemFont,Segoe 
+UI,Roboto,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe 
+UI Symbol; margin-bottom: 1rem; margin-top: 1rem; line-height: 2; 
+font-weight: 300; color: #2d3748; font-size: 18px;">Archivy is a self-hosted 
+knowledge repository that allows you to safely preserve useful content that 
+contributes to your knowledge bank.</p>
+<h2 style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: Helvetica; font-size: 20px; font-weight: 400; display: block; 
+margin-top: 30px; margin-bottom: 16px; line-height: 35px;"><a 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+border-bottom-color: #d69e2e; border-bottom-left-radius: 4px; 
+border-bottom-right-radius: 4px; border-bottom-style: solid; 
+border-bottom-width: 2px; color: #1a202c; padding-bottom: 1.6px; 
+padding-left: 0px; padding-right: 0px; padding-top: 1.6px; 
+text-decoration-line: none; line-height: 1.5em;" target="_blank" 
+href="https://github.com/TimeToogo/tunshell">tunshell</a></h2>
+<p style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: -apple-system,BlinkMacSystemFont,Segoe 
+UI,Roboto,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe 
+UI Symbol; margin-bottom: 1rem; margin-top: 1rem; line-height: 2; 
+font-weight: 300; color: #2d3748; font-size: 18px;">Tunshell is a simple and 
+secure method to remote shell into ephemeral environments such as deployment 
+pipelines or serverless functions.</p>
+<h2 style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: Helvetica; font-size: 20px; font-weight: 400; display: block; 
+margin-top: 30px; margin-bottom: 16px; line-height: 35px;"><a 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+border-bottom-color: #d69e2e; border-bottom-left-radius: 4px; 
+border-bottom-right-radius: 4px; border-bottom-style: solid; 
+border-bottom-width: 2px; color: #1a202c; padding-bottom: 1.6px; 
+padding-left: 0px; padding-right: 0px; padding-top: 1.6px; 
+text-decoration-line: none; line-height: 1.5em;" target="_blank" 
+href="https://github.com/i2p/i2p.i2p">i2p</a></h2>
+<p style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: -apple-system,BlinkMacSystemFont,Segoe 
+UI,Roboto,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe 
+UI Symbol; margin-bottom: 1rem; margin-top: 1rem; line-height: 2; 
+font-weight: 300; color: #2d3748; font-size: 18px;">I2P is an anonymizing 
+network, offering a simple layer that identity-sensitive applications can use 
+to securely communicate. All data is wrapped with several layers of 
+encryption, and the network is both distributed and dynamic, with no trusted 
+parties.</p>
+<h2 style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: Helvetica; font-size: 20px; font-weight: 400; display: block; 
+margin-top: 30px; margin-bottom: 16px; line-height: 35px;"><a 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+border-bottom-color: #d69e2e; border-bottom-left-radius: 4px; 
+border-bottom-right-radius: 4px; border-bottom-style: solid; 
+border-bottom-width: 2px; color: #1a202c; padding-bottom: 1.6px; 
+padding-left: 0px; padding-right: 0px; padding-top: 1.6px; 
+text-decoration-line: none; line-height: 1.5em;" target="_blank" 
+href="https://github.com/mikecao/umami">umami</a></h2>
+<p style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: -apple-system,BlinkMacSystemFont,Segoe 
+UI,Roboto,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe 
+UI Symbol; margin-bottom: 1rem; margin-top: 1rem; line-height: 2; 
+font-weight: 300; color: #2d3748; font-size: 18px;">Umami is a simple, fast, 
+website analytics alternative to Google Analytics.</p>
+<h2 style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: Helvetica; font-size: 20px; font-weight: 400; display: block; 
+margin-top: 30px; margin-bottom: 16px; line-height: 35px;"><a 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+border-bottom-color: #d69e2e; border-bottom-left-radius: 4px; 
+border-bottom-right-radius: 4px; border-bottom-style: solid; 
+border-bottom-width: 2px; color: #1a202c; padding-bottom: 1.6px; 
+padding-left: 0px; padding-right: 0px; padding-top: 1.6px; 
+text-decoration-line: none; line-height: 1.5em;" target="_blank" 
+href="https://github.com/k14s/ytt">ytt</a></h2>
+<p style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: -apple-system,BlinkMacSystemFont,Segoe 
+UI,Roboto,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe 
+UI Symbol; margin-bottom: 1rem; margin-top: 1rem; line-height: 2; 
+font-weight: 300; color: #2d3748; font-size: 18px;"><code 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+background-color: #e2e8f0; border-radius: .25rem; box-shadow: 0 1px 3px 0 
+rgba(0,0,0,.1), 0 1px 2px 0 rgba(0,0,0,.06); padding-left: .5rem; 
+padding-right: .5rem; padding-top: .25rem; padding-bottom: .25rem; 
+font-weight: 400; color: #4c51bf; margin-right: .25rem;">ytt</code> is a YAML 
+templating tool that works on YAML structure instead of text.</p>
+<h2 style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: Helvetica; font-size: 20px; font-weight: 400; display: block; 
+margin-top: 30px; margin-bottom: 16px; line-height: 35px;"><a 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+border-bottom-color: #d69e2e; border-bottom-left-radius: 4px; 
+border-bottom-right-radius: 4px; border-bottom-style: solid; 
+border-bottom-width: 2px; color: #1a202c; padding-bottom: 1.6px; 
+padding-left: 0px; padding-right: 0px; padding-top: 1.6px; 
+text-decoration-line: none; line-height: 1.5em;" target="_blank" 
+href="https://github.com/digitalocean/nginxconfig.io">nginxconfig</a></h2>
+<p style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: -apple-system,BlinkMacSystemFont,Segoe 
+UI,Roboto,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe 
+UI Symbol; margin-bottom: 1rem; margin-top: 1rem; line-height: 2; 
+font-weight: 300; color: #2d3748; font-size: 18px;">This is the repo of the 
+<a style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+border-bottom-color: #d69e2e; border-bottom-left-radius: 4px; 
+border-bottom-right-radius: 4px; border-bottom-style: solid; 
+border-bottom-width: 2px; color: #1a202c; padding-bottom: 1.6px; 
+padding-left: 0px; padding-right: 0px; padding-top: 1.6px; 
+text-decoration-line: none; line-height: 1.5em;" target="_blank" 
+href="https://www.digitalocean.com/community/tools/nginx">Nginx configurator 
+built by Digital Ocean</a>. Very powerful with <em 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;">lots</em> 
+of options.</p>
+<h1 style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: Helvetica; font-size: 33px; line-height: 1.1; display: block; 
+margin-top: 22px; margin-bottom: 22px; font-weight: 100;">Guides &amp; 
+Tutorials 🎓</h1>
+<h2 style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: Helvetica; font-size: 20px; font-weight: 400; display: block; 
+margin-top: 30px; margin-bottom: 16px; line-height: 35px;"><a 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+border-bottom-color: #d69e2e; border-bottom-left-radius: 4px; 
+border-bottom-right-radius: 4px; border-bottom-style: solid; 
+border-bottom-width: 2px; color: #1a202c; padding-bottom: 1.6px; 
+padding-left: 0px; padding-right: 0px; padding-top: 1.6px; 
+text-decoration-line: none; line-height: 1.5em;" target="_blank" 
+href="https://battlepenguin.com/tech/moving-from-youtube-to-peertube">Moving 
+from YouTube to PeerTube</a></h2>
+<p style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: -apple-system,BlinkMacSystemFont,Segoe 
+UI,Roboto,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe 
+UI Symbol; margin-bottom: 1rem; margin-top: 1rem; line-height: 2; 
+font-weight: 300; color: #2d3748; font-size: 18px;">This was a good 
+step-by-step guide on moving videos (with subtitles) to a self-hosted 
+PeerTube instance (which does P2P video streaming) using Docker.</p>
+<h2 style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: Helvetica; font-size: 20px; font-weight: 400; display: block; 
+margin-top: 30px; margin-bottom: 16px; line-height: 35px;"><a 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+border-bottom-color: #d69e2e; border-bottom-left-radius: 4px; 
+border-bottom-right-radius: 4px; border-bottom-style: solid; 
+border-bottom-width: 2px; color: #1a202c; padding-bottom: 1.6px; 
+padding-left: 0px; padding-right: 0px; padding-top: 1.6px; 
+text-decoration-line: none; line-height: 1.5em;" target="_blank" 
+href="https://www.defensecode.com/public/DefenseCode_Unix_WildCards_Gone_Wild.txt">Back 
+To The Future: Unix Wildcards Gone Wild (2014)</a></h2>
+<p style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: -apple-system,BlinkMacSystemFont,Segoe 
+UI,Roboto,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe 
+UI Symbol; margin-bottom: 1rem; margin-top: 1rem; line-height: 2; 
+font-weight: 300; color: #2d3748; font-size: 18px;">An oldie but a goodie: in 
+Unix, wildcards can sometimes have some unintended (for the user) 
+consequences. This post gives a clear summary of the dangerous cases and the 
+results.</p>
+<h2 style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: Helvetica; font-size: 20px; font-weight: 400; display: block; 
+margin-top: 30px; margin-bottom: 16px; line-height: 35px;"><a 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+border-bottom-color: #d69e2e; border-bottom-left-radius: 4px; 
+border-bottom-right-radius: 4px; border-bottom-style: solid; 
+border-bottom-width: 2px; color: #1a202c; padding-bottom: 1.6px; 
+padding-left: 0px; padding-right: 0px; padding-top: 1.6px; 
+text-decoration-line: none; line-height: 1.5em;" target="_blank" 
+href="https://thenewstack.io/tutorial-set-up-a-secure-and-highly-available-etcd-cluster/">Set 
+up a Secure and Highly Available etcd Cluster</a></h2>
+<p style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: -apple-system,BlinkMacSystemFont,Segoe 
+UI,Roboto,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe 
+UI Symbol; margin-bottom: 1rem; margin-top: 1rem; line-height: 2; 
+font-weight: 300; color: #2d3748; font-size: 18px;">This guide explores how 
+to configure a three-node <code style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%; background-color: #e2e8f0; border-radius: 
+.25rem; box-shadow: 0 1px 3px 0 rgba(0,0,0,.1), 0 1px 2px 0 rgba(0,0,0,.06); 
+padding-left: .5rem; padding-right: .5rem; padding-top: .25rem; 
+padding-bottom: .25rem; font-weight: 400; color: #4c51bf; margin-right: 
+.25rem;">etcd</code> cluster that will be used by a highly available, 
+multinode K3s cluster.</p>
+
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </td>
+          </tr>
+
+          <tr style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 
+100%;">
+            <td bgcolor="#ffffff" style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%; mso-table-lspace: 0pt !important; 
+mso-table-rspace: 0pt !important;">
+              <table border="0" cellpadding="0" cellspacing="0" 
+role="presentation" width="100%" style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%; mso-table-lspace: 0pt !important; 
+mso-table-rspace: 0pt !important; border-spacing: 0 !important; 
+border-collapse: collapse !important; table-layout: fixed !important; margin: 
+0 auto !important;">
+                <tbody style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%;">
+                  <tr style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%;">
+                    <td style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%; mso-table-lspace: 0pt !important; 
+mso-table-rspace: 0pt !important; padding: 40px; font-family: sans-serif; 
+font-size: 15px; mso-height-rule: exactly; line-height: 20px; color: #1a202c; 
+font-weight: 100; text-align: center;">
+                      <hr style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%; color: #333333; margin-bottom: 25px;">
+                      Thanks for reading this week's <em 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 
+100%;">cron.weekly</em>! Did you like it?
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </td>
+           </tr>
+
+           <tr style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 
+100%;">
+            <td align="center" bgcolor="#ffffff" height="100%" 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+mso-table-lspace: 0pt !important; mso-table-rspace: 0pt !important; 
+padding-bottom: 40px;" valign="top" width="100%">
+            <table align="center" border="0" cellpadding="0" cellspacing="0" 
+role="presentation" style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%; mso-table-lspace: 0pt !important; 
+mso-table-rspace: 0pt !important; border-spacing: 0 !important; 
+border-collapse: collapse !important; table-layout: fixed !important; margin: 
+0 auto !important; max-width: 560px;" width="100%">
+              <tbody style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%;">
+                <tr style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%;">
+                  <td align="center" valign="top" width="50%" 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+mso-table-lspace: 0pt !important; mso-table-rspace: 0pt !important;">
+                  <table border="0" cellpadding="0" cellspacing="0" 
+role="presentation" style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%; mso-table-lspace: 0pt !important; 
+mso-table-rspace: 0pt !important; border-spacing: 0 !important; 
+border-collapse: collapse !important; table-layout: fixed !important; margin: 
+0 auto !important; font-size: 14px; text-align: left;" width="100%">
+                    <tbody style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%;">
+                      <tr style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%;">
+                        <td style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%; mso-table-lspace: 0pt !important; 
+mso-table-rspace: 0pt !important; text-align: center; padding: 0 10px;">
+                          <table align="center" border="0" cellpadding="0" 
+cellspacing="0" role="presentation" style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%; mso-table-lspace: 0pt !important; 
+mso-table-rspace: 0pt !important; border-spacing: 0 !important; 
+border-collapse: collapse !important; table-layout: fixed !important; margin: 
+auto;">
+                            <tbody style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%;">
+                              <tr style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%;">
+                                <td class="button-td" 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+mso-table-lspace: 0pt !important; mso-table-rspace: 0pt !important; 
+transition: all 100ms ease-in; border-radius: 5px; background: #3bba39; 
+text-align: center;">
+                                  <a target="_blank" 
+href="https://ma.ttias.be/cronweekly/loved-it/?issue=146" 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+background: #3bba39; border: 15px solid #3bba39; font-family: sans-serif; 
+font-size: 13px; line-height: 1.1; text-align: center; text-decoration: none; 
+display: block; border-radius: 3px; font-weight: bold;">
+                                        
+                                    <span style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%; color: #ffffff; font-size: 24px; font-weight: 
+100;">
+                                      :-)
+                                    </span>
+                                        
+                                  </a>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </td>
+                      </tr>
+                      <tr style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%;">
+                        <td class="stack-column-center" 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+mso-table-lspace: 0pt !important; mso-table-rspace: 0pt !important; 
+text-align: center; font-family: sans-serif; font-size: 15px; 
+mso-height-rule: exactly; line-height: 20px; color: #1a202c; padding: 10px 
+10px 0; font-weight: 100;">
+                          Loved it!
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  </td>
+                  <td align="center" valign="top" width="50%" 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+mso-table-lspace: 0pt !important; mso-table-rspace: 0pt !important;">
+                    <table border="0" cellpadding="0" cellspacing="0" 
+role="presentation" style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%; mso-table-lspace: 0pt !important; 
+mso-table-rspace: 0pt !important; border-spacing: 0 !important; 
+border-collapse: collapse !important; table-layout: fixed !important; margin: 
+0 auto !important; font-size: 14px; text-align: left;" width="100%">
+                      <tbody style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%;">
+                        <tr style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%;">
+                          <td style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%; mso-table-lspace: 0pt !important; 
+mso-table-rspace: 0pt !important; text-align: center; padding: 0 10px;">
+                            <table align="center" border="0" cellpadding="0" 
+cellspacing="0" role="presentation" style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%; mso-table-lspace: 0pt !important; 
+mso-table-rspace: 0pt !important; border-spacing: 0 !important; 
+border-collapse: collapse !important; table-layout: fixed !important; margin: 
+auto;">
+                              <tbody style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%;">
+                                <tr style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%;">
+                                  <td class="button-td" 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+mso-table-lspace: 0pt !important; mso-table-rspace: 0pt !important; 
+transition: all 100ms ease-in; border-radius: 3px; background: #d9403e; 
+text-align: center;">
+                                    <a target="_blank" 
+href="https://ma.ttias.be/cronweekly/expected-better/?issue=146" 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+background: #d9403e; border: 15px solid #d9403e; font-family: sans-serif; 
+font-size: 13px; line-height: 1.1; text-align: center; text-decoration: none; 
+display: block; border-radius: 3px; font-weight: bold;">
+                                          
+                                      <span style="-ms-text-size-adjust: 
+100%; -webkit-text-size-adjust: 100%; color: #ffffff; font-size: 24px; 
+font-weight: 100;">
+                                        :-(
+                                      </span>
+                                          
+                                    </a>
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </td>
+                        </tr>
+                        <tr style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%;">
+                          <td class="stack-column-center" 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+mso-table-lspace: 0pt !important; mso-table-rspace: 0pt !important; 
+text-align: center; font-family: sans-serif; font-size: 15px; 
+mso-height-rule: exactly; line-height: 20px; color: #1a202c; padding: 10px 
+10px 0; font-weight: 100;">
+                            I expected better.
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            </td>
+          </tr>
+
+          <tr style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 
+100%;">
+            <td height="20" style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%; mso-table-lspace: 0pt !important; 
+mso-table-rspace: 0pt !important; font-size: 0; line-height: 0;"> </td>
+          </tr>
+
+        </tbody>
+      </table>
+      <!-- Email Body : END -->
+
+        <!-- Email Footer : BEGIN -->
+        <table align="center" border="0" cellpadding="0" cellspacing="0" 
+role="presentation" style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%; mso-table-lspace: 0pt !important; 
+mso-table-rspace: 0pt !important; border-spacing: 0 !important; 
+border-collapse: collapse !important; table-layout: fixed !important; margin: 
+0 auto !important; max-width: 680px;" width="100%">
+            <tbody style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%;">
+                <tr style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%;">
+                    <td valign="top" align="left" 
+background="https://ma.ttias.be/cronweekly/cronweekly_header_line_bottom.png?issue=146" 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+mso-table-lspace: 0pt !important; mso-table-rspace: 0pt !important; 
+background-repeat: no-repeat; background-size: cover; padding: 20px; 
+background-position: top;"></td>
+                </tr>
+                <tr style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%;">
+                    <td bgcolor="#bee3f8" style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%; mso-table-lspace: 0pt !important; 
+mso-table-rspace: 0pt !important; padding: 20px; padding-bottom: 35px; width: 
+100%; font-size: 12px; font-family: sans-serif; mso-height-rule: exactly; 
+line-height: 18px; text-align: center; color: #333;">
+                        <a 
+href="https://ma.ttias.be/cronweekly/issue-146/?via=newsletter" 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: sans-serif; mso-height-rule: exactly; color: #333;">View this 
+issue online in the archives</a><br style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%;">
+                        <br style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%;">
+                        cron.weekly is sent by <a href="https://ma.ttias.be" 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: sans-serif; mso-height-rule: exactly; color: #333; 
+text-decoration: underline;">Mattias Geniar</a> - You signed up at <a 
+href="https://ma.ttias.be/cronweekly/" style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%; font-family: sans-serif; mso-height-rule: 
+exactly; color: #333; text-decoration: underline;">ma.ttias.be</a>.<br 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;">
+                        Are you interested in <a 
+href="https://ma.ttias.be/cronweekly/about/" style="-ms-text-size-adjust: 
+100%; -webkit-text-size-adjust: 100%; font-family: sans-serif; 
+mso-height-rule: exactly; color: #333; text-decoration: 
+underline;">advertising</a>?<br style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%;">
+                        <br style="-ms-text-size-adjust: 100%; 
+-webkit-text-size-adjust: 100%;">
+                        Don't like the newsletter anymore? You can <a 
+href="https://newsletter.ma.ttias.be/unsubscribe/63a3317e-3edd-491b-bf16-dcd7f411dd5d/2d38dc55-c3de-4f54-8dc7-a38c4bca954c" 
+style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; 
+font-family: sans-serif; mso-height-rule: exactly; color: #333; 
+text-decoration: underline;">unsubscribe</a> at any time. No hard feelings.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <!-- Email Footer : END -->
+
+    </div>
+  </center>
+</body>
+</html>
+
+
+--_=_swift_1598163000_ca765d714ac11f4b53a5a1a6460bad06_=_--
