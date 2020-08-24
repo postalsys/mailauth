@@ -38,8 +38,13 @@ dkimSign(message, {
     ]
 })
     .then(res => {
-        console.log(res.join('\n'));
-        return dkimVerify(Buffer.concat([Buffer.from(res.join('\r\n') + '\r\n'), message]));
+        process.stdout.write(res);
+        return dkimVerify(Buffer.concat([Buffer.from(res), message]));
     })
-    .then(res => console.log('result', res))
+    .then(res => {
+        console.log('result', res);
+        for (let { info } of res.results) {
+            console.log(info);
+        }
+    })
     .catch(err => console.error(err));

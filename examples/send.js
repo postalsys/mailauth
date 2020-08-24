@@ -35,7 +35,7 @@ const sendNext = async (subject, dkimOpts) => {
     const raw = await build();
 
     let signatures = await dkimSign(raw, dkimOpts);
-    const signed = Buffer.concat([Buffer.from(signatures.join('\r\n') + '\r\n'), raw]);
+    const signed = Buffer.concat([Buffer.from(signatures), raw]);
 
     await transport.sendMail({
         envelope,
