@@ -1,57 +1,61 @@
 /* eslint no-unused-expressions:0 */
 'use strict';
 
-const { writeToStream } = require('../../../lib/tools');
 const chai = require('chai');
 const expect = chai.expect;
 
 let fs = require('fs').promises;
-let { RelaxedBody } = require('../../../lib/dkim/body/relaxed');
+let { RelaxedHash } = require('../../../lib/dkim/body/relaxed');
 
 chai.config.includeStack = true;
+
+const getBody = message => {
+    message = message.toString('binary');
+    let match = message.match(/\r?\n\r?\n/);
+    if (match) {
+        message = message.substr(match.index + match[0].length);
+    }
+    return Buffer.from(message, 'binary');
+};
 
 describe('DKIM RelaxedBody Tests', () => {
     it('Should calculate sha256 body hash for an empty message', async () => {
         const message = Buffer.from('\r\n\r\n\n\r\n\r\n');
 
-        let s = new RelaxedBody({
-            algorithm: 'sha256'
-        });
+        let s = new RelaxedHash('rsa-sha256');
+        s.update(message);
 
-        await writeToStream(s, message, 1);
-        expect(s.bodyHash).to.equal('47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=');
+        expect(s.digest('base64')).to.equal('47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=');
     });
 
     it('Should calculate sha1 body hash for an empty message', async () => {
         const message = Buffer.from('\r\n\r\n\n\r\n\r\n');
 
-        let s = new RelaxedBody({
-            algorithm: 'sha1'
-        });
+        let s = new RelaxedHash('rsa-sha1');
+        s.update(message);
 
-        await writeToStream(s, message, 1);
-        expect(s.bodyHash).to.equal('2jmj7l5rSw0yVb/vlWAYkK/YBwk=');
+        expect(s.digest('base64')).to.equal('2jmj7l5rSw0yVb/vlWAYkK/YBwk=');
     });
 
     it('Should calculate body hash byte by byte', async () => {
         let message = await fs.readFile(__dirname + '/../../fixtures/message1.eml');
+        message = getBody(message);
 
-        let s = new RelaxedBody({
-            algorithm: 'sha256'
-        });
+        let s = new RelaxedHash('rsa-sha256');
+        for (let i = 0; i < message.length; i++) {
+            s.update(Buffer.from([message[i]]));
+        }
 
-        await writeToStream(s, message, 1);
-        expect(s.bodyHash).to.equal('D2H5TEwtUgM2u8Ew0gG6vnt/Na6L+Zep7apmSmfy8IQ=');
+        expect(s.digest('base64')).to.equal('D2H5TEwtUgM2u8Ew0gG6vnt/Na6L+Zep7apmSmfy8IQ=');
     });
 
     it('Should calculate body hash all at once', async () => {
         let message = await fs.readFile(__dirname + '/../../fixtures/message1.eml');
+        message = getBody(message);
 
-        let s = new RelaxedBody({
-            algorithm: 'sha256'
-        });
+        let s = new RelaxedHash('rsa-sha256');
+        s.update(message);
 
-        await writeToStream(s, message, 1000000);
-        expect(s.bodyHash).to.equal('D2H5TEwtUgM2u8Ew0gG6vnt/Na6L+Zep7apmSmfy8IQ=');
+        expect(s.digest('base64')).to.equal('D2H5TEwtUgM2u8Ew0gG6vnt/Na6L+Zep7apmSmfy8IQ=');
     });
 });

@@ -1,36 +1,12 @@
-DKIM-Signature: v=1; a=rsa-sha256; c=simple/relaxed; d=tahvel.info;
- h=MIME-Version: Date: Message-ID: Subject: To: From: Content-Type;
- q=dns/txt; s=test.invalid; t=1598079221;
- bh=ie9r/Tus1hvKeTE1Vq3OtdSPun5RzjezRwwj8zowoto=;
- b=QBOQ4XP2Wpaw/G3bEs9bszm5kXwdKOyMH0m9qKp5tES3upEIuJAa8mkh2HSxnPmYvP6ZrY8q7
- 9AAU1hYgaHN6+2Ms8q5Kbu9RlUrYKNVvfmtJa7CMG5DbR7aWxxjziVNvLf9nQWc+LeD0Xu8y6o8
- ETnOeuGFeEcRBZbyiKfhHbA4juSnnuKZ3KMAtWKEMPWyffJvgsZt6AcsLMSIJmjZGQT9l8IqoGm
- Ckd4pyHzKmd7YPAfOOoGmob+PKRsbKSLuZ+Y3MIvdCFZ7mYYMs2eO90aFwerqU2kTyocudlWr0X
- uoYstSPm1zyOQjAtwCpDKXMb4oDBNmy/0+UDERepKs5A==
-DKIM-Signature: v=1; a=rsa-sha256; c=simple/relaxed; d=tahvel.info;
- h=MIME-Version: Date: Message-ID: Subject: To: From: Content-Type;
- q=dns/txt; s=test.rsa; t=1598079221;
- bh=ie9r/Tus1hvKeTE1Vq4OtdSPun5RzjezRwwj8zowoto=;
- b=kq2OimzTTJVR+6yY5MkZLA6rAEpSQ9XLAA66SyfDOpUwiCNynwBgcgf3nezccf+R7kqnDeLZs
- PKLwWvowtZGcYU2zt1YqJToNqHg6FtvTwqZ/GWhw86SGo2caE0j4Xp6K01GEL+qsxXtveiKXFDu
- aekGDitUFNhrwCMiJGVGis/D3t128isXyU5qivJBw15DrpiKrEShTUUr4aHzvaBrb6d0ybRkv1r
- fn1J14gqoeV8a1Qem+GyBHipKHiVInKy6As0jWQijy5I8eCqjmv1EfO5BTcGAd1scJriE4j1QXB
- TU6XeVgcPXs1KqTEg2Du54BP60HgVbQpdiO0PafPAajA==
-DKIM-Signature: v=1; a=rsa-sha256; c=simple/relaxed; d=tahvel.info;
- h=MIME-Version: Date: Message-ID: Subject: To: From: Content-Type;
- q=dns/txt; s=test.small; t=1598079221;
- bh=ie9r/Tus1hvKeTE1Vq3OtdSPun5RzjezRwwj8zowoto=;
- b=DjfoZCgsz5NDST91S3tyONDuqQ1I8nJAKvlDPA1etd3l/HoCQ0Pxz6zzBMvBMpKOkSZ5MB2bA
- NBP/rM2UsnIyw==
 Content-Type: multipart/mixed;
  boundary="--_NmP-?=_1-14707412835060.25498316106673347"
 From: Andris Test <andris@kreata.ee>
 To: andris.reinman@gmail.com
-Subject: Nodemailer is unicode friendly =?UTF-8?Q?=E2=9C=94?= 1470741283500
-Message-ID: <c8720a88-fcbd-7a8f-98db-9b982db61900@kreata.ee>
+Subject: Nodemailer is unicode friendly =?UTF-8?Q?=E2=9C=94?= 1470741283502
+Message-ID: <c8720a88-fcbd-7a8f-98db-9b982db619f7@kreata.ee>
 X-Mailer: nodemailer (2.5.0; +http://nodemailer.com/; SMTP
  (pool)/2.7.0[client:2.8.0])
-Date: Tue, 23 Aug 2016 17:02:44 +0000
+Date: Tue, 09 Aug 2016 11:14:43 +0000
 MIME-Version: 1.0
 
 ----_NmP-?=_1-14707412835060.25498316106673347
@@ -39,7 +15,7 @@ Content-Type: multipart/alternative;
 
 ----_NmP-?=_2-14707412835060.25498316106673347
 Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 7bit  
 
 Hello to myself!
 ----_NmP-?=_2-14707412835060.25498316106673347
@@ -63,13 +39,13 @@ AAAAAElFTkSuQmCC
 ----_NmP-?=_4-14707412835060.25498316106673347--
 
 ----_NmP-?=_2-14707412835060.25498316106673347--
-  
+
 ----_NmP-?=_1-14707412835060.25498316106673347
-Content-Type: text/plain; name=notes.txt  
+Content-Type: text/plain; name=notes.txt
 Content-Disposition: attachment; filename=notes.txt
 Content-Transfer-Encoding: 7bit
 
-Some notes about this e-mail 00
+Some notes about this e-mail
 ----_NmP-?=_1-14707412835060.25498316106673347
 Content-Type: application/octet-stream; name=attachment.bin
 Content-Disposition: attachment; filename=attachment.bin

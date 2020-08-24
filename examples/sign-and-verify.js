@@ -10,7 +10,7 @@ const time = 1598079221278;
 
 dkimSign(message, {
     algorithm: 'rsa-sha256',
-    canonicalization: 'simple/relaxed',
+    canonicalization: 'simple/simple',
     signTime: time,
 
     signatureData: [
@@ -28,6 +28,12 @@ dkimSign(message, {
             signingDomain: 'tahvel.info',
             selector: 'test.small',
             privateKey: fs.readFileSync('./test/fixtures/private-small.pem')
+        },
+
+        {
+            signingDomain: 'tahvel.info',
+            selector: 'test.ed25519',
+            privateKey: fs.readFileSync('./test/fixtures/private-ed25519.pem')
         }
     ]
 })
