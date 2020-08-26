@@ -26,6 +26,7 @@
         "eslint-config-prettier": "6.11.0"
     },
     "dependencies": {
+        "ipaddr.js": "^2.0.0",
         "libmime": "5.0.0",
         "node-forge": "0.9.1",
         "nodemailer": "6.4.11"
