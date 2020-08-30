@@ -63,6 +63,30 @@ dkim=pass header.i=@tahvel.info header.s=test.rsa header.b="BrEgDN4A"
 dkim=policy (weak key) header.i=@tahvel.info header.s=test.small header.b="d0jjgPun"
 ```
 
+## SPF
+
+### Verifying
+
+```js
+const { spf } = require('mailauth/lib/spf');
+
+let result = await spf({
+    sender: 'andris@wildduck.email',
+    ip: '217.146.76.20',
+    helo: 'foo',
+    mta: 'mx.myhost.com'
+});
+console.log(result.header);
+```
+
+Example output:
+
+```txt
+Received-SPF: pass (mx.myhost.com: domain of andris@wildduck.email
+ designates 217.146.76.20 as permitted sender) client-ip=217.146.76.20;
+ envelope-from="andris@wildduck.email";
+```
+
 ## License
 
 **MIT**
