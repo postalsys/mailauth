@@ -1,0 +1,77 @@
+Delivered-To: andris.reinman@gmail.com
+Received: by 2002:a67:f8c8:0:0:0:0:0 with SMTP id c8csp1206370vsp;
+        Mon, 31 Aug 2020 11:56:50 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJz6/8nGzWi/uxKDkh8RAJX9V3UVrjLKqjJQmCupn0Mlysn0cXb5jRmijIaLsJapAft+5Dwh
+X-Received: by 2002:a19:d95:: with SMTP id 143mr1224021lfn.4.1598900210696;
+        Mon, 31 Aug 2020 11:56:50 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1598900210; cv=none;
+        d=google.com; s=arc-20160816;
+        b=TL/Yqv+qa6a/iBn3i5oy3VOsw/fWXpBYAX2YE4rU9cT3ci3SmJso/o7y39L1MqhhVj
+         Lvo7OmCtIyKc6WHhKpjhhgPUOFxFcLHspFtI/nB+ZQc1lix6D9ijKNjcOHMwVghoVnQV
+         wmQqmd97kmbuYg74f7XyzMNiLJEcL6Yr1in0rAAlBqCWzw3G9SKPeaAf7wo8zblesRf4
+         KCSKdC4vPf+5VAVgTbp/xIuc0gNOdxZ9wO8iK3XC0SdMBinKUuGwoiU5wB+1Q0c3dJef
+         QZGSKiPQBlofHn+B8vfrq+s8+E8aAbcwF2YPSX/bJQZ6Zp07k20dQe+/id2l2vjuHah2
+         fXYA==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20160816;
+        h=user-agent:message-id:subject:to:from:date:mime-version
+         :dkim-signature;
+        bh=3NRBWpm/gJjG3od/tZnJamYAN8tws+nRJIh1FCbiG0Y=;
+        b=et5e8g7jfgTd3BeLdVaa+Zqm/x5zOUw97b2uzHg+vbL72Gk6USYyIl/yFsY8ouRzNw
+         qHNthIVQh8Ury3pI1QB9EMeSGjw77cESGeip+2mKDaEqzvM+Dtt4KzUNYU7cktucehXh
+         r6FI2/Bsotn+kiVYtLAJDf33koCEf02vzIQECUpCsObWUnlagUbWiwRGpQnkQ8Y36TJi
+         /hwcL8Zjn/w8XUyCWDDEnZPX6g8BmfB7L2e0fekd8edxgVgEiTm+OXceKwz2StI3Famx
+         mZAL0odqBvU7/6o4Ev6pbdRHsu38Q+oCuIvIHQEvo9pzLDjN0FSOdp+4qcwXPupTNpAZ
+         4cHw==
+ARC-Authentication-Results: i=1; mx.google.com;
+       dkim=pass header.i=@ekiri.ee header.s=default header.b=1VSEye1n;
+       spf=pass (google.com: domain of andris@ekiri.ee designates 217.146.67.33 as permitted sender) smtp.mailfrom=andris@ekiri.ee
+Return-Path: <andris@ekiri.ee>
+Received: from uvn-67-33.tll01.zonevs.eu (uvn-67-33.tll01.zonevs.eu. [217.146.67.33])
+        by mx.google.com with ESMTP id d17si4550964ljc.260.2020.08.31.11.56.49
+        for <andris.reinman@gmail.com>;
+        Mon, 31 Aug 2020 11:56:50 -0700 (PDT)
+Received-SPF: pass (google.com: domain of andris@ekiri.ee designates 217.146.67.33 as permitted sender) client-ip=217.146.67.33;
+Authentication-Results: mx.google.com;
+       dkim=pass header.i=@ekiri.ee header.s=default header.b=1VSEye1n;
+       spf=pass (google.com: domain of andris@ekiri.ee designates 217.146.67.33 as permitted sender) smtp.mailfrom=andris@ekiri.ee
+Received: from turvaline.ekiri.ee (localhost.localdomain [127.0.0.1])
+	by uvn-67-33.tll01.zonevs.eu (Postfix) with ESMTP id 9ADCC822C2
+	for <andris.reinman@gmail.com>; Mon, 31 Aug 2020 21:56:34 +0300 (EEST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=ekiri.ee; s=default;
+	t=1598900194; bh=Flek9xInsmQZ4Xl94IUCvSHK13lfK5QmHc3+0LbEFS8=;
+	h=Date:From:To:Subject;
+	b=1VSEye1nzBlOOoTNTPJlQRuusY7tX1H4QwxcMb3a7glTgXuEvAzRAr7wuBfpmx7KE
+	 DajhqCWEzF+mrhdRTc2IDBmCwvJfW277xfAx40QmSMfOdOzpPqR34V6g5vagCMHCEn
+	 3NoqSnEP2/qbceOKOc224HWmROf29jgUislXuwH0=
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="=_40b0c41f58d29bc4edee71b9105c7f6f"
+Date: Mon, 31 Aug 2020 21:56:34 +0300
+From: andris <andris@ekiri.ee>
+To: andris.reinman@gmail.com
+Subject: This is a test
+Message-ID: <ced6416ccff4cfa45117ce173e9c2121@ekiri.ee>
+X-Sender: andris@ekiri.ee
+User-Agent: Roundcube Webmail/1.1-git
+
+--=_40b0c41f58d29bc4edee71b9105c7f6f
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain
+
+ 
+
+This is a _test_ message 
+ 
+--=_40b0c41f58d29bc4edee71b9105c7f6f
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/html; charset=UTF-8
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN">
+<html><body style=3D'font-size: 10pt; font-family: Verdana,Geneva,sans-seri=
+f'>
+<p>This is a <em>test</em> message</p>
+<div>&nbsp;</div>
+</body></html>
+
+--=_40b0c41f58d29bc4edee71b9105c7f6f--
+

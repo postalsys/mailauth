@@ -10,6 +10,36 @@ Install from dev channel
 $ npm install mailauth@dev
 ```
 
+## Authentication
+
+```js
+const { authenticate } = require('mailauth');
+const { headers } = await authenticate(
+    message, // either a String, a Buffer or a Readable Stream
+    {
+        ip: '217.146.67.33',
+        helo: 'uvn-67-33.tll01.zonevs.eu',
+        mta: 'mx.ethereal.email',
+        sender: 'andris@ekiri.ee'
+    }
+);
+// output authenticated message
+process.stdout.write(headers); // includes terminating line break
+process.stdout.write(message);
+```
+
+Example output:
+
+```
+Received-SPF: pass (mx.ethereal.email: domain of andris@ekiri.ee designates
+ 217.146.67.33 as permitted sender) client-ip=217.146.67.33;
+Authentication-Results: mx.ethereal.email;
+ dkim=pass header.i=@ekiri.ee header.s=default header.b="1VSEye1n"
+ spf=pass (mx.ethereal.email: domain of andris@ekiri.ee designates
+ 217.146.67.33 as permitted sender) smtp.mailfrom=andris@ekiri.ee;
+From: ...
+```
+
 ## DKIM
 
 ### Signing
@@ -33,7 +63,7 @@ const signatures = await dkimSign(
     }
 ); // -> {String} signature headers using \r\n as the line separator
 // output signed message
-process.stdout.write(signatures);
+process.stdout.write(signatures); // includes terminating line break
 process.stdout.write(message);
 ```
 
@@ -41,7 +71,8 @@ Example output:
 
 ```
 DKIM-Signature: a=rsa-sha256; v=1; c=relaxed/relaxed; d=tahvel.info;
- s=test.rsa; ...
+ s=test.rsa; b=...
+From: ...
 ```
 
 ### Verifying
