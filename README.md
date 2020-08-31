@@ -27,10 +27,12 @@ const { authenticate } = require('mailauth');
 const { headers } = await authenticate(
     message, // either a String, a Buffer or a Readable Stream
     {
-        ip: '217.146.67.33',
-        helo: 'uvn-67-33.tll01.zonevs.eu',
-        mta: 'mx.ethereal.email',
-        sender: 'andris@ekiri.ee'
+        // SMTP transmission options must be provided as
+        // these are not parsed from the message
+        ip: '217.146.67.33', // SMTP client IP
+        helo: 'uvn-67-33.tll01.zonevs.eu', // EHLO/HELO hostname
+        mta: 'mx.ethereal.email', // server processing this message, defaults to os.hostname()
+        sender: 'andris@ekiri.ee' // MAIL FROM address
     }
 );
 // output authenticated message
