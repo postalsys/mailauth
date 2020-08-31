@@ -20,6 +20,8 @@ $ npm install mailauth@dev
 
 ## Authentication
 
+Validate DKIM signatures and SPF for an email.
+
 ```js
 const { authenticate } = require('mailauth');
 const { headers } = await authenticate(
