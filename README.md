@@ -1,6 +1,14 @@
 # mailauth
 
-Email authentication library for Node.js
+Email authentication library for Node.js (work in progress)
+
+-   [x] SPF verification
+-   [x] DKIM signing
+-   [x] DKIM verification
+-   [ ] DMARC verification
+-   [ ] ARC signing
+-   [ ] ARC verification
+-   [ ] MTA-STS resolver
 
 ## Setup
 
