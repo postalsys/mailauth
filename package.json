@@ -21,10 +21,10 @@
     "bugs": {
         "url": "https://github.com/andris9/mailauth/issues"
     },
-    "homepage": "https://github.com/andris9/mailauth#readme",
+    "homepage": "https://github.com/andris9/mailauth",
     "devDependencies": {
         "chai": "4.2.0",
-        "eslint": "7.7.0",
+        "eslint": "7.8.0",
         "eslint-config-nodemailer": "1.2.0",
         "eslint-config-prettier": "6.11.0",
         "js-yaml": "3.14.0",
@@ -36,6 +36,7 @@
         "joi": "17.2.1",
         "libmime": "5.0.0",
         "node-forge": "0.9.1",
-        "nodemailer": "6.4.11"
+        "nodemailer": "6.4.11",
+        "psl": "1.8.0"
     }
 }
