@@ -12,6 +12,10 @@ const main = async () => {
         sender: 'andris@ekiri.ee'
     });
     console.log(JSON.stringify(res, false, 2));
+
+    console.log('----');
+    console.log(res.headers.trim());
+    console.log('----');
 };
 
 main()

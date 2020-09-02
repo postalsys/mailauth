@@ -5,22 +5,22 @@ Email authentication library for Node.js (work in progress)
 -   [x] SPF verification
 -   [x] DKIM signing
 -   [x] DKIM verification
--   [ ] DMARC verification
+-   [x] DMARC verification
 -   [ ] ARC signing
 -   [ ] ARC verification
 -   [ ] MTA-STS resolver
 
 ## Setup
 
-Install from dev channel
+Install from NPM
 
 ```
-$ npm install mailauth@dev
+$ npm install mailauth
 ```
 
 ## Authentication
 
-Validate DKIM signatures and SPF for an email.
+Validate DKIM signatures, SPF and DMARC for an email.
 
 ```js
 const { authenticate } = require('mailauth');
@@ -49,6 +49,7 @@ Authentication-Results: mx.ethereal.email;
  dkim=pass header.i=@ekiri.ee header.s=default header.b="1VSEye1n"
  spf=pass (mx.ethereal.email: domain of andris@ekiri.ee designates
  217.146.67.33 as permitted sender) smtp.mailfrom=andris@ekiri.ee;
+ dmarc=none header.from=ekiri.ee
 From: ...
 ```
 
