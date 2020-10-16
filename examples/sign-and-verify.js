@@ -1,18 +1,22 @@
 'use strict';
 
+// sign and verify:
+//   $ node sign-and-verify.js /path/to/message.eml
+
 const fs = require('fs');
-const message = fs.readFileSync(__dirname + '/../test/fixtures/message1.eml');
 
 const { dkimSign } = require('../lib/dkim/sign');
 const { dkimVerify } = require('../lib/dkim/verify');
 
-const time = 1598079221278;
+let file = process.argv[2];
+let eml = fs.readFileSync(file);
 
-dkimSign(message, {
-    algorithm: 'rsa-sha256',
+let algo = process.argv[3] || 'rsa-sha256'; // or 'ed25519-sha256'
+
+dkimSign(eml, {
+    algorithm: algo,
     canonicalization: 'simple/simple',
-    signTime: time,
-
+    signTime: Date.now(),
     signatureData: [
         {
             signingDomain: 'tahvel.info',
@@ -37,9 +41,14 @@ dkimSign(message, {
         }
     ]
 })
-    .then(res => {
-        process.stdout.write(res);
-        return dkimVerify(Buffer.concat([Buffer.from(res), message]));
+    .then(signResult => {
+        // show signing errors
+        if (signResult.errors.length) {
+            console.log(signResult.errors);
+        }
+        // output signed message
+        process.stdout.write(signResult.signatures);
+        return dkimVerify(Buffer.concat([Buffer.from(signResult.signatures), eml]));
     })
     .then(res => {
         console.log('result', res);

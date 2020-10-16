@@ -1,5 +1,9 @@
 'use strict';
 
+// verify dkim signatures for messages from a mbox container
+//   $ node verify-mbox.js /path/to/messages.mbox
+// NB! mbox format is not lossless so having some failing messages might be normal
+
 const { eachMessage } = require('mbox-reader');
 
 const fs = require('fs');

@@ -59,10 +59,10 @@ From: ...
 
 ```js
 const { dkimSign } = require('mailauth/lib/dkim/sign');
-const signatures = await dkimSign(
+const signResult = await dkimSign(
     message, // either a String, a Buffer or a Readable Stream
     {
-        algorithm: 'rsa-sha256', // a=
+        algorithm: 'rsa-sha256', // a= either "rsa-sha256" (the default) or "ed25519-sha256" if you are using EC keys
         canonicalization: 'relaxed/relaxed', // c=
         signTime: new Date(), // t=
 
@@ -75,8 +75,12 @@ const signatures = await dkimSign(
         ]
     }
 ); // -> {String} signature headers using \r\n as the line separator
+// show signing errors
+if (signResult.errors.length) {
+    console.log(signResult.errors);
+}
 // output signed message
-process.stdout.write(signatures); // includes terminating line break
+process.stdout.write(signResult.signatures); // includes terminating line break
 process.stdout.write(message);
 ```
 

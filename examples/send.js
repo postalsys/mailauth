@@ -1,5 +1,7 @@
 'use strict';
 
+// sends some crappy signed messages to Gmail for verification
+
 const { promisify } = require('util');
 const MailComposer = require('nodemailer/lib/mail-composer');
 const nodemailer = require('nodemailer');
@@ -34,8 +36,8 @@ const sendNext = async (subject, dkimOpts) => {
     const build = promisify(compiled.build.bind(compiled));
     const raw = await build();
 
-    let signatures = await dkimSign(raw, dkimOpts);
-    const signed = Buffer.concat([Buffer.from(signatures), raw]);
+    let signResult = await dkimSign(raw, dkimOpts);
+    const signed = Buffer.concat([Buffer.from(signResult.signatures), raw]);
 
     await transport.sendMail({
         envelope,

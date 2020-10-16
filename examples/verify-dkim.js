@@ -1,5 +1,8 @@
 'use strict';
 
+// verify signed message:
+//   $ node verify-dkim.js /path/to/message.eml
+
 const fs = require('fs');
 const { dkimVerify } = require('../lib/dkim/verify');
 
