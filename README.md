@@ -12,11 +12,49 @@ Email authentication library for Node.js (work in progress)
 
 ## Setup
 
-Install from NPM
+### Free, AGPL-licensed version
+
+First install the module from npm:
 
 ```
 $ npm install mailauth
 ```
+
+next import any method you want to use from mailauth package into your script:
+
+```js
+const { authenticate } = require('mailauth');
+```
+
+### MIT version
+
+MIT-licensed version is available for [Postal Systems subscribers](https://postalsys.com/).
+
+First install the module from Postal Systems private registry:
+
+```
+$ npm install @postalsys/mailauth
+```
+
+next import any method you want to use from mailauth package into your script:
+
+```js
+const { authenticate } = require('@postalsys/mailauth');
+```
+
+If you have already built your application using the free version of "mailauth" and do not want to modify require statements in your code, you can install the MIT-licensed version as an alias for "mailauth".
+
+```
+$ npm install mailauth@npm:@postalsys/mailauth
+```
+
+This way you can keep using the old module name
+
+```js
+const { authenticate } = require('mailauth');
+```
+
+## Usage
 
 ## Authentication
 
@@ -62,20 +100,31 @@ const { dkimSign } = require('mailauth/lib/dkim/sign');
 const signResult = await dkimSign(
     message, // either a String, a Buffer or a Readable Stream
     {
-        algorithm: 'rsa-sha256', // a= either "rsa-sha256" (the default) or "ed25519-sha256" if you are using EC keys
+        // optional canonicalization, default is "relaxed/relaxed"
+        // this option applies to all signatures, so you can't create multiple signatures
+        // that use different canonicalization
         canonicalization: 'relaxed/relaxed', // c=
+
+        // optional, default is current time
         signTime: new Date(), // t=
 
+        // Keys for one or more signatures
+        // Different signatures can use different algorithms (mostly useful when
+        // you want to sign a message both with RSA and Ed25519)
         signatureData: [
             {
                 signingDomain: 'tahvel.info', // d=
                 selector: 'test.rsa', // s=
-                privateKey: fs.readFileSync('./test/fixtures/private-rsa.pem')
+                // supported key types: RSA, Ed25519
+                privateKey: fs.readFileSync('./test/fixtures/private-rsa.pem'),
+                // Optional algorithm, default is derived from the key.
+                // Mostly useful when you want to use rsa-sha1, otherwise no need to set
+                algorithm: 'rsa-sha256'
             }
         ]
     }
-); // -> {String} signature headers using \r\n as the line separator
-// show signing errors
+); // -> {signatures: String, errors: Array} signature headers using \r\n as the line separator
+// show signing errors (if any)
 if (signResult.errors.length) {
     console.log(signResult.errors);
 }
@@ -137,4 +186,8 @@ Received-SPF: pass (mx.myhost.com: domain of andris@wildduck.email
 
 ## License
 
-**MIT**
+&copy; 2020 Andris Reinman
+
+Licensed under GNU Affero General Public License v3.0 or later.
+
+MIT-licensed version of mailauth is available for [Postal Systems subscribers](https://postalsys.com/).

@@ -11,30 +11,33 @@ const { dkimVerify } = require('../lib/dkim/verify');
 let file = process.argv[2];
 let eml = fs.readFileSync(file);
 
-let algo = process.argv[3] || 'rsa-sha256'; // or 'ed25519-sha256'
+let algo = process.argv[3] || false; // allowed: 'rsa-sha256', 'rsa-sha1', 'ed25519-sha256'
 
 dkimSign(eml, {
-    algorithm: algo,
     canonicalization: 'simple/simple',
     signTime: Date.now(),
     signatureData: [
         {
+            algorithm: algo,
             signingDomain: 'tahvel.info',
             selector: 'test.invalid',
             privateKey: fs.readFileSync('./test/fixtures/private-rsa.pem')
         },
         {
+            algorithm: algo,
             signingDomain: 'tahvel.info',
             selector: 'test.rsa',
             privateKey: fs.readFileSync('./test/fixtures/private-rsa.pem')
         },
         {
+            algorithm: algo,
             signingDomain: 'tahvel.info',
             selector: 'test.small',
             privateKey: fs.readFileSync('./test/fixtures/private-small.pem')
         },
 
         {
+            algorithm: algo,
             signingDomain: 'tahvel.info',
             selector: 'test.ed25519',
             privateKey: fs.readFileSync('./test/fixtures/private-ed25519.pem')

@@ -1,6 +1,6 @@
 {
     "name": "mailauth",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "Email authentication library for Node.js",
     "main": "lib/mailauth.js",
     "scripts": {
@@ -17,7 +17,7 @@
         "spf"
     ],
     "author": "Andris Reinman",
-    "license": "MIT",
+    "license": "AGPL-3.0-or-later",
     "bugs": {
         "url": "https://github.com/andris9/mailauth/issues"
     },
