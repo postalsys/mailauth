@@ -157,7 +157,7 @@ Example output:
 ```txt
 dkim=neutral (invalid public key) header.i=@tahvel.info header.s=test.invalid header.b="b85yao+1"
 dkim=pass header.i=@tahvel.info header.s=test.rsa header.b="BrEgDN4A"
-dkim=policy (weak key) header.i=@tahvel.info header.s=test.small header.b="d0jjgPun"
+dkim=policy policy.dkim-rules=weak-key header.i=@tahvel.info header.s=test.small header.b="d0jjgPun"
 ```
 
 ## SPF

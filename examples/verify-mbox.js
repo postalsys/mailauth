@@ -35,14 +35,14 @@ const main = async () => {
                 }
             });
 
-            if (result.results.some(r => r.status === 'fail')) {
+            if (result.results.some(r => r.status.result === 'fail')) {
                 if (dest) {
                     let out = Buffer.concat([Buffer.from('X-DGB: ' + JSON.stringify(result.results)), msg]);
                     await fs.promises.writeFile(pathlib.join(dest, 'fail', counter + '.eml'), out);
                 }
             }
 
-            if (result.results.some(r => r.status === 'neutral')) {
+            if (result.results.some(r => r.status.result === 'neutral')) {
                 if (dest) {
                     let out = Buffer.concat([Buffer.from('X-DGB: ' + JSON.stringify(result.results)), msg]);
                     await fs.promises.writeFile(pathlib.join(dest, 'neutral', counter + '.eml'), out);
