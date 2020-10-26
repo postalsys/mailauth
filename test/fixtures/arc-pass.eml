@@ -1,0 +1,129 @@
+Delivered-To: andris.reinman@gmail.com
+Received: by 2002:a4a:8e45:0:0:0:0:0 with SMTP id z5csp2532955ook;
+        Mon, 26 Oct 2020 05:43:29 -0700 (PDT)
+X-Received: by 2002:a2e:592:: with SMTP id 140mr5360864ljf.381.1603716209698;
+        Mon, 26 Oct 2020 05:43:29 -0700 (PDT)
+ARC-Seal: i=2; a=rsa-sha256; t=1603716209; cv=pass;
+        d=google.com; s=arc-20160816;
+        b=udYsvnbq1JLBPHNUlyRtZkrO93flA8N1KI9+zFjkHGex9QvJpfJo6RkWHq7w9TkzJ6
+         b421vadQD4WxWMWJ2De1McL2TnIgqYbcrrSLqbc82oP/Ez0A8cD3ottlSkgHCjZItcV+
+         +K94vqHJ9SNk1EtpUo5AYphtCjJKw1zbvQFw8JA3S+/aXTiMPDdVd4dtGeCTlWodZwlo
+         Y2BCSxCTGlV/6WUOqIYCLgQ3Mg73qlsKtJHQl/VVyr9hV/Y7+L2mZ/OuIAVxHldBmxHu
+         pW3P/gXX0xe+eUbouGs0xKjwfKnI2FshfYaU3gbDE792S5fAfiwf3TNpqdb8KXTOKdQh
+         VhOA==
+ARC-Message-Signature: i=2; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20160816;
+        h=user-agent:message-id:subject:to:from:date:mime-version
+         :dkim-signature:delivered-to;
+        bh=BwpZnhk3EDpJ35ZCLhpdKkNA07D/aTXEr3T2tY9GriQ=;
+        b=HYn4lJgJHocLi2uSz1duVwuWkJCHXo9WReiQdmxXJpnccpRLuWOQolL+Eb1wwBoNiW
+         T918UmoGE1+CiHyFHEh/KV7O2sehCfAq1TZO/deOvr+VqFsLIuwV+UCwipqh8EZwsInS
+         8VfCzhPiNy2dKcUMV09jRPskeIJrEoS/vJNyiM8tKgoy1qG6nf5WKksOmPjHrfIIyq1a
+         j5YTfNeO4qG+HxcNvvbPjV8yi14CabXd1oMQDyUs35PMdQdm8RL9GYm3kCTuSYdrOUBC
+         K7qytPSikmxpQDIryVvusTzZblOpBeX8hK9lxHYEdYBnfRJgl1yLaax8e+IndScHbL7k
+         HEyA==
+ARC-Authentication-Results: i=2; mx.google.com;
+       dkim=pass header.i=@ekiri.ee header.s=default header.b=TXuCNlsq;
+       arc=pass (i=1 spf=pass spfdomain=ekiri.ee dkim=pass dkdomain=ekiri.ee);
+       spf=neutral (google.com: 209.85.220.41 is neither permitted nor denied by best guess record for domain of andris+caf_=andris.reinman=gmail.com@tr.ee) smtp.mailfrom="andris+caf_=andris.reinman=gmail.com@tr.ee"
+Return-Path: <andris+caf_=andris.reinman=gmail.com@tr.ee>
+Received: from mail-sor-f41.google.com (mail-sor-f41.google.com. [209.85.220.41])
+        by mx.google.com with SMTPS id p13sor3668128ljj.40.2020.10.26.05.43.29
+        for <andris.reinman@gmail.com>
+        (Google Transport Security);
+        Mon, 26 Oct 2020 05:43:29 -0700 (PDT)
+Received-SPF: neutral (google.com: 209.85.220.41 is neither permitted nor denied by best guess record for domain of andris+caf_=andris.reinman=gmail.com@tr.ee) client-ip=209.85.220.41;
+Authentication-Results: mx.google.com;
+       dkim=pass header.i=@ekiri.ee header.s=default header.b=TXuCNlsq;
+       arc=pass (i=1 spf=pass spfdomain=ekiri.ee dkim=pass dkdomain=ekiri.ee);
+       spf=neutral (google.com: 209.85.220.41 is neither permitted nor denied by best guess record for domain of andris+caf_=andris.reinman=gmail.com@tr.ee) smtp.mailfrom="andris+caf_=andris.reinman=gmail.com@tr.ee"
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:delivered-to:dkim-signature:mime-version:date
+         :from:to:subject:message-id:user-agent;
+        bh=BwpZnhk3EDpJ35ZCLhpdKkNA07D/aTXEr3T2tY9GriQ=;
+        b=ORcAeRUqc/qszhXhD/r9MzY+xQu7408J/D9lJDzpf4VncKXoD4RgWjc/gekXv6VwvW
+         oBWtjZTUwF5pBmsnDHABP45Cdhm0DNvrBr6aBtHkyoQrYQ5tg/NceCTiQvKkcHqr9oiA
+         YNApYc8CjO98+Yod+v4K0gAc8VyQmyMsltDUSGnhYQB++EpXapNkvgA4CA6Xx2P6mOnk
+         kSQeoni0s3bCVZPrnEw6mNelbef8CuS1/1axSN5K+62hTqp8hcRjPRhNWRvDLCvIwMJS
+         bf5JwsGXh3rv+Lr6dqZnoJY6Qezf6qwBujT5bfp9ualIKVOtLJ49fFJNC0R2JO9U7YMw
+         tKyQ==
+X-Gm-Message-State: AOAM532DPqbtvnj3zw8RpVGXCSuCGQIwJxuUUPVs21ltF1fTOONk1l1h
+	m67HyWNAwIM5tB73GA7CZqVBuy2YBiTpN/OQZqxNi4cQvqLS5zFriNDG
+X-Received: by 2002:a2e:9652:: with SMTP id z18mr5660036ljh.410.1603716209349;
+        Mon, 26 Oct 2020 05:43:29 -0700 (PDT)
+X-Forwarded-To: andris.reinman@gmail.com
+X-Forwarded-For: andris@tr.ee andris.reinman@gmail.com
+Delivered-To: andris@tr.ee
+Received: by 2002:a19:cb97:0:0:0:0:0 with SMTP id b145csp2707879lfg;
+        Mon, 26 Oct 2020 05:43:28 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJzm9dK781nxeLo4pX1j39rhsj3B0z1TSbOLgqSZNUhrZon8torLUsw54gfdlPBNhJWVQKRm
+X-Received: by 2002:a19:4b81:: with SMTP id y123mr4725097lfa.597.1603716206926;
+        Mon, 26 Oct 2020 05:43:26 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1603716206; cv=none;
+        d=google.com; s=arc-20160816;
+        b=Ud5ssc3qHUhoWh/s8P0ANv6MO4quTziW0GZQ+/iRftqXN9dCE1aoXJWK//6wPv8vbg
+         pKWAVKMdpDmCsLK3hDWAiPxHL2icWByf1dJs7mNR4DxcFLOetViaWYYd4puLLJImwSSg
+         cf40RaFPphoPqLvp1wekVmiz5ExjHE9ufS4858GzAPPfnLhmjrqka3JJtGUWuTrbNF/i
+         2WZipoKIKexRyeSInOLMI+8OBkbwXS0RWomMMmCgnfDypfKWSuJIdVgPv78qIHU8/uCo
+         LD+cRqxQ4cBm788OU9WYmpxCavCJGHv0V4VkOiOcwZjg+WFw6m9xuO1WQu3d603gkwgK
+         NXqQ==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20160816;
+        h=user-agent:message-id:subject:to:from:date:mime-version
+         :dkim-signature;
+        bh=BwpZnhk3EDpJ35ZCLhpdKkNA07D/aTXEr3T2tY9GriQ=;
+        b=mTrzv0WLz91MSapkyP4tRF42cfBX+0O3tsHg+fMFPgpWAXzwEymkF6NM/J8p12fW1r
+         xgGzhT+HdzhxZWwBYAMlHqSuPmt5azKUPTH06idfvQxzJzlQXabUsw9hooPVSTUuZvBZ
+         Tt3H8u70MjiCsm6wLBY2SXXc4YtElY+WgpYKjRzsfA0CJiQvy1vQz4ZHzOF81YHQeXqH
+         62CtiPT2vAnz/GjWH2lHyoQp5o+HTCvdiFG2kBTM8ODyx7jk+HLgfjMg9zidFFU8XKZb
+         AAgnI8qBeyHaf4lHxWOJCrLyHnpDbIVwWKD+t3qx2NgksRibFUayzYqwi2VN7VZXX5TP
+         00NA==
+ARC-Authentication-Results: i=1; mx.google.com;
+       dkim=pass header.i=@ekiri.ee header.s=default header.b=TXuCNlsq;
+       spf=pass (google.com: domain of andris@ekiri.ee designates 217.146.67.33 as permitted sender) smtp.mailfrom=andris@ekiri.ee
+Return-Path: <andris@ekiri.ee>
+Received: from uvn-67-33.tll01.zonevs.eu (uvn-67-33.tll01.zonevs.eu. [217.146.67.33])
+        by mx.google.com with ESMTP id l14si4417145lji.270.2020.10.26.05.43.26
+        for <andris@tr.ee>;
+        Mon, 26 Oct 2020 05:43:26 -0700 (PDT)
+Received-SPF: pass (google.com: domain of andris@ekiri.ee designates 217.146.67.33 as permitted sender) client-ip=217.146.67.33;
+Received: from turvaline.ekiri.ee (localhost.localdomain [127.0.0.1])
+	by uvn-67-33.tll01.zonevs.eu (Postfix) with ESMTP id 580F38228F
+	for <andris@tr.ee>; Mon, 26 Oct 2020 14:43:26 +0200 (EET)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=ekiri.ee; s=default;
+	t=1603716206; bh=Av6TMj5HbJPuKnFnvPvelZMBt+Ktj6y1ftx8i5fqYJo=;
+	h=Date:From:To:Subject;
+	b=TXuCNlsqy6o362UqYRAM+DCPjfYVJw1COP1hLfcDKGMN9YGaQjOsZ8hzCqiGd9qWJ
+	 VZ3R0rGeUwpaMBHffwTwbZO6DAcdvMwqks7Qfr61znGB3w9QmQKGwTJ2ouJpuzn1Rk
+	 LHvwIGrwuw8C7mTLcHrdPD3hRaDxcD8T+OhaylGI=
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="=_2ab9d02fe75ced7918516031de5deb2a"
+Date: Mon, 26 Oct 2020 14:43:26 +0200
+From: andris <andris@ekiri.ee>
+To: andris@tr.ee
+Subject: ARC test
+Message-ID: <bd3b7e197a2b159949cdbec54d05485d@ekiri.ee>
+X-Sender: andris@ekiri.ee
+User-Agent: Roundcube Webmail/1.1-git
+
+--=_2ab9d02fe75ced7918516031de5deb2a
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain
+
+ 
+
+ARC test kiri 
+ 
+--=_2ab9d02fe75ced7918516031de5deb2a
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/html; charset=UTF-8
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN">
+<html><body style=3D'font-size: 10pt; font-family: Verdana,Geneva,sans-seri=
+f'>
+<p>ARC test kiri</p>
+<div>&nbsp;</div>
+</body></html>
+
+--=_2ab9d02fe75ced7918516031de5deb2a--
+

@@ -139,9 +139,9 @@ for (let file of files) {
                 });
 
                 if (Array.isArray(testdata.result)) {
-                    expect(testdata.result).to.include(result.status);
+                    expect(testdata.result).to.include(result?.status?.result);
                 } else {
-                    expect(result.status).to.equal(testdata.result);
+                    expect(testdata.result).to.equal(result?.status?.result);
                 }
             });
         }
