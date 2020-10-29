@@ -24,9 +24,9 @@
     "homepage": "https://github.com/andris9/mailauth",
     "devDependencies": {
         "chai": "4.2.0",
-        "eslint": "7.12.0",
+        "eslint": "7.12.1",
         "eslint-config-nodemailer": "1.2.0",
-        "eslint-config-prettier": "6.14.0",
+        "eslint-config-prettier": "6.15.0",
         "js-yaml": "3.14.0",
         "mbox-reader": "1.1.5",
         "mocha": "8.2.0"
