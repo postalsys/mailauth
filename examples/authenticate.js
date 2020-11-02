@@ -11,8 +11,16 @@ const main = async () => {
         ip: '217.146.67.33',
         helo: 'uvn-67-33.tll01.zonevs.eu',
         mta: 'mx.ethereal.email',
-        sender: 'andris@ekiri.ee'
+        sender: 'andris@ekiri.ee',
+        // optional. add ARC seal if possible
+        seal: {
+            algorithm: 'rsa-sha256',
+            signingDomain: 'tahvel.info',
+            selector: 'test.rsa',
+            privateKey: fs.readFileSync('./test/fixtures/private-rsa.pem')
+        }
     });
+
     console.log(JSON.stringify(res, false, 2));
 
     console.log('----');

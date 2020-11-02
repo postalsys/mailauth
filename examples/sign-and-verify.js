@@ -37,6 +37,7 @@ dkimSign(eml, {
         },
 
         {
+            //canonicalization: 'relaxed/relaxed',
             algorithm: algo,
             signingDomain: 'tahvel.info',
             selector: 'test.ed25519',

@@ -100,10 +100,12 @@ const { dkimSign } = require('mailauth/lib/dkim/sign');
 const signResult = await dkimSign(
     message, // either a String, a Buffer or a Readable Stream
     {
-        // optional canonicalization, default is "relaxed/relaxed"
-        // this option applies to all signatures, so you can't create multiple signatures
-        // that use different canonicalization
+        // Optional default canonicalization, default is "relaxed/relaxed"
         canonicalization: 'relaxed/relaxed', // c=
+
+        // Optional default signing and hashing algorithm
+        // Mostly useful when you want to use rsa-sha1, otherwise no need to set
+        algorithm: 'rsa-sha256',
 
         // optional, default is current time
         signTime: new Date(), // t=
@@ -117,9 +119,13 @@ const signResult = await dkimSign(
                 selector: 'test.rsa', // s=
                 // supported key types: RSA, Ed25519
                 privateKey: fs.readFileSync('./test/fixtures/private-rsa.pem'),
+
                 // Optional algorithm, default is derived from the key.
-                // Mostly useful when you want to use rsa-sha1, otherwise no need to set
-                algorithm: 'rsa-sha256'
+                // Overrides whatever was set in parent object
+                algorithm: 'rsa-sha256',
+
+                // Optional signature specifc canonicalization, overrides whatever was set in parent object
+                canonicalization: 'relaxed/relaxed' // c=
             }
         ]
     }
