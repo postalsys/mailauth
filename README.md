@@ -8,6 +8,8 @@ Email authentication library for Node.js (work in progress)
 -   [x] DMARC verification
 -   [x] ARC verification
 -   [ ] ARC sealing
+    -   [x] Sealing on authentication
+    -   [ ] Sealing after modifications
 -   [ ] MTA-STS resolver
 
 ## Setup
@@ -58,11 +60,11 @@ const { authenticate } = require('mailauth');
 
 ## Authentication
 
-Validate DKIM signatures, SPF, DMARC and ARC for an email.
+Validate DKIM signatures, SPF, DMARC and ARC for an email. Also can seal a validated message with ARC.
 
 ```js
 const { authenticate } = require('mailauth');
-const { headers } = await authenticate(
+const { dkim, spf, arc, dmarc, headers } = await authenticate(
     message, // either a String, a Buffer or a Readable Stream
     {
         // SMTP transmission options must be provided as
@@ -70,7 +72,18 @@ const { headers } = await authenticate(
         ip: '217.146.67.33', // SMTP client IP
         helo: 'uvn-67-33.tll01.zonevs.eu', // EHLO/HELO hostname
         mta: 'mx.ethereal.email', // server processing this message, defaults to os.hostname()
-        sender: 'andris@ekiri.ee' // MAIL FROM address
+        sender: 'andris@ekiri.ee', // MAIL FROM address
+
+        // Optional ARC seal settings. If this is set then resulting headers include
+        // a complete ARC header set (unless the message has a failing ARC chain)
+        seal: {
+            signingDomain: 'tahvel.info',
+            selector: 'test.rsa',
+            privateKey: fs.readFileSync('./test/fixtures/private-rsa.pem')
+        },
+
+        //  Optional  DNS resolver function (defaults to `dns.promises.resolve`)
+        resolver: async (name, rr) => await dns.promises.resolve(name, rr)
     }
 );
 // output authenticated message
@@ -90,6 +103,8 @@ Authentication-Results: mx.ethereal.email;
  dmarc=none header.from=ekiri.ee
 From: ...
 ```
+
+You can see full output (structured data for DKIM, SPF, DMARC and ARC) from [this example](https://gist.github.com/andris9/6514b5e7c59154a5b08636f99052ce37).
 
 ## DKIM
 

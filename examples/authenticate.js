@@ -1,7 +1,7 @@
 'use strict';
 
 const { authenticate } = require('../lib/mailauth');
-//const { dkimSign } = require('../lib/dkim/sign');
+const dns = require('dns');
 
 const fs = require('fs');
 
@@ -18,6 +18,10 @@ const main = async () => {
             signingDomain: 'tahvel.info',
             selector: 'test.rsa',
             privateKey: fs.readFileSync('./test/fixtures/private-rsa.pem')
+        },
+        resolver: async (name, rr) => {
+            console.log('DNS', rr, name);
+            return await dns.promises.resolve(name, rr);
         }
     });
 
