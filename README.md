@@ -6,8 +6,8 @@ Email authentication library for Node.js (work in progress)
 -   [x] DKIM signing
 -   [x] DKIM verification
 -   [x] DMARC verification
--   [ ] ARC signing
--   [ ] ARC verification
+-   [x] ARC verification
+-   [ ] ARC sealing
 -   [ ] MTA-STS resolver
 
 ## Setup
@@ -58,7 +58,7 @@ const { authenticate } = require('mailauth');
 
 ## Authentication
 
-Validate DKIM signatures, SPF and DMARC for an email.
+Validate DKIM signatures, SPF, DMARC and ARC for an email.
 
 ```js
 const { authenticate } = require('mailauth');
@@ -81,12 +81,12 @@ process.stdout.write(message);
 Example output:
 
 ```
-Received-SPF: pass (mx.ethereal.email: domain of andris@ekiri.ee designates
- 217.146.67.33 as permitted sender) client-ip=217.146.67.33;
+Received-SPF: pass (mx.ethereal.email: domain of andris@ekiri.ee designates 217.146.67.33 as permitted sender) client-ip=217.146.67.33;
 Authentication-Results: mx.ethereal.email;
- dkim=pass header.i=@ekiri.ee header.s=default header.b="1VSEye1n"
- spf=pass (mx.ethereal.email: domain of andris@ekiri.ee designates
- 217.146.67.33 as permitted sender) smtp.mailfrom=andris@ekiri.ee;
+ dkim=pass header.i=@ekiri.ee header.s=default header.a=rsa-sha256 header.b=TXuCNlsq;
+ spf=pass (mx.ethereal.email: domain of andris@ekiri.ee designates 217.146.67.33 as permitted sender) smtp.mailfrom=andris@ekiri.ee
+ smtp.helo=uvn-67-33.tll01.zonevs.eu;
+ arc=pass (i=2 spf=neutral dkim=pass dkdomain=ekiri.ee);
  dmarc=none header.from=ekiri.ee
 From: ...
 ```

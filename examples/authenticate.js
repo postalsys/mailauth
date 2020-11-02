@@ -1,7 +1,7 @@
 'use strict';
 
 const { authenticate } = require('../lib/mailauth');
-const { dkimSign } = require('../lib/dkim/sign');
+//const { dkimSign } = require('../lib/dkim/sign');
 
 const fs = require('fs');
 
@@ -19,6 +19,7 @@ const main = async () => {
     console.log(res.headers.trim());
     console.log('----');
 
+    /*
     let signed = await dkimSign(message, {
         signTime: Date.now(),
         arc: {
@@ -31,6 +32,8 @@ const main = async () => {
     });
 
     console.log(signed);
+
+*/
 };
 
 main()
