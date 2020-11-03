@@ -7,9 +7,9 @@ Email authentication library for Node.js (work in progress)
 -   [x] DKIM verification
 -   [x] DMARC verification
 -   [x] ARC verification
--   [ ] ARC sealing
+-   [x] ARC sealing
     -   [x] Sealing on authentication
-    -   [ ] Sealing after modifications
+    -   [x] Sealing after modifications
 -   [ ] MTA-STS resolver
 
 ## Setup
@@ -60,7 +60,7 @@ const { authenticate } = require('mailauth');
 
 ## Authentication
 
-Validate DKIM signatures, SPF, DMARC and ARC for an email. Also can seal a validated message with ARC.
+Validate DKIM signatures, SPF, DMARC and ARC for an email.
 
 ```js
 const { authenticate } = require('mailauth');
@@ -73,14 +73,6 @@ const { dkim, spf, arc, dmarc, headers } = await authenticate(
         helo: 'uvn-67-33.tll01.zonevs.eu', // EHLO/HELO hostname
         mta: 'mx.ethereal.email', // server processing this message, defaults to os.hostname()
         sender: 'andris@ekiri.ee', // MAIL FROM address
-
-        // Optional ARC seal settings. If this is set then resulting headers include
-        // a complete ARC header set (unless the message has a failing ARC chain)
-        seal: {
-            signingDomain: 'tahvel.info',
-            selector: 'test.rsa',
-            privateKey: fs.readFileSync('./test/fixtures/private-rsa.pem')
-        },
 
         //  Optional  DNS resolver function (defaults to `dns.promises.resolve`)
         resolver: async (name, rr) => await dns.promises.resolve(name, rr)
@@ -115,14 +107,14 @@ const { dkimSign } = require('mailauth/lib/dkim/sign');
 const signResult = await dkimSign(
     message, // either a String, a Buffer or a Readable Stream
     {
-        // Optional default canonicalization, default is "relaxed/relaxed"
+        // Optional, default canonicalization, default is "relaxed/relaxed"
         canonicalization: 'relaxed/relaxed', // c=
 
-        // Optional default signing and hashing algorithm
+        // Optional, default signing and hashing algorithm
         // Mostly useful when you want to use rsa-sha1, otherwise no need to set
         algorithm: 'rsa-sha256',
 
-        // optional, default is current time
+        // Optional, default is current time
         signTime: new Date(), // t=
 
         // Keys for one or more signatures
@@ -203,6 +195,110 @@ Example output:
 Received-SPF: pass (mx.myhost.com: domain of andris@wildduck.email
  designates 217.146.76.20 as permitted sender) client-ip=217.146.76.20;
  envelope-from="andris@wildduck.email";
+```
+
+## ARC
+
+### Validation
+
+ARC seals are automatically validated during the authentication step.
+
+```js
+const { authenticate } = require('mailauth');
+const { arc } = await authenticate(
+    message, // either a String, a Buffer or a Readable Stream
+    {
+        // SMTP transmission options must be provided as
+        // these are not parsed from the message
+        ip: '217.146.67.33', // SMTP client IP
+        helo: 'uvn-67-33.tll01.zonevs.eu', // EHLO/HELO hostname
+        mta: 'mx.ethereal.email', // server processing this message, defaults to os.hostname()
+        sender: 'andris@ekiri.ee' // MAIL FROM address
+    }
+);
+console.log(arc);
+```
+
+Output being something like this:
+
+```
+{
+  "status": {
+    "result": "pass",
+    "comment": "i=2 spf=neutral dkim=pass dkdomain=zonevs.eu dkim=pass dkdomain=srs3.zonevs.eu dmarc=fail fromdomain=zone.ee"
+  },
+  "i": 2,
+  ...
+}
+```
+
+### Sealing
+
+#### During authentication
+
+You can seal messages with ARC automatically in the authentication step by providing the sealing key. In this case you can not modify the message anymore as this would break the seal.
+
+```js
+const { authenticate } = require('mailauth');
+const { headers } = await authenticate(
+    message, // either a String, a Buffer or a Readable Stream
+    {
+        // SMTP transmission options must be provided as
+        // these are not parsed from the message
+        ip: '217.146.67.33', // SMTP client IP
+        helo: 'uvn-67-33.tll01.zonevs.eu', // EHLO/HELO hostname
+        mta: 'mx.ethereal.email', // server processing this message, defaults to os.hostname()
+        sender: 'andris@ekiri.ee', // MAIL FROM address
+
+        // Optional ARC seal settings. If this is set then resulting headers include
+        // a complete ARC header set (unless the message has a failing ARC chain)
+        seal: {
+            signingDomain: 'tahvel.info',
+            selector: 'test.rsa',
+            privateKey: fs.readFileSync('./test/fixtures/private-rsa.pem')
+        }
+    }
+);
+// output authenticated and sealed message
+process.stdout.write(headers); // includes terminating line break
+process.stdout.write(message);
+```
+
+#### After modifications
+
+If you want to modify the message before sealing then you have to authenticate the message first and then use authentication results as input for the sealing step.
+
+```js
+const { authenticate, sealMessage } = require('@postalsys/mailauth');
+
+// 1. authenticate the message
+const { arc, headers } = await authenticate(
+    message, // either a String, a Buffer or a Readable Stream
+    {
+        ip: '217.146.67.33', // SMTP client IP
+        helo: 'uvn-67-33.tll01.zonevs.eu', // EHLO/HELO hostname
+        mta: 'mx.ethereal.email', // server processing this message, defaults to os.hostname()
+        sender: 'andris@ekiri.ee' // MAIL FROM address
+    }
+);
+
+// 2. perform some modifications with the message ...
+
+// 3. seal the modified message using the initial authentication results
+const sealHeaders = await sealMessage(message, {
+    signingDomain: 'tahvel.info',
+    selector: 'test.rsa',
+    privateKey: fs.readFileSync('./test/fixtures/private-rsa.pem'),
+
+    // values from the authentication step
+    authResults: arc.authResults,
+    cv: arc.status.result
+});
+
+// output authenticated message
+process.stdout.write(sealHeaders); // ARC set
+process.stdout.write(headers); // authentication results
+process.stdout.write(message);
 ```
 
 ## License
