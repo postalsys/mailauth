@@ -122,28 +122,30 @@ let getResolver = zonedata => {
     return resolver;
 };
 
-for (let file of files) {
-    let resolver = getResolver(file.zonedata);
-    describe(`SPF: ${file.description}`, () => {
-        for (let test of Object.keys(file.tests)) {
-            if (ignoreTests.some(re => re.test(test))) {
-                continue;
-            }
-            let testdata = file.tests[test];
-            it(test, async () => {
-                let result = await spf({
-                    ip: testdata.host,
-                    sender: testdata.mailfrom,
-                    helo: testdata.helo,
-                    resolver
-                });
-
-                if (Array.isArray(testdata.result)) {
-                    expect(testdata.result).to.include(result?.status?.result);
-                } else {
-                    expect(testdata.result).to.equal(result?.status?.result);
+describe(`SPF Suite`, () => {
+    for (let file of files) {
+        let resolver = getResolver(file.zonedata);
+        describe(`${file.description}`, () => {
+            for (let test of Object.keys(file.tests)) {
+                if (ignoreTests.some(re => re.test(test))) {
+                    continue;
                 }
-            });
-        }
-    });
-}
+                let testdata = file.tests[test];
+                it(test, async () => {
+                    let result = await spf({
+                        ip: testdata.host,
+                        sender: testdata.mailfrom,
+                        helo: testdata.helo,
+                        resolver
+                    });
+
+                    if (Array.isArray(testdata.result)) {
+                        expect(testdata.result).to.include(result?.status?.result);
+                    } else {
+                        expect(testdata.result).to.equal(result?.status?.result);
+                    }
+                });
+            }
+        });
+    }
+});
