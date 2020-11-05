@@ -11,6 +11,8 @@ Email authentication library for Node.js
     -   [x] Sealing on authentication
     -   [x] Sealing after modifications
 
+Pure JavaScript implementation, no external applications or compilation needed. Runs on any server/device that has Node 14+ installed.
+
 ## Usage
 
 ## Authentication
@@ -258,7 +260,7 @@ process.stdout.write(message);
 
 ## Testing
 
-`mailauth` uses the following test suites
+`mailauth` uses the following test suites:
 
 ### SPF test suite
 
@@ -266,13 +268,13 @@ process.stdout.write(message);
 
 -   No PTR support in `mailauth`, all PTR related tests are ignored
 -   Less strict whitespace checks (`mailauth` accepts multiple spaces between tags etc)
--   Some macro tests (macro expansion is supported _in most parts_)
+-   Some macro tests are skipped (macro expansion is supported _in most parts_)
 -   Some tests where invalid component is listed after a matching part (mailauth processes from left to right and returns on first match found)
 -   Other than that all tests pass
 
 ### ARC test suite from ValiMail
 
-ValiMail [arc_test_suit](https://github.com/ValiMail/arc_test_suite)
+ValiMail [arc_test_suite](https://github.com/ValiMail/arc_test_suite)
 
 -   `mailauth` is less strict on header tags and casing, for example uppercase `S=` for a selector passes in `mailauth` but fails in ValiMail.
 -   Signing test suite is used for input only. All listed messages are signed using provided keys but signatures are not matched against reference. Instead `mailauth` validates the signatures itself and looks for the same cv= output that the ARC-Seal header in the test suite has
