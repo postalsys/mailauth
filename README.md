@@ -11,50 +11,6 @@ Email authentication library for Node.js
     -   [x] Sealing on authentication
     -   [x] Sealing after modifications
 
-## Setup
-
-### Free, AGPL-licensed version
-
-First install the module from npm:
-
-```
-$ npm install mailauth
-```
-
-next import any method you want to use from mailauth package into your script:
-
-```js
-const { authenticate } = require('mailauth');
-```
-
-### MIT version
-
-MIT-licensed version is available for [Postal Systems subscribers](https://postalsys.com/).
-
-First install the module from Postal Systems private registry:
-
-```
-$ npm install @postalsys/mailauth
-```
-
-next import any method you want to use from mailauth package into your script:
-
-```js
-const { authenticate } = require('@postalsys/mailauth');
-```
-
-If you have already built your application using the free version of "mailauth" and do not want to modify require statements in your code, you can install the MIT-licensed version as an alias for "mailauth".
-
-```
-$ npm install mailauth@npm:@postalsys/mailauth
-```
-
-This way you can keep using the old module name
-
-```js
-const { authenticate } = require('mailauth');
-```
-
 ## Usage
 
 ## Authentication
@@ -321,6 +277,50 @@ ValiMail [arc_test_suit](https://github.com/ValiMail/arc_test_suite)
 -   `mailauth` is less strict on header tags and casing, for example uppercase `S=` for a selector passes in `mailauth` but fails in ValiMail.
 -   Signing test suite is used for input only. All listed messages are signed using provided keys but signatures are not matched against reference. Instead `mailauth` validates the signatures itself and looks for the same cv= output that the ARC-Seal header in the test suite has
 -   Other than that all tests pass
+
+## Setup
+
+### Free, AGPL-licensed version
+
+First install the module from npm:
+
+```
+$ npm install mailauth
+```
+
+next import any method you want to use from mailauth package into your script:
+
+```js
+const { authenticate } = require('mailauth');
+```
+
+### MIT version
+
+MIT-licensed version is available for [Postal Systems subscribers](https://postalsys.com/).
+
+First install the module from Postal Systems private registry:
+
+```
+$ npm install @postalsys/mailauth
+```
+
+next import any method you want to use from mailauth package into your script:
+
+```js
+const { authenticate } = require('@postalsys/mailauth');
+```
+
+If you have already built your application using the free version of "mailauth" and do not want to modify require statements in your code, you can install the MIT-licensed version as an alias for "mailauth".
+
+```
+$ npm install mailauth@npm:@postalsys/mailauth
+```
+
+This way you can keep using the old module name
+
+```js
+const { authenticate } = require('mailauth');
+```
 
 ## License
 
