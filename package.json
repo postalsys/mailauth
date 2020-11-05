@@ -1,6 +1,6 @@
 {
     "name": "mailauth",
-    "version": "1.0.7",
+    "version": "1.0.8",
     "description": "Email authentication library for Node.js",
     "main": "lib/mailauth.js",
     "scripts": {
@@ -14,7 +14,9 @@
         "rfc822",
         "email",
         "dkim",
-        "spf"
+        "spf",
+        "arc",
+        "dmarc"
     ],
     "author": "Andris Reinman",
     "license": "AGPL-3.0-or-later",
@@ -29,7 +31,7 @@
         "eslint-config-prettier": "6.15.0",
         "js-yaml": "3.14.0",
         "mbox-reader": "1.1.5",
-        "mocha": "8.2.0"
+        "mocha": "8.2.1"
     },
     "dependencies": {
         "ipaddr.js": "2.0.0",

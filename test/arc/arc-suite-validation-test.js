@@ -65,7 +65,8 @@ describe(`ARC Validation Suite`, () => {
                 let testdata = file.tests[test];
                 it(test, async () => {
                     let result = await authenticate(Buffer.from(testdata.message || ''), {
-                        resolver
+                        resolver,
+                        disableDmarc: true
                     });
 
                     expect(result?.arc).to.exist;
