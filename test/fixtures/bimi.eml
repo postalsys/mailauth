@@ -1,0 +1,73 @@
+Delivered-To: andris.reinman@gmail.com
+Received: by 2002:a4a:8e45:0:0:0:0:0 with SMTP id z5csp1291572ook;
+        Fri, 6 Nov 2020 04:54:07 -0800 (PST)
+X-Google-Smtp-Source: ABdhPJwG/OF40SwPaXYqJi5Ym12lB+gg3ViBBHQdVu0hrV1pYktkin7ng553o8PwTcPdJ4JbJZqX
+X-Received: by 2002:a17:906:5017:: with SMTP id s23mr1930184ejj.359.1604667247168;
+        Fri, 06 Nov 2020 04:54:07 -0800 (PST)
+ARC-Seal: i=1; a=rsa-sha256; t=1604667247; cv=none;
+        d=google.com; s=arc-20160816;
+        b=YOPK0MgCaMgc0geZPWMibJKRLV+eSUJfQB2/6zT6yRYUCli9nBoUIXRRI38XJFASnT
+         kxnoAgW09x0N5Pv4JyxLHzztKtFCWUJ8gCxyq+vZeapPK9wg9GCeMONiYJRNN/8AcxtX
+         7mtHx7WFAk8Sc6p88prxBHNiO91g9anKv/dZU7ColFx8ab7kzD279BtNn93KlycDpLgn
+         ul4IZ//sluNN/C7xD23UWk0MChrQ/tfid4QVFuDDT2NbJebb8XMwdj6676BnrDLtRPbH
+         QUIpiTqXxh+c3k+sI0BiYnpfeL3qVKyjLyL4dypPL3odrhU0i2np0q7RrJK6+WoV3VvW
+         0leQ==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20160816;
+        h=mime-version:date:content-transfer-encoding:message-id:subject:to
+         :from:bimi-selector:sender:dkim-signature:dkim-signature;
+        bh=F5gazvtr6eL0htA6YsWW9qY/Scv7TMkwECy2H9YMqgA=;
+        b=nKq76idBRJDpJTSKv+A5+xI26kf2LbJDWEBBXF+xHulz++ViWpEVkhURGtoC2Vfygh
+         c1H9070U60fWYaSkxSVvNmGDB2keaxLvivOR2OW9yjUScfkqskbTfj8tbFOyBH5vT0io
+         3y+57iFOKZAp3m0C+FfLK1j+0wQdoll3tKeA8tfpgmCISF79G+1QFC50x/N34q3Uy3jK
+         ycAwhghB/FauHsdA298f9AbPD4f9k3f66OpljMJdg56hv611EQ20JjbWejxCGE0c1YIu
+         MufjVDTMH0plDkdcKccLqjisD8/gjUQPt3m3+de+KaqbwmgZfAeNO1/VS40LvN2vWVEx
+         Q5qg==
+ARC-Authentication-Results: i=1; mx.google.com;
+       dkim=pass header.i=@out.srv.dev header.s=smtp header.b=g5+zMlsw;
+       dkim=pass header.i=@eu.mailgun.org header.s=krs header.b=qCUzzbOL;
+       spf=pass (google.com: domain of bounce+2fa2ae.181d-andris.reinman=gmail.com@out.srv.dev designates 141.193.32.19 as permitted sender) smtp.mailfrom="bounce+2fa2ae.181d-andris.reinman=gmail.com@out.srv.dev";
+       dmarc=pass (p=REJECT sp=REJECT dis=NONE) header.from=srv.dev
+Return-Path: <bounce+2fa2ae.181d-andris.reinman=gmail.com@out.srv.dev>
+Received: from m32-19.eu.mailgun.net (m32-19.eu.mailgun.net. [141.193.32.19])
+        by mx.google.com with UTF8SMTPS id g1si832311edh.491.2020.11.06.04.54.05
+        for <andris.reinman@gmail.com>
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Fri, 06 Nov 2020 04:54:06 -0800 (PST)
+Received-SPF: pass (google.com: domain of bounce+2fa2ae.181d-andris.reinman=gmail.com@out.srv.dev designates 141.193.32.19 as permitted sender) client-ip=141.193.32.19;
+Authentication-Results: mx.google.com;
+       dkim=pass header.i=@out.srv.dev header.s=smtp header.b=g5+zMlsw;
+       dkim=pass header.i=@eu.mailgun.org header.s=krs header.b=qCUzzbOL;
+       spf=pass (google.com: domain of bounce+2fa2ae.181d-andris.reinman=gmail.com@out.srv.dev designates 141.193.32.19 as permitted sender) smtp.mailfrom="bounce+2fa2ae.181d-andris.reinman=gmail.com@out.srv.dev";
+       dmarc=pass (p=REJECT sp=REJECT dis=NONE) header.from=srv.dev
+DKIM-Signature: a=rsa-sha256; v=1; c=relaxed/relaxed; d=out.srv.dev; q=dns/txt;
+ s=smtp; t=1604667246; h=MIME-Version: Date: Content-Transfer-Encoding:
+ Message-ID: Subject: To: From: Content-Type: Sender: X-Feedback-Id;
+ bh=F5gazvtr6eL0htA6YsWW9qY/Scv7TMkwECy2H9YMqgA=; b=g5+zMlswzkzjtRTUUw4jC+a0olekayxKDhtuO3k2zNLbqfFGyedzcS9BaI43pPpd1H8XRMQV
+ KBAYuKM/0aLWfTSzUjq6MoMo4m3g/FMvc1hRQBo8YTuZgOo8xs89ZxupkvumfCufMfH+tM92
+ CC/PJ0HEQtQZKAegTCnhWFAcv6U=
+DKIM-Signature: a=rsa-sha256; v=1; c=relaxed/relaxed; d=eu.mailgun.org; q=dns/txt;
+ s=krs; t=1604667246; h=MIME-Version: Date: Content-Transfer-Encoding:
+ Message-ID: Subject: To: From: Content-Type: Sender: X-Feedback-Id;
+ bh=F5gazvtr6eL0htA6YsWW9qY/Scv7TMkwECy2H9YMqgA=; b=qCUzzbOLEvRGuVpelg5cpoTNRV9/7BEN9GUFiBoke4Lt7ffIbsp5kMji1DjshhQYWjtJkIKa
+ 9df4Ps57eoDvAVavyLyk/pHOWH7N+v5wtZYOCF9JmlSOGKX7VXZez4ZDry3HflpO7D2sPhzm
+ fHz7OGbpzk0PVQNFCWp6d2nDsLs=
+X-Feedback-Id: 5ee86c21cc6056ae2e315d37:mailgun
+X-Mailgun-Sending-Ip: 141.193.32.19
+X-Mailgun-Sid: WyJiZmI0YyIsICJhbmRyaXMucmVpbm1hbkBnbWFpbC5jb20iLCAiMTgxZCJd
+Received: from [127.0.0.1] (134-247-159-217.sta.estpak.ee [217.159.247.134])
+ by smtp-out-n04.prod.eu-central-1.postgun.com with SMTP id
+ 5fa547684432cd880f339347 (version=TLS1.3, cipher=TLS_AES_128_GCM_SHA256);
+ Fri, 06 Nov 2020 12:54:00 GMT
+Sender: info=srv.dev@out.srv.dev
+Content-Type: text/plain; charset=utf-8
+BIMI-Selector: v=BIMI1; s=mailauth;
+From: Andris Reinman <info@srv.dev>
+To: Andris Reinman <andris.reinman@gmail.com>
+Subject: =?UTF-8?Q?Nodemailer_is_unicode_friendly_=E2=9C=94?=
+ =?UTF-8?Q?1604667239916?=
+Message-ID: <781601ea-4983-dcc5-38f4-34ed00e88344@srv.dev>
+Content-Transfer-Encoding: 7bit
+Date: Fri, 06 Nov 2020 12:53:59 +0000
+MIME-Version: 1.0
+
+Hello to myself!

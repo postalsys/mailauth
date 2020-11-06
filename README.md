@@ -10,6 +10,7 @@ Email authentication library for Node.js
 -   [x] ARC sealing
     -   [x] Sealing on authentication
     -   [x] Sealing after modifications
+-   [x] BIMI resolving
 
 Pure JavaScript implementation, no external applications or compilation needed. Runs on any server/device that has Node 14+ installed.
 
@@ -17,11 +18,11 @@ Pure JavaScript implementation, no external applications or compilation needed. 
 
 ## Authentication
 
-Validate DKIM signatures, SPF, DMARC and ARC for an email.
+Validate DKIM signatures, SPF, DMARC, ARC and BIMI for an email.
 
 ```js
 const { authenticate } = require('mailauth');
-const { dkim, spf, arc, dmarc, headers } = await authenticate(
+const { dkim, spf, arc, dmarc, bimi, headers } = await authenticate(
     message, // either a String, a Buffer or a Readable Stream
     {
         // SMTP transmission options must be provided as
@@ -257,6 +258,27 @@ process.stdout.write(sealHeaders); // ARC set
 process.stdout.write(headers); // authentication results
 process.stdout.write(message);
 ```
+
+### BIMI
+
+BIMI information is resolved in the authentication step and the results can be found from the `bimi` property. Message must pass DMARC validation in order to be processed for BIMI.
+
+```js
+const { bimi } = await authenticate(
+    message, // either a String, a Buffer or a Readable Stream
+    {
+        ip: '217.146.67.33', // SMTP client IP
+        helo: 'uvn-67-33.tll01.zonevs.eu', // EHLO/HELO hostname
+        mta: 'mx.ethereal.email', // server processing this message, defaults to os.hostname()
+        sender: 'andris@ekiri.ee' // MAIL FROM address
+    }
+);
+if (bimi?.link) {
+    console.log(`BIMI location: ${bimi.link}`);
+}
+```
+
+`BIMI-Location` header is ignored by `mailauth`, it is not checked for and it is not modified in any way if it is present. `BIMI-Selector` is used for selector selection (if available).
 
 ## Testing
 
