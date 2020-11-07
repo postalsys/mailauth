@@ -273,8 +273,8 @@ const { bimi } = await authenticate(
         sender: 'andris@ekiri.ee' // MAIL FROM address
     }
 );
-if (bimi?.link) {
-    console.log(`BIMI location: ${bimi.link}`);
+if (bimi?.location) {
+    console.log(`BIMI location: ${bimi.location}`);
 }
 ```
 
