@@ -1,4 +1,4 @@
-# mailauth
+![](https://github.com/andris9/mailauth/raw/master/assets/mailauth.png)
 
 Email authentication library for Node.js
 
