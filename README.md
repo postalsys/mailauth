@@ -259,9 +259,11 @@ process.stdout.write(headers); // authentication results
 process.stdout.write(message);
 ```
 
-### BIMI
+## BIMI
 
-BIMI information is resolved in the authentication step and the results can be found from the `bimi` property. Message must pass DMARC validation in order to be processed for BIMI.
+Brand Indicators for Message Identification (BIMI) support is based on [draft-blank-ietf-bimi-01](https://tools.ietf.org/html/draft-blank-ietf-bimi-01).
+
+BIMI information is resolved in the authentication step and the results can be found from the `bimi` property. Message must pass DMARC validation in order to be processed for BIMI. DMARC policy can not be "none" for BIMI to pass.
 
 ```js
 const { bimi } = await authenticate(
@@ -279,6 +281,8 @@ if (bimi?.location) {
 ```
 
 `BIMI-Location` header is ignored by `mailauth`, it is not checked for and it is not modified in any way if it is present. `BIMI-Selector` is used for selector selection (if available).
+
+> **NB!** Authority Evidence Documents for BIMI are not validated even if these are available. You can get the URL for validating it yourself from `bimi.authority` property.
 
 ## Testing
 
