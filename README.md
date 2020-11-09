@@ -282,7 +282,16 @@ if (bimi?.location) {
 
 `BIMI-Location` header is ignored by `mailauth`, it is not checked for and it is not modified in any way if it is present. `BIMI-Selector` is used for selector selection (if available).
 
-> **NB!** Authority Evidence Documents for BIMI are not validated even if these are available. You can get the URL for validating it yourself from `bimi.authority` property.
+### Verified Mark Certificate
+
+**NB!** Authority Evidence Documents for BIMI are not validated even if these are available. You can get the URL for validating it yourself from `bimi.authority` property.
+
+So far there does not seem to be much information released about VMC (Verified Mark Certificates) format that is used for Authority Evidence Documents. It seems to be a X509 certificate with an `id-pe-logotype` extension that includes the SVG formatted logo file.
+
+Some example authority evidence documents:
+
+-   [default.\_bimi.cnn.com](https://amplify.valimail.com/bimi/time-warner/LysAFUdG-Hw-cnn_vmc.pem)
+-   [default.\_bimi.entrustdatacard.com](https://www.entrustdatacard.com/-/media/certificate/Entrust%20VMC%20July%2014%202020.pem)
 
 ## Testing
 
