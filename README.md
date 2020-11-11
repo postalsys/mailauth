@@ -284,14 +284,23 @@ if (bimi?.location) {
 
 ### Verified Mark Certificate
 
-**NB!** Authority Evidence Documents for BIMI are not validated even if these are available. You can get the URL for validating it yourself from `bimi.authority` property.
+Authority Evidence Document location is available from the `bimi.authority` property (if set).
 
-So far there does not seem to be much information released about VMC (Verified Mark Certificates) format that is used for Authority Evidence Documents. It seems to be a X509 certificate with an `id-pe-logotype` extension that includes the SVG formatted logo file.
+VMC (Verified Mark Certificates) for Authority Evidence Documents is a X509 certificate with an `id-pe-logotype` extension (`oid=1.3.6.1.5.5.7.1.12`) that includes a compressed SVG formatted logo file ([read more here](https://bimigroup.org/resources/VMC_Guidelines_latest.pdf)).
 
 Some example authority evidence documents:
 
--   [default.\_bimi.cnn.com](https://amplify.valimail.com/bimi/time-warner/LysAFUdG-Hw-cnn_vmc.pem)
--   [default.\_bimi.entrustdatacard.com](https://www.entrustdatacard.com/-/media/certificate/Entrust%20VMC%20July%2014%202020.pem)
+-   [from default.\_bimi.cnn.com](https://amplify.valimail.com/bimi/time-warner/LysAFUdG-Hw-cnn_vmc.pem)
+-   [from default.\_bimi.entrustdatacard.com](https://www.entrustdatacard.com/-/media/certificate/Entrust%20VMC%20July%2014%202020.pem)
+
+You can parse logos from these certificate files by using the `parseLogoFromX509` function
+
+```js
+const { parseLogoFromX509 } = require('mailauth/lib/tools');
+let { altnNames, svg } = await parseLogoFromX509(fs.readFileSync('vmc.pem'));
+```
+
+> **NB!** `parseLogoFromX509` does not verify the validity of the VMC certificate. It could be self signed or expired and still be processed.
 
 ## Testing
 

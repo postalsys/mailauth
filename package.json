@@ -34,6 +34,7 @@
         "mocha": "8.2.1"
     },
     "dependencies": {
+        "@fidm/x509": "^1.2.1",
         "ipaddr.js": "2.0.0",
         "joi": "17.3.0",
         "libmime": "5.0.0",
