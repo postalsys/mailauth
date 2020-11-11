@@ -335,7 +335,7 @@ if (policy && !policyMatch) {
 
 ### SPF test suite
 
-[OpenSPF test suite](http://www.openspf.org/Test_Suite) with the following differences:
+[OpenSPF test suite](http://www.openspf.org/Test_Suite) ([archive.org mirror](https://web.archive.org/web/20190130131432/http://www.openspf.org/Test_Suite)) with the following differences:
 
 -   No PTR support in `mailauth`, all PTR related tests are ignored
 -   Less strict whitespace checks (`mailauth` accepts multiple spaces between tags etc)
