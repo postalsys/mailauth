@@ -11,6 +11,7 @@ Email authentication library for Node.js
     -   [x] Sealing on authentication
     -   [x] Sealing after modifications
 -   [x] BIMI resolving
+-   [x] MTA-STS helpers
 
 Pure JavaScript implementation, no external applications or compilation needed. Runs on any server/device that has Node 14+ installed.
 
@@ -301,6 +302,32 @@ let { altnNames, svg } = await parseLogoFromX509(fs.readFileSync('vmc.pem'));
 ```
 
 > **NB!** `parseLogoFromX509` does not verify the validity of the VMC certificate. It could be self signed or expired and still be processed.
+
+## MTA-STS
+
+`mailauth` allows you to fetch MTA-STS information for a domain name.
+
+```js
+const { getPolicy, validateMx } = require('mailauth/lib/mta-sts');
+
+let knownPolicy = getCachedPolicy('gmail.com'); // optional
+let mx = 'alt4.gmail-smtp-in.l.google.com';
+
+const policy = await getPolicy('gmail.com', knownPolicy);
+const policyMatch = validateMx(mx, policy);
+
+if (policy?.id !== knownPolicy?.id) {
+    // policy has been updated, update cache
+}
+
+if (policy?.mode === 'enforce') {
+    // must use TLS
+}
+
+if (policy && !policyMatch) {
+    // can't connect, unlisted MX
+}
+```
 
 ## Testing
 
