@@ -111,4 +111,45 @@ describe('BIMI Tests', () => {
         expect(res?.status?.header).to.deep.equal({ selector: 'default', d: 'gmail.com' });
         expect(res?.location).to.equal('https://cldup.com/a6t0ORNG2z.svg');
     });
+
+    it('Should resolve BIMI location with specific selector', async () => {
+        let res = await bimi({
+            dmarc: {
+                status: {
+                    result: 'pass',
+                    header: {
+                        from: 'gmail.com'
+                    }
+                },
+                domain: 'gmail.com',
+                policy: 'reject'
+            },
+
+            headers: {
+                parsed: [
+                    {
+                        key: 'bimi-selector',
+                        line: 'v=BIMI1; s=test'
+                    }
+                ]
+            },
+
+            resolver: async (name, rr) => {
+                if (rr !== 'TXT') {
+                    dnsReject();
+                }
+                switch (name) {
+                    case 'test._bimi.gmail.com':
+                        return [['v=BIMI1; l=https:', '//cldup.com/a6t0ORNG2z.svg']];
+                    default: {
+                        dnsReject();
+                    }
+                }
+            }
+        });
+
+        expect(res?.status?.result).to.equal('pass');
+        expect(res?.status?.header).to.deep.equal({ selector: 'test', d: 'gmail.com' });
+        expect(res?.location).to.equal('https://cldup.com/a6t0ORNG2z.svg');
+    });
 });
