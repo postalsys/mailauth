@@ -334,7 +334,7 @@ if (policy.mx && !policyMatch) {
 Resolve MTA-STS policy for a domain
 
 ```
-getPolicy(domain [,knownPolicy]) -> {policy, status}
+async getPolicy(domain [,knownPolicy]) -> {policy, status}
 ```
 
 Where
