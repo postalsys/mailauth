@@ -441,6 +441,6 @@ const { authenticate } = require('mailauth');
 
 &copy; 2020 Andris Reinman
 
-Licensed under GNU Affero General Public License v3.0 or later.
+Dual licensed under GNU Affero General Public License v3.0 or later or EUPLv1.1+
 
 MIT-licensed version of mailauth is available for [Postal Systems subscribers](https://postalsys.com/).
