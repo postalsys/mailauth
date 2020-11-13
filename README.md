@@ -313,21 +313,63 @@ const { getPolicy, validateMx } = require('mailauth/lib/mta-sts');
 let knownPolicy = getCachedPolicy('gmail.com'); // optional
 let mx = 'alt4.gmail-smtp-in.l.google.com';
 
-const policy = await getPolicy('gmail.com', knownPolicy);
+const { policy, status } = await getPolicy('gmail.com', knownPolicy);
 const policyMatch = validateMx(mx, policy);
 
-if (policy?.id !== knownPolicy?.id) {
+if (policy.id !== knownPolicy?.id) {
     // policy has been updated, update cache
 }
 
-if (policy?.mode === 'enforce') {
+if (policy.mode === 'enforce') {
     // must use TLS
 }
 
-if (policy && !policyMatch) {
+if (policy.mx && !policyMatch) {
     // can't connect, unlisted MX
 }
 ```
+
+### Resolve policy
+
+Resolve MTA-STS policy for a domain
+
+```
+getPolicy(domain [,knownPolicy]) -> {policy, status}
+```
+
+Where
+
+-   **domain** is the domain to check for (eg. "gmail.com")
+-   **knownPolicy** (optional) is the policy object from last check for this domain. This is used to check if the policy is still valid or it was updated.
+
+Function returns an object with the following properties:
+
+-   **policy** (object)
+    -   **id** (string or `false`) ID of the policy
+    -   **mode** (string) one of _"none"_, _"testing"_ or _"enforce"_
+    -   **mx** (array, if available) an Array of whitelisted MX hostnames
+    -   **expires** (string, if available) ISO date string for cacheing
+-   **status** (string) one of the following values:
+    -   _"not_found"_ no policy was found for this domain. You can decide yourself how long you want to cache this response
+    -   _"cached"_ no changes detected, current policy is still valid and can be used
+    -   _"found"_ new or updated policy was found. Cache this in your system until _policy.expires_
+    -   _"renew"_ existing policy is still valid, renew cached version until _policy.expires_
+    -   _"errored"_ policy discovery failed for some temporary error (eg. failing DNS queries). See _policy.error_ for details
+
+### Validate MX hostname
+
+Check if a resolved MX hostname is valid by MTA-STS policy or not
+
+```
+validateMx(mx, policy) -> Boolean
+```
+
+Where
+
+-   **mx** is the resolved MX hostname (eg. "gmail-smtp-in.l.google.com")
+-   **policy** is the policy object returned by `getPolicy()`
+
+Function returns a boolean. If it is `true` then MX hostname is allowed to use.
 
 ## Testing
 
