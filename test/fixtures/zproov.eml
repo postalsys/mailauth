@@ -1,0 +1,59 @@
+Delivered-To: andris@zone.ee
+Return-Path: <andris.reinman@gmail.com>
+Authentication-Results: zonemx.eu; spf=pass smtp.mailfrom=gmail.com; dkim=pass header.i=@gmail.com
+Received-SPF: Pass (zonemx.eu: domain of gmail.com designates 209.85.167.179 as permitted sender) receiver=zonemx.eu; identity=mailfrom; client-ip=209.85.167.179 helo=mail-oi1-f179.google.com; envelope-from=<andris.reinman@gmail.com>
+Received-SPF: None (zonemx.eu: domain of mail-oi1-f179.google.com does not designate 209.85.167.179 as permitted sender) receiver=zonemx.eu; identity=helo; client-ip=209.85.167.179 helo=mail-oi1-f179.google.com; envelope-from=<andris.reinman@gmail.com>
+Received: from mail-oi1-f179.google.com (mail-oi1-f179.google.com [209.85.167.179])
+	by zonemx.eu (Haraka/2.8.25) with ESMTPS id B3C0198B-A390-42E9-9DDC-C57D8D207298.1
+	envelope-from <andris.reinman@gmail.com>
+	(cipher=TLS_AES_256_GCM_SHA384);
+	Fri, 06 Nov 2020 12:20:14 +0000
+Received: by mail-oi1-f179.google.com with SMTP id m17so1131729oie.4
+        for <andris@zone.ee>; Fri, 06 Nov 2020 04:20:14 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=mime-version:from:date:message-id:subject:to;
+        bh=soxpikzF1NS7d4EGty4OcndOaSKP5vQFKHf5PLPm6Aw=;
+        b=LMYhp3KyGYB62y8sGrf2W6GuW8hBe+PI/tu4xetMFLM3vBmzWWxdZNqx/bOBj8n40f
+         0mRMRnKKcVbkOdHWSmcDrawQsM62e3HVCSR5sYY1a6vxWcQ0DYc3KqlJ73INnrvcAv1d
+         mfx4uNqppWx5J/2ByrCPkV4M7jFpVqwBRP38OMO0N7sG0LIHIb581aPfci4hbt+hmU44
+         v1sjLyPOpC6WajFOYYwa1liV9J8uJpu0/ZcWg1cd+f9FvldpjKJGlu7Xe7+YgucIEZ0u
+         68dIwbf/b7+TLJ+SZFVz6Acdl2PMpfbqkUP5F+kMkH8qu7hYoMZpqNyGi5zMXNcImzfA
+         VNiA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:from:date:message-id:subject:to;
+        bh=soxpikzF1NS7d4EGty4OcndOaSKP5vQFKHf5PLPm6Aw=;
+        b=GxHt3JowdFSYMb1KJKBMdDcr3Q9KVuWISyyCN+CjJYvgsowImpV1Vhx2JNR90KjaUx
+         82rYZGfSSltE2A+U1H731ZH0jFbdXlU7p5EuE1/L+RwzcckcJF0eN6SQc/jun+pyvO6C
+         L1WNrOrR2Gj7vT9gcMqnLOaZvLTvquRKSQGX19pVgRD2rrl6G0SkJWG69AZGol1qMGSk
+         9r5Xu6leB84rnlYdZij3ppj7kuqGNdoscxWhi8w8MtKmYHOqXfoNMMKVgUOAve9a3v9S
+         E1F/USYHwRV1HitXQgQ3Yeb5dy0zYOyVJPeOJzmlZNEpEQT3Dn5YFvX3SvHRARLmJOlx
+         ZNjg==
+X-Gm-Message-State: AOAM531HoEz9Vfxo/ZxItiBz+TgOHtTg0OELBtbJMDF7EHkCBhAokay9
+	5GI0ASbBrRTgbqhgdZzS36PLr0yUTVKUpFxeDzFbJoz1Pp0=
+X-Google-Smtp-Source: ABdhPJwiBA31e1UAw8vtTxhxms8jzhPrApsDMBvfFZZOIFzXWdWOZTfNovGOrsqN6q7V5x7tkQOBkauh2H8JpG/WKBI=
+X-Received: by 2002:aca:d6ce:: with SMTP id n197mr379264oig.151.1604665197386;
+ Fri, 06 Nov 2020 04:19:57 -0800 (PST)
+MIME-Version: 1.0
+From: Andris Reinman <andris.reinman@gmail.com>
+Date: Fri, 6 Nov 2020 14:19:43 +0200
+Message-ID: <CAPacwgw9P=oxVx+D+N6PUjMPotK+m9t0pncPzY6aK7V4P61_og@mail.gmail.com>
+Subject: Proovikiri
+To: Andris Reinman <andris@zone.ee>
+Content-Type: multipart/alternative; boundary="00000000000055fd0e05b36f3bcc"
+X-Rspamd-Bar: -
+X-Rspamd-Report: R_DKIM_ALLOW(-0.2) MIME_GOOD(-0.1) DMARC_POLICY_ALLOW(-0.5) R_SPF_ALLOW(-0.2)
+X-Rspamd-Score: -1
+
+--00000000000055fd0e05b36f3bcc
+Content-Type: text/plain; charset="UTF-8"
+
+DMARC test
+
+--00000000000055fd0e05b36f3bcc
+Content-Type: text/html; charset="UTF-8"
+
+<div dir="ltr">DMARC test</div>
+
+--00000000000055fd0e05b36f3bcc--
