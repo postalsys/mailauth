@@ -3,7 +3,6 @@
 const { spf } = require('../lib/spf');
 
 const main = async () => {
-    console.log(spf);
     let result = await spf({ sender: 'andris@wildduck.email', ip: '127.0.0.1', helo: 'foo' });
     console.log(result);
 
