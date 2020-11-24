@@ -2,9 +2,11 @@
     "name": "mailauth",
     "version": "1.0.19",
     "description": "Email authentication library for Node.js",
-    "main": "lib/mailauth.js",
+    "main": "dist/mailauth.js",
     "scripts": {
-        "test": "eslint \"lib/**/*.js\" \"test/**/*.js\" && mocha --recursive \"./test/**/*.js\" --reporter spec"
+        "test": "eslint \"lib/**/*.js\" \"test/**/*.js\" && mocha --recursive \"./test/**/*.js\" --reporter spec",
+        "build": "babel lib/ -d dist",
+        "postinstall": "npm run build"
     },
     "repository": {
         "type": "git",
@@ -27,6 +29,10 @@
     },
     "homepage": "https://github.com/andris9/mailauth",
     "devDependencies": {
+        "@babel/cli": "^7.12.8",
+        "@babel/core": "^7.12.8",
+        "@babel/plugin-transform-runtime": "^7.12.1",
+        "@babel/preset-env": "^7.12.7",
         "chai": "4.2.0",
         "eslint": "7.14.0",
         "eslint-config-nodemailer": "1.2.0",
