@@ -1,0 +1,9 @@
+{
+    "_dmarc.hotmail.com": {
+        "TXT": [["v=DMARC1; p=reject; sp=reject;"]]
+    },
+
+    "example.com": {
+        "TXT": [["v=spf1 include:_spf.google.com include:sendgrid.net", " include:servers.mcsv.net include:servers.outfunnel.com ip4:18.194.223.2 ~all"]]
+    }
+}
