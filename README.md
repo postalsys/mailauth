@@ -423,6 +423,8 @@ DNS query for TXT _dmarc.projectpending.com: not found
   ...
 ```
 
+See full example for DKIM checks [here](https://gist.github.com/andris9/8d4ab527282041f6725a640d80da4872).
+
 #### DNS cache file
 
 In general you would use the `--dns-cache` option only when testing. This way you can provide different kind of DNS responses without actually setting up a DNS server and unlike when using real DNS you do not have to wait for the changes in the DNS server to propagate – whatever is in the provided cache file, is used for the DNS query responses.
