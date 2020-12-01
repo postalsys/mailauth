@@ -43,7 +43,7 @@ Where
         -   **signingDomain** (_string_) ARC key domain name
         -   **selector** (_string_) ARC key selector
         -   **privateKey** (_string_ or _buffer_) Private key for signing. Can be a RSA or an Ed25519 key
-    -   **resolver** (_async function_) is an optional async function for DNS requests. Defaults to dns.promises.resolve](https://nodejs.org/api/dns.html#dns_dnspromises_resolve_hostname_rrtype)
+    -   **resolver** (_async function_) is an optional async function for DNS requests. Defaults to [dns.promises.resolve](https://nodejs.org/api/dns.html#dns_dnspromises_resolve_hostname_rrtype)
 
 **Example**
 
