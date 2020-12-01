@@ -33,7 +33,7 @@ Where
     -   **sender** (_string_) is the email address from MAIL FROM command. If not set then it is parsed from the `Return-Path` header
     -   **ip** (_string_) is the IP of remote client that sent this message
     -   **helo** (_string_) is the hostname value from HELO/EHLO command
-    -   **trustReceived** (_boolean_) if true then parses values for `ip` and `helo` from latest `Received` header if you have not set these values yourself
+    -   **trustReceived** (_boolean_) if true then parses values for `ip` and `helo` from latest `Received` header if you have not set these values yourself. Defaults to `false`
     -   **mta** (_string_) is the hostname of the server performing the authentication (defaults to `os.hostname()`)
     -   **minBitLength** (_number_) is the minimum allowed bits of RSA public keys (defaults to 1024). If a DKIM or ARC key has less bits, then validation is considered as failed
     -   **disableArc** (_boolean_) if true then skip ARC checks
@@ -57,7 +57,7 @@ const { dkim, spf, arc, dmarc, bimi, receivedChain, headers } = await authentica
         helo: 'uvn-67-33.tll01.zonevs.eu', // EHLO/HELO hostname
         sender: 'andris@ekiri.ee', // MAIL FROM address
 
-        // If you do not want to provide ip/helo/sender manually but parse from the message
+        // Uncomment if you do not want to provide ip/helo/sender manually but parse from the message
         //trustReceived: true,
 
         // Server processing this message, defaults to os.hostname(). Inserted into Authentication headers
@@ -201,12 +201,7 @@ const { authenticate } = require('mailauth');
 const { arc } = await authenticate(
     message, // either a String, a Buffer or a Readable Stream
     {
-        // SMTP transmission options must be provided as
-        // these are not parsed from the message
-        ip: '217.146.67.33', // SMTP client IP
-        helo: 'uvn-67-33.tll01.zonevs.eu', // EHLO/HELO hostname
-        mta: 'mx.ethereal.email', // server processing this message, defaults to os.hostname()
-        sender: 'andris@ekiri.ee' // MAIL FROM address
+        trustReceived: true
     }
 );
 console.log(arc);
@@ -236,14 +231,9 @@ const { authenticate } = require('mailauth');
 const { headers } = await authenticate(
     message, // either a String, a Buffer or a Readable Stream
     {
-        // SMTP transmission options must be provided as
-        // these are not parsed from the message
-        ip: '217.146.67.33', // SMTP client IP
-        helo: 'uvn-67-33.tll01.zonevs.eu', // EHLO/HELO hostname
-        mta: 'mx.ethereal.email', // server processing this message, defaults to os.hostname()
-        sender: 'andris@ekiri.ee', // MAIL FROM address
+        trustReceived: true,
 
-        // Optional ARC seal settings. If this is set then resulting headers include
+        // ARC seal settings. If this is set then resulting headers include
         // a complete ARC header set (unless the message has a failing ARC chain)
         seal: {
             signingDomain: 'tahvel.info',
