@@ -21,6 +21,32 @@ Pure JavaScript implementation, no external applications or compilation needed. 
 
 Validate DKIM signatures, SPF, DMARC, ARC and BIMI for an email.
 
+```
+await authenticate(message [,options]) ->
+    { dkim, spf, arc, dmarc, bimi, receivedChain, headers }
+```
+
+Where
+
+-   **message** is either a String, a Buffer or a Readable stream that represents an email message
+-   **options** (_object_) is an optional options object
+    -   **sender** (_string_) is the email address from MAIL FROM command (aka Return-Path address)
+    -   **ip** (_string_) is the IP of remote client that sent this message
+    -   **helo** (_string_) is the hostname value from HELO/EHLO command
+    -   **trustReceived** (_boolean_) if true then parses values for `ip` and `helo` from latest `Received` header if you have not set these values yourself
+    -   **mta** (_string_) is the hostname of the server performing the authentication (defaults to `os.hostname()`)
+    -   **minBitLength** (_number_) is the minimum allowed bits of RSA public keys (defaults to 1024). If a DKIM or ARC key has less bits, then validation is conisdered as failed
+    -   **disableArc** (_boolean_) if true then skip ARC checks
+    -   **disableDmarc** (_boolean_) if true then skip DMARC checks. This also disables checks that are dependent on DMARC (eg. BIMI)
+    -   **disableBimi** (_boolean_) if true then skip BIMI checks
+    -   **seal** (_object_) if set and message does not have a broken ARC chain, then seals the message using these values
+        -   **signingDomain** (_string_) ARC key domain name
+        -   **selector** (_string_) ARC key selector
+        -   **privateKey** (_string_ or _buffer_) Private key for signing. Can be a RSA or an Ed25519 key
+    -   **resolver** (_async function_) is an optional async function for DNS requests. Defaults to dns.promises.resolve](https://nodejs.org/api/dns.html#dns_dnspromises_resolve_hostname_rrtype)
+
+**Example**
+
 ```js
 const { authenticate } = require('mailauth');
 const { dkim, spf, arc, dmarc, bimi, receivedChain, headers } = await authenticate(
