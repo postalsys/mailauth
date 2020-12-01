@@ -2,16 +2,16 @@
 
 Email authentication library for Node.js
 
--   [x] SPF verification
--   [x] DKIM signing
--   [x] DKIM verification
--   [x] DMARC verification
--   [x] ARC verification
--   [x] ARC sealing
-    -   [x] Sealing on authentication
-    -   [x] Sealing after modifications
--   [x] BIMI resolving
--   [x] MTA-STS helpers
+-   **SPF** verification
+-   **DKIM** signing
+-   DKIM verification
+-   **DMARC** verification
+-   **ARC** verification
+-   ARC sealing
+    -   Sealing on authentication
+    -   Sealing after modifications
+-   **BIMI** resolving
+-   **MTA-STS** helpers
 
 Pure JavaScript implementation, no external applications or compilation needed. Runs on any server/device that has Node 14+ installed.
 
@@ -21,7 +21,7 @@ Pure JavaScript implementation, no external applications or compilation needed. 
 
 Validate DKIM signatures, SPF, DMARC, ARC and BIMI for an email.
 
-```
+```js
 await authenticate(message [,options]) ->
     { dkim, spf, arc, dmarc, bimi, receivedChain, headers }
 ```
@@ -30,12 +30,12 @@ Where
 
 -   **message** is either a String, a Buffer or a Readable stream that represents an email message
 -   **options** (_object_) is an optional options object
-    -   **sender** (_string_) is the email address from MAIL FROM command (aka Return-Path address)
+    -   **sender** (_string_) is the email address from MAIL FROM command. If not set then it is parsed from the `Return-Path` header
     -   **ip** (_string_) is the IP of remote client that sent this message
     -   **helo** (_string_) is the hostname value from HELO/EHLO command
     -   **trustReceived** (_boolean_) if true then parses values for `ip` and `helo` from latest `Received` header if you have not set these values yourself
     -   **mta** (_string_) is the hostname of the server performing the authentication (defaults to `os.hostname()`)
-    -   **minBitLength** (_number_) is the minimum allowed bits of RSA public keys (defaults to 1024). If a DKIM or ARC key has less bits, then validation is conisdered as failed
+    -   **minBitLength** (_number_) is the minimum allowed bits of RSA public keys (defaults to 1024). If a DKIM or ARC key has less bits, then validation is considered as failed
     -   **disableArc** (_boolean_) if true then skip ARC checks
     -   **disableDmarc** (_boolean_) if true then skip DMARC checks. This also disables checks that are dependent on DMARC (eg. BIMI)
     -   **disableBimi** (_boolean_) if true then skip BIMI checks
