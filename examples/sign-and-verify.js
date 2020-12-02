@@ -23,17 +23,27 @@ dkimSign(eml, {
             selector: 'test.invalid',
             privateKey: fs.readFileSync('./test/fixtures/private-rsa.pem')
         },
+
         {
             algorithm: algo,
             signingDomain: 'tahvel.info',
             selector: 'test.rsa',
             privateKey: fs.readFileSync('./test/fixtures/private-rsa.pem')
         },
+
         {
             algorithm: algo,
             signingDomain: 'tahvel.info',
             selector: 'test.small',
             privateKey: fs.readFileSync('./test/fixtures/private-small.pem')
+        },
+
+        {
+            algorithm: algo,
+            signingDomain: 'tahvel.info',
+            selector: 'test.small',
+            privateKey: fs.readFileSync('./test/fixtures/private-small.pem'),
+            maxBodyLength: 12
         },
 
         {

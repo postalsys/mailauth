@@ -126,6 +126,10 @@ const signResult = await dkimSign(
 
                 // Optional signature specifc canonicalization, overrides whatever was set in parent object
                 canonicalization: 'relaxed/relaxed' // c=
+
+                // Maximum number of canonicalizated body bytes to sign (eg. the "l=" tag).
+                // Do not use though. This is available only for compatibility testing.
+                // maxBodyLength: 12345
             }
         ]
     }
