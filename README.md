@@ -15,6 +15,8 @@ Email authentication library for Node.js
 
 Pure JavaScript implementation, no external applications or compilation needed. Runs on any server/device that has Node 14+ installed.
 
+> You can also install `mailauth` as a system command, see [details here](cli.md).
+
 ## Usage
 
 ## Authentication
