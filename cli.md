@@ -91,7 +91,7 @@ Where
 
 **Options**
 
--   `--headers-only` or `-h' If set return signing headers only. Default is to return the entire message.
+-   `--headers-only` or `-h` If set return signing headers only. Default is to return the entire message.
 -   `--domain example.com` or `-d example.com` is the domain name for signing
 -   `--selector xxx` or `-s xxx` is the key selector name for signing
 -   `--private-key /path` or `-k /path` is the path to a private key for signing
@@ -133,7 +133,7 @@ Where
 
 As the emails needs to be authenticated before sealing then `seal` command expects in additon to sealing key information also the authentication options from the `report` command.
 
--   `--headers-only` or `-h' If set return signing headers only. Default is to return the entire message.
+-   `--headers-only` or `-h` If set return signing headers only. Default is to return the entire message.
 -   `--domain example.com` or `-d example.com` is the domain name for signing
 -   `--selector xxx` or `-s xxx` is the key selector name for signing
 -   `--private-key /path` or `-k /path` is the path to a private key for signing
