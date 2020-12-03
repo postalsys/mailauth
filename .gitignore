@@ -108,3 +108,4 @@ dist
 .DS_Store
 node_modules
 
+man/mailauth.1

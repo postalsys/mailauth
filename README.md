@@ -401,78 +401,7 @@ Function returns a boolean. If it is `true` then MX hostname is allowed to use.
 
 ## Command line usage
 
-Install `mailauth` globally to get the command line interface
-
-```
-npm install -g mailauth
-```
-
-### Available commands
-
-#### report
-
-`report` command takes an email message and returns a JSON formatted report for SPF, DKIM, ARC, DMARC and BIMI. Not all reports might make sense for your use case, eg. SPF check for an outbound message usually gives no useful info, so you can ignore the parts you're not interested in.
-
-```
-$ mailauth report [options] [email]
-```
-
-Where
-
--   **options** are option flags
--   **email** is the path to EML formatted email message file. If not provided then email message is read from standard input
-
-**Options**
-
--   `--client-ip x.x.x.x` or `-c x.x.x.x` is the IP of the remote client that sent the email. If not provided then it is parsed from the latest `Received` header
--   `--sender user@example.com` or `-s address` is the email address from the MAIL FROM command. If not provided then it is parsed from the latest Return-Path header
--   `--helo hostname` or `-e hostname` is the client hostname from the HELO/EHLO command. Used in some obscure SPF validation operations
--   `--mta hostname` or `-m hostname` is the server hostname doing the validation checks. Defaults to `os.hostname()`
--   `--dns-cache /path/to/dns.json` or `-d path` is the path to a file with cached DNS query responses. If this file is provided then no actual DNS requests are performed, only cached values from this file are used.
--   `--verbose` or `-v` if this flag is set then mailauth writes some debugging info to standard error
-
-**Example**
-
-```
-$ mailauth report -v --dns-cache examples/dns-cache.json test/fixtures/message2.eml
-Reading email message from test/fixtures/message2.eml
-DNS query for TXT mail.projectpending.com: not found
-DNS query for TXT _dmarc.projectpending.com: not found
-{
-  "receivedChain": [
-  ...
-```
-
-See full example for DKIM checks [here](https://gist.github.com/andris9/8d4ab527282041f6725a640d80da4872).
-
-#### DNS cache file
-
-In general you would use the `--dns-cache` option only when testing. This way you can provide different kind of DNS responses without actually setting up a DNS server and unlike when using real DNS you do not have to wait for the changes in the DNS server to propagate – whatever is in the provided cache file, is used for the DNS query responses.
-
-DNS cache file includes a JSON encoded object where main keys are the domain names (eg. `"_dmarc.example.com"`), sub keys are resource record types (eg. `"TXT"`) and values are the corresponding values as provided by the [dns module](https://nodejs.org/api/dns.html#dns_dns_resolvetxt_hostname_callback).
-
-```json
-{
-    "full_domain_name": {
-        "TXT": [["string1"]]
-    }
-}
-```
-
-**Example**
-
-This example provides SPF and DMARC policy records for "example.com":
-
-```json
-{
-    "example.com": {
-        "TXT": [["v=spf1 include:_spf.google.com include:sendgrid.net", " include:servers.mcsv.net include:servers.outfunnel.com ip4:18.194.223.2 ~all"]]
-    },
-    "_dmarc.example.com": {
-        "TXT": [["v=DMARC1; p=reject; sp=reject;"]]
-    }
-}
-```
+See [CLI USAGE](cli.md)
 
 ## Testing
 

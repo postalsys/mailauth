@@ -1,0 +1,128 @@
+Delivered-To: andris.reinman@gmail.com
+Received: by 2002:a4a:8e45:0:0:0:0:0 with SMTP id z5csp3690610ook;
+        Mon, 2 Nov 2020 01:57:25 -0800 (PST)
+X-Received: by 2002:a19:350:: with SMTP id 77mr5828448lfd.92.1604311044926;
+        Mon, 02 Nov 2020 01:57:24 -0800 (PST)
+ARC-Seal: i=2; a=rsa-sha256; t=1604311044; cv=pass;
+        d=google.com; s=arc-20160816;
+        b=0p6i/ja3/uUjekAlDrixaXJMKkj9SiTUrehLOYFNLymZ2/9pWBODOxDxTRSfv2hg1K
+         BjFgSGzL4psnH9twdMuQmJb1eI8/FsGCTPGivpRpQk92fp36HmaBoe5QUWCdsMz6WZvo
+         wsBeQqjIqSMlHFz2ccY2AsbN9YRGSiUYtH57PfqpvOFIVJzhObumBHnw+37wGBXtsQzH
+         jUMNrJylXQb3OnqiHLYPU9Q47S+qHghnIyK0VbChiKpgdHKp/ozlqefcauFtzq1aOoLV
+         c8IQrVqsWh7TTQFTXwq3tqMAX+SSRAspP9xmU0b/mt4qvAeh0czV6h/bmkTo0KZzVofd
+         IQ7Q==
+ARC-Message-Signature: i=2; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20160816;
+        h=subject:to:from:message-id:date:dkim-signature:dkim-signature
+         :delivered-to;
+        bh=0KskbD0xkDMCMa8AUnLecsJOUmtwXR9v6sRHwzfwoB4=;
+        b=skQCqn1Q3pq52dR9dkpxBfJpHAy98iASB+VFHaL5UTMgeCtpTsehfEhox0mWF1byLS
+         AGvF4RcJMtQAI3hiE0lVat+bPeqZ4vPdxn5DWitn4ZRz2sA62W7BEA0lTuUvoB0xihlX
+         bR66J5gsu8+VcEcTld4lcgS3JfZsxlj1bctwHXIPyyJkpRchfyRa0bbSixLlwPvr8ZWP
+         oodHVWu96zjeZMZbeUrM0/Rejy6yLo0giGM++hs4JTrosm72Si2fVclSJO4t+1ogM7MV
+         3/evarkYfFQd1voz43TDZ5ANY2L8INz7//3DSVZw63iIVI/+vl3uKH4CxbTWGDpND6GE
+         95sA==
+ARC-Authentication-Results: i=2; mx.google.com;
+       dkim=pass header.i=@zonevs.eu header.s=oct2016 header.b=0ZgeYqhD;
+       dkim=pass header.i=@srs3.zonevs.eu header.s=oct2016 header.b=u8s6EKdV;
+       arc=pass (i=1 spf=pass spfdomain=zone.ee dkim=pass dkdomain=zonevs.eu dkim=pass dkdomain=srs3.zonevs.eu dmarc=pass fromdomain=zone.ee);
+       spf=neutral (google.com: 209.85.220.41 is neither permitted nor denied by best guess record for domain of andris+caf_=andris.reinman=gmail.com@tr.ee) smtp.mailfrom="andris+caf_=andris.reinman=gmail.com@tr.ee";
+       dmarc=fail (p=REJECT sp=REJECT dis=NONE arc=pass) header.from=zone.ee
+Return-Path: <andris+caf_=andris.reinman=gmail.com@tr.ee>
+Received: from mail-sor-f41.google.com (mail-sor-f41.google.com. [209.85.220.41])
+        by mx.google.com with SMTPS id e21sor2892698lfq.1.2020.11.02.01.57.24
+        for <andris.reinman@gmail.com>
+        (Google Transport Security);
+        Mon, 02 Nov 2020 01:57:24 -0800 (PST)
+Received-SPF: neutral (google.com: 209.85.220.41 is neither permitted nor denied by best guess record for domain of andris+caf_=andris.reinman=gmail.com@tr.ee) client-ip=209.85.220.41;
+Authentication-Results: mx.google.com;
+       dkim=pass header.i=@zonevs.eu header.s=oct2016 header.b=0ZgeYqhD;
+       dkim=pass header.i=@srs3.zonevs.eu header.s=oct2016 header.b=u8s6EKdV;
+       arc=pass (i=1 spf=pass spfdomain=zone.ee dkim=pass dkdomain=zonevs.eu dkim=pass dkdomain=srs3.zonevs.eu dmarc=pass fromdomain=zone.ee);
+       spf=neutral (google.com: 209.85.220.41 is neither permitted nor denied by best guess record for domain of andris+caf_=andris.reinman=gmail.com@tr.ee) smtp.mailfrom="andris+caf_=andris.reinman=gmail.com@tr.ee";
+       dmarc=fail (p=REJECT sp=REJECT dis=NONE arc=pass) header.from=zone.ee
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:delivered-to:dkim-signature:dkim-signature:date
+         :message-id:from:to:subject;
+        bh=0KskbD0xkDMCMa8AUnLecsJOUmtwXR9v6sRHwzfwoB4=;
+        b=TVPESDmH1OMyMky6Bw1K/4AV+brcqCn5pFUR2SjkZpv4Te2BXY5dh+ludQGfjcMy8Y
+         ZN9LZTA3Pco+EqB4T38oLhYnPmuc+qTf4Hwo7T+UCJOUvm+0UNChZvCmvglflsQTG5va
+         Zby07WFZ+YhDGkEUwf+a45K3sNfxltv2Sw3NinMPRl9tMmml2OdrckcFTxyuBR8wsQJz
+         UGezM0+XDQYVWFCVCwsuBJKdua9sXlmf4xcj6MYe6AjqGkGNrlBSFwK78BxEIsP2tvkH
+         qdtXR1cfG/933QnQa0VhfFBnq7zJIXi47t00YY5+HyPcl5FPv2sT9oKtqAfzqz2bH8Us
+         D6iw==
+X-Gm-Message-State: AOAM530zmivvtRN6OgnHNx1WZImUCa65J30cr+t+l6/fdRcyZmlUgmvz
+	J5nHzTPT1DHjyhjUPSdOWbDazz4xygLM0LwLvkczy7Ok0+5TRg/CsHdj
+X-Received: by 2002:a19:ed04:: with SMTP id y4mr5221224lfy.306.1604311044593;
+        Mon, 02 Nov 2020 01:57:24 -0800 (PST)
+X-Forwarded-To: andris.reinman@gmail.com
+X-Forwarded-For: andris@tr.ee andris.reinman@gmail.com
+Delivered-To: andris@tr.ee
+Received: by 2002:a19:24c6:0:0:0:0:0 with SMTP id k189csp3869744lfk;
+        Mon, 2 Nov 2020 01:57:23 -0800 (PST)
+X-Google-Smtp-Source: ABdhPJzs1NY5W/x8VMDngKdv128ZR+fLWrCNZu8ezB6lj7sOiQgohUc1b2dFlwFxzdHN81KWiX4h
+X-Received: by 2002:a2e:9f4d:: with SMTP id v13mr6543854ljk.379.1604311043606;
+        Mon, 02 Nov 2020 01:57:23 -0800 (PST)
+ARC-Seal: i=1; a=rsa-sha256; t=1604311043; cv=none;
+        d=google.com; s=arc-20160816;
+        b=oOFuOAAQqJoW8sGj85rV5zjQtRV2cdu3o93aacq/qdfXC1PE6u8QBFTZVhKY8Lzm56
+         lLmzlBwNYDcAeVYc8jpNYPDkJH64rrKLv14spyVadF11P6fnWpY/jmO1rDUocMDoH1N7
+         PuZOiHpKXEOA/MZ181wTu3miqduQKuRsY8pLgTTtoW7CCCfSa+/b3WeBtE3IgXsOSwNK
+         zsHLDK0jWhKR2MCWokGNn30MUodzflT8B+qWvk635QiWxacgHMFYlLBTwPw+rGmLMVc2
+         9ge8k+SvKDnKl5IL9IU2mz454L+4q5DqlN/IDl+g1J6BQOCnyARrMoLLb1s95DU4joaT
+         Vs6A==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20160816;
+        h=subject:to:from:message-id:date:dkim-signature:dkim-signature;
+        bh=0KskbD0xkDMCMa8AUnLecsJOUmtwXR9v6sRHwzfwoB4=;
+        b=yon30yJC+1aWkKBpvlv+tU1D+GN3AB4+UgloI+fNPsaxU/ZuxSNBAAJJsq/aAyXvK2
+         UIHwNw6GyMKXFsJuZUp5l9CiTxIHxdVKAw68G89vRPMkN6Lk2AMu+KAvXMbBFfwWc/6P
+         ArxxmHc3adg9VCNqQA0HM3GqurVPoESx+jwl72so2fX9zZcvUs9Xzi+RfP9/1Z86o/Ih
+         8y7DFtVH04IIo+Kr+B5ThbcQx9vhGov5eUIbfAz3zHd84Or4TfbckOu1nwtwbwLFu75I
+         j+gQEd/LLXwUej/zmcYH+Swh0M4l7FQCO9OtrHJU4wXcI+Mic+5jla84EItXyBPmczTL
+         v6uw==
+ARC-Authentication-Results: i=1; mx.google.com;
+       dkim=pass header.i=@zonevs.eu header.s=oct2016 header.b=0ZgeYqhD;
+       dkim=pass header.i=@srs3.zonevs.eu header.s=oct2016 header.b=u8s6EKdV;
+       spf=pass (google.com: domain of andris@zone.ee designates 217.146.68.193 as permitted sender) smtp.mailfrom=andris@zone.ee;
+       dmarc=pass (p=REJECT sp=REJECT dis=NONE) header.from=zone.ee
+Return-Path: <andris@zone.ee>
+Received: from srs3.zonevs.eu (srs3.zonevs.eu. [217.146.68.193])
+        by mx.google.com with ESMTPS id j19si6304805lfm.386.2020.11.02.01.57.23
+        for <andris@tr.ee>
+        (version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
+        Mon, 02 Nov 2020 01:57:23 -0800 (PST)
+Received-SPF: pass (google.com: domain of andris@zone.ee designates 217.146.68.193 as permitted sender) client-ip=217.146.68.193;
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=zonevs.eu;
+ q=dns/txt; s=oct2016; bh=0KskbD0xkDMCMa8AUnLecsJOUmtwXR9v6sRHwzfwoB4=;
+ h=from:subject:date:message-id:to;
+ b=0ZgeYqhDKOkrFyVt1S9r8jqXUQEISXAHyGxyTTxqsVv9t6T/xP3bcnMew2byVlq3iRyzZg0N1
+ vElt2x/nhxkRkazGz1tWIZJ4468CNF30/GmJS2k4nIbfXSkgnCOHjVbWA/H8sthaEyjjlqhRLLp
+ J0Rb0tHW72djGkqDeJS/xdxO294JGw8d4ye6vcrtPP8/rhtOm2o+fUGUIC0/nptpZsIEa+Pg5+h
+ F/yhnBSrpQrSTaeg5HJFn0RUAx9XhU8lSTYAOpSVyJZ1DzbI/FbKYHeZrI3nrf+y0CzV/mCa/mF
+ 0vR3aKcjdUISWub+GLSy9bacE7RnyC5pRc9yGeeRFP9A==
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=srs3.zonevs.eu;
+ q=dns/txt; s=oct2016; bh=0KskbD0xkDMCMa8AUnLecsJOUmtwXR9v6sRHwzfwoB4=;
+ h=from:subject:date:message-id:to;
+ b=u8s6EKdV9RuaSruXZws7xMbhJiLIyH3Obd4GVmnO8aTdLOdHXGxrraoZzAoO4CN8Icu9qJX0s
+ pWIagfa5MArnLC4H9FcSKZXMBPNKCxpHr2Lc0k0h7b3+xqcA2QsesY36FoKL9yJdemnrv9p5aGG
+ bdjgZa59OIycM56mOK2VWlPNdPK/kBJ9AYKSglyattrlEUk6b6tYk9+hQ6Gm+V9xstl8e02niy/
+ pxedlYgu02PTnK4NJbDboYjefSF3ZdwBLJJoH8Th5BKd/Dx5oWsbOykOKp35xLzvOh40EsrNg65
+ BmkuOUesG5FIBnF24yoY074XGKZXS+vyT+cXpr+GqH9g==
+Received: from foo [127.0.0.1]
+ by srs3.zonevs.eu (ZoneMTA Forwarder) with ESMTP id 175886347950003d56.001
+ for <andris@tr.ee>;
+ Mon, 02 Nov 2020 09:56:57 +0000
+X-Zone-Loop: fe066d941b265f3ca3d5f9b6f90a9d450a1b293f52e0
+Date: Mon, 02 Nov 2020 09:57:17 +0000
+Message-ID: <578b311a-e490-40bc-97f9-4218bc250711@zone.ee>
+From: andris@zone.ee
+To: andris@tr.ee
+Subject: test
+X-Zone-Spam-Resolution: no action
+X-Zone-Spam-Status: No, score=2.931282, required=15, tests=[ARC_NA=0,
+ MISSING_MID=2.5, MISSING_DATE=1, TO_DN_NONE=0, RCVD_TLS_ALL=0,
+ MIME_GOOD=-0.1, RCPT_COUNT_ONE=0, RCVD_COUNT_ZERO=0, BAYES_HAM=-2.968718,
+ HFILTER_HOSTNAME_UNKNOWN=2.5, FROM_NO_DN=0, R_DKIM_NA=0,
+ FROM_EQ_ENVFROM=0]
+
+Tere tere, vana kere. See on lihtsalt test.
