@@ -91,14 +91,16 @@ Where
 
 **Options**
 
--   `--headers-only` or `-h` If set return signing headers only. Default is to return the entire message.
--   `--domain example.com` or `-d example.com` is the domain name for signing
--   `--selector xxx` or `-s xxx` is the key selector name for signing
 -   `--private-key /path` or `-k /path` is the path to a private key for signing
+-   `--domain example.com` or `-d example.com` is the domain name for signing (d= tag)
+-   `--selector xxx` or `-s xxx` is the key selector name for signing (s= tag)
 -   `--algo rsa-sha256` or `-a rsa-sha256` is the signing algorithm. Defaults either to "rsa-sha256" or
-    "ed25519-sha256" depending on the private key format
--   `--canonicalization algo` or `-c algo` is the canonicalization algorithm (defaults to "relaxed/relaxed")
--   `--time 12345` or `-t 12345` is the signing time as a unix timestamp
+    "ed25519-sha256" depending on the private key format (a= tag)
+-   `--canonicalization algo` or `-c algo` is the canonicalization algorithm, defaults to "relaxed/relaxed" (c= tag)
+-   `--time 12345` or `-t 12345` is the signing time as a unix timestamp (t= tag)
+-   `--header-fields "message-id:date"` or `-h keys` is a colon separated list of header field names to sign (h= tag)
+-   `--body-length 12345` or `-l 12345` is the maximum length of canonicalizated body to sign (l= tag)
+-   `--headers-only` or `-o` If set return signing headers only. Default is to return the entire message.
 
 **Example**
 
@@ -133,19 +135,21 @@ Where
 
 As the emails needs to be authenticated before sealing then `seal` command expects in additon to sealing key information also the authentication options from the `report` command.
 
--   `--headers-only` or `-h` If set return signing headers only. Default is to return the entire message.
--   `--domain example.com` or `-d example.com` is the domain name for signing
--   `--selector xxx` or `-s xxx` is the key selector name for signing
--   `--private-key /path` or `-k /path` is the path to a private key for signing
--   `--algo rsa-sha256` or `-a rsa-sha256` is the signing algorithm. Defaults either to "rsa-sha256" or
-    "ed25519-sha256" depending on the private key format
--   `--canonicalization algo` or `-c algo` is the canonicalization algorithm (defaults to "relaxed/relaxed")
--   `--time 12345` or `-t 12345` is the signing time as a unix timestamp
+-   `--private-key /path` or `-k /path` is the path to a private key for sealing
+-   `--domain example.com` or `-d example.com` is the domain name for sealing (d= tag)
+-   `--selector xxx` or `-s xxx` is the key selector name for sealing (s= tag)
+-   `--algo rsa-sha256` or `-a rsa-sha256` is the sealing algorithm. Defaults either to "rsa-sha256" or
+    "ed25519-sha256" depending on the private key format (a= tag)
+-   `--time 12345` or `-t 12345` is the sealing time as a unix timestamp (t= tag)
+-   `--header-fields "message-id:date"` or `-h keys` is a colon separated list of header field names to seal (h= tag)
 -   `--client-ip x.x.x.x` or `-i x.x.x.x` is the IP of the remote client that sent the email. If not provided then it is parsed from the latest `Received` header
 -   `--sender user@example.com` or `-f address` is the email address from the MAIL FROM command. If not provided then it is parsed from the latest Return-Path header
 -   `--helo hostname` or `-e hostname` is the client hostname from the HELO/EHLO command. Used in some obscure SPF validation operations
 -   `--mta hostname` or `-m hostname` is the server hostname doing the validation checks. Defaults to `os.hostname()`
 -   `--dns-cache /path/to/dns.json` or `-n path` is the path to a file with cached DNS query responses. If this file is provided then no actual DNS requests are performed, only cached values from this file are used.
+-   `--headers-only` or `-o` If set return signing headers only. Default is to return the entire message.
+
+> Canonicalization (c= tag) is always "relaxed/relaxed" when sealing, this can not be changed
 
 **Example**
 

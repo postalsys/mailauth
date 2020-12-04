@@ -65,8 +65,8 @@ content is read from standard input.
 -   `--dns-cache`, `-n <file>`
     Path to a JSON file with cached DNS responses. If this file is given then no actual DNS requests are performed. (`report`, `seal`)
 
--   `--headers-only`, `-h`
-    Return signing headers only. By default the entire message is printed to console. (`sign`, `seal`)
+-   `--private-key`, `-k <file>`
+    Path to a private key for signing. Allowed key types are RSA and Ed25519 (`sign`, `seal`)
 
 -   `--domain`, `-d <domain>`
     Domain name for signing. (`sign`, `seal`)
@@ -74,17 +74,23 @@ content is read from standard input.
 -   `--selector`, `-s <selector>`
     Key selector for signing. (`sign`, `seal`)
 
--   `--private-key`, `-k <file>`
-    Path to a private key for signing. Allowed key types are RSA and Ed25519 (`sign`, `seal`)
-
 -   `--algo`, `-a <algo>`
     Signing algorithm. Defaults either to _rsa-sha256_ or _ed25519-sha256_ depending on the private key format. (`sign`, `seal`)
 
 -   `--canonicalization`, `-c <algo>`
-    Canonicalization algorithm. Defaults to _relaxed/relaxed_. (`sign`, `seal`)
+    Canonicalization algorithm. Defaults to _relaxed/relaxed_. (`sign`)
+
+-   `--body-length`, `-l <number>`
+    'Maximum length of canonicalizated body to sign. (`sign`)
 
 -   `--time`, `-t <number>`
     Signing time as a unix timestamp. (`sign`, `seal`)
+
+-   `--header-fields`, `-h <list>`
+    Colon separated list of header field names to sign. (`sign`, `seal`)
+
+-   `--headers-only`, `-o`
+    Return signing headers only. By default the entire message is printed to console. (`sign`, `seal`)
 
 ## DNS CACHE
 

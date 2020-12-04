@@ -19,7 +19,7 @@ const argv = yargs(hideBin(process.argv))
                 .option('client-ip', {
                     alias: 'i',
                     type: 'string',
-                    description: 'Client IP used for SPF checks. If not set then parsed from latest Received header'
+                    description: 'Client IP used for SPF checks. If not set then parsed from the latest Received header'
                 })
                 .option('mta', {
                     alias: 'm',
@@ -63,45 +63,50 @@ const argv = yargs(hideBin(process.argv))
         'Sign an email with a DKIM digital signature',
         yargs => {
             yargs
-                .option('headers-only', {
-                    alias: 'h',
-                    type: 'boolean',
-                    description: 'Return signing headers only'
-                })
-                .option('domain', {
-                    alias: 'd',
-                    type: 'string',
-                    description: 'Domain name for signing',
-                    demandOption: true
-                })
-                .option('selector', {
-                    alias: 's',
-                    type: 'string',
-                    description: 'Key selector for signing',
-                    demandOption: true
-                })
+
                 .option('private-key', {
                     alias: 'k',
                     type: 'string',
                     description: 'Path to a private key for signing',
                     demandOption: true
                 })
-                .option('algo', {
-                    alias: 'a',
+                .option('domain', {
+                    alias: 'd',
                     type: 'string',
-                    description: 'Signing algorithm. Defaults either to rsa-sha256 or ed25519-sha256 depending on the private key format',
-                    default: 'rsa-sha256'
+                    description: 'Domain name for signing (d= tag)',
+                    demandOption: true
+                })
+                .option('selector', {
+                    alias: 's',
+                    type: 'string',
+                    description: 'Key selector for signing  (s= tag)',
+                    demandOption: true
                 })
                 .option('canonicalization', {
                     alias: 'c',
                     type: 'string',
-                    description: 'Canonicalization algorithm',
+                    description: 'Canonicalization algorithm  (c= tag)',
                     default: 'relaxed/relaxed'
                 })
                 .option('time', {
                     alias: 't',
                     type: 'number',
-                    description: 'Signing time as a unix timestamp'
+                    description: 'Signing time as a unix timestamp (t= tag)'
+                })
+                .option('body-length', {
+                    alias: 'l',
+                    type: 'number',
+                    description: 'Maximum length of canonicalizated body to sign (l= tag)'
+                })
+                .option('header-fields', {
+                    alias: 'h',
+                    type: 'string',
+                    description: 'Colon separated list of header field names to sign (h= tag)'
+                })
+                .option('headers-only', {
+                    alias: 'o',
+                    type: 'boolean',
+                    description: 'Return signing headers only'
                 });
             yargs.positional('email', {
                 describe: 'Path to the email message file in EML format. If not specified then content is read from stdin'
@@ -126,50 +131,51 @@ const argv = yargs(hideBin(process.argv))
         'Authenticates an email and seals it with an ARC digital signature',
         yargs => {
             yargs
-                .option('headers-only', {
-                    alias: 'h',
-                    type: 'boolean',
-                    description: 'Return sealing headers only'
-                })
-                .option('domain', {
-                    alias: 'd',
-                    type: 'string',
-                    description: 'Domain name for sealing',
-                    demandOption: true
-                })
-                .option('selector', {
-                    alias: 's',
-                    type: 'string',
-                    description: 'Key selector for sealing',
-                    demandOption: true
-                })
                 .option('private-key', {
                     alias: 'k',
                     type: 'string',
                     description: 'Path to a private key for sealing',
                     demandOption: true
                 })
+                .option('domain', {
+                    alias: 'd',
+                    type: 'string',
+                    description: 'Domain name for sealing (d= tag)',
+                    demandOption: true
+                })
+                .option('selector', {
+                    alias: 's',
+                    type: 'string',
+                    description: 'Key selector for sealing  (s= tag)',
+                    demandOption: true
+                })
                 .option('algo', {
                     alias: 'a',
                     type: 'string',
-                    description: 'Sealing algorithm. Defaults either to rsa-sha256 or ed25519-sha256 depending on the private key format',
+                    description:
+                        'Sealing algorithm. Defaults either to rsa-sha256 or ed25519-sha256 depending on the private key format. NB! Only rsa-sha256 is allowed by RFC8617 (a= tag)',
                     default: 'rsa-sha256'
                 })
                 .option('canonicalization', {
                     alias: 'c',
                     type: 'string',
-                    description: 'Canonicalization algorithm',
+                    description: 'Canonicalization algorithm. NB! Only relaxed/relaxed is allowed by RFC8617 (c= tag)',
                     default: 'relaxed/relaxed'
                 })
                 .option('time', {
                     alias: 't',
                     type: 'number',
-                    description: 'Sealing time as a unix timestamp'
+                    description: 'Signing time as a unix timestamp (t= tag)'
+                })
+                .option('header-fields', {
+                    alias: 'h',
+                    type: 'string',
+                    description: 'Colon separated list of header field names to sign (h= tag)'
                 })
                 .option('client-ip', {
                     alias: 'i',
                     type: 'string',
-                    description: 'Client IP used for SPF checks. If not set then parsed from latest Received header'
+                    description: 'Client IP used for SPF checks. If not set then parsed from the latest Received header'
                 })
                 .option('mta', {
                     alias: 'm',
@@ -191,6 +197,11 @@ const argv = yargs(hideBin(process.argv))
                     alias: 'n',
                     type: 'string',
                     description: 'Path to a JSON file with cached DNS responses. If this file is given then no actual DNS requests are performed'
+                })
+                .option('headers-only', {
+                    alias: 'o',
+                    type: 'boolean',
+                    description: 'Return signing headers only'
                 });
             yargs.positional('email', {
                 describe: 'Path to the email message file in EML format. If not specified then content is read from stdin'
