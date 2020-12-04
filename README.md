@@ -35,7 +35,7 @@ Where
     -   **sender** (_string_) is the email address from MAIL FROM command. If not set then it is parsed from the `Return-Path` header
     -   **ip** (_string_) is the IP of remote client that sent this message
     -   **helo** (_string_) is the hostname value from HELO/EHLO command
-    -   **trustReceived** (_boolean_) if true then parses values for `ip` and `helo` from latest `Received` header if you have not set these values yourself. Defaults to `false`
+    -   **trustReceived** (_boolean_) if true then parses values for `ip` and `helo` from the latest `Received` header if you have not set these values yourself. Defaults to `false`
     -   **mta** (_string_) is the hostname of the server performing the authentication (defaults to `os.hostname()`)
     -   **minBitLength** (_number_) is the minimum allowed bits of RSA public keys (defaults to 1024). If a DKIM or ARC key has less bits, then validation is considered as failed
     -   **disableArc** (_boolean_) if true then skip ARC checks

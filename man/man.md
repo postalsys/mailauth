@@ -51,7 +51,7 @@ content is read from standard input.
     Print application version
 
 -   `--client-ip`, `-i <ip>`
-    Client IP used for SPF checks. If not set then parsed from latest Received header. (`report`, `seal`)
+    Client IP used for SPF checks. If not set then parsed from the latest Received header. (`report`, `seal`)
 
 -   `--mta`, `-m <hostname>`
     Hostname of this machine, used in the Authentication-Results header. (`report`, `seal`)

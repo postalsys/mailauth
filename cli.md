@@ -23,6 +23,8 @@ Install `mailauth` globally to get the command line interface
 npm install -g mailauth
 ```
 
+> Depending on you system you might need to use _sudo_ for this step.
+
 ## Help
 
 ```
