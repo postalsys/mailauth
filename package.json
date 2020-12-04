@@ -1,12 +1,12 @@
 {
     "name": "mailauth",
-    "version": "1.0.25",
+    "version": "1.0.26",
     "description": "Email authentication library for Node.js",
     "main": "lib/mailauth.js",
     "scripts": {
         "test": "eslint \"lib/**/*.js\" \"test/**/*.js\" && mocha --recursive \"./test/**/*.js\" --reporter spec",
         "prepublish": "npm run man",
-        "man": "cd man && marked-man --version 'v1.0.24' --manual 'Mailauth Help' --section 1 man.md > mailauth.1"
+        "man": "cd man && marked-man --version 'v1.0.26' --manual 'Mailauth Help' --section 1 man.md > mailauth.1"
     },
     "repository": {
         "type": "git",
