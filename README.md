@@ -1,6 +1,6 @@
 ![](https://github.com/andris9/mailauth/raw/master/assets/mailauth.png)
 
-Email authentication library for Node.js
+[Command line utility](cli.md) and a Node.js library for email authentication.
 
 -   **SPF** verification
 -   **DKIM** signing
@@ -15,9 +15,11 @@ Email authentication library for Node.js
 
 Pure JavaScript implementation, no external applications or compilation needed. Runs on any server/device that has Node 14+ installed.
 
-> You can also install `mailauth` as a system command, see [details here](cli.md).
+## Command line usage
 
-## Usage
+See [command line documentation](cli.md) for the `mailauth` command.
+
+## Library Usage
 
 ## Authentication
 
@@ -400,10 +402,6 @@ Where
 -   **policy** is the policy object returned by `getPolicy()`
 
 Function returns a boolean. If it is `true` then MX hostname is allowed to use.
-
-## Command line usage
-
-See [CLI USAGE](cli.md)
 
 ## Testing
 
