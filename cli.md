@@ -7,7 +7,7 @@
 -   [Help](#help)
 -   [Available commands](#available-commands)
     -   [report](#report) – to validate SPF, DKIM, DMARC, ARC
-    -   [sign](#sign) - to sing an email with DKIM
+    -   [sign](#sign) - to sign an email with DKIM
     -   [seal](#seal) - to seal an email with ARC
 -   [DNS cache file](#dns-cache-file)
 
