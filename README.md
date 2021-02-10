@@ -1,6 +1,6 @@
 ![](https://github.com/andris9/mailauth/raw/master/assets/mailauth.png)
 
-> Sponsored by [Forward Email](https://forwardemail.net/?ref=nodemailer) &ndash; free email forwarding + custom domains + 100% open-source!
+> Sponsored by [Forward Email](https://forwardemail.net/?ref=mailauth) &ndash; free email forwarding + custom domains + 100% open-source!
 
 [Command line utility](cli.md) and a Node.js library for email authentication.
 
