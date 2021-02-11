@@ -427,8 +427,6 @@ ValiMail [arc_test_suite](https://github.com/ValiMail/arc_test_suite)
 
 ## Setup
 
-### Free, AGPL-licensed version
-
 First install the module from npm:
 
 ```
@@ -441,38 +439,8 @@ next import any method you want to use from mailauth package into your script:
 const { authenticate } = require('mailauth');
 ```
 
-### MIT version
-
-MIT-licensed version is available for [Postal Systems subscribers](https://postalsys.com/).
-
-First install the module from Postal Systems private registry:
-
-```
-$ npm install @postalsys/mailauth
-```
-
-next import any method you want to use from mailauth package into your script:
-
-```js
-const { authenticate } = require('@postalsys/mailauth');
-```
-
-If you have already built your application using the free version of "mailauth" and do not want to modify require statements in your code, you can install the MIT-licensed version as an alias for "mailauth".
-
-```
-$ npm install mailauth@npm:@postalsys/mailauth
-```
-
-This way you can keep using the old module name
-
-```js
-const { authenticate } = require('mailauth');
-```
-
 ## License
 
 &copy; 2020 Andris Reinman
 
-Dual licensed under GNU Affero General Public License v3.0 or later or EUPLv1.1+
-
-MIT-licensed version of mailauth is available for [Postal Systems subscribers](https://postalsys.com/).
+Licensed under MIT license

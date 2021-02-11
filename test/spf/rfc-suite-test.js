@@ -13,7 +13,7 @@ const suiteFile = fs.readFileSync(__dirname + '/../fixtures/spf/rfc7208-tests.ym
 const files = suiteFile
     .split(/^-{2,}$/m)
     .filter(f => f.match(/^[^#\s]/m))
-    .map(f => yaml.safeLoad(f));
+    .map(f => yaml.load(f));
 
 const ignoreTests = [
     // SPF record specific issue
@@ -87,9 +87,7 @@ let getResolver = zonedata => {
                         return replyErr(val);
                     }
 
-                    let formatStr = str => {
-                        return str.replace(/\\0/g, '\x00').replace(/\\x([0-9A-F]{2})/g, (m, c) => unescape(`%${c}`));
-                    };
+                    let formatStr = str => str.replace(/\\0/g, '\x00').replace(/\\x([0-9A-F]{2})/g, (m, c) => unescape(`%${c}`));
 
                     switch (type) {
                         case 'TXT':

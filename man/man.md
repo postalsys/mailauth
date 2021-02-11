@@ -117,7 +117,7 @@ Please report any bugs to https://github.com/andris9/mailauth/issues.
 
 ## LICENSE
 
-Copyright (c) 2020, Andris Reinman (AGPL-3.0-or-later OR EUPL-1.1+).
+Copyright (c) 2020, Andris Reinman (MIT).
 
 ## SEE ALSO
 
