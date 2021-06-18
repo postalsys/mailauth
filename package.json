@@ -1,6 +1,6 @@
 {
     "name": "mailauth",
-    "version": "2.1.0",
+    "version": "2.1.1",
     "description": "Email authentication library for Node.js",
     "main": "lib/mailauth.js",
     "scripts": {
@@ -30,25 +30,25 @@
     "homepage": "https://github.com/andris9/mailauth",
     "devDependencies": {
         "chai": "4.3.4",
-        "eslint": "7.23.0",
+        "eslint": "7.28.0",
         "eslint-config-nodemailer": "1.2.0",
-        "eslint-config-prettier": "8.1.0",
-        "js-yaml": "4.0.0",
+        "eslint-config-prettier": "8.3.0",
+        "js-yaml": "4.1.0",
         "marked": "0.7.0",
         "marked-man": "0.7.0",
         "mbox-reader": "1.1.5",
-        "mocha": "8.3.2"
+        "mocha": "9.0.0"
     },
     "dependencies": {
         "@fidm/x509": "1.2.1",
-        "ipaddr.js": "2.0.0",
+        "ipaddr.js": "2.0.1",
         "joi": "17.4.0",
         "libmime": "5.0.0",
         "node-forge": "0.10.0",
-        "nodemailer": "6.5.0",
+        "nodemailer": "6.6.2",
         "psl": "1.8.0",
         "punycode": "2.1.1",
-        "yargs": "16.2.0"
+        "yargs": "17.0.1"
     },
     "engines": {
         "node": ">=14.0.0"
