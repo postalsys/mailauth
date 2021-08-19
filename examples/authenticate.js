@@ -26,6 +26,7 @@ const main = async () => {
     });
 
     console.log(JSON.stringify(res, false, 2));
+    console.log(res.headers);
 };
 
 main()
