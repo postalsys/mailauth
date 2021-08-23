@@ -48,6 +48,7 @@ Where
         -   **selector** (_string_) ARC key selector
         -   **privateKey** (_string_ or _buffer_) Private key for signing. Can be a RSA or an Ed25519 key
     -   **resolver** (_async function_) is an optional async function for DNS requests. Defaults to [dns.promises.resolve](https://nodejs.org/api/dns.html#dns_dnspromises_resolve_hostname_rrtype)
+    -   **maxResolveCount** (_number_ defaults to _50_) is the DNS lookup limit for SPF. [RFC7208](https://datatracker.ietf.org/doc/html/rfc7208#section-4.6.4) requires this limit to be 10, mailauth is less strict and defaults to 50.
 
 **Example**
 

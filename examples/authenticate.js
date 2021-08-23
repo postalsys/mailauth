@@ -22,7 +22,8 @@ const main = async () => {
         resolver: async (name, rr) => {
             console.log('DNS', rr, name);
             return await dns.promises.resolve(name, rr);
-        }
+        },
+        maxResolveCount: 10
     });
 
     console.log(JSON.stringify(res, false, 2));

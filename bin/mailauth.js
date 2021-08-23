@@ -9,6 +9,7 @@ const assert = require('assert');
 const commandReport = require('../lib/commands/report');
 const commandSign = require('../lib/commands/sign');
 const commandSeal = require('../lib/commands/seal');
+const commandSpf = require('../lib/commands/spf');
 
 const argv = yargs(hideBin(process.argv))
     .command(
@@ -41,6 +42,12 @@ const argv = yargs(hideBin(process.argv))
                     alias: 'n',
                     type: 'string',
                     description: 'Path to a JSON file with cached DNS responses. If this file is given then no actual DNS requests are performed'
+                })
+                .option('max-lookups', {
+                    alias: 'x',
+                    type: 'number',
+                    description: 'Maximum allowed DNS lookups',
+                    default: 50
                 });
             yargs.positional('email', {
                 describe: 'Path to the email message file in EML format. If not specified then content is read from stdin'
@@ -217,6 +224,63 @@ const argv = yargs(hideBin(process.argv))
                         console.error('Failed to sign input message');
                         console.error(err);
                     }
+                    process.exit(1);
+                });
+        }
+    )
+    .command(
+        ['spf'],
+        'Validate SPF for an email address and MTA IP address',
+        yargs => {
+            yargs
+                .option('sender', {
+                    alias: 'f',
+                    type: 'string',
+                    description: 'Email address from the MAIL FROM command',
+                    demandOption: true
+                })
+                .option('client-ip', {
+                    alias: 'i',
+                    type: 'string',
+                    description: 'Client IP used for SPF checks. If not set then parsed from the latest Received header',
+                    demandOption: true
+                })
+                .option('helo', {
+                    alias: 'e',
+                    type: 'string',
+                    description: 'Client hostname from the EHLO/HELO command, used in some specific SPF checks'
+                })
+                .option('mta', {
+                    alias: 'm',
+                    type: 'string',
+                    description: 'Hostname of this machine, used in the Authentication-Results header',
+                    default: os.hostname()
+                })
+                .option('dns-cache', {
+                    alias: 'n',
+                    type: 'string',
+                    description: 'Path to a JSON file with cached DNS responses. If this file is given then no actual DNS requests are performed'
+                })
+                .option('headers-only', {
+                    alias: 'o',
+                    type: 'boolean',
+                    description: 'Return signing headers only'
+                })
+                .option('max-lookups', {
+                    alias: 'x',
+                    type: 'number',
+                    description: 'Maximum allowed DNS lookups',
+                    default: 50
+                });
+        },
+        argv => {
+            commandSpf(argv)
+                .then(() => {
+                    process.exit();
+                })
+                .catch(err => {
+                    console.error('Failed to verify SPF for an email address');
+                    console.error(err);
                     process.exit(1);
                 });
         }

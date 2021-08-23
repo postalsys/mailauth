@@ -25,6 +25,9 @@ Sign an email with a DKIM digital signature
 **seal**\
 Authenticates an email and seals it with an ARC digital signature
 
+**spf**\
+Authenticates SPF for an IP address and email address
+
 ## Website
 
 [](https://github.com/andris9/mailauth)
@@ -35,7 +38,11 @@ Authenticates an email and seals it with an ARC digital signature
 
 `mailauth report /path/to/email.eml`
 
+`cat /path/to/email.eml | mailauth report`
+
 `mailauth sign /path/to/email.eml -d kreata.ee -s test -k /path/to/key`
+
+`mailauth spf -f andris@wildduck.email -i 217.146.76.20`
 
 ## EMAIL ARGUMENT
 
@@ -51,19 +58,19 @@ content is read from standard input.
     Print application version
 
 -   `--client-ip`, `-i <ip>`
-    Client IP used for SPF checks. If not set then parsed from the latest Received header. (`report`, `seal`)
+    Client IP used for SPF checks. If not set then parsed from the latest Received header. (`report`, `seal`, `spf`)
 
 -   `--mta`, `-m <hostname>`
-    Hostname of this machine, used in the Authentication-Results header. (`report`, `seal`)
+    Hostname of this machine, used in the Authentication-Results header. (`report`, `seal`, `spf`)
 
 -   `--helo`, `-e <hostname>`
-    Client hostname from the EHLO/HELO command, used in some specific SPF checks. (`report`, `seal`)
+    Client hostname from the EHLO/HELO command, used in some specific SPF checks. (`report`, `seal`, `spf`)
 
 -   `--sender`, `-f <address>`
-    Email address from the `MAIL FROM` command. If not set then the address from the latest _Return-Path_ header is used instead. (`report`, `seal`)
+    Email address from the `MAIL FROM` command. If not set then the address from the latest _Return-Path_ header is used instead. (`report`, `seal`, `spf`)
 
 -   `--dns-cache`, `-n <file>`
-    Path to a JSON file with cached DNS responses. If this file is given then no actual DNS requests are performed. (`report`, `seal`)
+    Path to a JSON file with cached DNS responses. If this file is given then no actual DNS requests are performed. (`report`, `seal`, `spf`)
 
 -   `--private-key`, `-k <file>`
     Path to a private key for signing. Allowed key types are RSA and Ed25519 (`sign`, `seal`)
@@ -90,7 +97,10 @@ content is read from standard input.
     Colon separated list of header field names to sign. (`sign`, `seal`)
 
 -   `--headers-only`, `-o`
-    Return signing headers only. By default the entire message is printed to console. (`sign`, `seal`)
+    Return signing headers only. By default the entire message is printed to console. (`sign`, `seal`, `spf`)
+
+-   `--max-lookups`, `-x`
+    How many DNS lookups allowed for SPF validation. Defaults to 50. (`report`, `spf`)
 
 ## DNS CACHE
 

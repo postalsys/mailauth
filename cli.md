@@ -9,6 +9,7 @@
     -   [report](#report) – to validate SPF, DKIM, DMARC, ARC
     -   [sign](#sign) - to sign an email with DKIM
     -   [seal](#seal) - to seal an email with ARC
+    -   [spt](#spf) - to validate SPF for an IP address and email address
 -   [DNS cache file](#dns-cache-file)
 
 ## Requirements
@@ -32,6 +33,7 @@ $ mailauth --help
 $ mailauth report --help
 $ mailauth sign --help
 $ mailauth seal --help
+$ mailauth spf --help
 ```
 
 In some systems you can also use manpages (manpage availability depends on how node and npm were installed to the system).
@@ -63,6 +65,7 @@ Where
 -   `--mta hostname` or `-m hostname` is the server hostname doing the validation checks. Defaults to `os.hostname()`
 -   `--dns-cache /path/to/dns.json` or `-n path` is the path to a file with cached DNS query responses. If this file is provided then no actual DNS requests are performed, only cached values from this file are used.
 -   `--verbose` or `-v` if this flag is set then mailauth writes some debugging info to standard error
+-   `--max-lookups nr` or `-x nr` defines the allowed DNS lookup limit for SPF checks. Defaults to 50.
 
 **Example**
 
@@ -167,6 +170,45 @@ Signing time:               2020-12-03T23:04:41.082Z
 ARC-Seal: i=3; a=rsa-sha256; t=1607036681; cv=pass; d=kreata.ee; s=test;
  b=Fo3hayVos+J77lzzgmr6J92gsUBKlPt/ZkoQt9ZCi514zy8+1WLvTHmI8CMUXAcegdcqP0NHt
  ...
+```
+
+### spf
+
+`spf` command takes an email address and an IP address and returns a JSON formatted SPF report.
+
+```
+$ mailauth spf [options]
+```
+
+Where
+
+-   **options** are option flags and arguments
+
+**Options**
+
+-   `--sender user@example.com` or `-f address` is the email address from the MAIL FROM command. Required.
+-   `--client-ip x.x.x.x` or `-i x.x.x.x` is the IP of the remote client that sent the email. Required.
+-   `--helo hostname` or `-e hostname` is the client hostname from the HELO/EHLO command. Used in some obscure SPF validation operations
+-   `--mta hostname` or `-m hostname` is the server hostname doing the validation checks. Defaults to `os.hostname()`. Used in authentication headers.
+-   `--dns-cache /path/to/dns.json` or `-n path` is the path to a file with cached DNS query responses. If this file is provided then no actual DNS requests are performed, only cached values from this file are used.
+-   `--verbose` or `-v` if this flag is set then mailauth writes some debugging info to standard error
+-   `--headers-only` or `-o` If set return SPF authentication header only. Default is to return a JSON structure.
+-   `--max-lookups nr` or `-x nr` defines the allowed DNS lookup limit for SPF checks. Defaults to 50.
+
+**Example**
+
+```
+$ mailauth spf --verbose -f andris@wildduck.email -i 217.146.76.20
+Checking SPF for andris@wildduck.email
+Maximum DNS lookups: 50
+--------
+DNS query for TXT wildduck.email: [["v=spf1 mx a -all"]]
+DNS query for MX wildduck.email: [{"exchange":"mail.wildduck.email","priority":1}]
+DNS query for A mail.wildduck.email: ["217.146.76.20"]
+{
+  "domain": "wildduck.email",
+  "client-ip": "217.146.76.20",
+  ...
 ```
 
 ## DNS cache file

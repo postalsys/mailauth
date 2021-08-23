@@ -1,16 +1,19 @@
 'use strict';
 
 const { spf } = require('../lib/spf');
+const util = require('util');
 
 const main = async () => {
-    let result = await spf({ sender: 'andris@wildduck.email', ip: '127.0.0.1', helo: 'foo' });
-    console.log(result);
+    let tests = [
+        { sender: 'andris@wildduck.email', ip: '127.0.0.1', helo: 'foo' },
+        { sender: 'andris@wildduckzzzzzz.email', ip: '127.0.0.1', helo: 'foo' },
+        { sender: 'andris@wildduck.email', ip: '217.146.76.20', helo: 'foo' }
+    ];
 
-    result = await spf({ sender: 'andris@wildduckzzzzzz.email', ip: '127.0.0.1', helo: 'foo' });
-    console.log(result);
-
-    result = await spf({ sender: 'andris@wildduck.email', ip: '217.146.76.20', helo: 'foo' });
-    console.log(result);
+    for (let opts of tests) {
+        let result = await spf(opts);
+        console.log(util.inspect(result, { depth: 22, colors: true }));
+    }
 };
 
 main()
