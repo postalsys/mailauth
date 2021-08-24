@@ -9,7 +9,7 @@
     -   [report](#report) – to validate SPF, DKIM, DMARC, ARC
     -   [sign](#sign) - to sign an email with DKIM
     -   [seal](#seal) - to seal an email with ARC
-    -   [spt](#spf) - to validate SPF for an IP address and email address
+    -   [spf](#spf) - to validate SPF for an IP address and an email address
 -   [DNS cache file](#dns-cache-file)
 
 ## Requirements
