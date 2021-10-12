@@ -69,7 +69,8 @@
         ],
         "assets": [
             "man/**/*",
-            "licenses.txt"
+            "licenses.txt",
+            "LICENSE.txt"
         ],
         "_targets": [
             "node16-macos-x64"

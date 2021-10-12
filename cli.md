@@ -17,7 +17,7 @@
 Download `mailauth` for your platform:
 
 -   [MacOS](https://github.com/postalsys/mailauth/releases/latest/download/mailauth.pkg)
--   [Linux](https://github.com/postalsys/mailauth/releases/latest/download/mailauth.gz)
+-   [Linux](https://github.com/postalsys/mailauth/releases/latest/download/mailauth.tar.gz)
 -   [Windows](https://github.com/postalsys/mailauth/releases/latest/download/mailauth.exe)
 -   Or install from the NPM registry: `npm install -g mailauth`
 
