@@ -10,6 +10,8 @@ const commandReport = require('../lib/commands/report');
 const commandSign = require('../lib/commands/sign');
 const commandSeal = require('../lib/commands/seal');
 const commandSpf = require('../lib/commands/spf');
+const fs = require('fs');
+const pathlib = require('path');
 
 const argv = yargs(hideBin(process.argv))
     .command(
@@ -283,6 +285,41 @@ const argv = yargs(hideBin(process.argv))
                     console.error(err);
                     process.exit(1);
                 });
+        }
+    )
+    .command(
+        ['license'],
+        'Show license information',
+        () => false,
+        () => {
+            fs.readFile(pathlib.join(__dirname, '..', 'LICENSE.txt'), (err, license) => {
+                if (err) {
+                    console.error('Failed to load license information');
+                    console.error(err);
+                    return process.exit(1);
+                }
+
+                console.error('Mailauth License');
+                console.error('================');
+
+                console.error(license.toString().trim());
+
+                console.error('');
+
+                fs.readFile(pathlib.join(__dirname, '..', 'licenses.txt'), (err, data) => {
+                    if (err) {
+                        console.error('Failed to load license information');
+                        console.error(err);
+                        return process.exit(1);
+                    }
+
+                    console.error('Included Modules');
+                    console.error('================');
+
+                    console.error(data.toString().trim());
+                    process.exit();
+                });
+            });
         }
     )
     .option('verbose', {

@@ -1,5 +1,6 @@
 test
 examples
+dist
 .prettierrc.js
 .eslintrc
 .github

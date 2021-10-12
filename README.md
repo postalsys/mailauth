@@ -1,4 +1,4 @@
-![](https://github.com/andris9/mailauth/raw/master/assets/mailauth.png)
+![](https://github.com/postalsys/mailauth/raw/master/assets/mailauth.png)
 
 [Command line utility](cli.md) and a Node.js library for email authentication.
 
@@ -442,6 +442,6 @@ const { authenticate } = require('mailauth');
 
 ## License
 
-&copy; 2020 Andris Reinman
+&copy; 2020-2021 Postal Systems OÜ
 
 Licensed under MIT license

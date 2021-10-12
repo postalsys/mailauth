@@ -1,16 +1,18 @@
 {
     "name": "mailauth",
-    "version": "2.2.2",
+    "version": "2.2.3",
     "description": "Email authentication library for Node.js",
     "main": "lib/mailauth.js",
     "scripts": {
         "test": "eslint \"lib/**/*.js\" \"test/**/*.js\" && mocha --recursive \"./test/**/*.js\" --reporter spec",
         "prepublish": "npm run man || true",
-        "man": "cd man && marked-man --version `node -e \"console.log('v'+require('../package.json').version)\"` --manual 'Mailauth Help' --section 1 man.md > mailauth.1"
+        "man": "cd man && marked-man --version `node -e \"console.log('v'+require('../package.json').version)\"` --manual 'Mailauth Help' --section 1 man.md > mailauth.1",
+        "build-dist": "npm run man && npm run licenses && pkg package.json",
+        "licenses": "license-report --only=prod --output=table --config license-report-config.json > licenses.txt"
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/andris9/mailauth.git"
+        "url": "git+https://github.com/postalsys/mailauth.git"
     },
     "keywords": [
         "rfc822",
@@ -22,22 +24,24 @@
         "bimi",
         "mta-sts"
     ],
-    "author": "Andris Reinman",
+    "author": "Postal Systems OÜ",
     "license": "MIT",
     "bugs": {
-        "url": "https://github.com/andris9/mailauth/issues"
+        "url": "https://github.com/postalsys/mailauth/issues"
     },
-    "homepage": "https://github.com/andris9/mailauth",
+    "homepage": "https://github.com/postalsys/mailauth",
     "devDependencies": {
         "chai": "4.3.4",
-        "eslint": "7.32.0",
+        "eslint": "8.0.0",
         "eslint-config-nodemailer": "1.2.0",
         "eslint-config-prettier": "8.3.0",
         "js-yaml": "4.1.0",
+        "license-report": "4.5.0",
         "marked": "0.7.0",
         "marked-man": "0.7.0",
         "mbox-reader": "1.1.5",
-        "mocha": "9.1.0"
+        "mocha": "9.1.2",
+        "pkg": "5.3.3"
     },
     "dependencies": {
         "@fidm/x509": "1.2.1",
@@ -45,10 +49,10 @@
         "joi": "17.4.2",
         "libmime": "5.0.0",
         "node-forge": "0.10.0",
-        "nodemailer": "6.6.3",
+        "nodemailer": "6.7.0",
         "psl": "1.8.0",
         "punycode": "2.1.1",
-        "yargs": "17.1.1"
+        "yargs": "17.2.1"
     },
     "engines": {
         "node": ">=14.0.0"
@@ -58,5 +62,18 @@
     },
     "directories": {
         "man": "man"
+    },
+    "pkg": {
+        "scripts": [
+            "workers/**/*.js"
+        ],
+        "assets": [
+            "man/**/*",
+            "licenses.txt"
+        ],
+        "_targets": [
+            "node16-macos-x64"
+        ],
+        "outputPath": "dist"
     }
 }

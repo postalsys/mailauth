@@ -28,9 +28,12 @@ Authenticates an email and seals it with an ARC digital signature
 **spf**\
 Authenticates SPF for an IP address and email address
 
+**license**\
+Display licenses for mailauth and included modules
+
 ## Website
 
-[](https://github.com/andris9/mailauth)
+[](https://github.com/postalsys/mailauth)
 
 ## EXAMPLES
 
@@ -123,11 +126,11 @@ Longer TXT strings can be split into multiple strings. Unlike in real DNS there 
 
 ## BUGS
 
-Please report any bugs to https://github.com/andris9/mailauth/issues.
+Please report any bugs to https://github.com/postalsys/mailauth/issues.
 
 ## LICENSE
 
-Copyright (c) 2020, Andris Reinman (MIT).
+Copyright (c) 2020-2021, Postal Systems (MIT).
 
 ## SEE ALSO
 

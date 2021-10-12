@@ -2,7 +2,6 @@
 
 ## TOC
 
--   [Requirements](#requirements)
 -   [Installation](#installation)
 -   [Help](#help)
 -   [Available commands](#available-commands)
@@ -10,21 +9,17 @@
     -   [sign](#sign) - to sign an email with DKIM
     -   [seal](#seal) - to seal an email with ARC
     -   [spf](#spf) - to validate SPF for an IP address and an email address
+    -   [license](#license) - display licenses for `mailauth` and included modules
 -   [DNS cache file](#dns-cache-file)
-
-## Requirements
-
--   **Node.js v14+** – using an older version of Node is not supported
 
 ## Installation
 
-Install `mailauth` globally to get the command line interface
+Download `mailauth` for your platform:
 
-```
-npm install -g mailauth
-```
-
-> Depending on you system you might need to use _sudo_ for this step.
+-   [MacOS](https://github.com/postalsys/mailauth/releases/latest/download/mailauth.pkg)
+-   [Linux](https://github.com/postalsys/mailauth/releases/latest/download/mailauth.gz)
+-   [Windows](https://github.com/postalsys/mailauth/releases/latest/download/mailauth.exe)
+-   Or install from the NPM registry: `npm install -g mailauth`
 
 ## Help
 
@@ -34,12 +29,6 @@ $ mailauth report --help
 $ mailauth sign --help
 $ mailauth seal --help
 $ mailauth spf --help
-```
-
-In some systems you can also use manpages (manpage availability depends on how node and npm were installed to the system).
-
-```
-$ man mailauth
 ```
 
 ## Available commands
@@ -209,6 +198,14 @@ DNS query for A mail.wildduck.email: ["217.146.76.20"]
   "domain": "wildduck.email",
   "client-ip": "217.146.76.20",
   ...
+```
+
+### license
+
+Display licenses for `mailauth` and included modules.
+
+```
+$ mailauth licenses
 ```
 
 ## DNS cache file
