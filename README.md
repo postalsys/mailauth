@@ -442,6 +442,6 @@ const { authenticate } = require('mailauth');
 
 ## License
 
-&copy; 2020-2021 Postal Systems OÜ
+&copy; 2020-2022 Postal Systems OÜ
 
 Licensed under MIT license

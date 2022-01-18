@@ -15,7 +15,7 @@ if (process.argv[3]) {
 
 dkimVerify(eml)
     .then(res => {
-        console.log('result', res);
+        console.log(JSON.stringify(res, false, 2));
     })
     .catch(err => {
         console.error(err);
