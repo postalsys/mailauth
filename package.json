@@ -7,7 +7,7 @@
         "test": "eslint \"lib/**/*.js\" \"test/**/*.js\" && mocha --recursive \"./test/**/*.js\" --reporter spec",
         "prepublish": "npm run man || true",
         "man": "cd man && marked-man --version `node -e \"console.log('v'+require('../package.json').version)\"` --manual 'Mailauth Help' --section 1 man.md > mailauth.1",
-        "build-dist": "npm run man && npm run licenses && pkg package.json",
+        "build-dist": "npm run man && npm run licenses && pkg --compress Brotli package.json",
         "licenses": "license-report --only=prod --output=table --config license-report-config.json > licenses.txt"
     },
     "repository": {
