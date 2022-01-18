@@ -60,9 +60,9 @@
     "bin": {
         "mailauth": "bin/mailauth.js"
     },
-    "directories": {
-        "man": "man"
-    },
+    "man": [
+        "man/mailauth.1"
+    ],
     "pkg": {
         "scripts": [
             "workers/**/*.js"

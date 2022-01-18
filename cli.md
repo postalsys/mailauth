@@ -23,6 +23,12 @@ Download `mailauth` for your platform:
 
 > **NB!** Downloadable files are quite large because these are packaged Node.js applications
 
+Alternatively you can install `mailauth` from [npm](https://npmjs.com/package/mailauth).
+
+```
+npm install -g mailauth
+```
+
 ## Help
 
 ```

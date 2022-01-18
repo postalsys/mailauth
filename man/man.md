@@ -12,7 +12,7 @@
 
 ## DESCRIPTION
 
-Mailauth is an email authentication application to validate SPF, DKIM, DMARC and ARC. You can also sign emails with DKIM digital signatures and seal messages with ARC.
+Mailauth is an email authentication application to validate SPF, DKIM, DMARC, and ARC. You can also sign emails with DKIM digital signatures and seal messages with ARC.
 
 ## COMMANDS
 
@@ -49,7 +49,7 @@ Display licenses for mailauth and included modules
 
 ## EMAIL ARGUMENT
 
-Email argument defines path to the email message file in EML format. If not specified then
+Email argument defines the path to the email message file in EML format. If not specified, then
 content is read from standard input.
 
 ## OPTIONS
@@ -61,19 +61,19 @@ content is read from standard input.
     Print application version
 
 -   `--client-ip`, `-i <ip>`
-    Client IP used for SPF checks. If not set then parsed from the latest Received header. (`report`, `seal`, `spf`)
+    Client IP used for SPF checks. If not set, then parsed from the latest Received header. (`report`, `seal`, `spf`)
 
 -   `--mta`, `-m <hostname>`
-    Hostname of this machine, used in the Authentication-Results header. (`report`, `seal`, `spf`)
+    The hostname of this machine, used in the `Authentication-Results` header. (`report`, `seal`, `spf`)
 
 -   `--helo`, `-e <hostname>`
     Client hostname from the EHLO/HELO command, used in some specific SPF checks. (`report`, `seal`, `spf`)
 
 -   `--sender`, `-f <address>`
-    Email address from the `MAIL FROM` command. If not set then the address from the latest _Return-Path_ header is used instead. (`report`, `seal`, `spf`)
+    The email address from the `MAIL FROM` command. If not set, the address from the latest _Return-Path_ header is used instead. (`report`, `seal`, `spf`)
 
 -   `--dns-cache`, `-n <file>`
-    Path to a JSON file with cached DNS responses. If this file is given then no actual DNS requests are performed. (`report`, `seal`, `spf`)
+    Path to a JSON file with cached DNS responses. If this file is given, then no actual DNS requests are performed. Anything that is not listed returns an `ENOTFOUND` error. (`report`, `seal`, `spf`)
 
 -   `--private-key`, `-k <file>`
     Path to a private key for signing. Allowed key types are RSA and Ed25519 (`sign`, `seal`)
@@ -91,23 +91,23 @@ content is read from standard input.
     Canonicalization algorithm. Defaults to _relaxed/relaxed_. (`sign`)
 
 -   `--body-length`, `-l <number>`
-    'Maximum length of canonicalizated body to sign. (`sign`)
+    The maximum length of the canonicalized body to sign. (`sign`)
 
 -   `--time`, `-t <number>`
-    Signing time as a unix timestamp. (`sign`, `seal`)
+    Signing time as a Unix timestamp. (`sign`, `seal`)
 
 -   `--header-fields`, `-h <list>`
     Colon separated list of header field names to sign. (`sign`, `seal`)
 
 -   `--headers-only`, `-o`
-    Return signing headers only. By default the entire message is printed to console. (`sign`, `seal`, `spf`)
+    Return signing headers only. By default, the entire message is printed to the console. (`sign`, `seal`, `spf`)
 
 -   `--max-lookups`, `-x`
     How many DNS lookups allowed for SPF validation. Defaults to 50. (`report`, `spf`)
 
 ## DNS CACHE
 
-For cached DNS requests use the following JSON structure where main keys are domain names and subkeys are rr types.
+For cached DNS requests, use the following JSON object structure: primary keys are domain names, and subkeys are resource record types.
 
 ```
 {
@@ -122,7 +122,7 @@ For cached DNS requests use the following JSON structure where main keys are dom
 }
 ```
 
-Longer TXT strings can be split into multiple strings. Unlike in real DNS there is no length limit, so you can put the entire public key into a single string.
+You can split longer TXT strings into multiple strings. There is no length limit, unlike in actual DNS so you can put the entire public key into a single string.
 
 ## BUGS
 
