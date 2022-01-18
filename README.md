@@ -13,7 +13,7 @@
 -   **BIMI** resolving
 -   **MTA-STS** helpers
 
-Pure JavaScript implementation, no external applications or compilation needed. Runs on any server/device that has Node 14+ installed.
+Pure JavaScript implementation, no external applications or compilation needed. It runs on any server/device that has Node 14+ installed.
 
 ## Command line usage
 
@@ -23,7 +23,7 @@ See [command line documentation](cli.md) for the `mailauth` command.
 
 ## Authentication
 
-Validate DKIM signatures, SPF, DMARC, ARC and BIMI for an email.
+Validate DKIM signatures, SPF, DMARC, ARC, and BIMI for an email.
 
 ```js
 await authenticate(message [,options]) ->
@@ -32,23 +32,23 @@ await authenticate(message [,options]) ->
 
 Where
 
--   **message** is either a String, a Buffer or a Readable stream that represents an email message
+-   **message** is either a String, a Buffer, or a Readable stream that represents an email message
 -   **options** (_object_) is an optional options object
-    -   **sender** (_string_) is the email address from MAIL FROM command. If not set then it is parsed from the `Return-Path` header
-    -   **ip** (_string_) is the IP of remote client that sent this message
+    -   **sender** (_string_) is the email address from MAIL FROM command. If not set, then it is parsed from the `Return-Path` header
+    -   **ip** (_string_) is the IP of the remote client that sent this message
     -   **helo** (_string_) is the hostname value from HELO/EHLO command
-    -   **trustReceived** (_boolean_) if true then parses values for `ip` and `helo` from the latest `Received` header if you have not set these values yourself. Defaults to `false`
+    -   **trustReceived** (_boolean_) if true, then parses values for `ip` and `helo` from the latest `Received` header if you have not set these values yourself. Defaults to `false`.
     -   **mta** (_string_) is the hostname of the server performing the authentication (defaults to `os.hostname()`)
-    -   **minBitLength** (_number_) is the minimum allowed bits of RSA public keys (defaults to 1024). If a DKIM or ARC key has less bits, then validation is considered as failed
+    -   **minBitLength** (_number_) is the minimum allowed bits of RSA public keys (defaults to 1024). If a DKIM or ARC key has fewer bits, then validation is considered as failed
     -   **disableArc** (_boolean_) if true then skip ARC checks
-    -   **disableDmarc** (_boolean_) if true then skip DMARC checks. This also disables checks that are dependent on DMARC (eg. BIMI)
-    -   **disableBimi** (_boolean_) if true then skip BIMI checks
+    -   **disableDmarc** (_boolean_) if true then skip DMARC checks. It also disables checks that are dependent on DMARC (e.g., BIMI)
+    -   **disableBimi** (_boolean_) if true, then skip BIMI checks
     -   **seal** (_object_) if set and message does not have a broken ARC chain, then seals the message using these values
         -   **signingDomain** (_string_) ARC key domain name
         -   **selector** (_string_) ARC key selector
-        -   **privateKey** (_string_ or _buffer_) Private key for signing. Can be a RSA or an Ed25519 key
+        -   **privateKey** (_string_ or _buffer_) Private key for signing. Either an RSA or an Ed25519 key
     -   **resolver** (_async function_) is an optional async function for DNS requests. Defaults to [dns.promises.resolve](https://nodejs.org/api/dns.html#dns_dnspromises_resolve_hostname_rrtype)
-    -   **maxResolveCount** (_number_ defaults to _50_) is the DNS lookup limit for SPF. [RFC7208](https://datatracker.ietf.org/doc/html/rfc7208#section-4.6.4) requires this limit to be 10, mailauth is less strict and defaults to 50.
+    -   **maxResolveCount** (_number_ defaults to _50_) is the DNS lookup limit for SPF. [RFC7208](https://datatracker.ietf.org/doc/html/rfc7208#section-4.6.4) requires this limit to be 10. Mailauth is less strict and defaults to 50.
 
 **Example**
 
@@ -90,11 +90,11 @@ Authentication-Results: mx.ethereal.email;
 From: ...
 ```
 
-You can see full output (structured data for DKIM, SPF, DMARC and ARC) from [this example](https://gist.github.com/andris9/6514b5e7c59154a5b08636f99052ce37).
+You can see the full output (structured data for DKIM, SPF, DMARC, and ARC) from [this example](https://gist.github.com/andris9/6514b5e7c59154a5b08636f99052ce37).
 
 ### receivedChain
 
-`receivedChain` property is an array of parsed representations of the `Received:` headers
+`receivedChain` property is an array of parsed representations of the `Received:` headers.
 
 ## DKIM
 
@@ -132,7 +132,7 @@ const signResult = await dkimSign(
                 // Optional signature specifc canonicalization, overrides whatever was set in parent object
                 canonicalization: 'relaxed/relaxed' // c=
 
-                // Maximum number of canonicalizated body bytes to sign (eg. the "l=" tag).
+                // Maximum number of canonicalized body bytes to sign (eg. the "l=" tag).
                 // Do not use though. This is available only for compatibility testing.
                 // maxBodyLength: 12345
             }
@@ -216,7 +216,7 @@ const { arc } = await authenticate(
 console.log(arc);
 ```
 
-Output being something like this:
+The output is something like this:
 
 ```
 {
@@ -233,7 +233,7 @@ Output being something like this:
 
 #### During authentication
 
-You can seal messages with ARC automatically in the authentication step by providing the sealing key. In this case you can not modify the message anymore as this would break the seal.
+You can seal messages with ARC automatically in the authentication step by providing the sealing key. In this case, you can not modify the message any more as this would break the seal.
 
 ```js
 const { authenticate } = require('mailauth');
@@ -258,7 +258,7 @@ process.stdout.write(message);
 
 #### After modifications
 
-If you want to modify the message before sealing then you have to authenticate the message first and then use authentication results as input for the sealing step.
+If you want to modify the message before sealing, you have to authenticate the message first and then use authentication results as input for the sealing step.
 
 ```js
 const { authenticate, sealMessage } = require('@postalsys/mailauth');
@@ -297,7 +297,7 @@ process.stdout.write(message);
 
 Brand Indicators for Message Identification (BIMI) support is based on [draft-blank-ietf-bimi-01](https://tools.ietf.org/html/draft-blank-ietf-bimi-01).
 
-BIMI information is resolved in the authentication step and the results can be found from the `bimi` property. Message must pass DMARC validation in order to be processed for BIMI. DMARC policy can not be "none" for BIMI to pass.
+BIMI information is resolved in the authentication step, and the results can be found from the `bimi` property. The message must pass DMARC validation to be processed for BIMI. DMARC policy can not be "none" for BIMI to pass.
 
 ```js
 const { bimi } = await authenticate(
@@ -314,7 +314,7 @@ if (bimi?.location) {
 }
 ```
 
-`BIMI-Location` header is ignored by `mailauth`, it is not checked for and it is not modified in any way if it is present. `BIMI-Selector` is used for selector selection (if available).
+`BIMI-Location` header is ignored by `mailauth`, it is not checked for, and it is not modified in any way if it is present. `BIMI-Selector` is used for selector selection (if available).
 
 ### Verified Mark Certificate
 
@@ -327,14 +327,14 @@ Some example authority evidence documents:
 -   [from default.\_bimi.cnn.com](https://amplify.valimail.com/bimi/time-warner/LysAFUdG-Hw-cnn_vmc.pem)
 -   [from default.\_bimi.entrustdatacard.com](https://www.entrustdatacard.com/-/media/certificate/Entrust%20VMC%20July%2014%202020.pem)
 
-You can parse logos from these certificate files by using the `parseLogoFromX509` function
+You can parse logos from these certificate files using the `parseLogoFromX509` function.
 
 ```js
 const { parseLogoFromX509 } = require('mailauth/lib/tools');
 let { altnNames, svg } = await parseLogoFromX509(fs.readFileSync('vmc.pem'));
 ```
 
-> **NB!** `parseLogoFromX509` does not verify the validity of the VMC certificate. It could be self signed or expired and still be processed.
+> **NB!** `parseLogoFromX509` does not verify the validity of the VMC certificate. It could be self-signed or expired and still be processed.
 
 ## MTA-STS
 
@@ -372,10 +372,10 @@ async getPolicy(domain [,knownPolicy]) -> {policy, status}
 
 Where
 
--   **domain** is the domain to check for (eg. "gmail.com")
--   **knownPolicy** (optional) is the policy object from last check for this domain. This is used to check if the policy is still valid or it was updated.
+-   **domain** is the domain to check for (e.g. "gmail.com")
+-   **knownPolicy** (optional) is the policy object from the last check for this domain. This is used to check if the policy is still valid or it was updated.
 
-Function returns an object with the following properties:
+The function returns an object with the following properties:
 
 -   **policy** (object)
     -   **id** (string or `false`) ID of the policy
@@ -387,11 +387,11 @@ Function returns an object with the following properties:
     -   _"cached"_ no changes detected, current policy is still valid and can be used
     -   _"found"_ new or updated policy was found. Cache this in your system until _policy.expires_
     -   _"renew"_ existing policy is still valid, renew cached version until _policy.expires_
-    -   _"errored"_ policy discovery failed for some temporary error (eg. failing DNS queries). See _policy.error_ for details
+    -   _"errored"_ policy discovery failed for some temporary error (e.g., failing DNS queries). See _policy.error_ for details
 
 ### Validate MX hostname
 
-Check if a resolved MX hostname is valid by MTA-STS policy or not
+Check if a resolved MX hostname is valid by MTA-STS policy or not.
 
 ```
 validateMx(mx, policy) -> Boolean
@@ -402,7 +402,7 @@ Where
 -   **mx** is the resolved MX hostname (eg. "gmail-smtp-in.l.google.com")
 -   **policy** is the policy object returned by `getPolicy()`
 
-Function returns a boolean. If it is `true` then MX hostname is allowed to use.
+The function returns a boolean. If it is `true`, then MX hostname is allowed to use.
 
 ## Testing
 
@@ -412,23 +412,23 @@ Function returns a boolean. If it is `true` then MX hostname is allowed to use.
 
 [OpenSPF test suite](http://www.openspf.org/Test_Suite) ([archive.org mirror](https://web.archive.org/web/20190130131432/http://www.openspf.org/Test_Suite)) with the following differences:
 
--   No PTR support in `mailauth`, all PTR related tests are ignored
--   Less strict whitespace checks (`mailauth` accepts multiple spaces between tags etc)
+-   No PTR support in `mailauth`. All PTR related tests are ignored
+-   Less strict whitespace checks (`mailauth` accepts multiple spaces between tags etc.)
 -   Some macro tests are skipped (macro expansion is supported _in most parts_)
--   Some tests where invalid component is listed after a matching part (mailauth processes from left to right and returns on first match found)
--   Other than that all tests pass
+-   Some tests where the invalid component is listed after a matching part (mailauth processes from left to right and returns on the first match found)
+-   Other than that, all tests pass
 
 ### ARC test suite from ValiMail
 
 ValiMail [arc_test_suite](https://github.com/ValiMail/arc_test_suite)
 
--   `mailauth` is less strict on header tags and casing, for example uppercase `S=` for a selector passes in `mailauth` but fails in ValiMail.
--   Signing test suite is used for input only. All listed messages are signed using provided keys but signatures are not matched against reference. Instead `mailauth` validates the signatures itself and looks for the same cv= output that the ARC-Seal header in the test suite has
--   Other than that all tests pass
+-   `mailauth` is less strict on header tags and casing. For example, uppercase `S=` for a selector passes in `mailauth` but fails in ValiMail.
+-   Signing test suite is used for input only. All listed messages are signed using provided keys, but signatures are not matched against the reference. Instead, `mailauth` validates the signatures itself and looks for the same cv= output that the ARC-Seal header in the test suite has
+-   Other than that, all tests pass
 
 ## Setup
 
-First install the module from npm:
+First, install the module from npm:
 
 ```
 $ npm install mailauth
