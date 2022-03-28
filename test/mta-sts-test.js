@@ -1,4 +1,4 @@
-/* eslint no-unused-expressions:0 */
+/* eslint no-unused-expressions:0, no-invalid-this: 0 */
 'use strict';
 
 const chai = require('chai');
@@ -10,7 +10,9 @@ chai.config.includeStack = true;
 
 // NB! these tests perform live DNS and HTTPS queries
 
-describe('MTA-STS Tests', () => {
+describe('MTA-STS Tests', function () {
+    this.timeout(15000);
+
     it('Should pass valid MX', async () => {
         const { policy } = await getPolicy('gmail.com');
         const policyMatch = validateMx('alt4.gmail-smtp-in.l.google.com', policy);

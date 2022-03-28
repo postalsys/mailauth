@@ -3,6 +3,7 @@
 
 const chai = require('chai');
 const expect = chai.expect;
+const Path = require('path');
 
 let fs = require('fs').promises;
 let { RelaxedHash } = require('../../../lib/dkim/body/relaxed');
@@ -57,5 +58,14 @@ describe('DKIM RelaxedBody Tests', () => {
         s.update(message);
 
         expect(s.digest('base64')).to.equal('D2H5TEwtUgM2u8Ew0gG6vnt/Na6L+Zep7apmSmfy8IQ=');
+    });
+
+    it('Should calculate sha1 body hash for an empty message', async () => {
+        const message = await fs.readFile(Path.join(__dirname, '..', '..', 'fixtures', 'end-space.eml'));
+
+        let s = new RelaxedHash('rsa-sha256');
+        s.update(message);
+
+        expect(s.digest('base64')).to.equal('Vxfz30FKdOmO1/hbIhudOeTt+gvue8V4ERWVBgJ/0Nk=');
     });
 });
