@@ -7,7 +7,8 @@
         "test": "eslint \"lib/**/*.js\" \"test/**/*.js\" && mocha --recursive \"./test/**/*.js\" --reporter spec",
         "prepublish": "npm run man || true",
         "man": "cd man && marked-man --version `node -e \"console.log('v'+require('../package.json').version)\"` --manual 'Mailauth Help' --section 1 man.md > mailauth.1",
-        "build-dist": "npm run man && npm run licenses && pkg --compress Brotli package.json",
+        "build-source": "rm -rf node_modules package-lock.json && npm install && npm run man && npm run licenses && rm -rf node_modules package-lock.json && npm install --production && rm -rf package-lock.json",
+        "build-dist": "npx pkg --compress Brotli package.json && rm -rf package-lock.json && npm install",
         "licenses": "license-report --only=prod --output=table --config license-report-config.json > licenses.txt"
     },
     "repository": {
@@ -64,16 +65,15 @@
         "man/mailauth.1"
     ],
     "pkg": {
-        "scripts": [
-            "workers/**/*.js"
-        ],
         "assets": [
             "man/**/*",
             "licenses.txt",
             "LICENSE.txt"
         ],
-        "_targets": [
-            "node16-macos-x64"
+        "targets": [
+            "node16-linux-x64",
+            "node16-macos-x64",
+            "node16-win-x64"
         ],
         "outputPath": "ee-dist"
     }
