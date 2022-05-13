@@ -1,7 +1,6 @@
 'use strict';
 
-const { authenticate } = require('../lib/mailauth');
-const { sealMessage } = require('../lib/arc');
+const { authenticate, sealMessage } = require('..');
 const dns = require('dns');
 
 const fs = require('fs');

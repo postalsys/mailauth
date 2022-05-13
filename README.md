@@ -261,7 +261,7 @@ process.stdout.write(message);
 If you want to modify the message before sealing, you have to authenticate the message first and then use authentication results as input for the sealing step.
 
 ```js
-const { authenticate, sealMessage } = require('@postalsys/mailauth');
+const { authenticate, sealMessage } = require('mailauth');
 
 // 1. authenticate the message
 const { arc, headers } = await authenticate(
