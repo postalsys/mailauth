@@ -6,10 +6,13 @@ const yargs = require('yargs/yargs');
 const { hideBin } = require('yargs/helpers');
 const os = require('os');
 const assert = require('assert');
+
 const commandReport = require('../lib/commands/report');
 const commandSign = require('../lib/commands/sign');
 const commandSeal = require('../lib/commands/seal');
 const commandSpf = require('../lib/commands/spf');
+const commandVmc = require('../lib/commands/vmc');
+
 const fs = require('fs');
 const pathlib = require('path');
 
@@ -282,6 +285,35 @@ const argv = yargs(hideBin(process.argv))
                 })
                 .catch(err => {
                     console.error('Failed to verify SPF for an email address');
+                    console.error(err);
+                    process.exit(1);
+                });
+        }
+    )
+    .command(
+        ['vmc'],
+        'Validate VMC logo',
+        yargs => {
+            yargs.option('authorityFile', {
+                alias: 'f',
+                type: 'string',
+                description: 'Path to a VMC file',
+                demandOption: false
+            });
+            yargs.option('authority', {
+                alias: 'a',
+                type: 'string',
+                description: 'URL to a VMC file',
+                demandOption: false
+            });
+        },
+        argv => {
+            commandVmc(argv)
+                .then(() => {
+                    process.exit();
+                })
+                .catch(err => {
+                    console.error('Failed to verify VMC file');
                     console.error(err);
                     process.exit(1);
                 });

@@ -9,6 +9,7 @@
     -   [sign](#sign) - to sign an email with DKIM
     -   [seal](#seal) - to seal an email with ARC
     -   [spf](#spf) - to validate SPF for an IP address and an email address
+    -   [vmc](#vmc) - to validate BIMI VMC logo files
     -   [license](#license) - display licenses for `mailauth` and included modules
 -   [DNS cache file](#dns-cache-file)
 
@@ -206,6 +207,86 @@ DNS query for A mail.wildduck.email: ["217.146.76.20"]
   "domain": "wildduck.email",
   "client-ip": "217.146.76.20",
   ...
+```
+
+### vmc
+
+`vmc` command takes either the URL for a VMC file or a file path or both. It then verifies if the VMC resource is a valid file or not and exposes its contents.
+
+```
+$ mailauth vmc [options]
+```
+
+Where
+
+-   **options** are option flags and arguments
+
+**Options**
+
+-   `--authority <url>` or `-a <url>` is the URL for the VMC resource
+-   `--authorityFile <path>` or `-f <path>` is the cached file for the authority URL to avoid network requests
+
+**Example**
+
+```
+$ mailauth vmc -a https://amplify.valimail.com/bimi/time-warner/yV3KRIg4nJW-cnn.pem
+{
+  "url": "https://amplify.valimail.com/bimi/time-warner/yV3KRIg4nJW-cnn.pem",
+  "success": true,
+  "vmc": {
+    "mediaType": "image/svg+xml",
+    "hashAlgo": "sha1",
+    "hashValue": "ea8c81da633c66a16262134a78576cdf067638e9",
+    "logoFile": "PD94bWwgdmVyc...",
+    "validHash": true,
+    "certificate": {
+      "subjectAltName": [
+        "cnn.com"
+      ],
+      "subject": {
+        "businessCategory": "Private Organization",
+        "jurisdictionCountryName": "US",
+        "jurisdictionStateOrProvinceName": "Delaware",
+        "serialNumber": "2976730",
+        "countryName": "US",
+        "stateOrProvinceName": "Georgia",
+        "localityName": "Atlanta",
+        "street": "190 Marietta St NW",
+        "organizationName": "Cable News Network, Inc.",
+        "commonName": "Cable News Network, Inc.",
+        "trademarkCountryOrRegionName": "US",
+        "trademarkRegistration": "5817930"
+      },
+      "fingerprint": "17:B3:94:97:E6:6B:C8:6B:33:B8:0A:D2:F0:79:6B:08:A2:A6:84:BD",
+      "serialNumber": "0821B8FE0A9CBC3BAC10DA08C088EEF4",
+      "issuer": {
+        "countryName": "US",
+        "organizationName": "DigiCert, Inc.",
+        "commonName": "DigiCert Verified Mark RSA4096 SHA256 2021 CA1"
+      }
+    }
+  }
+}
+```
+
+If the certificate verification fails, then the contents are not returned.
+
+```
+$ mailauth vmc -f /path/to/random/cert-bundle.pem
+{
+  "success": false,
+  "error": {
+    "message": "Self signed certificate in certificate chain",
+    "details": {
+      "subject": "CN=catchall.delivery",
+      "fingerprint": "35:EF:C9:9A:52:D5:A9:94:00:68:C6:D4:17:F1:26:61:01:0F:70:6D",
+      "fingerprint235": "09:AB:0F:6B:F5:4F:16:58:F8:94:80:DE:E2:1A:D1:47:CC:64:F2:BF:63:E7:73:E4:02:F9:D3:C3:F6:9E:CC:86",
+      "validFrom": "Jul  6 23:10:49 2022 GMT",
+      "validTo": "Oct  4 23:10:48 2022 GMT"
+    },
+    "code": "SELF_SIGNED_CERT_IN_CHAIN"
+  }
+}
 ```
 
 ### license

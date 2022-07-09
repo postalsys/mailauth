@@ -327,15 +327,6 @@ Some example authority evidence documents:
 -   [from default.\_bimi.cnn.com](https://amplify.valimail.com/bimi/time-warner/LysAFUdG-Hw-cnn_vmc.pem)
 -   [from default.\_bimi.entrustdatacard.com](https://www.entrustdatacard.com/-/media/certificate/Entrust%20VMC%20July%2014%202020.pem)
 
-You can parse logos from these certificate files using the `parseLogoFromX509` function.
-
-```js
-const { parseLogoFromX509 } = require('mailauth/lib/tools');
-let { altnNames, svg } = await parseLogoFromX509(fs.readFileSync('vmc.pem'));
-```
-
-> **NB!** `parseLogoFromX509` does not verify the validity of the VMC certificate. It could be self-signed or expired and still be processed.
-
 ## MTA-STS
 
 `mailauth` allows you to fetch MTA-STS information for a domain name.
