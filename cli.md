@@ -287,8 +287,8 @@ $ mailauth vmc -p /path/to/random/cert-bundle.pem
       "subject": "CN=postal.vmc.local\nO=Postal Systems OU.\nC=EE",
       "fingerprint": "CC:49:83:ED:3F:6B:77:45:5B:A5:3B:9E:EC:99:0E:A1:EF:D7:FF:97",
       "fingerprint235": "D4:36:6F:B4:EF:2B:4F:9E:84:23:3D:F2:3A:F7:13:21:C6:C3:CF:CB:03:5F:BB:54:5B:69:A4:AC:6A:43:61:7D",
-      "validFrom": "Jul  9 06:13:33 2022 GMT",
-      "validTo": "Jul  9 06:13:33 2023 GMT"
+      "validFrom": "2022-07-10T06:28:06.482Z",
+      "validTo": "2022-07-10T06:28:06.482Z"
     },
     "code": "SELF_SIGNED_CERT_IN_CHAIN"
   }
