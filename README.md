@@ -10,7 +10,7 @@
 -   ARC sealing
     -   Sealing on authentication
     -   Sealing after modifications
--   **BIMI** resolving
+-   **BIMI** resolving and **VMC** validation
 -   **MTA-STS** helpers
 
 Pure JavaScript implementation, no external applications or compilation needed. It runs on any server/device that has Node 14+ installed.
