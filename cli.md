@@ -26,14 +26,6 @@ Download `mailauth` for your platform:
 -   [Windows](https://github.com/postalsys/mailauth/releases/latest/download/mailauth.exe)
 -   Or install from the NPM registry: `npm install -g mailauth`
 
-> **NB!** Downloadable files are quite large because these are packaged Node.js applications
-
-Alternatively you can install `mailauth` from [npm](https://npmjs.com/package/mailauth).
-
-```
-npm install -g mailauth
-```
-
 ## Help
 
 ```
