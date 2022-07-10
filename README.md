@@ -13,7 +13,7 @@
 -   **BIMI** resolving and **VMC** validation
 -   **MTA-STS** helpers
 
-Pure JavaScript implementation, no external applications or compilation needed. It runs on any server/device that has Node 14+ installed.
+Pure JavaScript implementation, no external applications or compilation needed. It runs on any server/device that has Node 16+ installed.
 
 ## Command line usage
 
