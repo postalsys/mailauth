@@ -294,18 +294,25 @@ const argv = yargs(hideBin(process.argv))
         ['vmc'],
         'Validate VMC logo',
         yargs => {
-            yargs.option('authorityFile', {
-                alias: 'f',
-                type: 'string',
-                description: 'Path to a VMC file',
-                demandOption: false
-            });
-            yargs.option('authority', {
-                alias: 'a',
-                type: 'string',
-                description: 'URL to a VMC file',
-                demandOption: false
-            });
+            yargs
+                .option('authorityPath', {
+                    alias: 'p',
+                    type: 'string',
+                    description: 'Path to a VMC file',
+                    demandOption: false
+                })
+                .option('authority', {
+                    alias: 'a',
+                    type: 'string',
+                    description: 'URL to a VMC file',
+                    demandOption: false
+                })
+                .option('domain', {
+                    alias: 'd',
+                    type: 'string',
+                    description: 'Sending domain to validate',
+                    demandOption: false
+                });
         },
         argv => {
             commandVmc(argv)

@@ -1,6 +1,6 @@
 {
     "name": "mailauth",
-    "version": "3.0.0",
+    "version": "3.0.1",
     "description": "Email authentication library for Node.js",
     "main": "lib/mailauth.js",
     "scripts": {
@@ -45,8 +45,7 @@
         "pkg": "5.7.0"
     },
     "dependencies": {
-        "@fidm/x509": "1.2.1",
-        "@postalsys/vmc": "1.0.1",
+        "@postalsys/vmc": "1.0.3",
         "ipaddr.js": "2.0.1",
         "joi": "17.6.0",
         "libmime": "5.1.0",
