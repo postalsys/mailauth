@@ -42,10 +42,11 @@
         "marked-man": "0.7.0",
         "mbox-reader": "1.1.5",
         "mocha": "10.0.0",
-        "pkg": "5.7.0"
+        "pkg": "5.8.0"
     },
     "dependencies": {
-        "@postalsys/vmc": "1.0.3",
+        "@postalsys/vmc": "1.0.4",
+        "fast-xml-parser": "4.0.9",
         "ipaddr.js": "2.0.1",
         "joi": "17.6.0",
         "libmime": "5.1.0",
