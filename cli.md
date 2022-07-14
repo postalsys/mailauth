@@ -238,9 +238,6 @@ $ mailauth vmc -a https://amplify.valimail.com/bimi/time-warner/yV3KRIg4nJW-cnn.
     "logoFile": "<2300B base64 encoded file>",
     "validHash": true,
     "certificate": {
-      "subjectAltName": [
-        "cnn.com"
-      ],
       "subject": {
         "businessCategory": "Private Organization",
         "jurisdictionCountryName": "US",
@@ -255,8 +252,13 @@ $ mailauth vmc -a https://amplify.valimail.com/bimi/time-warner/yV3KRIg4nJW-cnn.
         "trademarkCountryOrRegionName": "US",
         "trademarkRegistration": "5817930"
       },
+      "subjectAltName": [
+        "cnn.com"
+      ],
       "fingerprint": "17:B3:94:97:E6:6B:C8:6B:33:B8:0A:D2:F0:79:6B:08:A2:A6:84:BD",
       "serialNumber": "0821B8FE0A9CBC3BAC10DA08C088EEF4",
+      "validFrom": "2021-08-12T00:00:00.000Z",
+      "validTo": "2022-08-12T23:59:59.000Z",
       "issuer": {
         "countryName": "US",
         "organizationName": "DigiCert, Inc.",
@@ -267,7 +269,7 @@ $ mailauth vmc -a https://amplify.valimail.com/bimi/time-warner/yV3KRIg4nJW-cnn.
 }
 ```
 
-If the certificate verification fails, then the contents are not returned.
+If the certificate verification fails, then the logo contents are not returned.
 
 ```
 $ mailauth vmc -p /path/to/random/cert-bundle.pem
@@ -276,13 +278,42 @@ $ mailauth vmc -p /path/to/random/cert-bundle.pem
   "error": {
     "message": "Self signed certificate in certificate chain",
     "details": {
-      "subject": "CN=postal.vmc.local\nO=Postal Systems OU.\nC=EE",
-      "fingerprint": "CC:49:83:ED:3F:6B:77:45:5B:A5:3B:9E:EC:99:0E:A1:EF:D7:FF:97",
-      "fingerprint235": "D4:36:6F:B4:EF:2B:4F:9E:84:23:3D:F2:3A:F7:13:21:C6:C3:CF:CB:03:5F:BB:54:5B:69:A4:AC:6A:43:61:7D",
-      "validFrom": "2022-07-10T06:28:06.482Z",
-      "validTo": "2022-07-10T06:28:06.482Z"
+      "certificate": {
+        "subject": {
+          "commonName": "postal.vmc.local",
+          "organizationName": "Postal Systems OU.",
+          "countryName": "EE"
+        },
+        "subjectAltName": [],
+        "fingerprint": "CC:49:83:ED:3F:6B:77:45:5B:A5:3B:9E:EC:99:0E:A1:EF:D7:FF:97",
+        "serialNumber": "B61FBFBA917B15D9",
+        "validFrom": "2022-07-09T06:13:33.000Z",
+        "validTo": "2023-07-09T06:13:33.000Z",
+        "issuer": {
+          "commonName": "postal.vmc.local",
+          "organizationName": "Postal Systems OU.",
+          "countryName": "EE"
+        }
+      }
     },
     "code": "SELF_SIGNED_CERT_IN_CHAIN"
+  }
+}
+```
+
+The embedded SVG file is also validated.
+
+```
+$ mailauth vmc -p /path/to/vmc-with-invalid-svg.pem
+{
+  "success": false,
+  "error": {
+    "message": "VMC logo SVG validation failed",
+    "details": {
+      "message": "Not a Tiny PS profile",
+      "code": "INVALID_BASE_PROFILE"
+    },
+    "code": "SVG_VALIDATION_FAILED"
   }
 }
 ```
