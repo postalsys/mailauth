@@ -23,7 +23,8 @@ const main = async () => {
             console.log('DNS', rr, name);
             return await dns.promises.resolve(name, rr);
         },
-        maxResolveCount: 10
+        maxResolveCount: 10,
+        maxVoidCount: 2
     });
 
     console.log(JSON.stringify(res, false, 2));

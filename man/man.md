@@ -103,7 +103,10 @@ content is read from standard input.
     Return signing headers only. By default, the entire message is printed to the console. (`sign`, `seal`, `spf`)
 
 -   `--max-lookups`, `-x`
-    How many DNS lookups allowed for SPF validation. Defaults to 50. (`report`, `spf`)
+    How many DNS lookups allowed for SPF validation. Defaults to 10. (`report`, `spf`)
+
+-   `--max-void-lookups`, `-z`
+    How many empty DNS lookups allowed for SPF validation. Defaults to 2. (`report`, `spf`)
 
 ## DNS CACHE
 

@@ -52,7 +52,13 @@ const argv = yargs(hideBin(process.argv))
                     alias: 'x',
                     type: 'number',
                     description: 'Maximum allowed DNS lookups',
-                    default: 50
+                    default: 10
+                })
+                .option('max-void-lookups', {
+                    alias: 'z',
+                    type: 'number',
+                    description: 'Maximum allowed empty DNS lookups',
+                    default: 2
                 });
             yargs.positional('email', {
                 describe: 'Path to the email message file in EML format. If not specified then content is read from stdin'
@@ -275,7 +281,13 @@ const argv = yargs(hideBin(process.argv))
                     alias: 'x',
                     type: 'number',
                     description: 'Maximum allowed DNS lookups',
-                    default: 50
+                    default: 10
+                })
+                .option('max-void-lookups', {
+                    alias: 'z',
+                    type: 'number',
+                    description: 'Maximum allowed empty DNS lookups',
+                    default: 2
                 });
         },
         argv => {

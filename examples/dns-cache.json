@@ -5,5 +5,71 @@
 
     "example.com": {
         "TXT": [["v=spf1 include:_spf.google.com include:sendgrid.net", " include:servers.mcsv.net include:servers.outfunnel.com ip4:18.194.223.2 ~all"]]
+    },
+
+    "exploding.mx": {
+        "TXT": [["v=spf1 mx -all"]],
+        "MX": [
+            { "exchange": "mx1.exploding.mx", "priority": 1 },
+            { "exchange": "mx2.exploding.mx", "priority": 2 },
+            { "exchange": "mx3.exploding.mx", "priority": 3 },
+            { "exchange": "mx4.exploding.mx", "priority": 4 },
+            { "exchange": "mx5.exploding.mx", "priority": 5 },
+            { "exchange": "mx6.exploding.mx", "priority": 6 },
+            { "exchange": "mx7.exploding.mx", "priority": 7 },
+            { "exchange": "mx8.exploding.mx", "priority": 8 },
+            { "exchange": "mx9.exploding.mx", "priority": 9 },
+            { "exchange": "mx10.exploding.mx", "priority": 10 },
+            { "exchange": "mx11.exploding.mx", "priority": 11 },
+            { "exchange": "mx12.exploding.mx", "priority": 12 }
+        ]
+    },
+
+    "mx1.exploding.mx": {
+        "A": [["1.2.3.1"]]
+    },
+
+    "mx2.exploding.mx": {
+        "A": [["1.2.3.2"]]
+    },
+
+    "mx3.exploding.mx": {
+        "A": [["1.2.3.3"]]
+    },
+
+    "mx4.exploding.mx": {
+        "A": [["1.2.3.4"]]
+    },
+
+    "mx5.exploding.mx": {
+        "A": [["1.2.3.5"]]
+    },
+
+    "mx6.exploding.mx": {
+        "A": [["1.2.3.6"]]
+    },
+
+    "mx7.exploding.mx": {
+        "A": [["1.2.3.7"]]
+    },
+
+    "_mx8.exploding.mx": {
+        "A": [["1.2.3.8"]]
+    },
+
+    "mx9.exploding.mx": {
+        "A": [["1.2.3.9"]]
+    },
+
+    "mx10.exploding.mx": {
+        "A": [["1.2.3.10"]]
+    },
+
+    "mx11.exploding.mx": {
+        "A": [["1.2.3.11"]]
+    },
+
+    "mx12.exploding.mx": {
+        "A": [["1.2.3.12"]]
     }
 }
