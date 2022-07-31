@@ -20,7 +20,8 @@ const ignoreTests = [
     /^non-ascii-non-spf$/,
 
     // PTR not supported
-    /^ptr-/,
+    //    /^ptr-/,
+
     /^bytes-bug$/,
 
     // this implementation is more relaxed
@@ -42,10 +43,10 @@ const ignoreTests = [
     // macro domain implementation not compatible
     /^invalid-hello-macro$/,
     /^hello-domain-literal$/,
-    /^require-valid-helo$/,
+    /^require-valid-helo$/
 
     // implementation has higher limits
-    /-limit$/
+    // /-limit$/
 ];
 
 let replyErr = code => {
@@ -67,6 +68,13 @@ let replyErr = code => {
 let getResolver = zonedata => {
     let resolver = async (domain, type) => {
         domain = domain.toLowerCase().trim();
+
+        // make sure we can run case insensitive queries
+        for (let key of Object.keys(zonedata)) {
+            if (key.toLowerCase() !== key && !zonedata[key.toLowerCase()]) {
+                zonedata[key.toLowerCase()] = zonedata[key];
+            }
+        }
 
         if (zonedata[domain]) {
             let list = zonedata[domain].filter(e => e && e[type]);

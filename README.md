@@ -48,7 +48,8 @@ Where
         -   **selector** (_string_) ARC key selector
         -   **privateKey** (_string_ or _buffer_) Private key for signing. Either an RSA or an Ed25519 key
     -   **resolver** (_async function_) is an optional async function for DNS requests. Defaults to [dns.promises.resolve](https://nodejs.org/api/dns.html#dns_dnspromises_resolve_hostname_rrtype)
-    -   **maxResolveCount** (_number_ defaults to _50_) is the DNS lookup limit for SPF. [RFC7208](https://datatracker.ietf.org/doc/html/rfc7208#section-4.6.4) requires this limit to be 10. Mailauth is less strict and defaults to 50.
+    -   **maxResolveCount** (_number_ defaults to _10_) is the DNS lookup limit for SPF. [RFC7208](https://datatracker.ietf.org/doc/html/rfc7208#section-4.6.4) requires this limit to be 10.
+    -   **maxVoidCount** (_number_ defaults to _2_) is the DNS lookup limit for SPF that produce an empty result. [RFC7208](https://datatracker.ietf.org/doc/html/rfc7208#section-4.6.4) requires this limit to be 2.
 
 **Example**
 
@@ -403,7 +404,6 @@ The function returns a boolean. If it is `true`, then MX hostname is allowed to 
 
 [OpenSPF test suite](http://www.openspf.org/Test_Suite) ([archive.org mirror](https://web.archive.org/web/20190130131432/http://www.openspf.org/Test_Suite)) with the following differences:
 
--   No PTR support in `mailauth`. All PTR related tests are ignored
 -   Less strict whitespace checks (`mailauth` accepts multiple spaces between tags etc.)
 -   Some macro tests are skipped (macro expansion is supported _in most parts_)
 -   Some tests where the invalid component is listed after a matching part (mailauth processes from left to right and returns on the first match found)

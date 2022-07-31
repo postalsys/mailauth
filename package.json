@@ -37,7 +37,7 @@
         "eslint-config-nodemailer": "1.2.0",
         "eslint-config-prettier": "8.5.0",
         "js-yaml": "4.1.0",
-        "license-report": "5.0.2",
+        "license-report": "6.0.0",
         "marked": "0.7.0",
         "marked-man": "0.7.0",
         "mbox-reader": "1.1.5",

@@ -59,7 +59,8 @@ Where
 -   `--mta hostname` or `-m hostname` is the server hostname doing the validation checks. Defaults to `os.hostname()`
 -   `--dns-cache /path/to/dns.json` or `-n path` is the path to a file with cached DNS query responses. If this file is provided then no actual DNS requests are performed, only cached values from this file are used.
 -   `--verbose` or `-v` if this flag is set then mailauth writes some debugging info to standard error
--   `--max-lookups nr` or `-x nr` defines the allowed DNS lookup limit for SPF checks. Defaults to 50.
+-   `--max-lookups nr` or `-x nr` defines the allowed DNS lookup limit for SPF checks. Defaults to 10.
+-   `--max-void-lookups nr` or `-z nr` defines the allowed DNS lookup limit for SPF checks. Defaults to 2.
 
 **Example**
 
@@ -187,14 +188,15 @@ Where
 -   `--dns-cache /path/to/dns.json` or `-n path` is the path to a file with cached DNS query responses. If this file is provided then no actual DNS requests are performed, only cached values from this file are used.
 -   `--verbose` or `-v` if this flag is set then mailauth writes some debugging info to standard error
 -   `--headers-only` or `-o` If set return SPF authentication header only. Default is to return a JSON structure.
--   `--max-lookups nr` or `-x nr` defines the allowed DNS lookup limit for SPF checks. Defaults to 50.
+-   `--max-lookups nr` or `-x nr` defines the allowed DNS lookup limit for SPF checks. Defaults to 10.
+-   `--max-void-lookups nr` or `-z nr` defines the allowed DNS lookup limit for SPF checks. Defaults to 2.
 
 **Example**
 
 ```
 $ mailauth spf --verbose -f andris@wildduck.email -i 217.146.76.20
 Checking SPF for andris@wildduck.email
-Maximum DNS lookups: 50
+Maximum DNS lookups: 10
 --------
 DNS query for TXT wildduck.email: [["v=spf1 mx a -all"]]
 DNS query for MX wildduck.email: [{"exchange":"mail.wildduck.email","priority":1}]
