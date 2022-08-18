@@ -166,7 +166,12 @@ describe('BIMI Tests', () => {
                 'base64'
             )
         };
-        let result = await validateVMC(bimiData);
+
+        // has to use specific time or the cert will be expired
+        const CUR_DATE_FIXED = '2022-07-09T08:30:14.715Z';
+
+        let result = await validateVMC(bimiData, { now: new Date(CUR_DATE_FIXED) });
+
         expect(result).to.exist;
         expect(result.location.hashValue).to.equal('ea8c81da633c66a16262134a78576cdf067638e9');
     });

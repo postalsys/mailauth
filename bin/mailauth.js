@@ -324,6 +324,12 @@ const argv = yargs(hideBin(process.argv))
                     type: 'string',
                     description: 'Sending domain to validate',
                     demandOption: false
+                })
+                .option('date', {
+                    alias: 't',
+                    type: 'string',
+                    description: 'ISO formatted timestamp for the certificate expiration checks',
+                    demandOption: false
                 });
         },
         argv => {
