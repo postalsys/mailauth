@@ -58,4 +58,14 @@ describe('DKIM RelaxedBody Tests', () => {
 
         expect(s.digest('base64')).to.equal('D2H5TEwtUgM2u8Ew0gG6vnt/Na6L+Zep7apmSmfy8IQ=');
     });
+
+    it('Should calculate body hash with l=0', async () => {
+        let message = await fs.readFile(__dirname + '/../../fixtures/message1.eml');
+        message = getBody(message);
+
+        let s = new RelaxedHash('rsa-sha256', 0);
+        s.update(message);
+
+        expect(s.digest('base64')).to.equal('47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=');
+    });
 });

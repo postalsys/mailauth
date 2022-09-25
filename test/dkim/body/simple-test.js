@@ -58,4 +58,14 @@ describe('DKIM SimpleBody Tests', () => {
 
         expect(s.digest('base64')).to.equal('GjyEkbey2OupCW5AKJv4dzTPsPHSaZjRDMqUSmhpTyQ=');
     });
+
+    it('Should calculate body hash with l=0', async () => {
+        let message = await fs.readFile(__dirname + '/../../fixtures/message1.eml');
+        message = getBody(message);
+
+        let s = new SimpleHash('rsa-sha256', 0);
+        s.update(message);
+
+        expect(s.digest('base64')).to.equal('47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=');
+    });
 });
