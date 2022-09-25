@@ -3,6 +3,7 @@
 
 const chai = require('chai');
 const expect = chai.expect;
+const crypto = require('crypto');
 
 let fs = require('fs').promises;
 let { SimpleHash } = require('../../../lib/dkim/body/simple');
@@ -67,5 +68,17 @@ describe('DKIM SimpleBody Tests', () => {
         s.update(message);
 
         expect(s.digest('base64')).to.equal('47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=');
+    });
+
+    it('Should calculate body hash with l=20', async () => {
+        let s = new SimpleHash('rsa-sha256', 20);
+        s.update(Buffer.from('tere tere\r\n \r\nvana kere\r\n\r\n'));
+
+        expect(s.digest('base64')).to.equal(
+            crypto
+                .createHash('sha256')
+                .update(Buffer.from(['tere tere\r\n', ' \r\n', 'vana k'].join('')))
+                .digest('base64')
+        );
     });
 });

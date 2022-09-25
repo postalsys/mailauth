@@ -16,6 +16,7 @@ let algo = process.argv[3] || false; // allowed: 'rsa-sha256', 'rsa-sha1', 'ed25
 dkimSign(eml, {
     canonicalization: 'simple/simple',
     signTime: Date.now(),
+    //expires: Date.now() + 1000,
     signatureData: [
         {
             algorithm: algo,
@@ -62,7 +63,10 @@ dkimSign(eml, {
         }
         // output signed message
         process.stdout.write(signResult.signatures);
-        return dkimVerify(Buffer.concat([Buffer.from(signResult.signatures), eml]));
+        return dkimVerify(Buffer.concat([Buffer.from(signResult.signatures), eml]), {
+            // change value to compare expiration timestamps
+            curTime: new Date()
+        });
     })
     .then(res => {
         console.log('result', res);

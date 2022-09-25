@@ -13,6 +13,7 @@ let eml = fs.readFileSync(file);
 let main = async () => {
     let signResult = await dkimSign(eml, {
         signTime: Date.now(),
+        //expires: new Date(Date.now() + 1000),
         signatureData: [
             {
                 canonicalization: 'simple/relaxed',
