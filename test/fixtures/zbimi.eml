@@ -1,0 +1,81 @@
+Delivered-To: andris.reinman@gmail.com
+Received: by 2002:a05:6358:e483:b0:ed:1eae:60a3 with SMTP id by3csp989960rwb;
+        Fri, 27 Jan 2023 00:11:26 -0800 (PST)
+X-Google-Smtp-Source: AMrXdXt9ZDtCSpBT4PpRtX+y+rFOSXiuPOVh5SS9kHTJgYYUrxY9xMBwzMUsnfRENIFzrsH35hk0
+X-Received: by 2002:a6b:4412:0:b0:704:b2a2:2be8 with SMTP id r18-20020a6b4412000000b00704b2a22be8mr27481410ioa.1.1674807086154;
+        Fri, 27 Jan 2023 00:11:26 -0800 (PST)
+ARC-Seal: i=1; a=rsa-sha256; t=1674807086; cv=none;
+        d=google.com; s=arc-20160816;
+        b=SF4m6JK1jzrUVX9CbY7IT4SLc9LdwZ+aJO6ToT8desK8lrJJq3399lC5VP1NXoQftQ
+         75vadyXEQWUWia9AMFvWQ4MrMqO1ahn7o5jPV24/ijGjDlCFLbYuxmeBtW0yo9938f1d
+         MKVwpbZxhUdgrNqfD8gNqpak/a6QEST6Y+LvA8TTMXuBVFkeK2BhGbDMBc01ka+gLdWK
+         UNPWuTjg7a+wSQUNlDzWc4xZ4rneq1OAD7z7/2KyVkdCzJUjHarj6ShB/ZJ/rbAmtdPt
+         G+cUAAvsrsu6+PCzIXYIJqB0mp0Bzv+4AqGVGX2KD7fYSnPxjWR/NH1ouxVeQ9BWmpe/
+         SxTg==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20160816;
+        h=to:date:message-id:subject:mime-version:from:dkim-signature;
+        bh=3sI3aH0s30d02osd7KMI81J1rHUHJpO2hlIBn8wI8QE=;
+        b=sGUgNkRO4JQ4nXxl35P0BUnf0hjqIaDKskMd8RtmplkmiqdELvrUc2u7YeqDzS0eiP
+         hsnf+ZYkJxNxGqxSSDyoWHjGnUGzAyzb4ixqnJnG59cCrP/QgR8/v0Y68h8SBUUbjBEa
+         SeAzMjFvxUCAvHdLEKvpxG/0V+vyTvTR4WKAZ1Bzef0XFcOg95brkMLlJG2NTbk4IrBF
+         Lh32QW2ON2FZ0OnX3vm6glbwp7eUzWwTanazk9vjYRDdHeUkGBCygSu8GPEwnOD+iQuS
+         uVkNJK2wPyujrTqRskxBsd5+YXJMWSOxxXSP52JM3kB3F8rtbnQHpc5WoTthZfslqiHo
+         srAw==
+ARC-Authentication-Results: i=1; mx.google.com;
+       dkim=pass header.i=@zone.ee header.s=zone header.b=lztj248j;
+       spf=pass (google.com: domain of andris@zone.ee designates 85.234.244.117 as permitted sender) smtp.mailfrom=andris@zone.ee;
+       dmarc=pass (p=REJECT sp=REJECT dis=NONE) header.from=zone.ee
+Return-Path: <andris@zone.ee>
+Received: from MTA-244-117.TLL07.ZONEAS.EU (mta-244-117.tll07.zoneas.eu. [85.234.244.117])
+        by mx.google.com with ESMTPS id i7-20020a056e020d8700b0030d70d9a6absi3210775ilj.159.2023.01.27.00.11.25
+        for <andris.reinman@gmail.com>
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 27 Jan 2023 00:11:26 -0800 (PST)
+Received-SPF: pass (google.com: domain of andris@zone.ee designates 85.234.244.117 as permitted sender) client-ip=85.234.244.117;
+Authentication-Results: mx.google.com;
+       dkim=pass header.i=@zone.ee header.s=zone header.b=lztj248j;
+       spf=pass (google.com: domain of andris@zone.ee designates 85.234.244.117 as permitted sender) smtp.mailfrom=andris@zone.ee;
+       dmarc=pass (p=REJECT sp=REJECT dis=NONE) header.from=zone.ee
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=zone.ee; q=dns/txt;
+ s=zone; bh=3sI3aH0s30d02osd7KMI81J1rHUHJpO2hlIBn8wI8QE=;
+ h=from:subject:date:message-id:to:mime-version:content-type;
+ b=lztj248jOAs5yYbjBQDCCk4e1ySReWh+b3G6HfuhtbcVC9pWRokOQ5AMgQIRIuNRm6U/8YpnF
+ E7nBmgQUsxXemLWLD9vgMdD0zrqRsBkCKKSWX4BQH57pzApqzJkWaa6i+KdS2tSIIcovX8G6rsm
+ zlTiQ3PZork9uknWu6BfcZJ/LDxFu1XkFw/m+m9pd7mhAst0Ozwmw+4RysjxH+BO02JbyBB9TvF
+ BOUxXugjPp+mPJHr5mNTFnK7W1YKjbpdGclgEH4z0s5jyAtr8shiaf32npewu9MMXqmLuqr4jrm
+ jDIlRZ1x32S7jOww8ig/VwLN5qM8EoAOsJOlp+6Jc8Xg==
+Received: from smtpclient.apple ([51.195.117.31] vpn.srv.dev)
+ (Authenticated sender: zmail-364712[andris@zone.ee])
+ by MTA-244-117.TLL07.ZONEAS.EU (ZoneMTA Forwarder) with ESMTPSA id 185f247f1cb000bca9.001
+ for <andris.reinman@gmail.com>
+ (version=TLSv1/SSLv3 cipher=ECDHE-RSA-AES128-GCM-SHA256);
+ Fri, 27 Jan 2023 08:11:19 +0000
+From: Andris Reinman <andris@zone.ee>
+Content-Type: multipart/alternative;
+	boundary="Apple-Mail=_F1CA573B-BCF5-4EF8-9669-10092D971828"
+Mime-Version: 1.0 (Mac OS X Mail 16.0 \(3731.300.101.1.3\))
+Subject: =?utf-8?B?SGFsbG8gaGFsbG8sIGhlbGdpIHNhbGxvIPCfmLXigI3wn5Kr?=
+Message-Id: <C6877778-B292-40DC-A93A-4DE108441876@zone.ee>
+Date: Fri, 27 Jan 2023 10:11:08 +0200
+To: Andris Reinman <andris.reinman@gmail.com>
+X-Mailer: Apple Mail (2.3731.300.101.1.3)
+
+
+--Apple-Mail=_F1CA573B-BCF5-4EF8-9669-10092D971828
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain;
+	charset=utf-8
+
+Hallo hallo, helgi sallo =F0=9F=98=B5=E2=80=8D=F0=9F=92=AB=
+
+--Apple-Mail=_F1CA573B-BCF5-4EF8-9669-10092D971828
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/html;
+	charset=utf-8
+
+<html><head><meta http-equiv=3D"content-type" content=3D"text/html; =
+charset=3Dutf-8"></head><body style=3D"overflow-wrap: break-word; =
+-webkit-nbsp-mode: space; line-break: after-white-space;">Hallo hallo, =
+<b>helgi</b> sallo =F0=9F=98=B5=E2=80=8D=F0=9F=92=AB</body></html>=
+
+--Apple-Mail=_F1CA573B-BCF5-4EF8-9669-10092D971828--
