@@ -33,7 +33,7 @@
     "homepage": "https://github.com/postalsys/mailauth",
     "devDependencies": {
         "chai": "4.3.7",
-        "eslint": "8.32.0",
+        "eslint": "8.33.0",
         "eslint-config-nodemailer": "1.2.0",
         "eslint-config-prettier": "8.6.0",
         "js-yaml": "4.1.0",
@@ -46,11 +46,11 @@
     },
     "dependencies": {
         "@postalsys/vmc": "1.0.6",
-        "fast-xml-parser": "4.0.15",
+        "fast-xml-parser": "4.1.1",
         "ipaddr.js": "2.0.1",
         "joi": "17.7.0",
-        "libmime": "5.2.0",
-        "nodemailer": "6.9.0",
+        "libmime": "5.2.1",
+        "nodemailer": "6.9.1",
         "psl": "1.9.0",
         "punycode": "2.3.0",
         "yargs": "17.6.2"
