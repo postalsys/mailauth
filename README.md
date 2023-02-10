@@ -294,6 +294,39 @@ process.stdout.write(headers); // authentication results
 process.stdout.write(message);
 ```
 
+## DMARC
+
+DMARC is verified as part of the authentication process and even as the `dmarc` handler is exported, it requires input from previous steps.
+
+### Helpers
+
+#### getDmarcRecord
+
+Returns parsed DMARC DNS record for a domain, or a subdomain
+
+```
+const getDmarcRecord = require('mailauth/lib/dmarc/get-dmarc-record');
+const dmarcRecord = getDmarcRecord("ethereal.email");
+console.log(dmarcRecord);
+```
+
+**Output**
+
+```
+{
+  v: 'DMARC1',
+  p: 'none',
+  pct: 100,
+  rua: 'mailto:re+joqy8fpatm3@dmarc.postmarkapp.com',
+  sp: 'none',
+  aspf: 'r',
+  rr: 'v=DMARC1; p=none; pct=100; rua=mailto:re+joqy8fpatm3@dmarc.postmarkapp.com; sp=none; aspf=r;',
+  isOrgRecord: false
+}
+```
+
+`isOrgRecord` is `true` for sudomains, where organizational domain's DMARC policy applies, so use the `sp`, not `p` policy.
+
 ## BIMI
 
 Brand Indicators for Message Identification (BIMI) support is based on [draft-blank-ietf-bimi-01](https://tools.ietf.org/html/draft-blank-ietf-bimi-01).
