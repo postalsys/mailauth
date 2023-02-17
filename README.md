@@ -302,7 +302,7 @@ DMARC is verified as part of the authentication process and even as the `dmarc` 
 
 #### getDmarcRecord(domain, resolver)
 
-Returns parsed DMARC DNS record for a domain, or a subdomain.
+Returns parsed DMARC DNS record for a domain or a subdomain (or) `false` is no record exists.
 
 ```
 const getDmarcRecord = require('mailauth/lib/dmarc/get-dmarc-record');
