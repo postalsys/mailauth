@@ -306,7 +306,7 @@ Returns parsed DMARC DNS record for a domain, or a subdomain.
 
 ```
 const getDmarcRecord = require('mailauth/lib/dmarc/get-dmarc-record');
-const dmarcRecord = getDmarcRecord("ethereal.email");
+const dmarcRecord = await getDmarcRecord("ethereal.email");
 console.log(dmarcRecord);
 ```
 
