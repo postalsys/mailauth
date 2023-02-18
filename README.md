@@ -300,13 +300,13 @@ DMARC is verified as part of the authentication process and even as the `dmarc` 
 
 ### Helpers
 
-#### getDmarcRecord
+#### getDmarcRecord(domain [,resolver])
 
-Returns parsed DMARC DNS record for a domain, or a subdomain
+Returns parsed DMARC DNS record for a domain or a subdomain or `false` is no record exists.
 
 ```
 const getDmarcRecord = require('mailauth/lib/dmarc/get-dmarc-record');
-const dmarcRecord = getDmarcRecord("ethereal.email");
+const dmarcRecord = await getDmarcRecord("ethereal.email");
 console.log(dmarcRecord);
 ```
 
@@ -326,6 +326,8 @@ console.log(dmarcRecord);
 ```
 
 `isOrgRecord` is `true` for sudomains, where organizational domain's DMARC policy applies, so use the `sp`, not `p` policy.
+
+Optionally set `resolver` argument with custom resolver (uses `dns.resolve` by default).
 
 ## BIMI
 
