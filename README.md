@@ -384,7 +384,7 @@ if (policy.mode === 'enforce') {
     // must use TLS
 }
 
-if (policy.mx && !policyMatch) {
+if (policy.mx && !policyMatch.valid) {
     // can't connect, unlisted MX
 }
 ```
@@ -421,7 +421,7 @@ The function returns an object with the following properties:
 Check if a resolved MX hostname is valid by MTA-STS policy or not.
 
 ```
-validateMx(mx, policy) -> Boolean
+validateMx(mx, policy) -> Object
 ```
 
 Where
@@ -429,7 +429,7 @@ Where
 -   **mx** is the resolved MX hostname (eg. "gmail-smtp-in.l.google.com")
 -   **policy** is the policy object returned by `getPolicy()`
 
-The function returns a boolean. If it is `true`, then MX hostname is allowed to use.
+The function returns an object. If `{valid}` is `true`, then MX hostname is allowed to be used.
 
 ## Testing
 

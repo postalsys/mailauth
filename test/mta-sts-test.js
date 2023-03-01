@@ -16,21 +16,21 @@ describe('MTA-STS Tests', function () {
     it('Should pass valid MX', async () => {
         const { policy } = await getPolicy('gmail.com');
         const policyMatch = validateMx('alt4.gmail-smtp-in.l.google.com', policy);
-        expect(policyMatch).to.be.true;
+        expect(policyMatch.valid).to.be.true;
         expect(policy.mode).to.equal('enforce');
     });
 
     it('Should discard invalid MX', async () => {
         const { policy } = await getPolicy('gmail.com');
         const policyMatch = validateMx('alt4.gmail-smtp-in.l.zoogle.com', policy);
-        expect(policyMatch).to.be.false;
+        expect(policyMatch.valid).to.be.false;
         expect(policy.mode).to.equal('enforce');
     });
 
     it('Should pass any MX', async () => {
         const { policy } = await getPolicy('unknown.kreata.ee');
         const policyMatch = validateMx('alt4.gmail-smtp-in.l.zoogle.com', policy);
-        expect(policyMatch).to.be.true;
+        expect(policyMatch.valid).to.be.true;
         expect(policy.mode).to.equal('none');
     });
 });
