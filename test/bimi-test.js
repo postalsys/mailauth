@@ -159,7 +159,7 @@ describe('BIMI Tests', () => {
         expect(res?.location).to.equal('https://cldup.com/a6t0ORNG2z.svg');
     });
 
-    it.only('Should resolve BIMI location with valid DKIM', async () => {
+    it('Should resolve BIMI location with valid DKIM', async () => {
         let res = await bimi({
             dmarc: {
                 status: {
@@ -197,7 +197,7 @@ describe('BIMI Tests', () => {
         expect(res?.location).to.equal('https://cldup.com/a6t0ORNG2z.svg');
     });
 
-    it.only('Should fail resolving BIMI location without valid DKIM', async () => {
+    it('Should fail resolving BIMI location without valid DKIM', async () => {
         let res = await bimi({
             dmarc: {
                 status: {
@@ -233,7 +233,7 @@ describe('BIMI Tests', () => {
         expect(res?.status?.result).to.equal('skipped');
     });
 
-    it.only('Should not fail resolving BIMI location without valid DKIM', async () => {
+    it('Should not fail resolving BIMI location without valid DKIM', async () => {
         let res = await bimi({
             dmarc: {
                 status: {
