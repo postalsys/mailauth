@@ -122,7 +122,11 @@ describe('BIMI Tests', () => {
                     }
                 },
                 domain: 'gmail.com',
-                policy: 'reject'
+                policy: 'reject',
+                alignment: {
+                    spf: { result: 'gmail.com', strict: false },
+                    dkim: { result: 'gmail.com', strict: false }
+                }
             },
 
             headers: {
@@ -145,11 +149,125 @@ describe('BIMI Tests', () => {
                         dnsReject();
                     }
                 }
-            }
+            },
+
+            bimiWithAlignedDkim: false
         });
 
         expect(res?.status?.result).to.equal('pass');
         expect(res?.status?.header).to.deep.equal({ selector: 'test', d: 'gmail.com' });
+        expect(res?.location).to.equal('https://cldup.com/a6t0ORNG2z.svg');
+    });
+
+    it.only('Should resolve BIMI location with valid DKIM', async () => {
+        let res = await bimi({
+            dmarc: {
+                status: {
+                    result: 'pass',
+                    header: {
+                        from: 'gmail.com'
+                    }
+                },
+                domain: 'gmail.com',
+                policy: 'reject',
+                alignment: {
+                    spf: { result: false, strict: false },
+                    dkim: { result: 'gmail.com', strict: false }
+                }
+            },
+
+            resolver: async (name, rr) => {
+                if (rr !== 'TXT') {
+                    dnsReject();
+                }
+                switch (name) {
+                    case 'default._bimi.gmail.com':
+                        return [['v=BIMI1; l=https:', '//cldup.com/a6t0ORNG2z.svg']];
+                    default: {
+                        dnsReject();
+                    }
+                }
+            },
+
+            bimiWithAlignedDkim: true
+        });
+
+        expect(res?.status?.result).to.equal('pass');
+        expect(res?.status?.header).to.deep.equal({ selector: 'default', d: 'gmail.com' });
+        expect(res?.location).to.equal('https://cldup.com/a6t0ORNG2z.svg');
+    });
+
+    it.only('Should fail resolving BIMI location without valid DKIM', async () => {
+        let res = await bimi({
+            dmarc: {
+                status: {
+                    result: 'pass',
+                    header: {
+                        from: 'gmail.com'
+                    }
+                },
+                domain: 'gmail.com',
+                policy: 'reject',
+                alignment: {
+                    spf: { result: 'gmail.com', strict: false },
+                    dkim: { result: false, strict: false }
+                }
+            },
+
+            resolver: async (name, rr) => {
+                if (rr !== 'TXT') {
+                    dnsReject();
+                }
+                switch (name) {
+                    case 'default._bimi.gmail.com':
+                        return [['v=BIMI1; l=https:', '//cldup.com/a6t0ORNG2z.svg']];
+                    default: {
+                        dnsReject();
+                    }
+                }
+            },
+
+            bimiWithAlignedDkim: true
+        });
+
+        expect(res?.status?.result).to.equal('skipped');
+    });
+
+    it.only('Should not fail resolving BIMI location without valid DKIM', async () => {
+        let res = await bimi({
+            dmarc: {
+                status: {
+                    result: 'pass',
+                    header: {
+                        from: 'gmail.com'
+                    }
+                },
+                domain: 'gmail.com',
+                policy: 'reject',
+                alignment: {
+                    spf: { result: 'gmail.com', strict: false },
+                    dkim: { result: false, strict: false }
+                }
+            },
+
+            resolver: async (name, rr) => {
+                if (rr !== 'TXT') {
+                    dnsReject();
+                }
+                switch (name) {
+                    case 'default._bimi.gmail.com':
+                        return [['v=BIMI1; l=https:', '//cldup.com/a6t0ORNG2z.svg']];
+                    default: {
+                        dnsReject();
+                    }
+                }
+            },
+
+            bimiWithAlignedDkim: false
+        });
+
+        expect(res?.status?.result).to.equal('pass');
+        expect(res?.status?.header).to.deep.equal({ selector: 'default', d: 'gmail.com' });
         expect(res?.location).to.equal('https://cldup.com/a6t0ORNG2z.svg');
     });
 
