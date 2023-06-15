@@ -24,7 +24,9 @@ const main = async () => {
             return await dns.promises.resolve(name, rr);
         },
         maxResolveCount: 10,
-        maxVoidCount: 2
+        maxVoidCount: 2,
+
+        bimiWithAlignedDkim: true
     });
 
     console.log(JSON.stringify(res, false, 2));

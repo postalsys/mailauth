@@ -342,7 +342,9 @@ const { bimi } = await authenticate(
         ip: '217.146.67.33', // SMTP client IP
         helo: 'uvn-67-33.tll01.zonevs.eu', // EHLO/HELO hostname
         mta: 'mx.ethereal.email', // server processing this message, defaults to os.hostname()
-        sender: 'andris@ekiri.ee' // MAIL FROM address
+        sender: 'andris@ekiri.ee', // MAIL FROM address
+
+        bimiWithAlignedDkim: false // If true then ignores SPF in DMARC and requires a valid DKIM signature
     }
 );
 if (bimi?.location) {
