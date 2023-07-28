@@ -112,3 +112,4 @@ node_modules
 man/mailauth.1
 
 licenses.txt
+examples/devel-*
