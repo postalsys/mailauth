@@ -14,6 +14,7 @@ Command line utility and a [Node.js library](README.md) for email authentication
     -   [seal](#seal) - to seal an email with ARC
     -   [spf](#spf) - to validate SPF for an IP address and an email address
     -   [vmc](#vmc) - to validate BIMI VMC logo files
+    -   [bodyhash](#bodyhash) - to generate the signature body hash value for an email
     -   [license](#license) - display licenses for `mailauth` and included modules
 -   [DNS cache file](#dns-cache-file)
 
@@ -318,6 +319,35 @@ $ mailauth vmc -p /path/to/vmc-with-invalid-svg.pem
     "code": "SVG_VALIDATION_FAILED"
   }
 }
+```
+
+### bodyhash
+
+`bodyhash` command takes an email message and calculates the body hash value for it
+
+```
+$ mailauth bodyhash [options] [email]
+```
+
+Where
+
+-   **options** are option flags and arguments
+-   **email** is the path to EML formatted email message file. If not provided then email message is read from standard input
+
+**Options**
+
+-   `--algo sha256` or `-a sha256` is the signing algorithm. Defaults to "sha256". Can also use the a= tag format ("rsa-sha256").
+-   `--canonicalization algo` or `-c algo` is the body canonicalization algorithm, defaults to "relaxed". Can also use the c= tag format ("relaxed/relaxed").
+-   `--body-length 12345` or `-l 12345` is the maximum length of canonicalizated body to sign (l= tag)
+
+**Example**
+
+```
+$ mailauth bodyhash /path/message.eml -a sha1 --verbose
+Hashing algorithm:               sha1
+Body canonicalization algorithm: relaxed
+--------
+j+dD7whKXS1yDmyoWtvClYSyYiQ=
 ```
 
 ### license

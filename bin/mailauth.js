@@ -12,6 +12,7 @@ const commandSign = require('../lib/commands/sign');
 const commandSeal = require('../lib/commands/seal');
 const commandSpf = require('../lib/commands/spf');
 const commandVmc = require('../lib/commands/vmc');
+const commandBodyhash = require('../lib/commands/bodyhash');
 
 const fs = require('fs');
 const pathlib = require('path');
@@ -99,6 +100,12 @@ const argv = yargs(hideBin(process.argv))
                     type: 'string',
                     description: 'Key selector for signing  (s= tag)',
                     demandOption: true
+                })
+                .option('algo', {
+                    alias: 'a',
+                    type: 'string',
+                    description: 'Signing algorithm. Defaults either to rsa-sha256 or ed25519-sha256 depending on the private key format.',
+                    default: 'rsa-sha256'
                 })
                 .option('canonicalization', {
                     alias: 'c',
@@ -340,6 +347,50 @@ const argv = yargs(hideBin(process.argv))
                 .catch(err => {
                     console.error('Failed to verify VMC file');
                     console.error(err);
+                    process.exit(1);
+                });
+        }
+    )
+    .command(
+        ['bodyhash [email]'],
+        'Generate a signature body hash for an email',
+        yargs => {
+            yargs
+
+                .option('algo', {
+                    alias: 'a',
+                    type: 'string',
+                    description: 'Hashing algorithm. Defaults to sha256.',
+                    default: 'sha256'
+                })
+
+                .option('canonicalization', {
+                    alias: 'c',
+                    type: 'string',
+                    description: 'Canonicalization algorithm  (c= tag)',
+                    default: 'relaxed'
+                })
+
+                .option('body-length', {
+                    alias: 'l',
+                    type: 'number',
+                    description: 'Maximum length of canonicalizated body to sign (l= tag)'
+                });
+
+            yargs.positional('email', {
+                describe: 'Path to the email message file in EML format. If not specified then content is read from stdin'
+            });
+        },
+        argv => {
+            commandBodyhash(argv)
+                .then(() => {
+                    process.exit();
+                })
+                .catch(err => {
+                    if (!err.suppress) {
+                        console.error('Failed to calculate body hash for the input message');
+                        console.error(err);
+                    }
                     process.exit(1);
                 });
         }
