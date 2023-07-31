@@ -1,6 +1,6 @@
 {
     "name": "mailauth",
-    "version": "4.4.2",
+    "version": "4.5.0",
     "description": "Email authentication library for Node.js",
     "main": "lib/mailauth.js",
     "scripts": {
@@ -33,7 +33,7 @@
     "homepage": "https://github.com/postalsys/mailauth",
     "devDependencies": {
         "chai": "4.3.7",
-        "eslint": "8.45.0",
+        "eslint": "8.46.0",
         "eslint-config-nodemailer": "1.2.0",
         "eslint-config-prettier": "8.9.0",
         "js-yaml": "4.1.0",
@@ -46,7 +46,7 @@
     },
     "dependencies": {
         "@postalsys/vmc": "1.0.6",
-        "fast-xml-parser": "4.2.6",
+        "fast-xml-parser": "4.2.7",
         "ipaddr.js": "2.1.0",
         "joi": "17.9.2",
         "libmime": "5.2.1",
