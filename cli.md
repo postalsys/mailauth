@@ -22,7 +22,9 @@ Command line utility and a [Node.js library](README.md) for email authentication
 
 Download `mailauth` for your platform:
 
--   [MacOS](https://github.com/postalsys/mailauth/releases/latest/download/mailauth.pkg)
+-   MacOS
+    -   [Intel processors](https://github.com/postalsys/mailauth/releases/latest/download/mailauth.pkg)
+    -   [Apple silicon](https://github.com/postalsys/mailauth/releases/latest/download/mailauth-arm.pkg)
 -   [Linux](https://github.com/postalsys/mailauth/releases/latest/download/mailauth.tar.gz)
 -   [Windows](https://github.com/postalsys/mailauth/releases/latest/download/mailauth.exe)
 -   Or install from the NPM registry: `npm install -g mailauth`
