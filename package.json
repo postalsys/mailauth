@@ -53,6 +53,7 @@
         "nodemailer": "6.9.4",
         "psl": "1.9.0",
         "punycode": "2.3.0",
+        "undici": "5.23.0",
         "yargs": "17.7.2"
     },
     "engines": {
