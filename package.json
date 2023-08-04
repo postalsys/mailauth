@@ -1,6 +1,6 @@
 {
     "name": "mailauth",
-    "version": "4.5.0",
+    "version": "4.5.1",
     "description": "Email authentication library for Node.js",
     "main": "lib/mailauth.js",
     "scripts": {
@@ -35,7 +35,7 @@
         "chai": "4.3.7",
         "eslint": "8.46.0",
         "eslint-config-nodemailer": "1.2.0",
-        "eslint-config-prettier": "8.9.0",
+        "eslint-config-prettier": "8.10.0",
         "js-yaml": "4.1.0",
         "license-report": "6.4.0",
         "marked": "0.7.0",
