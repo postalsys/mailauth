@@ -1,0 +1,6 @@
+from:Joe SixPack <joe@football.example.com>
+to:Suzie Q <suzie@shopping.example.net>
+subject:Is dinner ready?
+date:Fri, 11 Jul 2003 21:00:37 -0700 (PDT)
+message-id:<20030712040037.46341.5F8J@football.example.com>
+dkim-signature:v=1; a=ed25519-sha256; c=relaxed/relaxed; d=football.example.com; i=@football.example.com; q=dns/txt; s=brisbane; t=1697433160; h=from : to : subject : date : message-id : from; bh=2jUSOH9NhtVGCQWNr9BrIAPreKQjO6Sn7XIkfJVOzv8=; b=
