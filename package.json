@@ -9,7 +9,8 @@
         "man": "cd man && marked-man --version `node -e \"console.log('v'+require('../package.json').version)\"` --manual 'Mailauth Help' --section 1 man.md > mailauth.1",
         "build-source": "rm -rf node_modules package-lock.json && npm install && npm run man && npm run licenses && rm -rf node_modules package-lock.json && npm install --production && rm -rf package-lock.json",
         "build-dist": "npx pkg --compress Brotli package.json && rm -rf package-lock.json && npm install",
-        "licenses": "license-report --only=prod --output=table --config license-report-config.json > licenses.txt"
+        "licenses": "license-report --only=prod --output=table --config license-report-config.json > licenses.txt",
+        "update": "rm -rf node_modules package-lock.json && ncu -u && npm install"
     },
     "repository": {
         "type": "git",
@@ -32,12 +33,12 @@
     },
     "homepage": "https://github.com/postalsys/mailauth",
     "devDependencies": {
-        "chai": "4.3.9",
-        "eslint": "8.50.0",
+        "chai": "4.3.10",
+        "eslint": "8.52.0",
         "eslint-config-nodemailer": "1.2.0",
         "eslint-config-prettier": "9.0.0",
         "js-yaml": "4.1.0",
-        "license-report": "6.4.0",
+        "license-report": "6.5.0",
         "marked": "0.7.0",
         "marked-man": "0.7.0",
         "mbox-reader": "1.1.5",
@@ -46,14 +47,14 @@
     },
     "dependencies": {
         "@postalsys/vmc": "1.0.6",
-        "fast-xml-parser": "4.3.1",
+        "fast-xml-parser": "4.3.2",
         "ipaddr.js": "2.1.0",
-        "joi": "17.10.2",
+        "joi": "17.11.0",
         "libmime": "5.2.1",
-        "nodemailer": "6.9.5",
+        "nodemailer": "6.9.7",
         "psl": "1.9.0",
-        "punycode": "2.3.0",
-        "undici": "5.25.2",
+        "punycode": "2.3.1",
+        "undici": "5.27.0",
         "yargs": "17.7.2"
     },
     "engines": {

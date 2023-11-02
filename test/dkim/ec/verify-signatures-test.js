@@ -45,6 +45,8 @@ const cachedResolver = async (name, rr) => {
 
 chai.config.includeStack = true;
 
+// FIXME: EC signing does not work!
+
 describe('DKIM EC Signature tests', () => {
     it('Should sign an email', async () => {
         let ecPrivateKey = formatECPrivateKey(privateKeyEC);
