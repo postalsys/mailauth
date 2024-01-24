@@ -55,7 +55,7 @@
         "nodemailer": "6.9.8",
         "psl": "1.9.0",
         "punycode": "2.3.1",
-        "undici": "6.4.0",
+        "undici": "5.28.2",
         "yargs": "17.7.2"
     },
     "engines": {
