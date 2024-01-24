@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.6.1](https://github.com/postalsys/mailauth/compare/v4.6.0...v4.6.1) (2024-01-24)
+
+
+### Bug Fixes
+
+* **dkim-verify:** Show the length of the source body in DKIM results ([d28663b](https://github.com/postalsys/mailauth/commit/d28663b30b0bfaf07d395e9d3eaea044c9085657))
+
 ## [4.6.0](https://github.com/postalsys/mailauth/compare/v4.5.2...v4.6.0) (2023-11-02)
 
 
