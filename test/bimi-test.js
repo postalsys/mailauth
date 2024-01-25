@@ -271,7 +271,7 @@ describe('BIMI Tests', () => {
         expect(res?.location).to.equal('https://cldup.com/a6t0ORNG2z.svg');
     });
 
-    it.only('Should fail BIMI location with oversized DKIM', async () => {
+    it('Should fail BIMI location with oversized DKIM', async () => {
         let res = await bimi({
             dmarc: {
                 status: {
