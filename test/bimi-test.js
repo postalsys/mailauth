@@ -271,6 +271,40 @@ describe('BIMI Tests', () => {
         expect(res?.location).to.equal('https://cldup.com/a6t0ORNG2z.svg');
     });
 
+    it.only('Should fail BIMI location with oversized DKIM', async () => {
+        let res = await bimi({
+            dmarc: {
+                status: {
+                    result: 'pass',
+                    header: {
+                        from: 'gmail.com'
+                    }
+                },
+                domain: 'gmail.com',
+                policy: 'reject',
+                alignment: {
+                    spf: { result: false, strict: false },
+                    dkim: { result: 'gmail.com', strict: false, overSized: 100 }
+                }
+            },
+
+            resolver: async (name, rr) => {
+                if (rr !== 'TXT') {
+                    dnsReject();
+                }
+                switch (name) {
+                    case 'default._bimi.gmail.com':
+                        return [['v=BIMI1; l=https:', '//cldup.com/a6t0ORNG2z.svg']];
+                    default: {
+                        dnsReject();
+                    }
+                }
+            }
+        });
+
+        expect(res?.status?.result).to.equal('skipped');
+    });
+
     it('Should validate VMC', async () => {
         let bimiData = {
             location: 'https://amplify.valimail.com/bimi/time-warner/yV3KRIg4nJW-cnn.svg',
