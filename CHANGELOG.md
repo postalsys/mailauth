@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.6.2](https://github.com/postalsys/mailauth/compare/v4.6.1...v4.6.2) (2024-01-25)
+
+
+### Bug Fixes
+
+* **bimi:** skip bimi with oversized DKIM signatures ([d666d74](https://github.com/postalsys/mailauth/commit/d666d7476cbcae8b3161c78a7e737559ad112fd9))
+
 ## [4.6.1](https://github.com/postalsys/mailauth/compare/v4.6.0...v4.6.1) (2024-01-24)
 
 
