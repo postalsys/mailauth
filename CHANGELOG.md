@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.6.3](https://github.com/postalsys/mailauth/compare/v4.6.2...v4.6.3) (2024-01-26)
+
+
+### Bug Fixes
+
+* bumped 2022 in copyright notices to 2024 ([cc89823](https://github.com/postalsys/mailauth/commit/cc8982349d14b42a28581ebc52aa6de2e11b5be8))
+
 ## [4.6.2](https://github.com/postalsys/mailauth/compare/v4.6.1...v4.6.2) (2024-01-25)
 
 ### Bug Fixes
