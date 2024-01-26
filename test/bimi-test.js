@@ -271,7 +271,7 @@ describe('BIMI Tests', () => {
         expect(res?.location).to.equal('https://cldup.com/a6t0ORNG2z.svg');
     });
 
-    it('Should fail BIMI location with oversized DKIM', async () => {
+    it('Should fail BIMI location with undersized DKIM', async () => {
         let res = await bimi({
             dmarc: {
                 status: {
@@ -284,7 +284,7 @@ describe('BIMI Tests', () => {
                 policy: 'reject',
                 alignment: {
                     spf: { result: false, strict: false },
-                    dkim: { result: 'gmail.com', strict: false, overSized: 100 }
+                    dkim: { result: 'gmail.com', strict: false, underSized: 100 }
                 }
             },
 

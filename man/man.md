@@ -133,7 +133,7 @@ Please report any bugs to https://github.com/postalsys/mailauth/issues.
 
 ## LICENSE
 
-Copyright (c) 2020-2022, Postal Systems (MIT).
+Copyright (c) 2020-2024, Postal Systems (MIT).
 
 ## SEE ALSO
 

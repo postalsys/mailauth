@@ -43,7 +43,7 @@
         "marked-man": "0.7.0",
         "mbox-reader": "1.1.5",
         "mocha": "10.2.0",
-        "npm-check-updates": "16.14.12",
+        "npm-check-updates": "16.14.13",
         "pkg": "5.8.1"
     },
     "dependencies": {
