@@ -48,11 +48,21 @@ dkimSign(eml, {
         },
 
         {
+            // PEM
             //canonicalization: 'relaxed/relaxed',
             algorithm: algo,
             signingDomain: 'tahvel.info',
             selector: 'test.ed25519',
             privateKey: fs.readFileSync('./test/fixtures/private-ed25519.pem')
+        },
+
+        {
+            // Raw key
+            //canonicalization: 'relaxed/relaxed',
+            algorithm: algo,
+            signingDomain: 'tahvel.info',
+            selector: 'test.ed25519',
+            privateKey: Buffer.from('YgsMTASxKi7M+Rxg+h9H4UTUNOGsAer6LaQgCwcl3mY=', 'base64')
         }
     ]
 })

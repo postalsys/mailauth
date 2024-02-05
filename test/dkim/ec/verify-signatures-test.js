@@ -1,12 +1,9 @@
 /* eslint no-unused-expressions:0 */
 'use strict';
 
-// FIXME: Ed25519 signing and verification _does not work_
-
 const chai = require('chai');
 const expect = chai.expect;
 const Path = require('path');
-const util = require('util');
 
 const { dkimSign } = require('../../../lib/dkim/sign');
 const { dkimVerify } = require('../../../lib/dkim/verify');
@@ -31,8 +28,6 @@ ${Buffer.concat([Buffer.from('MC4CAQAwBQYDK2VwBCIEIA==', 'base64'), Buffer.from(
 
 const cachedResolver = async (name, rr) => {
     let match = dnsCache?.[name]?.[rr];
-
-    console.log('DNS', name, rr, match);
 
     if (!match) {
         let err = new Error('Error');
@@ -71,9 +66,7 @@ describe('DKIM EC Signature tests', () => {
             ]
         });
 
-        console.log(util.inspect(res, false, 22, true));
-
-        expect(true).to.equal(true);
+        expect(res.signatures).to.exist;
     });
 
     it('Should verify hashes for a signed email', async () => {
@@ -82,7 +75,8 @@ describe('DKIM EC Signature tests', () => {
             curTime
         });
 
-        console.log(util.inspect(res, false, 22, true));
+        expect(res.results[0].status.result).equal('pass');
+        expect(res.results[1].status.result).equal('pass');
 
         expect(true).to.equal(true);
     });
