@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.6.4](https://github.com/postalsys/mailauth/compare/v4.6.3...v4.6.4) (2024-02-05)
+
+
+### Bug Fixes
+
+* **ed25519:** Fixed ed25519 signing and verification ([40f1245](https://github.com/postalsys/mailauth/commit/40f12457d8f49f0ea21015fe4203b4de746ab7b8))
+
 ## [4.6.3](https://github.com/postalsys/mailauth/compare/v4.6.2...v4.6.3) (2024-01-26)
 
 
