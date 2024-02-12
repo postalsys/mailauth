@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.6.5](https://github.com/postalsys/mailauth/compare/v4.6.4...v4.6.5) (2024-02-12)
+
+
+### Bug Fixes
+
+* **dkim:** Added new output property mimeStructureStart ([8f25353](https://github.com/postalsys/mailauth/commit/8f25353fa6a67ba3e1f0c5091325007b2434a29d))
+
 ## [4.6.4](https://github.com/postalsys/mailauth/compare/v4.6.3...v4.6.4) (2024-02-05)
 
 
