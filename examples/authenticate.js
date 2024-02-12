@@ -8,10 +8,11 @@ const fs = require('fs');
 const main = async () => {
     let message = await fs.promises.readFile(process.argv[2] || __dirname + '/../test/fixtures/message4.eml');
     let res = await authenticate(message, {
-        ip: '217.146.67.33',
-        helo: 'uvn-67-33.tll01.zonevs.eu',
+        //ip: '217.146.67.33',
+        //helo: 'uvn-67-33.tll01.zonevs.eu',
         mta: 'mx.ethereal.email',
-        sender: 'andris@ekiri.ee',
+        //sender: 'andris@ekiri.ee',
+        trustReceived: true,
         // optional. add ARC seal if possible
         seal: {
             signingDomain: 'tahvel.info',
