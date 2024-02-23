@@ -1,9 +1,10 @@
 /* eslint no-unused-expressions:0 */
 'use strict';
 
+const { Buffer } = require('node:buffer');
 const chai = require('chai');
 const expect = chai.expect;
-const fs = require('fs');
+const fs = require('node:fs');
 
 let { authenticate } = require('../../lib/mailauth');
 

@@ -1,6 +1,7 @@
 /* eslint no-unused-expressions:0 */
 'use strict';
 
+const { Buffer } = require('node:buffer');
 const chai = require('chai');
 const expect = chai.expect;
 

@@ -5,7 +5,7 @@ const chai = require('chai');
 const expect = chai.expect;
 
 const yaml = require('js-yaml');
-const fs = require('fs');
+const fs = require('node:fs');
 
 let { spf } = require('../../lib/spf');
 

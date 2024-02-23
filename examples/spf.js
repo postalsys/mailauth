@@ -1,7 +1,7 @@
 'use strict';
 
 const { spf } = require('../lib/spf');
-const util = require('util');
+const util = require('node:util');
 
 const main = async () => {
     let tests = [

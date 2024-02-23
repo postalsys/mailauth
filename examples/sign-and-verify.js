@@ -3,8 +3,8 @@
 // sign and verify:
 //   $ node sign-and-verify.js /path/to/message.eml
 
-const fs = require('fs');
-
+const fs = require('node:fs');
+const { Buffer } = require('node:buffer');
 const { dkimSign } = require('../lib/dkim/sign');
 const { dkimVerify } = require('../lib/dkim/verify');
 

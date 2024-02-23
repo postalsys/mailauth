@@ -2,11 +2,12 @@
 
 // sends some crappy signed messages to Gmail for verification
 
-const { promisify } = require('util');
+const { Buffer } = require('node:buffer');
+const { promisify } = require('node:util');
 const MailComposer = require('nodemailer/lib/mail-composer');
 const nodemailer = require('nodemailer');
 const { dkimSign } = require('../lib/dkim/sign');
-const fs = require('fs');
+const fs = require('node:fs');
 
 const transport = nodemailer.createTransport({
     host: 'gmail-smtp-in.l.google.com',

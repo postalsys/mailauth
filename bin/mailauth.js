@@ -4,8 +4,8 @@
 
 const yargs = require('yargs/yargs');
 const { hideBin } = require('yargs/helpers');
-const os = require('os');
-const assert = require('assert');
+const os = require('node:os');
+const assert = require('node:assert');
 
 const commandReport = require('../lib/commands/report');
 const commandSign = require('../lib/commands/sign');
@@ -14,8 +14,8 @@ const commandSpf = require('../lib/commands/spf');
 const commandVmc = require('../lib/commands/vmc');
 const commandBodyhash = require('../lib/commands/bodyhash');
 
-const fs = require('fs');
-const pathlib = require('path');
+const fs = require('node:fs');
+const pathlib = require('node:path');
 
 const argv = yargs(hideBin(process.argv))
     .command(

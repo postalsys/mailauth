@@ -1,9 +1,9 @@
 'use strict';
 
 const { authenticate, sealMessage } = require('..');
-const dns = require('dns');
+const dns = require('node:dns');
 
-const fs = require('fs');
+const fs = require('node:fs');
 
 const main = async () => {
     let message = await fs.promises.readFile(process.argv[2] || __dirname + '/../test/fixtures/message4.eml');

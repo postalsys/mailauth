@@ -3,7 +3,8 @@
 // verify signed message:
 //   $ node verify-dkim.js /path/to/message.eml
 
-const fs = require('fs');
+const fs = require('node:fs');
+const { Buffer } = require('node:buffer');
 const { dkimVerify } = require('../lib/dkim/verify');
 
 let file = process.argv[2];

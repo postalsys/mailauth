@@ -1,11 +1,12 @@
 /* eslint no-unused-expressions:0 */
 'use strict';
 
+const { Buffer } = require('node:buffer');
 const chai = require('chai');
 const expect = chai.expect;
-const crypto = require('crypto');
+const crypto = require('node:crypto');
 
-let fs = require('fs').promises;
+let fs = require('node:fs').promises;
 let { RelaxedHash } = require('../../../lib/dkim/body/relaxed');
 
 chai.config.includeStack = true;

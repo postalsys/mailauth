@@ -1,14 +1,15 @@
 /* eslint no-unused-expressions:0 */
 'use strict';
 
+const { Buffer } = require('node:buffer');
 const chai = require('chai');
 const expect = chai.expect;
-const Path = require('path');
+const Path = require('node:path');
 
 const { dkimSign } = require('../../../lib/dkim/sign');
 const { dkimVerify } = require('../../../lib/dkim/verify');
 
-let fs = require('fs');
+let fs = require('node:fs');
 
 const curTime = new Date(1528637909000);
 

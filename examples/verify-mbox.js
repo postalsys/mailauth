@@ -6,9 +6,10 @@
 
 const { eachMessage } = require('mbox-reader');
 
-const fs = require('fs');
+const fs = require('node:fs');
+const { Buffer } = require('node:buffer');
 const { dkimVerify } = require('../lib/dkim/verify');
-const pathlib = require('path');
+const pathlib = require('node:path');
 
 let file = process.argv[2];
 let mbox = fs.createReadStream(file);
