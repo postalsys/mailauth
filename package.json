@@ -42,20 +42,19 @@
         "marked": "0.7.0",
         "marked-man": "0.7.0",
         "mbox-reader": "1.1.5",
-        "mocha": "10.3.0",
-        "npm-check-updates": "16.14.15",
-        "pkg": "5.8.1"
+        "mocha": "10.4.0",
+        "npm-check-updates": "16.14.20"
     },
     "dependencies": {
         "@postalsys/vmc": "1.0.8",
-        "fast-xml-parser": "4.3.4",
-        "ipaddr.js": "2.1.0",
-        "joi": "17.12.2",
-        "libmime": "5.2.1",
-        "nodemailer": "6.9.10",
+        "fast-xml-parser": "4.3.6",
+        "ipaddr.js": "2.2.0",
+        "joi": "17.13.1",
+        "libmime": "5.3.5",
+        "nodemailer": "6.9.13",
         "psl": "1.9.0",
         "punycode": "2.3.1",
-        "undici": "5.28.2",
+        "undici": "5.28.4",
         "uuid": "9.0.1",
         "yargs": "17.7.2"
     },

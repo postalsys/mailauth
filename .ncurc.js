@@ -7,6 +7,9 @@ module.exports = {
         'chai',
 
         // Fails in Node 16
-        'undici'
+        'undici',
+
+        // fix later
+        'eslint'
     ]
 };
