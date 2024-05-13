@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.6.6](https://github.com/postalsys/mailauth/compare/v4.6.5...v4.6.6) (2024-05-13)
+
+
+### Bug Fixes
+
+* **deps:** Bumped deps to clear out security warnings ([4ca35fe](https://github.com/postalsys/mailauth/commit/4ca35fef37e37ae715c420b8a52c7cb202e4b360))
+
 ## [4.6.5](https://github.com/postalsys/mailauth/compare/v4.6.4...v4.6.5) (2024-02-12)
 
 
