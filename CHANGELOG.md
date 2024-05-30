@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.6.7](https://github.com/postalsys/mailauth/compare/v4.6.6...v4.6.7) (2024-05-30)
+
+
+### Bug Fixes
+
+* **psl:** Replaced psl module with tldts for up to date public suffix list ([cab894b](https://github.com/postalsys/mailauth/commit/cab894b54a3544b33a641f377783db67a43bec0e))
+
 ## [4.6.6](https://github.com/postalsys/mailauth/compare/v4.6.5...v4.6.6) (2024-05-13)
 
 
