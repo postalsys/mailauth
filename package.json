@@ -10,7 +10,7 @@
         "build-source": "rm -rf node_modules package-lock.json && npm install && npm run man && npm run licenses && rm -rf node_modules package-lock.json && npm install --production && rm -rf package-lock.json",
         "build-dist": "npx pkg --compress Brotli package.json && rm -rf package-lock.json && npm install",
         "licenses": "license-report --only=prod --output=table --config license-report-config.json > licenses.txt",
-        "update": "rm -rf node_modules package-lock.json && ncu -u && npm install"
+        "update": "rm -rf node_modules package-lock.json && npx ncu -u && npm install"
     },
     "repository": {
         "type": "git",
@@ -42,18 +42,17 @@
         "marked": "0.7.0",
         "marked-man": "0.7.0",
         "mbox-reader": "1.1.5",
-        "mocha": "10.4.0",
-        "npm-check-updates": "16.14.20"
+        "mocha": "10.4.0"
     },
     "dependencies": {
         "@postalsys/vmc": "1.0.8",
-        "fast-xml-parser": "4.3.6",
+        "fast-xml-parser": "4.4.0",
         "ipaddr.js": "2.2.0",
         "joi": "17.13.1",
         "libmime": "5.3.5",
         "nodemailer": "6.9.13",
-        "psl": "1.9.0",
-        "punycode": "2.3.1",
+        "punycode.js": "2.3.1",
+        "tldts": "6.1.23",
         "undici": "5.28.4",
         "uuid": "9.0.1",
         "yargs": "17.7.2"
