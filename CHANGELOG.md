@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.6.8](https://github.com/postalsys/mailauth/compare/v4.6.7...v4.6.8) (2024-06-04)
+
+
+### Bug Fixes
+
+* **dmarc-alignment:** Fixed tldts usage to allow private domains ([cc7dfa8](https://github.com/postalsys/mailauth/commit/cc7dfa8d820c1a4112602340192010354d51cd52))
+
 ## [4.6.7](https://github.com/postalsys/mailauth/compare/v4.6.6...v4.6.7) (2024-05-30)
 
 
