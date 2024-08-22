@@ -82,4 +82,18 @@ describe('DKIM RelaxedBody Tests', () => {
                 .digest('base64')
         );
     });
+
+    it('Should process a very long line', async () => {
+        const lineLen = 10 * 1024 * 1024;
+        const message = Buffer.alloc(lineLen);
+        // Fill the line with printable characters from 0x20 to 0x7E
+        for (let i = 1; i < lineLen + 1; i++) {
+            message[i] = (i % 95) + 0x20;
+        }
+
+        let s = new RelaxedHash('rsa-sha256');
+        let buf = s.fixLineBuffer(message);
+
+        expect(buf).to.exist;
+    });
 });
