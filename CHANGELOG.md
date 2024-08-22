@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.6.9](https://github.com/postalsys/mailauth/compare/v4.6.8...v4.6.9) (2024-08-22)
+
+
+### Bug Fixes
+
+* **deps:** Removed uuid dependency in favor of crypto.randomUUID() ([0b5d8f5](https://github.com/postalsys/mailauth/commit/0b5d8f5328d0b82f75daea7fdbd74e1e76e8b642))
+* **dkim-relaxed:** Faster DKIM hash calculation for relaxed body if the body contains extremely long lines ([fd8c89e](https://github.com/postalsys/mailauth/commit/fd8c89edd87a114464f99ebf79a1e903a8287876))
+
 ## [4.6.8](https://github.com/postalsys/mailauth/compare/v4.6.7...v4.6.8) (2024-06-04)
 
 
