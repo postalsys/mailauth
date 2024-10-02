@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.7.1](https://github.com/postalsys/mailauth/compare/v4.7.0...v4.7.1) (2024-10-02)
+
+
+### Bug Fixes
+
+* **dkim:** New class BodyHashStream ([88d2fad](https://github.com/postalsys/mailauth/commit/88d2fad329a9a6fc8ebc1da4efc1c4844ae49507))
+
 ## [4.7.0](https://github.com/postalsys/mailauth/compare/v4.6.9...v4.7.0) (2024-10-02)
 
 
