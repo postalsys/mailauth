@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.7.0](https://github.com/postalsys/mailauth/compare/v4.6.9...v4.7.0) (2024-10-02)
+
+
+### Features
+
+* **dkim-sign:** Added new Transfor stream class DkimSignStream to sign emails in a stream processing pipeline ([130a1a3](https://github.com/postalsys/mailauth/commit/130a1a3812fac2ad710f244510ca60887c2d33a9))
+
 ## [4.6.9](https://github.com/postalsys/mailauth/compare/v4.6.8...v4.6.9) (2024-08-22)
 
 
