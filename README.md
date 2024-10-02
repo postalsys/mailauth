@@ -157,6 +157,52 @@ DKIM-Signature: a=rsa-sha256; v=1; c=relaxed/relaxed; d=tahvel.info;
 From: ...
 ```
 
+### Signing as a PassThrough Stream
+
+Use `DkimSignStream` stream if you want to use DKIM signing as part of a stream processing pipeline.
+
+```js
+const { DkimSignStream } = require('mailauth/lib/dkim/sign');
+
+const dkimSignStream = new DkimSignStream({
+    // Optional, default canonicalization, default is "relaxed/relaxed"
+    canonicalization: 'relaxed/relaxed', // c=
+
+    // Optional, default signing and hashing algorithm
+    // Mostly useful when you want to use rsa-sha1, otherwise no need to set
+    algorithm: 'rsa-sha256',
+
+    // Optional, default is current time
+    signTime: new Date(), // t=
+
+    // Keys for one or more signatures
+    // Different signatures can use different algorithms (mostly useful when
+    // you want to sign a message both with RSA and Ed25519)
+    signatureData: [
+        {
+            signingDomain: 'tahvel.info', // d=
+            selector: 'test.rsa', // s=
+            // supported key types: RSA, Ed25519
+            privateKey: fs.readFileSync('./test/fixtures/private-rsa.pem'),
+
+            // Optional algorithm, default is derived from the key.
+            // Overrides whatever was set in parent object
+            algorithm: 'rsa-sha256',
+
+            // Optional signature specifc canonicalization, overrides whatever was set in parent object
+            canonicalization: 'relaxed/relaxed' // c=
+
+            // Maximum number of canonicalized body bytes to sign (eg. the "l=" tag).
+            // Do not use though. This is available only for compatibility testing.
+            // maxBodyLength: 12345
+        }
+    ]
+});
+
+// Writes a signed message to the output
+process.stdin.pipe(dkimSignStream).pipe(process.stdout);
+```
+
 ### Verifying
 
 ```js
