@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.7.2](https://github.com/postalsys/mailauth/compare/v4.7.1...v4.7.2) (2024-10-02)
+
+
+### Bug Fixes
+
+* **dkim:** Store byteLength in BodyHashStream ([081f823](https://github.com/postalsys/mailauth/commit/081f82340505d4beb88f12728919d851d35b6576))
+
 ## [4.7.1](https://github.com/postalsys/mailauth/compare/v4.7.0...v4.7.1) (2024-10-02)
 
 
