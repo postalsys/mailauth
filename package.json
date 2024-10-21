@@ -52,7 +52,7 @@
         "libmime": "5.3.5",
         "nodemailer": "6.9.15",
         "punycode.js": "2.3.1",
-        "tldts": "6.1.49",
+        "tldts": "6.1.52",
         "undici": "5.28.4",
         "yargs": "17.7.2"
     },
