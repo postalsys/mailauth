@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.7.3](https://github.com/postalsys/mailauth/compare/v4.7.2...v4.7.3) (2024-10-21)
+
+
+### Bug Fixes
+
+* **BodyHashStream:** Skip header ([3da03d2](https://github.com/postalsys/mailauth/commit/3da03d23baa90acb119c7946c2cd740a72ba069d))
+
 ## [4.7.2](https://github.com/postalsys/mailauth/compare/v4.7.1...v4.7.2) (2024-10-02)
 
 
