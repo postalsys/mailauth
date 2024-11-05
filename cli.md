@@ -93,13 +93,13 @@ mailauth report --verbose --dns-cache examples/dns-cache.json test/fixtures/mess
 
 **Sample Output:**
 
-```json
+```
 Reading email message from test/fixtures/message2.eml
 DNS query for TXT mail.projectpending.com: not found
 DNS query for TXT _dmarc.projectpending.com: not found
 {
   "receivedChain": [
-    // ...
+    "..."
   ]
 }
 ```
@@ -247,7 +247,7 @@ DNS query for TXT _spf.example.com: [["v=spf1 ip4:192.0.2.0/24 -all"]]
   "domain": "example.com",
   "client-ip": "192.0.2.1",
   "result": "pass",
-  // ...
+  "..."
 }
 ```
 
@@ -289,7 +289,7 @@ mailauth vmc -a https://example.com/path/to/vmc.pem -d example.com
         "certificate": {
             "subject": {
                 "commonName": "Example Inc."
-                // ...
+                "..."
             },
             "subjectAltName": ["example.com"],
             "fingerprint": "12:34:56:78:9A:BC:DE:F0...",
@@ -298,7 +298,7 @@ mailauth vmc -a https://example.com/path/to/vmc.pem -d example.com
             "validTo": "2024-01-01T23:59:59.000Z",
             "issuer": {
                 "commonName": "Trusted CA"
-                // ...
+                "..."
             }
         }
     }
@@ -313,7 +313,7 @@ If validation fails, the output includes error details:
     "error": {
         "message": "Self signed certificate in certificate chain",
         "details": {
-            // ...
+            "..."
         },
         "code": "SELF_SIGNED_CERT_IN_CHAIN"
     }
