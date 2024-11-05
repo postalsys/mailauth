@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.8.0](https://github.com/postalsys/mailauth/compare/v4.7.3...v4.8.0) (2024-11-05)
+
+
+### Features
+
+* **cert-type:** BIMI authority information includes the type of the cert ('VMC' or 'CMC') ([0dd8db8](https://github.com/postalsys/mailauth/commit/0dd8db81b2ffc8b9d84d1a4396c65bfa9a347088))
+
 ## [4.7.3](https://github.com/postalsys/mailauth/compare/v4.7.2...v4.7.3) (2024-10-21)
 
 
