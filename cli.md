@@ -1,8 +1,8 @@
-# MailAuth CLI Usage
+# mailauth CLI Usage
 
-![MailAuth Logo](https://github.com/postalsys/mailauth/raw/master/assets/mailauth.png)
+![mailauth Logo](https://github.com/postalsys/mailauth/raw/master/assets/mailauth.png)
 
-MailAuth provides a command-line utility for email authentication, complementing its [Node.js library](README.md). This guide explains how to use the MailAuth CLI to perform various email authentication tasks.
+mailauth provides a command-line utility for email authentication, complementing its [Node.js library](README.md). This guide explains how to use the mailauth CLI to perform various email authentication tasks.
 
 ## Table of Contents
 
@@ -15,13 +15,13 @@ MailAuth provides a command-line utility for email authentication, complementing
     -   [`spf`](#spf) &mdash; Validate SPF for an IP address and email address
     -   [`vmc`](#vmc) &mdash; Validate BIMI VMC logo files
     -   [`bodyhash`](#bodyhash) &mdash; Generate the body hash value for an email
-    -   [`license`](#license) &mdash; Display licenses for MailAuth and included modules
+    -   [`license`](#license) &mdash; Display licenses for mailauth and included modules
 -   [DNS Cache File](#dns-cache-file)
 -   [License](#license)
 
 ## Installation
 
-Install the MailAuth CLI by downloading the appropriate package for your platform or via npm:
+Install the mailauth CLI by downloading the appropriate package for your platform or via npm:
 
 -   **MacOS:**
     -   [Intel processors](https://github.com/postalsys/mailauth/releases/latest/download/mailauth.pkg)
@@ -40,7 +40,7 @@ Install the MailAuth CLI by downloading the appropriate package for your platfor
 
 ## Getting Help
 
-To display help information for the MailAuth CLI or any specific command, use the `--help` flag:
+To display help information for the mailauth CLI or any specific command, use the `--help` flag:
 
 ```bash
 mailauth --help
@@ -52,7 +52,7 @@ mailauth spf --help
 
 ## Available Commands
 
-The MailAuth CLI offers several commands to perform different email authentication tasks:
+The mailauth CLI offers several commands to perform different email authentication tasks:
 
 1. [`report`](#report) &mdash; Validate SPF, DKIM, DMARC, ARC, and BIMI.
 2. [`sign`](#sign) &mdash; Sign an email with DKIM.
@@ -60,7 +60,7 @@ The MailAuth CLI offers several commands to perform different email authenticati
 4. [`spf`](#spf) &mdash; Validate SPF for an IP address and email address.
 5. [`vmc`](#vmc) &mdash; Validate BIMI VMC logo files.
 6. [`bodyhash`](#bodyhash) &mdash; Generate the body hash value for an email.
-7. [`license`](#license) &mdash; Display licenses for MailAuth and included modules.
+7. [`license`](#license) &mdash; Display licenses for mailauth and included modules.
 
 ### report
 
@@ -356,7 +356,7 @@ j+dD7whKXS1yDmyoWtvClYSyYiQ=
 
 ### license
 
-The `license` command displays the licenses for MailAuth and its included modules.
+The `license` command displays the licenses for mailauth and its included modules.
 
 #### Usage
 
@@ -373,7 +373,7 @@ mailauth license
 **Sample Output:**
 
 ```
-MailAuth License: MIT License
+mailauth License: MIT License
 Included Modules:
 - module1: MIT License
 - module2: Apache License 2.0
@@ -413,7 +413,7 @@ Specify the DNS cache file using the `--dns-cache` option:
 mailauth report --dns-cache /path/to/dns-cache.json email.eml
 ```
 
-When this option is used, MailAuth will not perform actual DNS queries but will use the data from the cache file instead.
+When this option is used, mailauth will not perform actual DNS queries but will use the data from the cache file instead.
 
 ## License
 
