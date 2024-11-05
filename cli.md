@@ -1,351 +1,353 @@
-![](https://github.com/postalsys/mailauth/raw/master/assets/mailauth.png)
+# MailAuth CLI Usage
 
-Command line utility and a [Node.js library](README.md) for email authentication.
+![MailAuth Logo](https://github.com/postalsys/mailauth/raw/master/assets/mailauth.png)
 
-# CLI USAGE
+MailAuth provides a command-line utility for email authentication, complementing its [Node.js library](README.md). This guide explains how to use the MailAuth CLI to perform various email authentication tasks.
 
-## TOC
+## Table of Contents
 
 -   [Installation](#installation)
--   [Help](#help)
--   [Available commands](#available-commands)
-    -   [report](#report) – to validate SPF, DKIM, DMARC, ARC
-    -   [sign](#sign) - to sign an email with DKIM
-    -   [seal](#seal) - to seal an email with ARC
-    -   [spf](#spf) - to validate SPF for an IP address and an email address
-    -   [vmc](#vmc) - to validate BIMI VMC logo files
-    -   [bodyhash](#bodyhash) - to generate the signature body hash value for an email
-    -   [license](#license) - display licenses for `mailauth` and included modules
--   [DNS cache file](#dns-cache-file)
+-   [Getting Help](#getting-help)
+-   [Available Commands](#available-commands)
+    -   [`report`](#report) &mdash; Validate SPF, DKIM, DMARC, ARC, and BIMI
+    -   [`sign`](#sign) &mdash; Sign an email with DKIM
+    -   [`seal`](#seal) &mdash; Seal an email with ARC
+    -   [`spf`](#spf) &mdash; Validate SPF for an IP address and email address
+    -   [`vmc`](#vmc) &mdash; Validate BIMI VMC logo files
+    -   [`bodyhash`](#bodyhash) &mdash; Generate the body hash value for an email
+    -   [`license`](#license) &mdash; Display licenses for MailAuth and included modules
+-   [DNS Cache File](#dns-cache-file)
+-   [License](#license)
 
 ## Installation
 
-Download `mailauth` for your platform:
+Install the MailAuth CLI by downloading the appropriate package for your platform or via npm:
 
--   MacOS
+-   **MacOS:**
     -   [Intel processors](https://github.com/postalsys/mailauth/releases/latest/download/mailauth.pkg)
     -   [Apple silicon](https://github.com/postalsys/mailauth/releases/latest/download/mailauth-arm.pkg)
--   [Linux](https://github.com/postalsys/mailauth/releases/latest/download/mailauth.tar.gz)
--   [Windows](https://github.com/postalsys/mailauth/releases/latest/download/mailauth.exe)
--   Or install from the NPM registry: `npm install -g mailauth`
+-   **Linux:**
+    -   [Download mailauth.tar.gz](https://github.com/postalsys/mailauth/releases/latest/download/mailauth.tar.gz)
+-   **Windows:**
+    -   [Download mailauth.exe](https://github.com/postalsys/mailauth/releases/latest/download/mailauth.exe)
+-   **NPM Registry:**
 
-## Help
+    -   Install globally using npm:
 
+        ```bash
+        npm install -g mailauth
+        ```
+
+## Getting Help
+
+To display help information for the MailAuth CLI or any specific command, use the `--help` flag:
+
+```bash
+mailauth --help
+mailauth report --help
+mailauth sign --help
+mailauth seal --help
+mailauth spf --help
 ```
-$ mailauth --help
-$ mailauth report --help
-$ mailauth sign --help
-$ mailauth seal --help
-$ mailauth spf --help
-```
 
-## Available commands
+## Available Commands
+
+The MailAuth CLI offers several commands to perform different email authentication tasks:
+
+1. [`report`](#report) &mdash; Validate SPF, DKIM, DMARC, ARC, and BIMI.
+2. [`sign`](#sign) &mdash; Sign an email with DKIM.
+3. [`seal`](#seal) &mdash; Seal an email with ARC.
+4. [`spf`](#spf) &mdash; Validate SPF for an IP address and email address.
+5. [`vmc`](#vmc) &mdash; Validate BIMI VMC logo files.
+6. [`bodyhash`](#bodyhash) &mdash; Generate the body hash value for an email.
+7. [`license`](#license) &mdash; Display licenses for MailAuth and included modules.
 
 ### report
 
-`report` command takes an email message and returns a JSON formatted report for SPF, DKIM, ARC, DMARC and BIMI. Not all reports might make sense for your use case, eg. SPF check for an outbound message usually gives no useful info, so you can ignore the parts you're not interested in.
+The `report` command analyzes an email message and returns a JSON-formatted report detailing the results of SPF, DKIM, DMARC, ARC, and BIMI validations.
 
+#### Usage
+
+```bash
+mailauth report [options] [email]
 ```
-$ mailauth report [options] [email]
+
+-   **email**: (Optional) Path to the EML-formatted email message file. If omitted, the email is read from standard input.
+
+#### Options
+
+-   `--client-ip x.x.x.x`, `-i x.x.x.x`: IP address of the remote client that sent the email. If not provided, it's parsed from the latest `Received` header.
+-   `--sender user@example.com`, `-f user@example.com`: Email address from the MAIL FROM command. If not provided, it's parsed from the latest `Return-Path` header.
+-   `--helo hostname`, `-e hostname`: Hostname from the HELO/EHLO command. Used in some SPF validations.
+-   `--mta hostname`, `-m hostname`: Hostname of the server performing validations. Defaults to the local hostname.
+-   `--dns-cache /path/to/dns.json`, `-n /path/to/dns.json`: Path to a DNS cache file. When provided, DNS queries use cached responses.
+-   `--verbose`, `-v`: Enables verbose output, displaying debugging information.
+-   `--max-lookups number`, `-x number`: Sets the maximum number of DNS lookups for SPF checks. Defaults to `10`.
+-   `--max-void-lookups number`, `-z number`: Sets the maximum number of void DNS lookups for SPF checks. Defaults to `2`.
+
+#### Example
+
+```bash
+mailauth report --verbose --dns-cache examples/dns-cache.json test/fixtures/message2.eml
 ```
 
-Where
+**Sample Output:**
 
--   **options** are option flags and arguments
--   **email** is the path to EML formatted email message file. If not provided then email message is read from standard input
-
-**Options**
-
--   `--client-ip x.x.x.x` or `-i x.x.x.x` is the IP of the remote client that sent the email. If not provided then it is parsed from the latest `Received` header
--   `--sender user@example.com` or `-f address` is the email address from the MAIL FROM command. If not provided then it is parsed from the latest Return-Path header
--   `--helo hostname` or `-e hostname` is the client hostname from the HELO/EHLO command. Used in some obscure SPF validation operations
--   `--mta hostname` or `-m hostname` is the server hostname doing the validation checks. Defaults to `os.hostname()`
--   `--dns-cache /path/to/dns.json` or `-n path` is the path to a file with cached DNS query responses. If this file is provided then no actual DNS requests are performed, only cached values from this file are used.
--   `--verbose` or `-v` if this flag is set then mailauth writes some debugging info to standard error
--   `--max-lookups nr` or `-x nr` defines the allowed DNS lookup limit for SPF checks. Defaults to 10.
--   `--max-void-lookups nr` or `-z nr` defines the allowed DNS lookup limit for SPF checks. Defaults to 2.
-
-**Example**
-
-```
-$ mailauth report --verbose --dns-cache examples/dns-cache.json test/fixtures/message2.eml
+```json
 Reading email message from test/fixtures/message2.eml
 DNS query for TXT mail.projectpending.com: not found
 DNS query for TXT _dmarc.projectpending.com: not found
 {
   "receivedChain": [
-  ...
+    // ...
+  ]
+}
 ```
 
-See full example for DKIM checks [here](https://gist.github.com/andris9/8d4ab527282041f6725a640d80da4872).
+For a detailed example of DKIM checks, refer to [this gist](https://gist.github.com/andris9/8d4ab527282041f6725a640d80da4872).
 
 ### sign
 
-`sign` command takes an email message and signs it with a DKIM digital signature.
+The `sign` command signs an email message using a DKIM signature.
+
+#### Usage
+
+```bash
+mailauth sign [options] [email]
+```
+
+-   **email**: (Optional) Path to the EML-formatted email message file. If omitted, the email is read from standard input.
+
+#### Options
+
+-   `--private-key /path/to/private.key`, `-k /path/to/private.key`: Path to the private key used for signing.
+-   `--domain example.com`, `-d example.com`: Domain name for the DKIM signature (`d=` tag).
+-   `--selector selector`, `-s selector`: Selector for the DKIM key (`s=` tag).
+-   `--algo algorithm`, `-a algorithm`: Signing algorithm (e.g., `rsa-sha256`). Defaults based on the private key type.
+-   `--canonicalization method`, `-c method`: Canonicalization method (e.g., `relaxed/relaxed`). Defaults to `relaxed/relaxed`.
+-   `--time timestamp`, `-t timestamp`: Signing time as a Unix timestamp (`t=` tag).
+-   `--header-fields "field1:field2"`, `-h "field1:field2"`: Colon-separated list of header fields to include in the signature (`h=` tag).
+-   `--body-length length`, `-l length`: Maximum length of the body to include in the signature (`l=` tag).
+-   `--headers-only`, `-o`: Outputs only the DKIM signature headers without the entire message.
+
+#### Example
+
+```bash
+mailauth sign /path/to/message.eml --domain example.com --selector s1 --private-key /path/to/private.key --verbose
+```
+
+**Sample Output:**
 
 ```
-$ mailauth sign [options] [email]
-```
-
-Where
-
--   **options** are option flags and arguments
--   **email** is the path to EML formatted email message file. If not provided then email message is read from standard input
-
-**Options**
-
--   `--private-key /path` or `-k /path` is the path to a private key for signing
--   `--domain example.com` or `-d example.com` is the domain name for signing (d= tag)
--   `--selector xxx` or `-s xxx` is the key selector name for signing (s= tag)
--   `--algo rsa-sha256` or `-a rsa-sha256` is the signing algorithm. Defaults either to "rsa-sha256" or
-    "ed25519-sha256" depending on the private key format (a= tag)
--   `--canonicalization algo` or `-c algo` is the canonicalization algorithm, defaults to "relaxed/relaxed" (c= tag)
--   `--time 12345` or `-t 12345` is the signing time as a unix timestamp (t= tag)
--   `--header-fields "message-id:date"` or `-h keys` is a colon separated list of header field names to sign (h= tag)
--   `--body-length 12345` or `-l 12345` is the maximum length of canonicalizated body to sign (l= tag)
--   `--headers-only` or `-o` If set return signing headers only. Default is to return the entire message.
-
-**Example**
-
-```
-$ mailauth sign /path/message.eml --domain kreata.ee --selector test --privateKey /path/private-rsa.pem --verbose
-Reading email message from /path/message.eml
-Signing domain:             kreata.ee
-Key selector:               test
+Reading email message from /path/to/message.eml
+Signing domain:             example.com
+Key selector:               s1
 Canonicalization algorithm: relaxed/relaxed
 Hashing algorithm:          rsa-sha256
-Signing time:               2020-12-03T23:00:14.956Z
+Signing time:               2023-03-15T12:00:00.000Z
 --------
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kreata.ee;
- h=MIME-Version: Date: Message-ID: Subject: To: From: Content-Type;
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=example.com;
+ h=MIME-Version:Date:Message-ID:Subject:To:From:Content-Type;
  ...
 ```
 
 ### seal
 
-`seal` command takes an email message and seals it with an ARC digital signature.
+The `seal` command adds an ARC (Authenticated Received Chain) seal to an email message.
+
+#### Usage
+
+```bash
+mailauth seal [options] [email]
+```
+
+-   **email**: (Optional) Path to the EML-formatted email message file. If omitted, the email is read from standard input.
+
+#### Options
+
+**Sealing Options:**
+
+-   `--private-key /path/to/private.key`, `-k /path/to/private.key`: Path to the private key used for sealing.
+-   `--domain example.com`, `-d example.com`: Domain name for the ARC seal (`d=` tag).
+-   `--selector selector`, `-s selector`: Selector for the ARC key (`s=` tag).
+-   `--algo algorithm`, `-a algorithm`: Sealing algorithm (e.g., `rsa-sha256`). Defaults based on the private key type.
+-   `--time timestamp`, `-t timestamp`: Sealing time as a Unix timestamp (`t=` tag).
+-   `--header-fields "field1:field2"`, `-h "field1:field2"`: Colon-separated list of header fields to include in the seal (`h=` tag).
+-   `--headers-only`, `-o`: Outputs only the ARC seal headers without the entire message.
+
+**Authentication Options (from `report` command):**
+
+-   `--client-ip x.x.x.x`, `-i x.x.x.x`: IP address of the remote client that sent the email.
+-   `--sender user@example.com`, `-f user@example.com`: Email address from the MAIL FROM command.
+-   `--helo hostname`, `-e hostname`: Hostname from the HELO/EHLO command.
+-   `--mta hostname`, `-m hostname`: Hostname of the server performing validations.
+-   `--dns-cache /path/to/dns.json`, `-n /path/to/dns.json`: Path to a DNS cache file.
+-   `--verbose`, `-v`: Enables verbose output.
+
+**Note:** The canonicalization method (`c=` tag) for ARC sealing is always `relaxed/relaxed` and cannot be changed.
+
+#### Example
+
+```bash
+mailauth seal /path/to/message.eml --domain example.com --selector s1 --private-key /path/to/private.key --verbose
+```
+
+**Sample Output:**
 
 ```
-$ mailauth seal [options] [email]
-```
-
-Where
-
--   **options** are option flags and arguments
--   **email** is the path to EML formatted email message file. If not provided then email message is read from standard input
-
-**Options**
-
-As the emails needs to be authenticated before sealing then `seal` command expects in additon to sealing key information also the authentication options from the `report` command.
-
--   `--private-key /path` or `-k /path` is the path to a private key for sealing
--   `--domain example.com` or `-d example.com` is the domain name for sealing (d= tag)
--   `--selector xxx` or `-s xxx` is the key selector name for sealing (s= tag)
--   `--algo rsa-sha256` or `-a rsa-sha256` is the sealing algorithm. Defaults either to "rsa-sha256" or
-    "ed25519-sha256" depending on the private key format (a= tag)
--   `--time 12345` or `-t 12345` is the sealing time as a unix timestamp (t= tag)
--   `--header-fields "message-id:date"` or `-h keys` is a colon separated list of header field names to seal (h= tag)
--   `--client-ip x.x.x.x` or `-i x.x.x.x` is the IP of the remote client that sent the email. If not provided then it is parsed from the latest `Received` header
--   `--sender user@example.com` or `-f address` is the email address from the MAIL FROM command. If not provided then it is parsed from the latest Return-Path header
--   `--helo hostname` or `-e hostname` is the client hostname from the HELO/EHLO command. Used in some obscure SPF validation operations
--   `--mta hostname` or `-m hostname` is the server hostname doing the validation checks. Defaults to `os.hostname()`
--   `--dns-cache /path/to/dns.json` or `-n path` is the path to a file with cached DNS query responses. If this file is provided then no actual DNS requests are performed, only cached values from this file are used.
--   `--headers-only` or `-o` If set return signing headers only. Default is to return the entire message.
-
-> Canonicalization (c= tag) is always "relaxed/relaxed" when sealing, this can not be changed
-
-**Example**
-
-```
-$ mailauth seal /path/message.eml --domain kreata.ee --selector test --privateKey /path/private-rsa.pem --verbose
-Reading email message from /path/message.eml
-Signing domain:             kreata.ee
-Key selector:               test
+Reading email message from /path/to/message.eml
+Signing domain:             example.com
+Key selector:               s1
 Canonicalization algorithm: relaxed/relaxed
 Hashing algorithm:          rsa-sha256
-Signing time:               2020-12-03T23:04:41.082Z
+Sealing time:               2023-03-15T12:05:00.000Z
 --------
-ARC-Seal: i=3; a=rsa-sha256; t=1607036681; cv=pass; d=kreata.ee; s=test;
+ARC-Seal: i=3; a=rsa-sha256; t=1678884300; cv=pass; d=example.com; s=s1;
  b=Fo3hayVos+J77lzzgmr6J92gsUBKlPt/ZkoQt9ZCi514zy8+1WLvTHmI8CMUXAcegdcqP0NHt
  ...
 ```
 
 ### spf
 
-`spf` command takes an email address and an IP address and returns a JSON formatted SPF report.
+The `spf` command checks the SPF (Sender Policy Framework) record for a given email address and IP address.
+
+#### Usage
+
+```bash
+mailauth spf [options]
+```
+
+#### Options
+
+-   `--sender user@example.com`, `-f user@example.com`: Email address from the MAIL FROM command. **Required.**
+-   `--client-ip x.x.x.x`, `-i x.x.x.x`: IP address of the remote client that sent the email. **Required.**
+-   `--helo hostname`, `-e hostname`: Hostname from the HELO/EHLO command.
+-   `--mta hostname`, `-m hostname`: Hostname of the server performing the SPF check.
+-   `--dns-cache /path/to/dns.json`, `-n /path/to/dns.json`: Path to a DNS cache file.
+-   `--verbose`, `-v`: Enables verbose output.
+-   `--headers-only`, `-o`: Outputs only the SPF authentication header.
+-   `--max-lookups number`, `-x number`: Sets the maximum number of DNS lookups. Defaults to `10`.
+-   `--max-void-lookups number`, `-z number`: Sets the maximum number of void DNS lookups. Defaults to `2`.
+
+#### Example
+
+```bash
+mailauth spf --verbose -f user@example.com -i 192.0.2.1
+```
+
+**Sample Output:**
 
 ```
-$ mailauth spf [options]
-```
-
-Where
-
--   **options** are option flags and arguments
-
-**Options**
-
--   `--sender user@example.com` or `-f address` is the email address from the MAIL FROM command. Required.
--   `--client-ip x.x.x.x` or `-i x.x.x.x` is the IP of the remote client that sent the email. Required.
--   `--helo hostname` or `-e hostname` is the client hostname from the HELO/EHLO command. Used in some obscure SPF validation operations
--   `--mta hostname` or `-m hostname` is the server hostname doing the validation checks. Defaults to `os.hostname()`. Used in authentication headers.
--   `--dns-cache /path/to/dns.json` or `-n path` is the path to a file with cached DNS query responses. If this file is provided then no actual DNS requests are performed, only cached values from this file are used.
--   `--verbose` or `-v` if this flag is set then mailauth writes some debugging info to standard error
--   `--headers-only` or `-o` If set return SPF authentication header only. Default is to return a JSON structure.
--   `--max-lookups nr` or `-x nr` defines the allowed DNS lookup limit for SPF checks. Defaults to 10.
--   `--max-void-lookups nr` or `-z nr` defines the allowed DNS lookup limit for SPF checks. Defaults to 2.
-
-**Example**
-
-```
-$ mailauth spf --verbose -f andris@wildduck.email -i 217.146.76.20
-Checking SPF for andris@wildduck.email
+Checking SPF for user@example.com
 Maximum DNS lookups: 10
 --------
-DNS query for TXT wildduck.email: [["v=spf1 mx a -all"]]
-DNS query for MX wildduck.email: [{"exchange":"mail.wildduck.email","priority":1}]
-DNS query for A mail.wildduck.email: ["217.146.76.20"]
+DNS query for TXT example.com: [["v=spf1 include:_spf.example.com -all"]]
+DNS query for TXT _spf.example.com: [["v=spf1 ip4:192.0.2.0/24 -all"]]
 {
-  "domain": "wildduck.email",
-  "client-ip": "217.146.76.20",
-  ...
+  "domain": "example.com",
+  "client-ip": "192.0.2.1",
+  "result": "pass",
+  // ...
+}
 ```
 
 ### vmc
 
-`vmc` command takes either the URL for a VMC file or a file path or both. It then verifies if the VMC resource is a valid file or not and exposes its contents.
+The `vmc` command validates a Verified Mark Certificate (VMC) used in BIMI (Brand Indicators for Message Identification).
 
+#### Usage
+
+```bash
+mailauth vmc [options]
 ```
-$ mailauth vmc [options]
+
+#### Options
+
+-   `--authority <url>`, `-a <url>`: URL of the VMC resource.
+-   `--authorityPath <path>`, `-p <path>`: Path to a local VMC file, used to avoid network requests.
+-   `--domain <domain>`, `-d <domain>`: Sender domain to validate against the certificate.
+
+#### Example
+
+```bash
+mailauth vmc -a https://example.com/path/to/vmc.pem -d example.com
 ```
 
-Where
+**Sample Output:**
 
--   **options** are option flags and arguments
-
-**Options**
-
--   `--authority <url>` or `-a <url>` is the URL for the VMC resource
--   `--authorityPath <path>` or `-p <path>` is the cached file for the authority URL to avoid network requests
--   `--domain <domain>` or `-d <domain>` is the sender domain to compare the certificate against
-
-**Example**
-
-```
-$ mailauth vmc -a https://amplify.valimail.com/bimi/time-warner/yV3KRIg4nJW-cnn.pem -d cnn.com
+```json
 {
-  "url": "https://amplify.valimail.com/bimi/time-warner/yV3KRIg4nJW-cnn.pem",
-  "success": true,
-  "domainVerified": true,
-  "vmc": {
-    "mediaType": "image/svg+xml",
-    "hashAlgo": "sha1",
-    "hashValue": "ea8c81da633c66a16262134a78576cdf067638e9",
-    "logoFile": "<2300B base64 encoded file>",
-    "validHash": true,
-    "certificate": {
-      "subject": {
-        "businessCategory": "Private Organization",
-        "jurisdictionCountryName": "US",
-        "jurisdictionStateOrProvinceName": "Delaware",
-        "serialNumber": "2976730",
-        "countryName": "US",
-        "stateOrProvinceName": "Georgia",
-        "localityName": "Atlanta",
-        "street": "190 Marietta St NW",
-        "organizationName": "Cable News Network, Inc.",
-        "commonName": "Cable News Network, Inc.",
-        "trademarkCountryOrRegionName": "US",
-        "trademarkRegistration": "5817930"
-      },
-      "subjectAltName": [
-        "cnn.com"
-      ],
-      "fingerprint": "17:B3:94:97:E6:6B:C8:6B:33:B8:0A:D2:F0:79:6B:08:A2:A6:84:BD",
-      "serialNumber": "0821B8FE0A9CBC3BAC10DA08C088EEF4",
-      "validFrom": "2021-08-12T00:00:00.000Z",
-      "validTo": "2022-08-12T23:59:59.000Z",
-      "issuer": {
-        "countryName": "US",
-        "organizationName": "DigiCert, Inc.",
-        "commonName": "DigiCert Verified Mark RSA4096 SHA256 2021 CA1"
-      }
-    }
-  }
-}
-```
-
-If the certificate verification fails, then the logo contents are not returned.
-
-```
-$ mailauth vmc -p /path/to/random/cert-bundle.pem
-{
-  "success": false,
-  "error": {
-    "message": "Self signed certificate in certificate chain",
-    "details": {
-      "certificate": {
-        "subject": {
-          "commonName": "postal.vmc.local",
-          "organizationName": "Postal Systems OU.",
-          "countryName": "EE"
-        },
-        "subjectAltName": [],
-        "fingerprint": "CC:49:83:ED:3F:6B:77:45:5B:A5:3B:9E:EC:99:0E:A1:EF:D7:FF:97",
-        "serialNumber": "B61FBFBA917B15D9",
-        "validFrom": "2022-07-09T06:13:33.000Z",
-        "validTo": "2023-07-09T06:13:33.000Z",
-        "issuer": {
-          "commonName": "postal.vmc.local",
-          "organizationName": "Postal Systems OU.",
-          "countryName": "EE"
+    "url": "https://example.com/path/to/vmc.pem",
+    "success": true,
+    "domainVerified": true,
+    "vmc": {
+        "mediaType": "image/svg+xml",
+        "hashAlgo": "sha256",
+        "hashValue": "abc123...",
+        "logoFile": "<Base64 encoded SVG>",
+        "validHash": true,
+        "certificate": {
+            "subject": {
+                "commonName": "Example Inc."
+                // ...
+            },
+            "subjectAltName": ["example.com"],
+            "fingerprint": "12:34:56:78:9A:BC:DE:F0...",
+            "serialNumber": "0123456789ABCDEF",
+            "validFrom": "2023-01-01T00:00:00.000Z",
+            "validTo": "2024-01-01T23:59:59.000Z",
+            "issuer": {
+                "commonName": "Trusted CA"
+                // ...
+            }
         }
-      }
-    },
-    "code": "SELF_SIGNED_CERT_IN_CHAIN"
-  }
+    }
 }
 ```
 
-The embedded SVG file is also validated.
+If validation fails, the output includes error details:
 
-```
-$ mailauth vmc -p /path/to/vmc-with-invalid-svg.pem
+```json
 {
-  "success": false,
-  "error": {
-    "message": "VMC logo SVG validation failed",
-    "details": {
-      "message": "Not a Tiny PS profile",
-      "code": "INVALID_BASE_PROFILE"
-    },
-    "code": "SVG_VALIDATION_FAILED"
-  }
+    "success": false,
+    "error": {
+        "message": "Self signed certificate in certificate chain",
+        "details": {
+            // ...
+        },
+        "code": "SELF_SIGNED_CERT_IN_CHAIN"
+    }
 }
 ```
 
 ### bodyhash
 
-`bodyhash` command takes an email message and calculates the body hash value for it
+The `bodyhash` command computes the body hash value of an email message, which is used in DKIM signatures.
+
+#### Usage
+
+```bash
+mailauth bodyhash [options] [email]
+```
+
+-   **email**: (Optional) Path to the EML-formatted email message file. If omitted, the email is read from standard input.
+
+#### Options
+
+-   `--algo algorithm`, `-a algorithm`: Hashing algorithm (e.g., `sha256`). Defaults to `sha256`. Can also specify DKIM-style algorithms (e.g., `rsa-sha256`).
+-   `--canonicalization method`, `-c method`: Body canonicalization method (e.g., `relaxed`). Defaults to `relaxed`. Can use DKIM-style (e.g., `relaxed/relaxed`).
+-   `--body-length length`, `-l length`: Maximum length of the body to hash (`l=` tag).
+-   `--verbose`, `-v`: Enables verbose output.
+
+#### Example
+
+```bash
+mailauth bodyhash /path/to/message.eml -a sha1 --verbose
+```
+
+**Sample Output:**
 
 ```
-$ mailauth bodyhash [options] [email]
-```
-
-Where
-
--   **options** are option flags and arguments
--   **email** is the path to EML formatted email message file. If not provided then email message is read from standard input
-
-**Options**
-
--   `--algo sha256` or `-a sha256` is the signing algorithm. Defaults to "sha256". Can also use the a= tag format ("rsa-sha256").
--   `--canonicalization algo` or `-c algo` is the body canonicalization algorithm, defaults to "relaxed". Can also use the c= tag format ("relaxed/relaxed").
--   `--body-length 12345` or `-l 12345` is the maximum length of canonicalizated body to sign (l= tag)
-
-**Example**
-
-```
-$ mailauth bodyhash /path/message.eml -a sha1 --verbose
 Hashing algorithm:               sha1
 Body canonicalization algorithm: relaxed
 --------
@@ -354,37 +356,67 @@ j+dD7whKXS1yDmyoWtvClYSyYiQ=
 
 ### license
 
-Display licenses for `mailauth` and included modules.
+The `license` command displays the licenses for MailAuth and its included modules.
 
-```
-$ mailauth licenses
-```
+#### Usage
 
-## DNS cache file
-
-In general you would use the `--dns-cache` option only when testing. This way you can provide different kind of DNS responses without actually setting up a DNS server and unlike when using real DNS you do not have to wait for the changes in the DNS server to propagate – whatever is in the provided cache file, is used for the DNS query responses.
-
-DNS cache file includes a JSON encoded object where main keys are the domain names (eg. `"_dmarc.example.com"`), sub keys are resource record types (eg. `"TXT"`) and values are the corresponding values as provided by the [dns module](https://nodejs.org/api/dns.html#dns_dns_resolvetxt_hostname_callback).
-
-```json
-{
-    "full_domain_name": {
-        "TXT": [["string1"]]
-    }
-}
+```bash
+mailauth license
 ```
 
-**Example**
+#### Example
 
-This example provides SPF and DMARC policy records for "example.com":
+```bash
+mailauth license
+```
+
+**Sample Output:**
+
+```
+MailAuth License: MIT License
+Included Modules:
+- module1: MIT License
+- module2: Apache License 2.0
+...
+```
+
+## DNS Cache File
+
+The `--dns-cache` option allows you to use a JSON-formatted DNS cache file for testing purposes. This avoids the need to set up a DNS server or wait for DNS propagation.
+
+### Format
+
+The DNS cache file is a JSON object where:
+
+-   **Keys**: Fully qualified domain names (e.g., `"example.com"`).
+-   **Values**: Objects with DNS record types as keys (e.g., `"TXT"`, `"MX"`) and their corresponding values.
+
+**Example:**
 
 ```json
 {
     "example.com": {
-        "TXT": [["v=spf1 include:_spf.google.com include:sendgrid.net", " include:servers.mcsv.net include:servers.outfunnel.com ip4:18.194.223.2 ~all"]]
+        "TXT": [["v=spf1 include:_spf.example.com -all"]],
+        "MX": [{ "exchange": "mail.example.com", "priority": 10 }]
     },
     "_dmarc.example.com": {
-        "TXT": [["v=DMARC1; p=reject; sp=reject;"]]
+        "TXT": [["v=DMARC1; p=reject; rua=mailto:dmarc@example.com;"]]
     }
 }
 ```
+
+### Usage
+
+Specify the DNS cache file using the `--dns-cache` option:
+
+```bash
+mailauth report --dns-cache /path/to/dns-cache.json email.eml
+```
+
+When this option is used, MailAuth will not perform actual DNS queries but will use the data from the cache file instead.
+
+## License
+
+&copy; 2020-2024 Postal Systems OÜ
+
+Licensed under the [MIT License](LICENSE).
