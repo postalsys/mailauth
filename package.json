@@ -42,17 +42,17 @@
         "marked": "0.7.0",
         "marked-man": "0.7.0",
         "mbox-reader": "1.2.0",
-        "mocha": "10.7.3"
+        "mocha": "10.8.2"
     },
     "dependencies": {
-        "@postalsys/vmc": "1.0.8",
+        "@postalsys/vmc": "1.1.0",
         "fast-xml-parser": "4.5.0",
         "ipaddr.js": "2.2.0",
         "joi": "17.13.3",
         "libmime": "5.3.5",
-        "nodemailer": "6.9.15",
+        "nodemailer": "6.9.16",
         "punycode.js": "2.3.1",
-        "tldts": "6.1.52",
+        "tldts": "6.1.58",
         "undici": "5.28.4",
         "yargs": "17.7.2"
     },
