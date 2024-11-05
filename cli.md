@@ -286,9 +286,11 @@ mailauth vmc -a https://example.com/path/to/vmc.pem -d example.com
         "hashValue": "abc123...",
         "logoFile": "<Base64 encoded SVG>",
         "validHash": true,
+        "type": "VMC",
         "certificate": {
             "subject": {
-                "commonName": "Example Inc."
+                "commonName": "Example Inc.",
+                "markType": "Registered Mark",
                 "..."
             },
             "subjectAltName": ["example.com"],
