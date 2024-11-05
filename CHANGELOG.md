@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.8.1](https://github.com/postalsys/mailauth/compare/v4.8.0...v4.8.1) (2024-11-05)
+
+
+### Bug Fixes
+
+* **cli:** Updated help strings for the cli script ([8a86e51](https://github.com/postalsys/mailauth/commit/8a86e51bff0300a7daea26062481ac56904202a8))
+
 ## [4.8.0](https://github.com/postalsys/mailauth/compare/v4.7.3...v4.8.0) (2024-11-05)
 
 
