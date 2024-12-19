@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.8.2](https://github.com/postalsys/mailauth/compare/v4.8.1...v4.8.2) (2024-12-19)
+
+
+### Bug Fixes
+
+* **ARC:** ensure that instance value is 1 if ARC chain does not exist yet ([ab4c5e9](https://github.com/postalsys/mailauth/commit/ab4c5e9ae0158e196b10f346321ca55b8f06c679))
+
 ## [4.8.1](https://github.com/postalsys/mailauth/compare/v4.8.0...v4.8.1) (2024-11-05)
 
 
