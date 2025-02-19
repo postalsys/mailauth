@@ -39,8 +39,8 @@
         "eslint-config-prettier": "9.1.0",
         "js-yaml": "4.1.0",
         "license-report": "6.7.1",
-        "marked": "0.7.0",
-        "marked-man": "0.7.0",
+        "marked": "^15.0.7",
+        "marked-man": "^2.1.0",
         "mbox-reader": "1.2.0",
         "mocha": "11.0.1"
     },
