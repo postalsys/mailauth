@@ -5,9 +5,7 @@ module.exports = {
         'marked-man',
         // only works as ESM
         'chai',
-
-        // Fails in Node 16
-        'undici',
+        'fast-xml-parser',
 
         // fix later
         'eslint',
