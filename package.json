@@ -38,21 +38,21 @@
         "eslint-config-nodemailer": "1.2.0",
         "eslint-config-prettier": "9.1.0",
         "js-yaml": "4.1.0",
-        "license-report": "6.7.1",
+        "license-report": "6.7.2",
         "marked": "0.7.0",
         "marked-man": "0.7.0",
         "mbox-reader": "1.2.0",
-        "mocha": "11.0.1"
+        "mocha": "11.1.0"
     },
     "dependencies": {
         "@postalsys/vmc": "1.1.0",
-        "fast-xml-parser": "4.5.1",
+        "fast-xml-parser": "5.2.0",
         "ipaddr.js": "2.2.0",
         "joi": "17.13.3",
         "libmime": "5.3.6",
-        "nodemailer": "6.9.16",
+        "nodemailer": "6.10.1",
         "punycode.js": "2.3.1",
-        "tldts": "6.1.68",
+        "tldts": "7.0.1",
         "undici": "5.28.5",
         "yargs": "17.7.2"
     },

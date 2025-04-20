@@ -19,9 +19,6 @@ const ignoreTests = [
     // SPF record specific issue
     /^non-ascii-non-spf$/,
 
-    // PTR not supported
-    //    /^ptr-/,
-
     /^bytes-bug$/,
 
     // this implementation is more relaxed
@@ -44,9 +41,6 @@ const ignoreTests = [
     /^invalid-hello-macro$/,
     /^hello-domain-literal$/,
     /^require-valid-helo$/
-
-    // implementation has higher limits
-    // /-limit$/
 ];
 
 let replyErr = code => {

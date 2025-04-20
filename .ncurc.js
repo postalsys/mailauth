@@ -10,6 +10,7 @@ module.exports = {
         'undici',
 
         // fix later
-        'eslint'
+        'eslint',
+        'eslint-config-prettier'
     ]
 };
