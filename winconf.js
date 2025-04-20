@@ -6,8 +6,8 @@ const PackageData = require('./package.json');
 const { readFileSync, writeFileSync } = require('fs');
 
 const options = {
-    in: './ee-dist/mailauth-app-win-x64.exe',
-    out: './ee-dist/mailauth-app-win-x64.exe',
+    in: './ee-dist/mailauth-win-x64.exe',
+    out: './ee-dist/mailauth-win-x64.exe',
     version: PackageData.version,
     properties: {
         LegalCopyright: 'Postal Systems OÜ',
