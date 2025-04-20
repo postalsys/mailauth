@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.8.3](https://github.com/postalsys/mailauth/compare/v4.8.2...v4.8.3) (2025-04-20)
+
+
+### Bug Fixes
+
+* protect against prototype pollution ([3b7515d](https://github.com/postalsys/mailauth/commit/3b7515df768ce1d2e4e02858fdfca8efca6243fb))
+
 ## [4.8.2](https://github.com/postalsys/mailauth/compare/v4.8.1...v4.8.2) (2024-12-19)
 
 
