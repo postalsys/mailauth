@@ -5,9 +5,7 @@
     "main": "lib/mailauth.js",
     "scripts": {
         "test": "eslint \"lib/**/*.js\" \"test/**/*.js\" && mocha --recursive \"./test/**/*.js\" --reporter spec",
-        "prepublish": "npm run man || true",
-        "man": "cd man && marked-man --version `node -e \"console.log('v'+require('../package.json').version)\"` --manual 'Mailauth Help' --section 1 man.md > mailauth.1",
-        "build-source": "rm -rf node_modules package-lock.json && npm install && npm run man && npm run licenses && rm -rf node_modules package-lock.json && npm install --production && rm -rf package-lock.json",
+        "build-source": "rm -rf node_modules package-lock.json && npm install && npm run licenses && rm -rf node_modules package-lock.json && npm install --production && rm -rf package-lock.json",
         "build-dist": "npx pkg --compress Brotli package.json && rm -rf package-lock.json && npm install && node winconf.js",
         "build-dist-fast": "pkg --debug package.json && npm install && node winconf.js",
         "licenses": "license-report --only=prod --output=table --config license-report-config.json > licenses.txt",
@@ -40,8 +38,6 @@
         "eslint-config-prettier": "9.1.0",
         "js-yaml": "4.1.0",
         "license-report": "6.7.2",
-        "marked": "0.7.0",
-        "marked-man": "0.7.0",
         "mbox-reader": "1.2.0",
         "mocha": "11.1.0",
         "resedit": "^2.0.3"
@@ -64,12 +60,8 @@
     "bin": {
         "mailauth": "bin/mailauth.js"
     },
-    "man": [
-        "man/mailauth.1"
-    ],
     "pkg": {
         "assets": [
-            "man/**/*",
             "licenses.txt",
             "LICENSE.txt"
         ],

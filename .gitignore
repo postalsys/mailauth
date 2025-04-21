@@ -107,7 +107,5 @@ ee-dist
 .DS_Store
 node_modules
 
-man/mailauth.1
-
 licenses.txt
 examples/devel-*
