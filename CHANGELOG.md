@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.8.4](https://github.com/postalsys/mailauth/compare/v4.8.3...v4.8.4) (2025-04-21)
+
+
+### Bug Fixes
+
+* **bimi:** Bumped VMC module to add support for GLobalSign VMC root ([d0e9ecf](https://github.com/postalsys/mailauth/commit/d0e9ecf89b699aae8ad9953445f052b558250f5a))
+
 ## [4.8.3](https://github.com/postalsys/mailauth/compare/v4.8.2...v4.8.3) (2025-04-20)
 
 
