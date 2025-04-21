@@ -43,7 +43,7 @@
         "resedit": "^2.0.3"
     },
     "dependencies": {
-        "@postalsys/vmc": "1.1.0",
+        "@postalsys/vmc": "1.1.1",
         "fast-xml-parser": "4.5.2",
         "ipaddr.js": "2.2.0",
         "joi": "17.13.3",
