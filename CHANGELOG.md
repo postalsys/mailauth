@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.8.5](https://github.com/postalsys/mailauth/compare/v4.8.4...v4.8.5) (2025-05-11)
+
+
+### Bug Fixes
+
+* **deps:** Bumped deps to get updated vmc root store ([5ad7464](https://github.com/postalsys/mailauth/commit/5ad746450f97d348217607802e83445e08737faf))
+
 ## [4.8.4](https://github.com/postalsys/mailauth/compare/v4.8.3...v4.8.4) (2025-04-21)
 
 
