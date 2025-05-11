@@ -39,19 +39,19 @@
         "js-yaml": "4.1.0",
         "license-report": "6.7.2",
         "mbox-reader": "1.2.0",
-        "mocha": "11.1.0",
+        "mocha": "11.2.2",
         "resedit": "^2.0.3"
     },
     "dependencies": {
-        "@postalsys/vmc": "1.1.1",
+        "@postalsys/vmc": "1.1.2",
         "fast-xml-parser": "4.5.2",
         "ipaddr.js": "2.2.0",
         "joi": "17.13.3",
         "libmime": "5.3.6",
-        "nodemailer": "6.10.1",
+        "nodemailer": "7.0.3",
         "punycode.js": "2.3.1",
-        "tldts": "7.0.1",
-        "undici": "7.8.0",
+        "tldts": "7.0.7",
+        "undici": "7.9.0",
         "yargs": "17.7.2"
     },
     "engines": {
