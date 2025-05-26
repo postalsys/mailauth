@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.8.6](https://github.com/postalsys/mailauth/compare/v4.8.5...v4.8.6) (2025-05-26)
+
+
+### Bug Fixes
+
+* **ARC:** Updated built-in trust list for ARC ([ea9fc8c](https://github.com/postalsys/mailauth/commit/ea9fc8c6f8c5609b66053f1ffe95891c0b4efcb7))
+* use minLength option for rsa keys ([#84](https://github.com/postalsys/mailauth/issues/84)) ([cbfed81](https://github.com/postalsys/mailauth/commit/cbfed816d953eee3c7eed99055c53f689a46a101))
+
 ## [4.8.5](https://github.com/postalsys/mailauth/compare/v4.8.4...v4.8.5) (2025-05-11)
 
 
