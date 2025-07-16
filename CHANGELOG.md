@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.8.7](https://github.com/postalsys/mailauth/compare/v4.8.6...v4.8.7) (2025-07-16)
+
+
+### Bug Fixes
+
+* expose verifyASChain ([#89](https://github.com/postalsys/mailauth/issues/89)) ([cd11d85](https://github.com/postalsys/mailauth/commit/cd11d851f3c8cea125209676f3ba26676c700c5b))
+
 ## [4.8.6](https://github.com/postalsys/mailauth/compare/v4.8.5...v4.8.6) (2025-05-26)
 
 
