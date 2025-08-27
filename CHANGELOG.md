@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.9.1](https://github.com/postalsys/mailauth/compare/v4.9.0...v4.9.1) (2025-08-27)
+
+
+### Bug Fixes
+
+* ZMS-262: Add raw record sanitanization and validation util functions ([#93](https://github.com/postalsys/mailauth/issues/93)) ([e4842cf](https://github.com/postalsys/mailauth/commit/e4842cf222bd6db29f34c25434b5c38c44edefdc))
+
 ## [4.9.0](https://github.com/postalsys/mailauth/compare/v4.8.6...v4.9.0) (2025-08-21)
 
 
