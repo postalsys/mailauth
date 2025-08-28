@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.9.2](https://github.com/postalsys/mailauth/compare/v4.9.1...v4.9.2) (2025-08-28)
+
+
+### Bug Fixes
+
+* ZMS-262 remove control chars from record add support for mappers in validateTagValueRecord ([#95](https://github.com/postalsys/mailauth/issues/95)) ([42828a6](https://github.com/postalsys/mailauth/commit/42828a6cb38add3aed35881f102488f8143407cb))
+
 ## [4.9.1](https://github.com/postalsys/mailauth/compare/v4.9.0...v4.9.1) (2025-08-27)
 
 
