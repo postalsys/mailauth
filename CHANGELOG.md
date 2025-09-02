@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.9.4](https://github.com/postalsys/mailauth/compare/v4.9.3...v4.9.4) (2025-09-02)
+
+
+### Bug Fixes
+
+* downgraded yargs because of ESM ([215c71a](https://github.com/postalsys/mailauth/commit/215c71aaa108744970533f346408c41b38590500))
+
 ## [4.9.3](https://github.com/postalsys/mailauth/compare/v4.9.2...v4.9.3) (2025-09-02)
 
 
