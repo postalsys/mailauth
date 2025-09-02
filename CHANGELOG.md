@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.9.3](https://github.com/postalsys/mailauth/compare/v4.9.2...v4.9.3) (2025-09-02)
+
+
+### Bug Fixes
+
+* bumped deps ([006475e](https://github.com/postalsys/mailauth/commit/006475ee7bbf61a8c7c00de793f4007f66dba61a))
+
 ## [4.9.2](https://github.com/postalsys/mailauth/compare/v4.9.1...v4.9.2) (2025-08-28)
 
 
