@@ -37,22 +37,22 @@
         "eslint-config-nodemailer": "1.2.0",
         "eslint-config-prettier": "9.1.0",
         "js-yaml": "4.1.0",
-        "license-report": "6.7.2",
+        "license-report": "6.8.0",
         "mbox-reader": "1.2.0",
-        "mocha": "11.5.0",
+        "mocha": "11.7.2",
         "resedit": "^2.0.3"
     },
     "dependencies": {
         "@postalsys/vmc": "1.1.2",
         "fast-xml-parser": "4.5.2",
         "ipaddr.js": "2.2.0",
-        "joi": "17.13.3",
-        "libmime": "5.3.6",
-        "nodemailer": "7.0.3",
+        "joi": "18.0.1",
+        "libmime": "5.3.7",
+        "nodemailer": "7.0.6",
         "punycode.js": "2.3.1",
-        "tldts": "7.0.7",
-        "undici": "7.10.0",
-        "yargs": "17.7.2"
+        "tldts": "7.0.12",
+        "undici": "7.15.0",
+        "yargs": "18.0.0"
     },
     "engines": {
         "node": ">=18.0.0"
