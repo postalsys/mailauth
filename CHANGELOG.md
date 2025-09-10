@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.9.5](https://github.com/postalsys/mailauth/compare/v4.9.4...v4.9.5) (2025-09-10)
+
+
+### Bug Fixes
+
+* **spf:** expand macros in mx mechanism ([d8c05f9](https://github.com/postalsys/mailauth/commit/d8c05f90589e3fb5a56ecb4498e6dcb795dcc047))
+
 ## [4.9.4](https://github.com/postalsys/mailauth/compare/v4.9.3...v4.9.4) (2025-09-02)
 
 
