@@ -109,3 +109,6 @@ node_modules
 
 licenses.txt
 examples/devel-*
+
+.claude
+CLAUDE.md
