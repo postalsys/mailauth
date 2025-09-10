@@ -119,4 +119,44 @@ describe('SPF Verifier Tests', () => {
         result = await spfVerify('example.com', { ip: '1.2.2.4', sender: 'some+user@example.com', resolver: stubResolver });
         expect(result.qualifier).to.equal('-');
     });
+
+    it('Should expand macros in MX mechanism', async () => {
+        const stubResolver = (domain, type) => {
+            switch (type) {
+                case 'TXT':
+                    if (domain === 'spf.lcn.com') {
+                        // Real-world case with mx:%{o} macro
+                        return [['v=spf1 mx:%{o} -all']];
+                    }
+                    break;
+                case 'MX':
+                    if (domain === 'skinanalytics.co.uk') {
+                        return [{ priority: 10, exchange: 'mail.skinanalytics.co.uk' }];
+                    }
+                    break;
+                case 'A':
+                    if (domain === 'mail.skinanalytics.co.uk') {
+                        return ['209.85.208.173'];
+                    }
+                    break;
+            }
+            return [];
+        };
+
+        // Test with %{o} macro - sender domain should be used for MX lookup
+        let result = await spfVerify('spf.lcn.com', {
+            ip: '209.85.208.173',
+            sender: 'test@skinanalytics.co.uk',
+            resolver: stubResolver
+        });
+        expect(result.qualifier).to.equal('+');
+
+        // Test with non-matching IP
+        result = await spfVerify('spf.lcn.com', {
+            ip: '192.0.2.20',
+            sender: 'test@skinanalytics.co.uk',
+            resolver: stubResolver
+        });
+        expect(result.qualifier).to.equal('-');
+    });
 });
