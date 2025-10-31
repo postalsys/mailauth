@@ -1,0 +1,10 @@
+# Auto-generated files
+CHANGELOG.md
+licenses.txt
+
+# Build output
+ee-dist/
+node_modules/
+
+# Test fixtures with embedded content
+test/fixtures/**/*.yml

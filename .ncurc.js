@@ -4,10 +4,6 @@ module.exports = {
         // only works as ESM
         'chai',
         'fast-xml-parser',
-        'yargs',
-
-        // fix later
-        'eslint',
-        'eslint-config-prettier'
+        'yargs'
     ]
 };

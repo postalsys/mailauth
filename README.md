@@ -6,14 +6,14 @@
 
 **Key Features:**
 
--   **SPF** verification
--   **DKIM** signing and verification
--   **DMARC** verification
--   **ARC** verification and sealing
-    -   Sealing during authentication
-    -   Sealing after message modifications
--   **BIMI** resolving and **VMC** validation
--   **MTA-STS** helper functions
+- **SPF** verification
+- **DKIM** signing and verification
+- **DMARC** verification
+- **ARC** verification and sealing
+    - Sealing during authentication
+    - Sealing after message modifications
+- **BIMI** resolving and **VMC** validation
+- **MTA-STS** helper functions
 
 mailauth is a pure JavaScript implementation, requiring no external applications or compilation. It runs on any server or device with Node.js version 16 or later.
 
@@ -73,24 +73,24 @@ await authenticate(message [, options])
 
 #### Parameters
 
--   **message**: A `String`, `Buffer`, or `Readable` stream representing the email message.
--   **options** (optional):
-    -   **sender** (`string`): Email address from the MAIL FROM command. Defaults to the `Return-Path` header if not set.
-    -   **ip** (`string`): IP address of the remote client that sent the message.
-    -   **helo** (`string`): Hostname from the HELO/EHLO command.
-    -   **trustReceived** (`boolean`): If `true`, parses `ip` and `helo` from the latest `Received` header if not provided. Defaults to `false`.
-    -   **mta** (`string`): Hostname of the server performing the authentication. Defaults to `os.hostname()`. Included in Authentication headers.
-    -   **minBitLength** (`number`): Minimum allowed bits for RSA public keys. Defaults to `1024`. Keys with fewer bits will fail validation.
-    -   **disableArc** (`boolean`): If `true`, skips ARC checks.
-    -   **disableDmarc** (`boolean`): If `true`, skips DMARC checks, also disabling dependent checks like BIMI.
-    -   **disableBimi** (`boolean`): If `true`, skips BIMI checks.
-    -   **seal** (`object`): Options for ARC sealing if the message doesn't have a broken ARC chain.
-        -   **signingDomain** (`string`): ARC key domain name.
-        -   **selector** (`string`): ARC key selector.
-        -   **privateKey** (`string` or `Buffer`): Private key for signing (RSA or Ed25519).
-    -   **resolver** (`async function`): Custom DNS resolver function. Defaults to [`dns.promises.resolve`](https://nodejs.org/api/dns.html#dns_dnspromises_resolve_hostname_rrtype).
-    -   **maxResolveCount** (`number`): DNS lookup limit for SPF. Defaults to `10` as per [RFC7208](https://datatracker.ietf.org/doc/html/rfc7208#section-4.6.4).
-    -   **maxVoidCount** (`number`): DNS lookup limit for SPF producing empty results. Defaults to `2` as per [RFC7208](https://datatracker.ietf.org/doc/html/rfc7208#section-4.6.4).
+- **message**: A `String`, `Buffer`, or `Readable` stream representing the email message.
+- **options** (optional):
+    - **sender** (`string`): Email address from the MAIL FROM command. Defaults to the `Return-Path` header if not set.
+    - **ip** (`string`): IP address of the remote client that sent the message.
+    - **helo** (`string`): Hostname from the HELO/EHLO command.
+    - **trustReceived** (`boolean`): If `true`, parses `ip` and `helo` from the latest `Received` header if not provided. Defaults to `false`.
+    - **mta** (`string`): Hostname of the server performing the authentication. Defaults to `os.hostname()`. Included in Authentication headers.
+    - **minBitLength** (`number`): Minimum allowed bits for RSA public keys. Defaults to `1024`. Keys with fewer bits will fail validation.
+    - **disableArc** (`boolean`): If `true`, skips ARC checks.
+    - **disableDmarc** (`boolean`): If `true`, skips DMARC checks, also disabling dependent checks like BIMI.
+    - **disableBimi** (`boolean`): If `true`, skips BIMI checks.
+    - **seal** (`object`): Options for ARC sealing if the message doesn't have a broken ARC chain.
+        - **signingDomain** (`string`): ARC key domain name.
+        - **selector** (`string`): ARC key selector.
+        - **privateKey** (`string` or `Buffer`): Private key for signing (RSA or Ed25519).
+    - **resolver** (`async function`): Custom DNS resolver function. Defaults to [`dns.promises.resolve`](https://nodejs.org/api/dns.html#dns_dnspromises_resolve_hostname_rrtype).
+    - **maxResolveCount** (`number`): DNS lookup limit for SPF. Defaults to `10` as per [RFC7208](https://datatracker.ietf.org/doc/html/rfc7208#section-4.6.4).
+    - **maxVoidCount** (`number`): DNS lookup limit for SPF producing empty results. Defaults to `2` as per [RFC7208](https://datatracker.ietf.org/doc/html/rfc7208#section-4.6.4).
 
 #### Example
 
@@ -155,18 +155,18 @@ const signResult = await dkimSign(message, options);
 
 ##### Parameters
 
--   **message**: A `String`, `Buffer`, or `Readable` stream representing the email message.
--   **options**:
-    -   **canonicalization** (`string`): Canonicalization method. Defaults to `'relaxed/relaxed'`.
-    -   **algorithm** (`string`): Signing and hashing algorithm. Defaults to `'rsa-sha256'`.
-    -   **signTime** (`Date`): Signing time. Defaults to current time.
-    -   **signatureData** (`Array`): Array of signature objects. Each object may contain:
-        -   **signingDomain** (`string`): DKIM key domain name.
-        -   **selector** (`string`): DKIM key selector.
-        -   **privateKey** (`string` or `Buffer`): Private key for signing (RSA or Ed25519).
-        -   **algorithm** (`string`, optional): Overrides parent `algorithm`.
-        -   **canonicalization** (`string`, optional): Overrides parent `canonicalization`.
-        -   **maxBodyLength** (`number`, optional): Maximum number of canonicalized body bytes to sign (`l=` tag). Not recommended for general use.
+- **message**: A `String`, `Buffer`, or `Readable` stream representing the email message.
+- **options**:
+    - **canonicalization** (`string`): Canonicalization method. Defaults to `'relaxed/relaxed'`.
+    - **algorithm** (`string`): Signing and hashing algorithm. Defaults to `'rsa-sha256'`.
+    - **signTime** (`Date`): Signing time. Defaults to current time.
+    - **signatureData** (`Array`): Array of signature objects. Each object may contain:
+        - **signingDomain** (`string`): DKIM key domain name.
+        - **selector** (`string`): DKIM key selector.
+        - **privateKey** (`string` or `Buffer`): Private key for signing (RSA or Ed25519).
+        - **algorithm** (`string`, optional): Overrides parent `algorithm`.
+        - **canonicalization** (`string`, optional): Overrides parent `canonicalization`.
+        - **maxBodyLength** (`number`, optional): Maximum number of canonicalized body bytes to sign (`l=` tag). Not recommended for general use.
 
 ##### Example
 
@@ -286,11 +286,11 @@ const result = await spf(options);
 
 ##### Parameters
 
--   **options**:
-    -   **sender** (`string`): MAIL FROM address.
-    -   **ip** (`string`): SMTP client IP.
-    -   **helo** (`string`): HELO/EHLO hostname.
-    -   **mta** (`string`): Hostname of the MTA performing the check.
+- **options**:
+    - **sender** (`string`): MAIL FROM address.
+    - **ip** (`string`): SMTP client IP.
+    - **helo** (`string`): HELO/EHLO hostname.
+    - **mta** (`string`): Hostname of the MTA performing the check.
 
 ##### Example
 
@@ -433,8 +433,8 @@ const dmarcRecord = await getDmarcRecord(domain [, resolver]);
 
 ###### Parameters
 
--   **domain** (`string`): The domain to check for a DMARC record.
--   **resolver** (`function`, optional): Custom DNS resolver function. Defaults to `dns.resolve`.
+- **domain** (`string`): The domain to check for a DMARC record.
+- **resolver** (`function`, optional): Custom DNS resolver function. Defaults to `dns.resolve`.
 
 ###### Example
 
@@ -486,8 +486,8 @@ if (bimi?.location) {
 
 **Note:**
 
--   The `BIMI-Location` header is ignored by mailauth.
--   The `BIMI-Selector` header can be used for selector selection if available.
+- The `BIMI-Location` header is ignored by mailauth.
+- The `BIMI-Selector` header can be used for selector selection if available.
 
 #### Verified Mark Certificate (VMC)
 
@@ -495,8 +495,8 @@ If an Authority Evidence Document is specified in the BIMI record, its location 
 
 **Example Authority Evidence Documents:**
 
--   [CNN's VMC](https://amplify.valimail.com/bimi/time-warner/LysAFUdG-Hw-cnn_vmc.pem)
--   [Entrust's VMC](https://www.entrustdatacard.com/-/media/certificate/Entrust%20VMC%20July%2014%202020.pem)
+- [CNN's VMC](https://amplify.valimail.com/bimi/time-warner/LysAFUdG-Hw-cnn_vmc.pem)
+- [Entrust's VMC](https://www.entrustdatacard.com/-/media/certificate/Entrust%20VMC%20July%2014%202020.pem)
 
 ### MTA-STS
 
@@ -517,8 +517,8 @@ const { policy, status } = await getPolicy(domain [, knownPolicy]);
 
 ##### Parameters
 
--   **domain** (`string`): The domain to retrieve the policy for.
--   **knownPolicy** (`object`, optional): Previously cached policy for the domain.
+- **domain** (`string`): The domain to retrieve the policy for.
+- **knownPolicy** (`object`, optional): Previously cached policy for the domain.
 
 ##### Example
 
@@ -539,11 +539,11 @@ if (policy.mode === 'enforce') {
 
 **Possible Status Values:**
 
--   `"not_found"`: No policy was found.
--   `"cached"`: Existing policy is still valid.
--   `"found"`: New or updated policy found.
--   `"renew"`: Existing policy is valid; renew cache.
--   `"errored"`: Policy discovery failed due to a temporary error.
+- `"not_found"`: No policy was found.
+- `"cached"`: Existing policy is still valid.
+- `"found"`: New or updated policy found.
+- `"renew"`: Existing policy is valid; renew cache.
+- `"errored"`: Policy discovery failed due to a temporary error.
 
 #### MX Validation
 
@@ -560,8 +560,8 @@ const validation = validateMx(mx, policy);
 
 ##### Parameters
 
--   **mx** (`string`): The resolved MX hostname.
--   **policy** (`object`): The MTA-STS policy object.
+- **mx** (`string`): The resolved MX hostname.
+- **policy** (`object`): The MTA-STS policy object.
 
 ##### Example
 
@@ -586,18 +586,18 @@ mailauth uses the following test suites:
 
 Based on the [OpenSPF test suite](http://www.openspf.org/Test_Suite), with some differences:
 
--   Less strict whitespace checks.
--   Some macro tests are skipped.
--   Some tests are skipped where the invalid component is after a matching part.
--   All other tests pass.
+- Less strict whitespace checks.
+- Some macro tests are skipped.
+- Some tests are skipped where the invalid component is after a matching part.
+- All other tests pass.
 
 ### ARC Test Suite from ValiMail
 
 Based on ValiMail's [arc_test_suite](https://github.com/ValiMail/arc_test_suite):
 
--   mailauth is less strict on header tags and casing.
--   Signing test suite is used for input; mailauth validates signatures and checks for the same `cv=` output.
--   All tests pass, aside from minor differences.
+- mailauth is less strict on header tags and casing.
+- Signing test suite is used for input; mailauth validates signatures and checks for the same `cv=` output.
+- All tests pass, aside from minor differences.
 
 ## License
 

@@ -5,6 +5,7 @@
     "main": "lib/mailauth.js",
     "scripts": {
         "test": "eslint \"lib/**/*.js\" \"test/**/*.js\" && mocha --recursive \"./test/**/*.js\" --reporter spec",
+        "format": "prettier --write .",
         "build-source": "rm -rf node_modules package-lock.json && npm install && npm run licenses && rm -rf node_modules package-lock.json && npm install --production && rm -rf package-lock.json",
         "build-dist": "npx pkg --compress Brotli package.json && rm -rf package-lock.json && npm install && node winconf.js",
         "build-dist-fast": "pkg --debug package.json && npm install && node winconf.js",
@@ -33,14 +34,15 @@
     "homepage": "https://github.com/postalsys/mailauth",
     "devDependencies": {
         "chai": "4.4.1",
-        "eslint": "8.56.0",
+        "eslint": "9.38.0",
         "eslint-config-nodemailer": "1.2.0",
-        "eslint-config-prettier": "9.1.0",
+        "eslint-config-prettier": "10.1.8",
         "js-yaml": "4.1.0",
-        "license-report": "6.8.0",
+        "license-report": "6.8.1",
         "mbox-reader": "1.2.0",
-        "mocha": "11.7.2",
-        "resedit": "^2.0.3"
+        "mocha": "11.7.4",
+        "prettier": "^3.6.2",
+        "resedit": "^3.0.0"
     },
     "dependencies": {
         "@postalsys/vmc": "1.1.2",
@@ -48,9 +50,9 @@
         "ipaddr.js": "2.2.0",
         "joi": "18.0.1",
         "libmime": "5.3.7",
-        "nodemailer": "7.0.6",
+        "nodemailer": "7.0.10",
         "punycode.js": "2.3.1",
-        "tldts": "7.0.13",
+        "tldts": "7.0.17",
         "undici": "7.16.0",
         "yargs": "17.7.2"
     },

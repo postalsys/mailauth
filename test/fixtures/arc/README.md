@@ -1,6 +1,6 @@
 # ARC Test Suite
 
-This is an informal schema for the open source test suites for the [Authenticated Recieved Chain(ARC)](https://tools.ietf.org/id/draft-ietf-dmarc-arc-protocol-18.txt) protocol, illustrated with examples.  This was prototyped from [the OpenSPF Test Suite](http://www.openspf.org/Test_Suite/Schema), and consists of two suites, one for the generation of ARC header fields, the other for their validation.
+This is an informal schema for the open source test suites for the [Authenticated Recieved Chain(ARC)](https://tools.ietf.org/id/draft-ietf-dmarc-arc-protocol-18.txt) protocol, illustrated with examples. This was prototyped from [the OpenSPF Test Suite](http://www.openspf.org/Test_Suite/Schema), and consists of two suites, one for the generation of ARC header fields, the other for their validation.
 
 Their syntax is YAML. The top level object is a "scenario". A file can consist of multiple scenarios separated by '---' on a line by itself. Lexical comments are introduced by '#' and continue to the end of a line. Lexical comments are ignored. There are also comment fields which are part of a scenario. DKIM records, private keys, domains, and selectors are shared across scenarios.
 
@@ -13,7 +13,6 @@ Parts of the test suite use the following external packages:
 They can be easy installed with pip using the provided dependencies.py script:
 
 $ ./dependencies.py
-
 
 ## Example Validation Scenario
 
@@ -46,14 +45,16 @@ comment: >-
 ```
 
 ## Signing Suite Assumptions
-An accurate chain validation status for the messages in the test suite has been stamped into the most recent Authentication-Results header.  Implementations are free to use this or not, although it is encouraged that they do so.  It is also assumed that signing implementations do not add additional Authentication-Results header fields, as this would be propagated into the AAR header & thus invalidate signatures.
+
+An accurate chain validation status for the messages in the test suite has been stamped into the most recent Authentication-Results header. Implementations are free to use this or not, although it is encouraged that they do so. It is also assumed that signing implementations do not add additional Authentication-Results header fields, as this would be propagated into the AAR header & thus invalidate signatures.
 
 All tests in the signing test suite are generated using the relaxed/relaxed cannonicalization rules.
 
 ## AR Consolidation
+
 When generating AAR'sm implementations are expected to consolidate AR headers with the ADMD's authserv_id. How this is done is implementation specific. In order to test this feature, we asume a standard way of accomplishing this.
 
-All AR's with the give authserv-id are consolidated, and kept in the order in which they appear in the message.  Each complete result is extracted from the AR headers, and kept in order.  These are added to the AAR, in order, one per line, beggining with the line containing the authserv_id.  For example:
+All AR's with the give authserv-id are consolidated, and kept in the order in which they appear in the message. Each complete result is extracted from the AR headers, and kept in order. These are added to the AAR, in order, one per line, beggining with the line containing the authserv_id. For example:
 
 ```
 Authentication-Results: lists.example.org; arc=none;
@@ -65,6 +66,7 @@ MIME-Version: 1.0
 Return-Path: <jqd@d1.example.org>
 ....
 ```
+
 Would yield the following AAR, assuming this to be the first arc hop:
 
 ```
@@ -76,16 +78,16 @@ ARC-Authentication-Results: i=1; lists.example.org; arc=none;
 
 ## Signing Header Format Standardization
 
-There is an explicit ambiguity & indeterminism supported by the ARC & DKIM specs with respect to the format of generated signature headers.  Implementors are free to add additional tags, whitespace, and to arbitrarily order tags, etc.  This degree of variability makes it impossible to predict message signatures from inputs.  Therefore, for the purposes of the signing section of this test suite, we assume the signing implementer generates a standardized header format for both ARC-Message-Signature, and ARC-Seal header fields:
+There is an explicit ambiguity & indeterminism supported by the ARC & DKIM specs with respect to the format of generated signature headers. Implementors are free to add additional tags, whitespace, and to arbitrarily order tags, etc. This degree of variability makes it impossible to predict message signatures from inputs. Therefore, for the purposes of the signing section of this test suite, we assume the signing implementer generates a standardized header format for both ARC-Message-Signature, and ARC-Seal header fields:
 
-* All tags are ordered alphabetically by key
-* All tag keys are lowercase
-* All tag values are lowercase except for b= and bh=
-* There is no whitespace(newlines, crlf, spaces) asside from exactly one space after separator semi-colons
-* There is no trailing semi-colon
-* The ARC-Seal tag set will be exactly - (a, b, cv, d, i, s, t)
-* The ARC-Message-Signature tag set will be exactly - (a, b, b, bh, d, h, i, s, t)
-* ARC-Seal & ARC-Message-Signature a=rsa-sha256
+- All tags are ordered alphabetically by key
+- All tag keys are lowercase
+- All tag values are lowercase except for b= and bh=
+- There is no whitespace(newlines, crlf, spaces) asside from exactly one space after separator semi-colons
+- There is no trailing semi-colon
+- The ARC-Seal tag set will be exactly - (a, b, cv, d, i, s, t)
+- The ARC-Message-Signature tag set will be exactly - (a, b, b, bh, d, h, i, s, t)
+- ARC-Seal & ARC-Message-Signature a=rsa-sha256
 
 ## Example Signing Scenario
 
@@ -163,7 +165,9 @@ comment: >-
 ```
 
 ## Running the Suite
-Included is an example python harness for running the test suite.  The harness takes as input the suite to run(sign/validate), and a command line tool which performs the operation.  A DNS server with the key records is started on a local port during suite execution.  More details are provided by ./testarc.py -h.  Dependencies for this script are documented in requirements.txt.  OpenARC, dkimpy, & dummy runners are found in the runners directory.
+
+Included is an example python harness for running the test suite. The harness takes as input the suite to run(sign/validate), and a command line tool which performs the operation. A DNS server with the key records is started on a local port during suite execution. More details are provided by ./testarc.py -h. Dependencies for this script are documented in requirements.txt. OpenARC, dkimpy, & dummy runners are found in the runners directory.
 
 ## Modifying the suite
-There are various tools for generating and modifying parts of the suite, found in the sig_gen directory.  See the Readme file in that directory for more information.
+
+There are various tools for generating and modifying parts of the suite, found in the sig_gen directory. See the Readme file in that directory for more information.
