@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.12.0](https://github.com/postalsys/mailauth/compare/v4.11.0...v4.12.0) (2025-12-16)
+
+
+### Features
+
+* add TypeScript type definitions and expand module exports ([c1cf880](https://github.com/postalsys/mailauth/commit/c1cf880a385fac5d2b5ecf5c1e4fa0cd3a319656))
+
+
+### Bug Fixes
+
+* correct variable name in mta-sts domain extraction ([e68e2d4](https://github.com/postalsys/mailauth/commit/e68e2d4c267130e0defe750cb95a6b8654620cc4))
+
 ## [4.11.0](https://github.com/postalsys/mailauth/compare/v4.10.0...v4.11.0) (2025-10-31)
 
 
