@@ -4,6 +4,9 @@
 
 mailauth provides a command-line utility for email authentication, complementing its [Node.js library](README.md). This guide explains how to use the mailauth CLI to perform various email authentication tasks.
 
+> [!NOTE]
+> mailauth is used by [EmailEngine](https://emailengine.app/) for validating email authentication settings. See the [Email Authentication Testing documentation](https://learn.emailengine.app/docs/advanced/email-authentication-testing) for details.
+
 ## Table of Contents
 
 - [Installation](#installation)
