@@ -3,6 +3,7 @@
     "version": "4.11.0",
     "description": "Email authentication library for Node.js",
     "main": "lib/mailauth.js",
+    "types": "index.d.ts",
     "scripts": {
         "test": "eslint \"lib/**/*.js\" \"test/**/*.js\" && mocha --recursive \"./test/**/*.js\" --reporter spec",
         "format": "prettier --write .",
@@ -34,25 +35,25 @@
     "homepage": "https://github.com/postalsys/mailauth",
     "devDependencies": {
         "chai": "4.4.1",
-        "eslint": "9.38.0",
+        "eslint": "9.39.2",
         "eslint-config-nodemailer": "1.2.0",
         "eslint-config-prettier": "10.1.8",
-        "js-yaml": "4.1.0",
+        "js-yaml": "4.1.1",
         "license-report": "6.8.1",
         "mbox-reader": "1.2.0",
-        "mocha": "11.7.4",
-        "prettier": "^3.6.2",
-        "resedit": "^3.0.0"
+        "mocha": "11.7.5",
+        "prettier": "3.7.4",
+        "resedit": "3.0.1"
     },
     "dependencies": {
         "@postalsys/vmc": "1.1.2",
         "fast-xml-parser": "4.5.2",
-        "ipaddr.js": "2.2.0",
-        "joi": "18.0.1",
+        "ipaddr.js": "2.3.0",
+        "joi": "18.0.2",
         "libmime": "5.3.7",
-        "nodemailer": "7.0.10",
+        "nodemailer": "7.0.11",
         "punycode.js": "2.3.1",
-        "tldts": "7.0.17",
+        "tldts": "7.0.19",
         "undici": "7.16.0",
         "yargs": "17.7.2"
     },

@@ -30,10 +30,13 @@ module.exports = [
         rules: {
             'no-await-in-loop': 0,
             'require-atomic-updates': 0,
-            'no-unused-vars': ['error', { 
-                argsIgnorePattern: '^_',
-                caughtErrors: 'none'
-            }],
+            'no-unused-vars': [
+                'error',
+                {
+                    argsIgnorePattern: '^_',
+                    caughtErrors: 'none'
+                }
+            ],
             'no-console': 0
         }
     }
