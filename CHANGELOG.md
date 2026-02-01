@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.12.1](https://github.com/postalsys/mailauth/compare/v4.12.0...v4.12.1) (2026-02-01)
+
+
+### Bug Fixes
+
+* upgrade fast-xml-parser to 5.3.4 to resolve DoS vulnerability ([60aef5d](https://github.com/postalsys/mailauth/commit/60aef5dfc9883047735975339efc9b1ae3de8f8f))
+
 ## [4.12.0](https://github.com/postalsys/mailauth/compare/v4.11.0...v4.12.0) (2025-12-16)
 
 
