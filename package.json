@@ -42,19 +42,19 @@
         "license-report": "6.8.1",
         "mbox-reader": "1.2.0",
         "mocha": "11.7.5",
-        "prettier": "3.7.4",
+        "prettier": "3.8.1",
         "resedit": "3.0.1"
     },
     "dependencies": {
         "@postalsys/vmc": "1.1.2",
-        "fast-xml-parser": "4.5.2",
+        "fast-xml-parser": "5.3.4",
         "ipaddr.js": "2.3.0",
         "joi": "18.0.2",
         "libmime": "5.3.7",
-        "nodemailer": "7.0.11",
+        "nodemailer": "7.0.13",
         "punycode.js": "2.3.1",
-        "tldts": "7.0.19",
-        "undici": "7.16.0",
+        "tldts": "7.0.21",
+        "undici": "7.19.2",
         "yargs": "17.7.2"
     },
     "engines": {

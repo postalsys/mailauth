@@ -3,7 +3,6 @@ module.exports = {
     reject: [
         // only works as ESM
         'chai',
-        'fast-xml-parser',
         'yargs'
     ]
 };
