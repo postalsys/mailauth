@@ -604,6 +604,6 @@ Based on ValiMail's [arc_test_suite](https://github.com/ValiMail/arc_test_suite)
 
 ## License
 
-&copy; 2020-2025 Postal Systems OÜ
+&copy; 2020-2026 Postal Systems OÜ
 
 Licensed under the [MIT License](LICENSE).

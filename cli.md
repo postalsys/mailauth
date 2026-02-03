@@ -421,6 +421,6 @@ When this option is used, mailauth will not perform actual DNS queries but will 
 
 ## License
 
-&copy; 2020-2025 Postal Systems OÜ
+&copy; 2020-2026 Postal Systems OÜ
 
 Licensed under the [MIT License](LICENSE).
