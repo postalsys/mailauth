@@ -163,6 +163,8 @@ const signResult = await dkimSign(message, options);
     - **canonicalization** (`string`): Canonicalization method. Defaults to `'relaxed/relaxed'`.
     - **algorithm** (`string`): Signing and hashing algorithm. Defaults to `'rsa-sha256'`.
     - **signTime** (`Date`): Signing time. Defaults to current time.
+    - **expires** (`Date`): Signature expiration time (`x=` tag). Optional.
+    - **headerList** (`Array`): List of header field names to sign. Optional; uses default set if not specified.
     - **signatureData** (`Array`): Array of signature objects. Each object may contain:
         - **signingDomain** (`string`): DKIM key domain name.
         - **selector** (`string`): DKIM key selector.

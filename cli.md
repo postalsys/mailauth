@@ -268,6 +268,7 @@ mailauth vmc [options]
 - `--authority <url>`, `-a <url>`: URL of the VMC resource.
 - `--authorityPath <path>`, `-p <path>`: Path to a local VMC file, used to avoid network requests.
 - `--domain <domain>`, `-d <domain>`: Sender domain to validate against the certificate.
+- `--date <timestamp>`, `-t <timestamp>`: ISO-formatted timestamp for certificate expiration checks. Defaults to the current time.
 
 #### Example
 
