@@ -15,7 +15,7 @@
 - **BIMI** resolving and **VMC** validation
 - **MTA-STS** helper functions
 
-mailauth is a pure JavaScript implementation, requiring no external applications or compilation. It runs on any server or device with Node.js version 16 or later.
+mailauth is a pure JavaScript implementation, requiring no external applications or compilation. It runs on any server or device with Node.js version 18 or later.
 
 > [!NOTE]
 > mailauth is used by [EmailEngine](https://emailengine.app/) for validating email authentication settings. See the [Email Authentication Testing documentation](https://learn.emailengine.app/docs/advanced/email-authentication-testing) for details.
@@ -604,6 +604,6 @@ Based on ValiMail's [arc_test_suite](https://github.com/ValiMail/arc_test_suite)
 
 ## License
 
-&copy; 2020-2024 Postal Systems OÜ
+&copy; 2020-2025 Postal Systems OÜ
 
 Licensed under the [MIT License](LICENSE).
