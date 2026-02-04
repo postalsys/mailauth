@@ -252,6 +252,8 @@ const result = await dkimVerify(message);
 // Returns an object containing verification results
 ```
 
+See [DKIM Result Reference](docs/dkim.md) for details on the result object structure.
+
 ##### Example
 
 ```javascript
@@ -288,6 +290,8 @@ const { spf } = require('mailauth/lib/spf');
 const result = await spf(options);
 // Returns an object containing SPF verification results
 ```
+
+See [SPF Result Reference](docs/spf.md) for details on the result object structure.
 
 ##### Parameters
 
@@ -339,6 +343,8 @@ const { arc } = await authenticate(message, {
 
 console.log(arc);
 ```
+
+See [ARC Result Reference](docs/arc.md) for details on the result object structure.
 
 **Sample Output:**
 
@@ -421,6 +427,8 @@ process.stdout.write(message);
 
 DMARC is verified during the authentication process. Although the `dmarc` handler is exported, it requires input from previous steps like SPF and DKIM.
 
+See [DMARC Result Reference](docs/dmarc.md) for details on the result object structure.
+
 #### DMARC Helpers
 
 ##### `getDmarcRecord(domain [, resolver])`
@@ -468,6 +476,8 @@ console.log(dmarcRecord);
 ### BIMI
 
 Brand Indicators for Message Identification (BIMI) support is based on [draft-blank-ietf-bimi-02](https://tools.ietf.org/html/draft-blank-ietf-bimi-02). BIMI information is resolved during the authentication step, provided the message passes DMARC validation with a policy other than "none".
+
+See [BIMI Result Reference](docs/bimi.md) for details on the result object structure.
 
 #### Example
 
@@ -519,6 +529,8 @@ const { getPolicy } = require('mailauth/lib/mta-sts');
 const { policy, status } = await getPolicy(domain [, knownPolicy]);
 // Returns an object with the policy and status
 ```
+
+See [MTA-STS Result Reference](docs/mta-sts.md) for details on the result object structure.
 
 ##### Parameters
 
