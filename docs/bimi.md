@@ -23,6 +23,7 @@ const { bimi } = await authenticate(message, {
 | `status` | `object` | Always | Resolution status object (see below) |
 | `location` | `string` | Found | HTTPS URL for the logo SVG file (from `l=` tag) |
 | `authority` | `string` | Found | HTTPS URL for the VMC/CMC certificate (from `a=` tag) |
+| `preference` | `string` | When `p=` present | Logo preference value from DNS record |
 | `rr` | `string` | Found | Raw BIMI DNS TXT record |
 | `info` | `string` | Always | Formatted Authentication-Results header value |
 
@@ -102,6 +103,7 @@ const vmcResult = await validateVMC(bimiResult, options);
 |-------|------|-------------|
 | `location` | `object` | Logo file fetch result |
 | `authority` | `object` | VMC/CMC fetch and validation result |
+| `headers` | `object` | Ready-to-use email headers (only on validation success) |
 
 ### location Object
 
@@ -124,6 +126,20 @@ const vmcResult = await validateVMC(bimiResult, options);
 | `domainVerified` | `boolean` | Whether domain matches certificate |
 | `hashMatch` | `boolean` | Whether logo hash matches certificate |
 | `error` | `object` | Error details (on failure) |
+
+### headers Object
+
+Present only when VMC validation succeeds. Contains ready-to-use email headers.
+
+| Field | Type | Presence | Description |
+|-------|------|----------|-------------|
+| `indicator` | `string` | Always | BIMI-Indicator header with base64-encoded SVG logo |
+| `location` | `string` | Always | BIMI-Location header with logo URL |
+| `preference` | `string` | `p=` tag present | BIMI-Logo-Preference header |
+
+These headers should be added to messages after successful BIMI validation. The MTA should:
+1. Remove any existing BIMI-* headers from incoming messages
+2. Add these headers after successful validation
 
 ### VMC Error Codes
 
@@ -155,7 +171,8 @@ const vmcResult = await validateVMC(bimiResult, options);
   },
   "location": "https://example.com/bimi/logo.svg",
   "authority": "https://example.com/bimi/vmc.pem",
-  "rr": "v=BIMI1; l=https://example.com/bimi/logo.svg; a=https://example.com/bimi/vmc.pem",
+  "preference": "self",
+  "rr": "v=BIMI1; l=https://example.com/bimi/logo.svg; a=https://example.com/bimi/vmc.pem; p=self",
   "info": "bimi=pass header.selector=default header.d=example.com policy.authority=none policy.authority-uri=https://example.com/bimi/vmc.pem"
 }
 ```
@@ -245,6 +262,11 @@ const vmcResult = await validateVMC(bimiResult, options);
         "subjectAltName": ["example.com", "*.example.com"]
       }
     }
+  },
+  "headers": {
+    "indicator": "BIMI-Indicator: PHN2ZyB4bWxucz0i...",
+    "location": "BIMI-Location: v=BIMI1; l=https://example.com/bimi/logo.svg",
+    "preference": "BIMI-Logo-Preference: self"
   }
 }
 ```
