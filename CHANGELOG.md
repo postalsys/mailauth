@@ -1,5 +1,18 @@
 # Changelog
 
+## [4.13.0](https://github.com/postalsys/mailauth/compare/v4.12.1...v4.13.0) (2026-02-04)
+
+
+### Features
+
+* **bimi:** add BIMI headers to VMC validation output ([77ce4e8](https://github.com/postalsys/mailauth/commit/77ce4e847d79b2acf319c3b79e865225e4c97040))
+* **dkim:** add timestamp, expiration, and validity status to output ([2267eb7](https://github.com/postalsys/mailauth/commit/2267eb77fbcaf79a6c0fb59681815628186a3ae9))
+
+
+### Bug Fixes
+
+* update Node.js requirement to &gt;=20.18.1 ([3280a59](https://github.com/postalsys/mailauth/commit/3280a597430cf47b640b1cc31e661ab18becf145)), closes [#109](https://github.com/postalsys/mailauth/issues/109)
+
 ## [4.12.1](https://github.com/postalsys/mailauth/compare/v4.12.0...v4.12.1) (2026-02-01)
 
 
