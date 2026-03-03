@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.13.1](https://github.com/postalsys/mailauth/compare/v4.13.0...v4.13.1) (2026-03-03)
+
+
+### Bug Fixes
+
+* trigger build ([33b05b7](https://github.com/postalsys/mailauth/commit/33b05b7df806b0104c3ac3a93986f6406b02393a))
+
 ## [4.13.0](https://github.com/postalsys/mailauth/compare/v4.12.1...v4.13.0) (2026-02-04)
 
 
