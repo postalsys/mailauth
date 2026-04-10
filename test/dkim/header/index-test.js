@@ -14,9 +14,7 @@ describe('DKIM Header Canonicalization Dispatcher Tests', () => {
         it('Should use simple canonicalization when c=simple/simple', () => {
             const signingHeaderLines = {
                 keys: 'From',
-                headers: [
-                    { line: Buffer.from('FROM: user@example.com', 'binary') }
-                ]
+                headers: [{ line: Buffer.from('FROM: user@example.com', 'binary') }]
             };
 
             const result = generateCanonicalizedHeader('DKIM', signingHeaderLines, {
@@ -35,9 +33,7 @@ describe('DKIM Header Canonicalization Dispatcher Tests', () => {
         it('Should use relaxed canonicalization when c=relaxed/relaxed', () => {
             const signingHeaderLines = {
                 keys: 'From',
-                headers: [
-                    { line: Buffer.from('FROM: user@example.com', 'binary') }
-                ]
+                headers: [{ line: Buffer.from('FROM: user@example.com', 'binary') }]
             };
 
             const result = generateCanonicalizedHeader('DKIM', signingHeaderLines, {
@@ -57,9 +53,7 @@ describe('DKIM Header Canonicalization Dispatcher Tests', () => {
         it('Should use simple canonicalization when c=simple/relaxed', () => {
             const signingHeaderLines = {
                 keys: 'From',
-                headers: [
-                    { line: Buffer.from('FROM: user@example.com', 'binary') }
-                ]
+                headers: [{ line: Buffer.from('FROM: user@example.com', 'binary') }]
             };
 
             const result = generateCanonicalizedHeader('DKIM', signingHeaderLines, {
@@ -78,9 +72,7 @@ describe('DKIM Header Canonicalization Dispatcher Tests', () => {
         it('Should use relaxed canonicalization when c=relaxed/simple', () => {
             const signingHeaderLines = {
                 keys: 'From',
-                headers: [
-                    { line: Buffer.from('FROM: user@example.com', 'binary') }
-                ]
+                headers: [{ line: Buffer.from('FROM: user@example.com', 'binary') }]
             };
 
             const result = generateCanonicalizedHeader('DKIM', signingHeaderLines, {
@@ -99,9 +91,7 @@ describe('DKIM Header Canonicalization Dispatcher Tests', () => {
         it('Should default to simple canonicalization when not specified', () => {
             const signingHeaderLines = {
                 keys: 'From',
-                headers: [
-                    { line: Buffer.from('FROM: user@example.com', 'binary') }
-                ]
+                headers: [{ line: Buffer.from('FROM: user@example.com', 'binary') }]
             };
 
             const result = generateCanonicalizedHeader('DKIM', signingHeaderLines, {
@@ -121,9 +111,7 @@ describe('DKIM Header Canonicalization Dispatcher Tests', () => {
         it('Should throw for unknown canonicalization type', () => {
             const signingHeaderLines = {
                 keys: 'From',
-                headers: [
-                    { line: Buffer.from('From: user@example.com', 'binary') }
-                ]
+                headers: [{ line: Buffer.from('From: user@example.com', 'binary') }]
             };
 
             try {
@@ -144,9 +132,7 @@ describe('DKIM Header Canonicalization Dispatcher Tests', () => {
         it('Should throw for invalid canonicalization value', () => {
             const signingHeaderLines = {
                 keys: 'From',
-                headers: [
-                    { line: Buffer.from('From: user@example.com', 'binary') }
-                ]
+                headers: [{ line: Buffer.from('From: user@example.com', 'binary') }]
             };
 
             try {
@@ -169,9 +155,7 @@ describe('DKIM Header Canonicalization Dispatcher Tests', () => {
         it('Should handle uppercase canonicalization value', () => {
             const signingHeaderLines = {
                 keys: 'From',
-                headers: [
-                    { line: Buffer.from('FROM: user@example.com', 'binary') }
-                ]
+                headers: [{ line: Buffer.from('FROM: user@example.com', 'binary') }]
             };
 
             const result = generateCanonicalizedHeader('DKIM', signingHeaderLines, {
@@ -190,9 +174,7 @@ describe('DKIM Header Canonicalization Dispatcher Tests', () => {
         it('Should handle mixed case canonicalization value', () => {
             const signingHeaderLines = {
                 keys: 'From',
-                headers: [
-                    { line: Buffer.from('FROM: user@example.com', 'binary') }
-                ]
+                headers: [{ line: Buffer.from('FROM: user@example.com', 'binary') }]
             };
 
             const result = generateCanonicalizedHeader('DKIM', signingHeaderLines, {

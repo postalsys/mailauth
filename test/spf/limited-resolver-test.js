@@ -19,7 +19,11 @@ describe('SPF Limited Resolver Tests', () => {
             const stubResolver = (domain, type) => {
                 if (type === 'TXT') {
                     if (domain === 'example.com') {
-                        return [['v=spf1 include:s1.example.com include:s2.example.com include:s3.example.com include:s4.example.com include:s5.example.com include:s6.example.com include:s7.example.com include:s8.example.com -all']];
+                        return [
+                            [
+                                'v=spf1 include:s1.example.com include:s2.example.com include:s3.example.com include:s4.example.com include:s5.example.com include:s6.example.com include:s7.example.com include:s8.example.com -all'
+                            ]
+                        ];
                     }
                     // Each include domain
                     return [['v=spf1 -all']];
@@ -45,7 +49,11 @@ describe('SPF Limited Resolver Tests', () => {
                         return [['v=spf1 include:level1.example.com -all']];
                     }
                     if (domain === 'level1.example.com') {
-                        return [['v=spf1 include:level2.example.com include:level3.example.com include:level4.example.com include:level5.example.com include:level6.example.com include:level7.example.com include:level8.example.com include:level9.example.com include:level10.example.com include:level11.example.com -all']];
+                        return [
+                            [
+                                'v=spf1 include:level2.example.com include:level3.example.com include:level4.example.com include:level5.example.com include:level6.example.com include:level7.example.com include:level8.example.com include:level9.example.com include:level10.example.com include:level11.example.com -all'
+                            ]
+                        ];
                     }
                     // Each level includes more
                     return [['v=spf1 include:deep.example.com -all']];
@@ -321,7 +329,11 @@ describe('SPF Limited Resolver Tests', () => {
                 if (type === 'TXT') {
                     if (domain === 'example.com') {
                         // 10 includes should work since initial TXT is not counted
-                        return [['v=spf1 include:s1.com include:s2.com include:s3.com include:s4.com include:s5.com include:s6.com include:s7.com include:s8.com include:s9.com include:s10.com -all']];
+                        return [
+                            [
+                                'v=spf1 include:s1.com include:s2.com include:s3.com include:s4.com include:s5.com include:s6.com include:s7.com include:s8.com include:s9.com include:s10.com -all'
+                            ]
+                        ];
                     }
                     return [['v=spf1 -all']];
                 }

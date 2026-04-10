@@ -217,7 +217,7 @@ describe('SPF Dual-Stack Resolver Tests', () => {
                 }
                 // Synchronous resolver - errors thrown directly
                 if (type === 'A' || type === 'AAAA') {
-                    return [];  // Return empty arrays instead of throwing
+                    return []; // Return empty arrays instead of throwing
                 }
                 return [];
             };
@@ -361,10 +361,10 @@ describe('SPF Dual-Stack Resolver Tests', () => {
                     return [['v=spf1 a:host.example.com -all']];
                 }
                 if (type === 'A') {
-                    return [];  // Empty but not an error
+                    return []; // Empty but not an error
                 }
                 if (type === 'AAAA') {
-                    return [];  // Empty but not an error
+                    return []; // Empty but not an error
                 }
                 return [];
             };
@@ -450,7 +450,7 @@ describe('SPF Dual-Stack Resolver Tests', () => {
                     return ['192.0.2.1'];
                 }
                 if (type === 'AAAA') {
-                    return [];  // Empty AAAA, but A exists
+                    return []; // Empty AAAA, but A exists
                 }
                 return [];
             };

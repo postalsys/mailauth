@@ -81,7 +81,11 @@ describe('getDmarcRecord Tests', () => {
         it('Should parse all standard tags', async () => {
             const stubResolver = (domain, type) => {
                 if (type === 'TXT' && domain === '_dmarc.example.com') {
-                    return [['v=DMARC1; p=quarantine; sp=reject; pct=50; adkim=s; aspf=r; fo=1; rua=mailto:dmarc@example.com; ruf=mailto:forensic@example.com; ri=3600']];
+                    return [
+                        [
+                            'v=DMARC1; p=quarantine; sp=reject; pct=50; adkim=s; aspf=r; fo=1; rua=mailto:dmarc@example.com; ruf=mailto:forensic@example.com; ri=3600'
+                        ]
+                    ];
                 }
                 const err = new Error('Not found');
                 err.code = 'ENOTFOUND';

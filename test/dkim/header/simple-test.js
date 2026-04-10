@@ -14,10 +14,7 @@ describe('DKIM Simple Header Canonicalization Tests', () => {
         it('Should preserve original header case', () => {
             const signingHeaderLines = {
                 keys: 'From: Subject',
-                headers: [
-                    { line: Buffer.from('From: user@example.com', 'binary') },
-                    { line: Buffer.from('Subject: Test Email', 'binary') }
-                ]
+                headers: [{ line: Buffer.from('From: user@example.com', 'binary') }, { line: Buffer.from('Subject: Test Email', 'binary') }]
             };
 
             const result = simpleHeaders('DKIM', signingHeaderLines, {
@@ -36,9 +33,7 @@ describe('DKIM Simple Header Canonicalization Tests', () => {
         it('Should preserve whitespace in headers', () => {
             const signingHeaderLines = {
                 keys: 'Subject',
-                headers: [
-                    { line: Buffer.from('Subject:   Multiple   Spaces', 'binary') }
-                ]
+                headers: [{ line: Buffer.from('Subject:   Multiple   Spaces', 'binary') }]
             };
 
             const result = simpleHeaders('DKIM', signingHeaderLines, {
@@ -56,10 +51,7 @@ describe('DKIM Simple Header Canonicalization Tests', () => {
         it('Should add CRLF after each header', () => {
             const signingHeaderLines = {
                 keys: 'From: Subject',
-                headers: [
-                    { line: Buffer.from('From: user@example.com', 'binary') },
-                    { line: Buffer.from('Subject: Test', 'binary') }
-                ]
+                headers: [{ line: Buffer.from('From: user@example.com', 'binary') }, { line: Buffer.from('Subject: Test', 'binary') }]
             };
 
             const result = simpleHeaders('DKIM', signingHeaderLines, {
@@ -78,9 +70,7 @@ describe('DKIM Simple Header Canonicalization Tests', () => {
         it('Should preserve folded headers', () => {
             const signingHeaderLines = {
                 keys: 'Subject',
-                headers: [
-                    { line: Buffer.from('Subject: This is a very long subject line\r\n that has been folded', 'binary') }
-                ]
+                headers: [{ line: Buffer.from('Subject: This is a very long subject line\r\n that has been folded', 'binary') }]
             };
 
             const result = simpleHeaders('DKIM', signingHeaderLines, {
@@ -100,9 +90,7 @@ describe('DKIM Simple Header Canonicalization Tests', () => {
         it('Should generate DKIM-Signature header', () => {
             const signingHeaderLines = {
                 keys: 'From',
-                headers: [
-                    { line: Buffer.from('From: user@example.com', 'binary') }
-                ]
+                headers: [{ line: Buffer.from('From: user@example.com', 'binary') }]
             };
 
             const result = simpleHeaders('DKIM', signingHeaderLines, {
@@ -123,9 +111,7 @@ describe('DKIM Simple Header Canonicalization Tests', () => {
         it('Should generate ARC-Message-Signature header', () => {
             const signingHeaderLines = {
                 keys: 'From',
-                headers: [
-                    { line: Buffer.from('From: user@example.com', 'binary') }
-                ]
+                headers: [{ line: Buffer.from('From: user@example.com', 'binary') }]
             };
 
             const result = simpleHeaders('ARC', signingHeaderLines, {
@@ -144,9 +130,7 @@ describe('DKIM Simple Header Canonicalization Tests', () => {
         it('Should generate ARC-Seal header', () => {
             const signingHeaderLines = {
                 keys: 'ARC-Authentication-Results',
-                headers: [
-                    { line: Buffer.from('ARC-Authentication-Results: i=1; none', 'binary') }
-                ]
+                headers: [{ line: Buffer.from('ARC-Authentication-Results: i=1; none', 'binary') }]
             };
 
             const result = simpleHeaders('AS', signingHeaderLines, {
@@ -164,9 +148,7 @@ describe('DKIM Simple Header Canonicalization Tests', () => {
         it('Should use provided signatureHeaderLine if given', () => {
             const signingHeaderLines = {
                 keys: 'From',
-                headers: [
-                    { line: Buffer.from('From: user@example.com', 'binary') }
-                ]
+                headers: [{ line: Buffer.from('From: user@example.com', 'binary') }]
             };
 
             const customHeader = 'DKIM-Signature: v=1; a=rsa-sha256; d=custom.com; s=sel; b=';
@@ -183,9 +165,7 @@ describe('DKIM Simple Header Canonicalization Tests', () => {
         it('Should include l= tag when bodyHashedBytes is set', () => {
             const signingHeaderLines = {
                 keys: 'From',
-                headers: [
-                    { line: Buffer.from('From: user@example.com', 'binary') }
-                ]
+                headers: [{ line: Buffer.from('From: user@example.com', 'binary') }]
             };
 
             const result = simpleHeaders('DKIM', signingHeaderLines, {
@@ -204,9 +184,7 @@ describe('DKIM Simple Header Canonicalization Tests', () => {
         it('Should include t= tag when signTime is provided', () => {
             const signingHeaderLines = {
                 keys: 'From',
-                headers: [
-                    { line: Buffer.from('From: user@example.com', 'binary') }
-                ]
+                headers: [{ line: Buffer.from('From: user@example.com', 'binary') }]
             };
 
             const signTime = new Date('2024-01-15T12:00:00Z');
@@ -227,9 +205,7 @@ describe('DKIM Simple Header Canonicalization Tests', () => {
         it('Should include x= tag when expires is provided', () => {
             const signingHeaderLines = {
                 keys: 'From',
-                headers: [
-                    { line: Buffer.from('From: user@example.com', 'binary') }
-                ]
+                headers: [{ line: Buffer.from('From: user@example.com', 'binary') }]
             };
 
             const expires = new Date('2024-01-20T12:00:00Z');
@@ -250,9 +226,7 @@ describe('DKIM Simple Header Canonicalization Tests', () => {
         it('Should include i= for ARC instance', () => {
             const signingHeaderLines = {
                 keys: 'From',
-                headers: [
-                    { line: Buffer.from('From: user@example.com', 'binary') }
-                ]
+                headers: [{ line: Buffer.from('From: user@example.com', 'binary') }]
             };
 
             const result = simpleHeaders('ARC', signingHeaderLines, {
@@ -272,9 +246,7 @@ describe('DKIM Simple Header Canonicalization Tests', () => {
         it('Should remove b= value from canonicalized header', () => {
             const signingHeaderLines = {
                 keys: 'From',
-                headers: [
-                    { line: Buffer.from('From: user@example.com', 'binary') }
-                ]
+                headers: [{ line: Buffer.from('From: user@example.com', 'binary') }]
             };
 
             const result = simpleHeaders('DKIM', signingHeaderLines, {
@@ -295,9 +267,7 @@ describe('DKIM Simple Header Canonicalization Tests', () => {
         it('Should use placeholder signature when none provided', () => {
             const signingHeaderLines = {
                 keys: 'From',
-                headers: [
-                    { line: Buffer.from('From: user@example.com', 'binary') }
-                ]
+                headers: [{ line: Buffer.from('From: user@example.com', 'binary') }]
             };
 
             const result = simpleHeaders('DKIM', signingHeaderLines, {
@@ -317,9 +287,7 @@ describe('DKIM Simple Header Canonicalization Tests', () => {
         it('Should return canonicalizedHeader as Buffer', () => {
             const signingHeaderLines = {
                 keys: 'From',
-                headers: [
-                    { line: Buffer.from('From: user@example.com', 'binary') }
-                ]
+                headers: [{ line: Buffer.from('From: user@example.com', 'binary') }]
             };
 
             const result = simpleHeaders('DKIM', signingHeaderLines, {
@@ -336,9 +304,7 @@ describe('DKIM Simple Header Canonicalization Tests', () => {
         it('Should return dkimHeaderOpts with all set options', () => {
             const signingHeaderLines = {
                 keys: 'From',
-                headers: [
-                    { line: Buffer.from('From: user@example.com', 'binary') }
-                ]
+                headers: [{ line: Buffer.from('From: user@example.com', 'binary') }]
             };
 
             const result = simpleHeaders('DKIM', signingHeaderLines, {
@@ -360,9 +326,7 @@ describe('DKIM Simple Header Canonicalization Tests', () => {
         it('Should return false for dkimHeaderOpts when signatureHeaderLine provided', () => {
             const signingHeaderLines = {
                 keys: 'From',
-                headers: [
-                    { line: Buffer.from('From: user@example.com', 'binary') }
-                ]
+                headers: [{ line: Buffer.from('From: user@example.com', 'binary') }]
             };
 
             const result = simpleHeaders('DKIM', signingHeaderLines, {

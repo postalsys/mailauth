@@ -210,14 +210,18 @@ describe('Tools Tests', () => {
         });
 
         it('Should fold signature when folded=true', () => {
-            const result = formatSignatureHeaderLine('DKIM', {
-                a: 'rsa-sha256',
-                d: 'example.com',
-                s: 'selector1',
-                h: 'from:to:subject',
-                bh: 'bodyhash==',
-                b: 'a'.repeat(200)
-            }, true);
+            const result = formatSignatureHeaderLine(
+                'DKIM',
+                {
+                    a: 'rsa-sha256',
+                    d: 'example.com',
+                    s: 'selector1',
+                    h: 'from:to:subject',
+                    bh: 'bodyhash==',
+                    b: 'a'.repeat(200)
+                },
+                true
+            );
 
             expect(result).to.include('\r\n');
         });
