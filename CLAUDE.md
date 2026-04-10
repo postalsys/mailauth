@@ -60,3 +60,7 @@ Tests mirror the `lib/` structure under `test/`. Test fixtures in `test/fixtures
 ### Key Design Pattern
 
 All protocol functions accept an optional `resolver` parameter (async function matching `dns.promises.resolve` signature) for DNS lookups. This enables testing with mock DNS and allows consumers to implement caching or custom resolution.
+
+## Releases
+
+Version numbers, changelogs, and releases are managed automatically by release-please via GitHub Actions. Do not manually edit `package.json` version, `CHANGELOG.md`, or release-related files.
