@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.13.2](https://github.com/postalsys/mailauth/compare/v4.13.1...v4.13.2) (2026-04-10)
+
+
+### Bug Fixes
+
+* prevent chunk-boundary-dependent DKIM relaxed body hash ([9ae9745](https://github.com/postalsys/mailauth/commit/9ae9745a4b82737c2ef9cfe6de083e9f934b57e4)), closes [#115](https://github.com/postalsys/mailauth/issues/115)
+
 ## [4.13.1](https://github.com/postalsys/mailauth/compare/v4.13.0...v4.13.1) (2026-03-03)
 
 
