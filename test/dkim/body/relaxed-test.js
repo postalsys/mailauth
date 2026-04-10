@@ -83,6 +83,65 @@ describe('DKIM RelaxedBody Tests', () => {
         );
     });
 
+    it('Should produce identical hash for all 2-chunk splits', async () => {
+        // Body with leading whitespace + tab trigger -- reproduces issue #115
+        const body = Buffer.from('\r\n Hello\r\nWorld\r\nContent\there\r\nEnd\r\n');
+
+        // Reference: all-at-once hash
+        let ref = new RelaxedHash('rsa-sha256');
+        ref.update(body);
+        let refHash = ref.digest('base64');
+
+        for (let splitAt = 1; splitAt < body.length; splitAt++) {
+            let s = new RelaxedHash('rsa-sha256');
+            s.update(body.subarray(0, splitAt));
+            s.update(body.subarray(splitAt));
+            expect(s.digest('base64')).to.equal(refHash, `hash mismatch at split position ${splitAt}`);
+        }
+    });
+
+    it('Should produce identical hash for random multi-chunk splits', async () => {
+        let message = await fs.readFile(__dirname + '/../../fixtures/message1.eml');
+        message = getBody(message);
+
+        let ref = new RelaxedHash('rsa-sha256');
+        ref.update(message);
+        let refHash = ref.digest('base64');
+
+        let chunkSizes = [1, 3, 7, 13, 37, 64, 128, 255];
+        for (let sizeIdx = 0; sizeIdx < chunkSizes.length; sizeIdx++) {
+            let s = new RelaxedHash('rsa-sha256');
+            let pos = 0;
+            let ci = sizeIdx;
+            while (pos < message.length) {
+                let chunkSize = chunkSizes[ci % chunkSizes.length];
+                ci++;
+                let end = Math.min(pos + chunkSize, message.length);
+                s.update(message.subarray(pos, end));
+                pos = end;
+            }
+            expect(s.digest('base64')).to.equal(refHash, `hash mismatch starting with chunk size ${chunkSizes[sizeIdx]}`);
+        }
+    });
+
+    it('Should produce identical hash for 3-chunk splits with tab trigger', async () => {
+        const body = Buffer.from('\r\n Hello\r\nWorld\r\nContent\there\r\nEnd\r\n');
+
+        let ref = new RelaxedHash('rsa-sha256');
+        ref.update(body);
+        let refHash = ref.digest('base64');
+
+        for (let i = 1; i < body.length - 1; i++) {
+            for (let j = i + 1; j < body.length; j++) {
+                let s = new RelaxedHash('rsa-sha256');
+                s.update(body.subarray(0, i));
+                s.update(body.subarray(i, j));
+                s.update(body.subarray(j));
+                expect(s.digest('base64')).to.equal(refHash, `hash mismatch at split positions ${i},${j}`);
+            }
+        }
+    });
+
     it('Should process a very long line', async () => {
         const lineLen = 10 * 1024 * 1024;
         const message = Buffer.alloc(lineLen);
