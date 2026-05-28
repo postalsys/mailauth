@@ -376,15 +376,44 @@ describe('Tools Tests', () => {
             expect(result).to.deep.include({ domain: 'mail.example.com' });
         });
 
-        it('Should match exact domain in strict mode', () => {
-            const result = getAlignment('example.com', ['example.com'], { strict: true });
+        it('Should match identical domain in strict mode', () => {
+            const result = getAlignment('news.example.com', ['news.example.com'], true);
+            expect(result).to.deep.include({ domain: 'news.example.com' });
+        });
+
+        it('Should not match a host against its org domain in strict mode', () => {
+            const result = getAlignment('mail.example.com', ['example.com'], true);
+            expect(result).to.be.false;
+        });
+
+        it('Should not match two different hosts of the same org in strict mode', () => {
+            const result = getAlignment('news.example.com', ['foo.example.com'], true);
+            expect(result).to.be.false;
+        });
+
+        it('Should not match unrelated domains in strict mode', () => {
+            const result = getAlignment('news.example.com', ['foo.example.net'], true);
+            expect(result).to.be.false;
+        });
+
+        it('Should match identical domains case-insensitively in strict mode', () => {
+            const result = getAlignment('News.Example.COM', ['news.example.com'], true);
+            expect(result).to.deep.include({ domain: 'news.example.com' });
+        });
+
+        it('Should match a host against its org domain in relaxed mode', () => {
+            const result = getAlignment('mail.example.com', ['example.com'], false);
             expect(result).to.deep.include({ domain: 'example.com' });
         });
 
-        it('Should not match subdomain in strict mode', () => {
-            const result = getAlignment('example.com', ['mail.example.com'], { strict: true });
-            // In strict mode, only org domains should match
-            expect(result).to.not.be.false;
+        it('Should match two different hosts of the same org in relaxed mode', () => {
+            const result = getAlignment('news.example.com', ['foo.example.com'], false);
+            expect(result).to.deep.include({ domain: 'foo.example.com' });
+        });
+
+        it('Should not match unrelated domains in relaxed mode', () => {
+            const result = getAlignment('news.example.com', ['foo.example.net'], false);
+            expect(result).to.be.false;
         });
 
         it('Should return false when no match', () => {

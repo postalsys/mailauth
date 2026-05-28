@@ -270,7 +270,30 @@ describe('DMARC Verify Tests', () => {
             expect(result.alignment.dkim.strict).to.be.false;
         });
 
-        it('Should use strict DKIM alignment when adkim=s', async () => {
+        it('Should fail strict DKIM alignment when only the org domain matches (adkim=s)', async () => {
+            const stubResolver = (domain, type) => {
+                if (type === 'TXT' && domain === '_dmarc.example.com') {
+                    return [['v=DMARC1; p=reject; adkim=s']];
+                }
+                const err = new Error('Not found');
+                err.code = 'ENOTFOUND';
+                throw err;
+            };
+
+            // Author is mail.example.com, signing domain is example.com.
+            // They share an org domain but are not identical, so strict alignment must fail.
+            const result = await verifyDmarc({
+                headerFrom: 'user@mail.example.com',
+                dkimDomains: [{ domain: 'example.com' }],
+                spfDomains: [],
+                resolver: stubResolver
+            });
+
+            expect(result.status.result).to.equal('fail');
+            expect(result.alignment.dkim.strict).to.be.true;
+        });
+
+        it('Should pass strict DKIM alignment when the signing domain is identical (adkim=s)', async () => {
             const stubResolver = (domain, type) => {
                 if (type === 'TXT' && domain === '_dmarc.example.com') {
                     return [['v=DMARC1; p=reject; adkim=s']];
@@ -281,8 +304,29 @@ describe('DMARC Verify Tests', () => {
             };
 
             const result = await verifyDmarc({
-                headerFrom: 'user@mail.example.com',
+                headerFrom: 'user@example.com',
                 dkimDomains: [{ domain: 'example.com' }],
+                spfDomains: [],
+                resolver: stubResolver
+            });
+
+            expect(result.status.result).to.equal('pass');
+            expect(result.alignment.dkim.strict).to.be.true;
+        });
+
+        it('Should pass strict DKIM alignment when the signing domain matches a subdomain author (adkim=s)', async () => {
+            const stubResolver = (domain, type) => {
+                if (type === 'TXT' && domain === '_dmarc.mail.example.com') {
+                    return [['v=DMARC1; p=reject; adkim=s']];
+                }
+                const err = new Error('Not found');
+                err.code = 'ENOTFOUND';
+                throw err;
+            };
+
+            const result = await verifyDmarc({
+                headerFrom: 'user@mail.example.com',
+                dkimDomains: [{ domain: 'mail.example.com' }],
                 spfDomains: [],
                 resolver: stubResolver
             });
@@ -333,7 +377,30 @@ describe('DMARC Verify Tests', () => {
             expect(result.alignment.spf.strict).to.be.false;
         });
 
-        it('Should use strict SPF alignment when aspf=s', async () => {
+        it('Should fail strict SPF alignment when only the org domain matches (aspf=s)', async () => {
+            const stubResolver = (domain, type) => {
+                if (type === 'TXT' && domain === '_dmarc.example.com') {
+                    return [['v=DMARC1; p=reject; aspf=s']];
+                }
+                const err = new Error('Not found');
+                err.code = 'ENOTFOUND';
+                throw err;
+            };
+
+            // Author is mail.example.com, SPF domain is example.com.
+            // They share an org domain but are not identical, so strict alignment must fail.
+            const result = await verifyDmarc({
+                headerFrom: 'user@mail.example.com',
+                spfDomains: [{ domain: 'example.com' }],
+                dkimDomains: [],
+                resolver: stubResolver
+            });
+
+            expect(result.status.result).to.equal('fail');
+            expect(result.alignment.spf.strict).to.be.true;
+        });
+
+        it('Should pass strict SPF alignment when the SPF domain is identical (aspf=s)', async () => {
             const stubResolver = (domain, type) => {
                 if (type === 'TXT' && domain === '_dmarc.example.com') {
                     return [['v=DMARC1; p=reject; aspf=s']];
@@ -344,7 +411,7 @@ describe('DMARC Verify Tests', () => {
             };
 
             const result = await verifyDmarc({
-                headerFrom: 'user@mail.example.com',
+                headerFrom: 'user@example.com',
                 spfDomains: [{ domain: 'example.com' }],
                 dkimDomains: [],
                 resolver: stubResolver
@@ -352,6 +419,30 @@ describe('DMARC Verify Tests', () => {
 
             expect(result.status.result).to.equal('pass');
             expect(result.alignment.spf.strict).to.be.true;
+        });
+
+        it('Should pass when SPF aligns relaxed even though DKIM strict fails (adkim=s; aspf=r)', async () => {
+            const stubResolver = (domain, type) => {
+                if (type === 'TXT' && domain === '_dmarc.example.com') {
+                    return [['v=DMARC1; p=reject; adkim=s; aspf=r']];
+                }
+                const err = new Error('Not found');
+                err.code = 'ENOTFOUND';
+                throw err;
+            };
+
+            // DKIM only aligns at org level (strict -> fail), SPF aligns relaxed (pass).
+            // DMARC passes if any mechanism aligns.
+            const result = await verifyDmarc({
+                headerFrom: 'user@mail.example.com',
+                dkimDomains: [{ domain: 'example.com' }],
+                spfDomains: [{ domain: 'example.com' }],
+                resolver: stubResolver
+            });
+
+            expect(result.status.result).to.equal('pass');
+            expect(result.alignment.dkim.result).to.not.be.ok;
+            expect(result.alignment.spf.result).to.equal('example.com');
         });
     });
 
