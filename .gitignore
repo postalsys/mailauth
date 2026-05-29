@@ -111,3 +111,6 @@ licenses.txt
 examples/devel-*
 
 .claude/
+
+# Internal review notes (not part of the published package)
+RFC*-REVIEW.md
