@@ -230,7 +230,28 @@ const argv = yargs(hideBin(process.argv))
                     alias: 'o',
                     type: 'boolean',
                     description: 'If set, outputs only the ARC seal headers without the message body.'
-                });
+                })
+                .option('auth-results', {
+                    type: 'string',
+                    description:
+                        'Authentication-Results value to embed in the ARC-Authentication-Results header (the part after "i=N;"). When set, the message is sealed using this value as is and no authentication checks are performed.'
+                })
+                .option('auth-results-file', {
+                    type: 'string',
+                    description: 'Path to a file containing the Authentication-Results value. Same as --auth-results, but read from a file.'
+                })
+                .option('cv', {
+                    type: 'string',
+                    choices: ['none', 'pass', 'fail'],
+                    description:
+                        'Chain validation status for the ARC-Seal header (cv= tag). Only used together with --auth-results or --auth-results-file. Defaults to "none".'
+                })
+                .option('instance', {
+                    type: 'number',
+                    description:
+                        'ARC instance number (i= tag). Only used together with --auth-results or --auth-results-file. Defaults to the next instance number based on the existing ARC chain, or 1.'
+                })
+                .conflicts('auth-results', 'auth-results-file');
             yargs.positional('email', {
                 describe: 'Path to the email message file in EML format. If not specified, the content is read from standard input.'
             });
