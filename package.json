@@ -47,6 +47,7 @@
     },
     "dependencies": {
         "@postalsys/vmc": "1.1.5",
+        "commander": "15.0.0",
         "fast-xml-parser": "5.10.1",
         "ipaddr.js": "2.5.0",
         "joi": "18.2.3",
@@ -54,8 +55,7 @@
         "nodemailer": "9.0.4",
         "punycode.js": "2.3.1",
         "tldts": "7.4.10",
-        "undici": "8.10.0",
-        "yargs": "17.7.2"
+        "undici": "8.10.0"
     },
     "engines": {
         "node": ">=22.19.0"
