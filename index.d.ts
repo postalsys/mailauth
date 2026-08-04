@@ -179,8 +179,15 @@ export interface DKIMResult {
      * Verification status
      */
     status: AuthStatus & {
-        aligned?: boolean;
-        underSized?: boolean;
+        /**
+         * Signing domain if it aligns with the From domain, false otherwise
+         */
+        aligned?: string | false;
+
+        /**
+         * Number of body bytes left unsigned by an l= tag
+         */
+        underSized?: number;
     };
 
     /**
@@ -392,13 +399,25 @@ export interface DMARCResult {
      */
     alignment: {
         spf: {
-            result: string | false;
+            /**
+             * Aligned SPF domain, or undefined if no domain aligned
+             */
+            result?: string;
             strict: boolean;
         };
         dkim: {
-            result: string | false;
+            /**
+             * Aligned signing domain, or undefined if no domain aligned
+             */
+            result?: string;
             strict: boolean;
-            underSized?: boolean;
+
+            /**
+             * Number of body bytes left unsigned by an l= tag. Reported for a signature that
+             * aligns at the organizational domain even if adkim=s rejected it, so that it stays
+             * a reliable content-integrity warning regardless of the alignment mode.
+             */
+            underSized?: number;
         };
     };
 
@@ -968,8 +987,8 @@ export interface DMARCOptions {
     dkimDomains?: Array<{
         id?: string;
         domain: string;
-        aligned?: boolean;
-        underSized?: boolean;
+        aligned?: string | false;
+        underSized?: number;
     }>;
 
     /**

@@ -119,7 +119,8 @@ describe('getDmarcRecord Tests', () => {
             const result = await getDmarcRecord('example.com', stubResolver);
 
             expect(result.v).to.equal('DMARC1');
-            expect(result.p).to.equal(' reject');
+            // *WSP is allowed around "=", so the value is "reject", not " reject"
+            expect(result.p).to.equal('reject');
             expect(result.pct).to.equal(100);
         });
 

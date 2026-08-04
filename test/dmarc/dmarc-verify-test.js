@@ -5,6 +5,7 @@ const chai = require('chai');
 const expect = chai.expect;
 
 const verifyDmarc = require('../../lib/dmarc/verify');
+const { zoneResolver } = require('../helpers/dns-zone');
 
 chai.config.includeStack = true;
 
@@ -673,6 +674,52 @@ describe('DMARC Verify Tests', () => {
 
             expect(result.info).to.be.a('string');
             expect(result.info).to.include('dmarc=pass');
+        });
+    });
+
+    describe('Reported identifiers', () => {
+        it('Should report the From domain as header.from, not the org domain', async () => {
+            const result = await verifyDmarc({
+                headerFrom: 'user@mail.example.com',
+                dkimDomains: [{ domain: 'example.com' }],
+                spfDomains: [],
+                resolver: zoneResolver({ '_dmarc.example.com': { TXT: [['v=DMARC1; p=reject']] } })
+            });
+
+            expect(result.status.header.from).to.equal('mail.example.com');
+            // the policy was inherited from the org domain, which is what header.d points at
+            expect(result.status.header.d).to.equal('example.com');
+            expect(result.domain).to.equal('example.com');
+        });
+
+        it('Should report the author domain as header.d when it publishes its own record', async () => {
+            const result = await verifyDmarc({
+                headerFrom: 'user@mail.example.com',
+                dkimDomains: [{ domain: 'mail.example.com' }],
+                spfDomains: [],
+                resolver: zoneResolver({ '_dmarc.mail.example.com': { TXT: [['v=DMARC1; p=reject']] } })
+            });
+
+            expect(result.status.header.from).to.equal('mail.example.com');
+            expect(result.status.header.d).to.equal('mail.example.com');
+        });
+
+        it('Should report an undersized DKIM signature even when strict alignment rejects it', async () => {
+            const run = record =>
+                verifyDmarc({
+                    headerFrom: 'user@mail.example.com',
+                    dkimDomains: [{ domain: 'example.com', underSized: 500 }],
+                    spfDomains: [{ domain: 'example.com' }],
+                    resolver: zoneResolver({ '_dmarc.example.com': { TXT: [[record]] } })
+                });
+
+            const relaxed = await run('v=DMARC1; p=reject');
+            expect(relaxed.alignment.dkim.underSized).to.equal(500);
+
+            const strict = await run('v=DMARC1; p=reject; adkim=s');
+            expect(strict.status.result).to.equal('pass'); // SPF aligns relaxed
+            expect(strict.alignment.dkim.result).to.be.undefined;
+            expect(strict.alignment.dkim.underSized).to.equal(500);
         });
     });
 });

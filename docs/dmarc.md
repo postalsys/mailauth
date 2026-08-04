@@ -41,10 +41,10 @@ const { dmarc } = await authenticate(message, {
 
 ### status.header Object
 
-| Field  | Type     | Description                                |
-| ------ | -------- | ------------------------------------------ |
-| `from` | `string` | Organizational domain from the From header |
-| `d`    | `string` | Domain where DMARC record was found        |
+| Field  | Type     | Description                         |
+| ------ | -------- | ----------------------------------- |
+| `from` | `string` | Domain of the From header address   |
+| `d`    | `string` | Domain where DMARC record was found |
 
 ## alignment Object
 
@@ -55,18 +55,20 @@ const { dmarc } = await authenticate(message, {
 
 ### alignment.spf Object
 
-| Field    | Type            | Description                                                 |
-| -------- | --------------- | ----------------------------------------------------------- |
-| `result` | `string\|false` | Aligned domain if SPF passed and aligned, otherwise `false` |
-| `strict` | `boolean`       | Whether strict alignment is required (`aspf=s`)             |
+| Field    | Type                | Description                                                     |
+| -------- | ------------------- | --------------------------------------------------------------- |
+| `result` | `string\|undefined` | Aligned domain if SPF passed and aligned, otherwise `undefined` |
+| `strict` | `boolean`           | Whether strict alignment is required (`aspf=s`)                 |
 
 ### alignment.dkim Object
 
-| Field        | Type            | Description                                                  |
-| ------------ | --------------- | ------------------------------------------------------------ |
-| `result`     | `string\|false` | Aligned domain if DKIM passed and aligned, otherwise `false` |
-| `strict`     | `boolean`       | Whether strict alignment is required (`adkim=s`)             |
-| `underSized` | `number`        | Number of unsigned body bytes (if `l=` tag limited body)     |
+| Field        | Type                | Description                                                      |
+| ------------ | ------------------- | ---------------------------------------------------------------- |
+| `result`     | `string\|undefined` | Aligned domain if DKIM passed and aligned, otherwise `undefined` |
+| `strict`     | `boolean`           | Whether strict alignment is required (`adkim=s`)                 |
+| `underSized` | `number`            | Number of unsigned body bytes (if `l=` tag limited body)         |
+
+`underSized` is reported for a signature that aligns at the organizational domain even when `adkim=s` rejected it, so that it stays a reliable content-integrity warning regardless of the alignment mode the domain publishes.
 
 ## Result Values
 
@@ -103,21 +105,19 @@ For example: `"p=REJECT sp=REJECT arc=pass"`
 {
     "status": {
         "result": "pass",
+        "comment": "p=REJECT",
         "header": {
             "from": "example.com",
             "d": "example.com"
-        },
-        "comment": "p=REJECT arc=none"
+        }
     },
     "domain": "example.com",
     "policy": "reject",
     "p": "reject",
     "sp": "reject",
-    "pct": 100,
     "rr": "v=DMARC1; p=reject; rua=mailto:dmarc@example.com",
     "alignment": {
         "spf": {
-            "result": false,
             "strict": false
         },
         "dkim": {
@@ -125,7 +125,7 @@ For example: `"p=REJECT sp=REJECT arc=pass"`
             "strict": false
         }
     },
-    "info": "dmarc=pass (p=REJECT arc=none) header.from=example.com"
+    "info": "dmarc=pass (p=REJECT) header.from=example.com header.d=example.com"
 }
 ```
 
@@ -135,29 +135,26 @@ For example: `"p=REJECT sp=REJECT arc=pass"`
 {
     "status": {
         "result": "fail",
+        "comment": "p=REJECT",
         "header": {
             "from": "example.com",
             "d": "example.com"
-        },
-        "comment": "p=REJECT"
+        }
     },
     "domain": "example.com",
     "policy": "reject",
     "p": "reject",
     "sp": "reject",
-    "pct": 100,
     "rr": "v=DMARC1; p=reject; rua=mailto:dmarc@example.com",
     "alignment": {
         "spf": {
-            "result": false,
             "strict": false
         },
         "dkim": {
-            "result": false,
             "strict": false
         }
     },
-    "info": "dmarc=fail (p=REJECT) header.from=example.com"
+    "info": "dmarc=fail (p=REJECT) header.from=example.com header.d=example.com"
 }
 ```
 
@@ -171,7 +168,7 @@ For example: `"p=REJECT sp=REJECT arc=pass"`
             "from": "no-dmarc.example.com"
         }
     },
-    "domain": "no-dmarc.example.com",
+    "domain": "example.com",
     "info": "dmarc=none header.from=no-dmarc.example.com"
 }
 ```
@@ -182,29 +179,27 @@ For example: `"p=REJECT sp=REJECT arc=pass"`
 {
     "status": {
         "result": "pass",
+        "comment": "p=NONE sp=QUARANTINE",
         "header": {
-            "from": "example.com",
-            "d": "sub.example.com"
-        },
-        "comment": "p=NONE sp=QUARANTINE"
+            "from": "sub.example.com",
+            "d": "example.com"
+        }
     },
     "domain": "example.com",
     "policy": "quarantine",
     "p": "none",
     "sp": "quarantine",
-    "pct": 100,
     "rr": "v=DMARC1; p=none; sp=quarantine; rua=mailto:dmarc@example.com",
     "alignment": {
         "spf": {
-            "result": "example.com",
+            "result": "sub.example.com",
             "strict": false
         },
         "dkim": {
-            "result": false,
             "strict": false
         }
     },
-    "info": "dmarc=pass (p=NONE sp=QUARANTINE) header.from=example.com"
+    "info": "dmarc=pass (p=NONE sp=QUARANTINE) header.from=sub.example.com header.d=example.com"
 }
 ```
 

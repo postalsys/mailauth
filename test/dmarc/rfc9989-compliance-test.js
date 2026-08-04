@@ -4,13 +4,17 @@
 // RFC 9989 (DMARCbis) compliance harness.
 //
 // This file is an executable specification of the target DMARC behaviour from
-// RFC 9989 (https://www.rfc-editor.org/rfc/rfc9989.txt). See RFC9989-DMARC-REVIEW.md
-// at the repo root for the gap analysis the suites below map to (items #1, #3-#8, #10).
+// RFC 9989 (https://www.rfc-editor.org/rfc/rfc9989.txt). The suite numbering follows
+// the gap analysis this harness was written from (items #1, #3-#8, #10).
 //
-// Suites for features that are NOT yet implemented use `describe.skip(...)` so the
+// Suites for features that are not implemented yet use `describe.skip(...)` so the
 // default `npm test` run stays green (they report as pending). To develop a feature
 // test-first, change its `describe.skip` to `describe`, implement until green, and
 // leave it active as a regression guard.
+//
+// Note that a few cases inside the skipped suites already pass today, but only as a
+// side effect of organizational-record inheritance rather than of the feature under
+// test. They are marked inline and must be re-verified when the feature lands.
 //
 // Expected outcomes are taken verbatim from the RFC's normative text and the worked
 // examples in Appendix B.4.
@@ -80,6 +84,38 @@ describe('RFC 9989 DMARC compliance', () => {
             expect(result.status.result).to.equal('none');
         });
 
+        it('does not inherit the org policy when the author domain publishes multiple records (§4.10 step 2)', async () => {
+            // A multi-record set terminates policy discovery. Falling back to the org domain
+            // here would silently apply p=none to a subdomain the owner meant to protect.
+            const resolver = zoneResolver({
+                '_dmarc.mail.example.com': { TXT: [['v=DMARC1; p=reject'], ['v=DMARC1; p=quarantine']] },
+                '_dmarc.example.com': { TXT: [['v=DMARC1; p=none']] }
+            });
+            const result = await verifyDmarc({
+                headerFrom: 'user@mail.example.com',
+                dkimDomains: [],
+                spfDomains: [],
+                resolver
+            });
+            expect(result.status.result).to.equal('none');
+            expect(result).to.not.have.property('policy');
+        });
+
+        it('continues to the org domain when the author domain publishes only non-DMARC TXT records (§4.10)', async () => {
+            const resolver = zoneResolver({
+                '_dmarc.mail.example.com': { TXT: [['some other txt record'], ['and another one']] },
+                '_dmarc.example.com': { TXT: [['v=DMARC1; p=quarantine']] }
+            });
+            const result = await verifyDmarc({
+                headerFrom: 'user@mail.example.com',
+                dkimDomains: [{ domain: 'example.com' }],
+                spfDomains: [],
+                resolver
+            });
+            expect(result.status.result).to.equal('pass');
+            expect(result.policy).to.equal('quarantine');
+        });
+
         it('joins split (chunked) TXT records', async () => {
             const resolver = zoneResolver({
                 '_dmarc.example.com': { TXT: [['v=DMARC1; p=re', 'ject']] }
@@ -98,16 +134,27 @@ describe('RFC 9989 DMARC compliance', () => {
             const resolver = zoneResolver({
                 '_dmarc.example.com': { TXT: [['v=DMARC1; p=reject; pct=0']] }
             });
-            const result = await verifyDmarc({
+
+            const aligned = await verifyDmarc({
                 headerFrom: 'user@example.com',
                 dkimDomains: [{ domain: 'example.com' }],
                 spfDomains: [],
                 resolver
             });
-            expect(result.status.result).to.equal('pass');
+            expect(aligned.status.result).to.equal('pass');
+
+            // pct=0 historically meant "apply the policy to no messages". It must not turn a
+            // failing evaluation into a passing one, which is the only way this assertion can bite.
+            const unaligned = await verifyDmarc({
+                headerFrom: 'user@example.com',
+                dkimDomains: [{ domain: 'other.example' }],
+                spfDomains: [{ domain: 'other.example' }],
+                resolver
+            });
+            expect(unaligned.status.result).to.equal('fail');
         });
 
-        // RFC 9989 Appendix B.4.1 — outcome matches today (PSL agrees with the Tree Walk
+        // RFC 9989 Appendix B.4.1: outcome matches today (PSL agrees with the Tree Walk
         // for simple names); kept active so the eventual Tree Walk keeps these correct.
         it('B.4.1: org domain and alignment for a simple hierarchy', async () => {
             const resolver = zoneResolver({
@@ -124,7 +171,7 @@ describe('RFC 9989 DMARC compliance', () => {
             expect(result.domain).to.equal('example.com');
         });
 
-        // RFC 9989 Appendix B.4.2 — deep name, records only at example.com. Outcome
+        // RFC 9989 Appendix B.4.2: deep name, records only at example.com. Outcome
         // matches today; the bounded query *sequence* is asserted in the #1 suite below.
         it('B.4.2: org domain for a deep author name resolves to example.com', async () => {
             const resolver = zoneResolver({
@@ -143,13 +190,13 @@ describe('RFC 9989 DMARC compliance', () => {
     });
 
     // ---------------------------------------------------------------------------
-    // #1 DNS Tree Walk — policy discovery & organizational domain
+    // #1 DNS Tree Walk: policy discovery and organizational domain
     // RFC 9989 §4.10, §4.10.1, §4.10.2. Replaces the Public Suffix List.
     // ---------------------------------------------------------------------------
-    describe.skip('#1 DNS Tree Walk — policy discovery & organizational domain [§4.10–§4.10.2]', () => {
+    describe.skip('#1 DNS Tree Walk: policy discovery and organizational domain [§4.10, §4.10.2]', () => {
         it('uses a record published at an intermediate label marked psd=n as the org domain', async () => {
             // Author a.b.example.com: walk finds _dmarc.b.example.com with psd=n and stops there.
-            // b.example.com is the Organizational Domain, so its policy (reject) applies — not example.com's.
+            // b.example.com is the Organizational Domain, so its policy (reject) applies, not example.com's.
             const resolver = zoneResolver({
                 '_dmarc.b.example.com': { TXT: [['v=DMARC1; p=reject; psd=n']] },
                 '_dmarc.example.com': { TXT: [['v=DMARC1; p=none']] }
@@ -189,7 +236,7 @@ describe('RFC 9989 DMARC compliance', () => {
     });
 
     // ---------------------------------------------------------------------------
-    // #3 np — Domain Owner Assessment Policy for non-existent subdomains
+    // #3 np: Domain Owner Assessment Policy for non-existent subdomains
     // RFC 9989 §4.7 (np), §4.10.1, §3.2.13, Appendix A.4 (domain existence test).
     // ---------------------------------------------------------------------------
     describe.skip('#3 np + domain-existence test [§4.7 np, §4.10.1, §3.2.13, §A.4]', () => {
@@ -208,6 +255,8 @@ describe('RFC 9989 DMARC compliance', () => {
         });
 
         it('applies sp (not np) for an existing author subdomain', async () => {
+            // Already passes today, but only because sp is applied to every subdomain without
+            // an existence test at all. Re-verify once the existence test is implemented.
             // sub.example.com exists (has an A record), so the existing-subdomain policy (sp) applies.
             const resolver = zoneResolver({
                 '_dmarc.example.com': { TXT: [['v=DMARC1; p=reject; sp=none; np=quarantine']] },
@@ -223,6 +272,7 @@ describe('RFC 9989 DMARC compliance', () => {
         });
 
         it('treats a name with any RR (NODATA on TXT) as existing for the existence test', async () => {
+            // Passes today for the same incidental reason as the test above.
             // mail.example.com has an MX but no TXT: it exists, so np must not be applied.
             const resolver = zoneResolver({
                 '_dmarc.example.com': { TXT: [['v=DMARC1; p=reject; sp=none; np=quarantine']] },
@@ -239,7 +289,7 @@ describe('RFC 9989 DMARC compliance', () => {
     });
 
     // ---------------------------------------------------------------------------
-    // #4 psd — Public Suffix Domain discovery
+    // #4 psd: Public Suffix Domain discovery
     // RFC 9989 §4.7 (psd), §4.10.2, §5.2. Worked example: Appendix B.4.3.
     // ---------------------------------------------------------------------------
     describe.skip('#4 psd / PSD discovery [§4.7 psd, §4.10.2, §5.2; example B.4.3]', () => {
@@ -265,6 +315,7 @@ describe('RFC 9989 DMARC compliance', () => {
         });
 
         it('PSD policy is not used when the org domain publishes its own record (§4.10.1 note)', async () => {
+            // Already passes today, but only because PSD records are never consulted at all.
             // foo.example has its own record; the psd=y record above it must not override it.
             const resolver = zoneResolver({
                 '_dmarc.example': { TXT: [['v=DMARC1; p=reject; psd=y; rua=mailto:psd@example']] },
@@ -282,12 +333,12 @@ describe('RFC 9989 DMARC compliance', () => {
     });
 
     // ---------------------------------------------------------------------------
-    // #5 t — DMARC policy test mode
+    // #5 t: DMARC policy test mode
     // RFC 9989 §4.7 (t), Appendix A.6. t=y downgrades the applied policy one level.
     // TODO: confirm the output contract for the downgrade (effective `policy` vs declared
     // `p`, or a dedicated `testMode` flag) when implementing.
     // ---------------------------------------------------------------------------
-    describe.skip('#5 t — policy test mode [§4.7 t, §A.6]', () => {
+    describe.skip('#5 t: policy test mode [§4.7 t, §A.6]', () => {
         it('t=y downgrades reject to quarantine for a failing message', async () => {
             const resolver = zoneResolver({
                 '_dmarc.example.com': { TXT: [['v=DMARC1; p=reject; t=y']] }
@@ -324,7 +375,7 @@ describe('RFC 9989 DMARC compliance', () => {
     // BREAKING output change for consumers that read result.pct, so it is left for
     // the implementer to decide; enable only if that change is adopted.
     // ---------------------------------------------------------------------------
-    describe.skip('#6 pct is historic — not surfaced in the result [§9.3, §A.6]', () => {
+    describe.skip('#6 pct is historic, not surfaced in the result [§9.3, §A.6]', () => {
         it('does not expose a pct property on the result', async () => {
             const resolver = zoneResolver({
                 '_dmarc.example.com': { TXT: [['v=DMARC1; p=reject; pct=50']] }
@@ -393,9 +444,10 @@ describe('RFC 9989 DMARC compliance', () => {
 
     // ---------------------------------------------------------------------------
     // #10 Tag value case handling
-    // RFC 9989 §4.7. Tag values should be compared case-insensitively.
+    // RFC 9989 §4.7. Tag values that are ABNF literals are case insensitive (RFC 5234 §2.3),
+    // and *WSP is allowed around "=". Implemented, so this suite is an active guard.
     // ---------------------------------------------------------------------------
-    describe.skip('#10 tag value case handling [§4.7]', () => {
+    describe('#10 tag value case handling [§4.7]', () => {
         it('recognizes a policy value regardless of case (p=Reject)', async () => {
             const resolver = zoneResolver({
                 '_dmarc.example.com': { TXT: [['v=DMARC1; p=Reject']] }
@@ -422,6 +474,35 @@ describe('RFC 9989 DMARC compliance', () => {
                 resolver
             });
             expect(result.status.result).to.equal('fail');
+            expect(result.alignment.dkim.strict).to.be.true;
+        });
+
+        it('allows whitespace around "=" in a tag (*WSP in the ABNF)', async () => {
+            const resolver = zoneResolver({
+                '_dmarc.example.com': { TXT: [['v=DMARC1; p = reject; adkim = s']] }
+            });
+            const result = await verifyDmarc({
+                headerFrom: 'user@mail.example.com',
+                dkimDomains: [{ domain: 'example.com' }],
+                spfDomains: [],
+                resolver
+            });
+            expect(result.status.result).to.equal('fail');
+            expect(result.alignment.dkim.strict).to.be.true;
+            expect(result.policy).to.equal('reject');
+        });
+
+        it('preserves the case of tag values that are not ABNF literals', async () => {
+            const resolver = zoneResolver({
+                '_dmarc.example.com': { TXT: [['v=DMARC1; p=none; rua=mailto:DMARC-Reports@Example.COM']] }
+            });
+            const result = await verifyDmarc({
+                headerFrom: 'user@example.com',
+                dkimDomains: [{ domain: 'example.com' }],
+                spfDomains: [],
+                resolver
+            });
+            expect(result.rr).to.contain('mailto:DMARC-Reports@Example.COM');
         });
     });
 });

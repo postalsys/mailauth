@@ -416,6 +416,15 @@ describe('Tools Tests', () => {
             expect(result).to.be.false;
         });
 
+        it('Should ignore a trailing root dot in strict mode', () => {
+            expect(getAlignment('example.com.', ['example.com'], true)).to.deep.include({ domain: 'example.com' });
+            expect(getAlignment('example.com', ['example.com.'], true)).to.deep.include({ domain: 'example.com.' });
+        });
+
+        it('Should ignore a trailing root dot in relaxed mode', () => {
+            expect(getAlignment('mail.example.com.', ['example.com'], false)).to.deep.include({ domain: 'example.com' });
+        });
+
         it('Should return false when no match', () => {
             const result = getAlignment('example.com', ['other.com']);
             expect(result).to.be.false;
