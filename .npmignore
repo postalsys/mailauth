@@ -5,3 +5,10 @@ ee-dist
 .prettierrc.js
 .eslintrc
 .github
+
+# npm ignores .gitignore when this file exists, so anything that must stay out of the
+# published tarball has to be listed here as well
+coverage
+.claude
+CLAUDE.md
+RFC*-REVIEW.md

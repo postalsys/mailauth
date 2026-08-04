@@ -112,5 +112,5 @@ examples/devel-*
 
 .claude/
 
-# Internal review notes (not part of the published package)
+# Internal review notes
 RFC*-REVIEW.md
