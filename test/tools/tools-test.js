@@ -416,6 +416,14 @@ describe('Tools Tests', () => {
             expect(result).to.be.false;
         });
 
+        it('Should honor the legacy options object instead of treating it as truthy', () => {
+            // { strict: false } is the call shape this argument used to take. Every object is
+            // truthy, so without unwrapping it would mean hard strict, the opposite of the ask.
+            expect(getAlignment('mail.example.com', ['example.com'], { strict: false })).to.deep.include({ domain: 'example.com' });
+            expect(getAlignment('mail.example.com', ['example.com'], { strict: true })).to.be.false;
+            expect(getAlignment('mail.example.com', ['example.com'], {})).to.deep.include({ domain: 'example.com' });
+        });
+
         it('Should ignore a trailing root dot in strict mode', () => {
             expect(getAlignment('example.com.', ['example.com'], true)).to.deep.include({ domain: 'example.com' });
             expect(getAlignment('example.com', ['example.com.'], true)).to.deep.include({ domain: 'example.com.' });
