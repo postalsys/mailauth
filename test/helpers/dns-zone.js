@@ -28,9 +28,7 @@ const zoneResolver = zone => {
     const resolver = async (name, type) => {
         resolver.calls.push({ name, type });
 
-        const key = String(name)
-            .toLowerCase()
-            .replace(/\.$/, '');
+        const key = String(name).toLowerCase().replace(/\.$/, '');
         const node = normalized.get(key);
 
         if (!node) {
