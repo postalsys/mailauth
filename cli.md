@@ -177,6 +177,20 @@ mailauth seal [options] [email]
 - `--header-fields "field1:field2"`, `-h "field1:field2"`: Colon-separated list of header fields to include in the seal (`h=` tag).
 - `--headers-only`, `-o`: Outputs only the ARC seal headers without the entire message.
 
+**Seal-Only Options:**
+
+By default, `seal` authenticates the message (SPF, DKIM, DMARC, ARC) and embeds the computed results in the `ARC-Authentication-Results` header. If the message was already authenticated elsewhere (for example at an edge MTA) and modified afterwards, you can instead provide the original `Authentication-Results` value yourself. When one of the following options is set, no authentication checks or DNS lookups are performed:
+
+- `--auth-results "authserv-id; spf=pass ..."`: `Authentication-Results` value to embed in the `ARC-Authentication-Results` header (the part after `i=N;`). Used as is.
+- `--auth-results-file /path/to/value.txt`: Same as `--auth-results`, but the value is read from a file. Useful for long or multi-line values. Cannot be combined with `--auth-results`.
+- `--cv status`: Chain validation status for the `ARC-Seal` header (`cv=` tag): `none`, `pass`, or `fail`. Defaults to `none`.
+- `--instance number`: ARC instance number (`i=` tag). Defaults to the next instance number based on the existing ARC chain of the message, or `1`.
+
+```bash
+mailauth seal message.eml -d example.com -s s1 -k private.key \
+  --cv pass --auth-results-file auth-results.txt --headers-only
+```
+
 **Authentication Options (from `report` command):**
 
 - `--client-ip x.x.x.x`, `-i x.x.x.x`: IP address of the remote client that sent the email.
