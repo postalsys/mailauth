@@ -11,6 +11,8 @@ const util = require('node:util');
 const execFile = util.promisify(require('node:child_process').execFile);
 
 const { authenticate } = require('../../lib/mailauth');
+const { dkimTxtRecord } = require('../helpers/keys');
+const { zoneResolver } = require('../helpers/dns-zone');
 
 const CLI_PATH = path.join(__dirname, '..', '..', 'bin', 'mailauth.js');
 const DENY_DNS_PATH = path.join(__dirname, '..', 'fixtures', 'deny-dns.js');
@@ -27,16 +29,7 @@ const runSeal = async args =>
 const keyArgs = ['-k', path.join(FIXTURES_PATH, 'private-rsa.pem'), '-d', 'tahvel.info', '-s', 'test.rsa'];
 
 // resolver that only knows the public key for the sealing selector
-const publicKeyPem = fs.readFileSync(path.join(FIXTURES_PATH, 'public-rsa.pem'), 'utf8');
-const publicKeyTxt = `v=DKIM1; k=rsa; p=${publicKeyPem.replace(/-+(BEGIN|END) PUBLIC KEY-+/g, '').replace(/\s+/g, '')}`;
-const resolver = async (name, rr) => {
-    if (rr === 'TXT' && name === 'test.rsa._domainkey.tahvel.info') {
-        return [[publicKeyTxt]];
-    }
-    let err = new Error('Error');
-    err.code = 'ENOTFOUND';
-    throw err;
-};
+const resolver = zoneResolver({ 'test.rsa._domainkey.tahvel.info': { TXT: [[dkimTxtRecord('public-rsa.pem')]] } });
 
 describe('CLI seal command', function () {
     this.timeout(15000);
@@ -114,15 +107,41 @@ describe('CLI seal command', function () {
         });
 
         it('should reject using --auth-results and --auth-results-file together', async () => {
-            let failed = false;
-            try {
-                await runSeal(
-                    keyArgs.concat(['--auth-results', AUTH_RESULTS, '--auth-results-file', 'whatever.txt', '-o', path.join(FIXTURES_PATH, 'message1.eml')])
+            let err = await runSeal(
+                keyArgs.concat(['--auth-results', AUTH_RESULTS, '--auth-results-file', 'whatever.txt', '-o', path.join(FIXTURES_PATH, 'message1.eml')])
+            ).then(
+                () => null,
+                e => e
+            );
+            expect(err).to.be.an('error');
+        });
+
+        it('should reject an empty --auth-results value instead of silently authenticating', async () => {
+            let err = await runSeal(keyArgs.concat(['--auth-results', '', '-o', path.join(FIXTURES_PATH, 'message1.eml')])).then(
+                () => null,
+                e => e
+            );
+            expect(err).to.be.an('error');
+            expect(err.stderr).to.include('--auth-results must not be empty');
+        });
+
+        it('should reject --cv and --instance without --auth-results', async () => {
+            for (let extra of [
+                ['--cv', 'pass'],
+                ['--instance', '2']
+            ]) {
+                let err = await runSeal(keyArgs.concat(extra, ['-o', path.join(FIXTURES_PATH, 'message1.eml')])).then(
+                    () => null,
+                    e => e
                 );
-            } catch (err) {
-                failed = true;
+                expect(err, extra.join(' ')).to.be.an('error');
+                expect(err.stderr, extra.join(' ')).to.include('can only be used together with');
             }
-            expect(failed).to.be.true;
+        });
+
+        it('should warn when sealing an existing chain with the default cv=none', async () => {
+            let { stderr } = await runSeal(keyArgs.concat(['--auth-results', AUTH_RESULTS, '-o', path.join(FIXTURES_PATH, 'arc-pass.eml')]));
+            expect(stderr).to.include('only validates when cv=pass');
         });
     });
 

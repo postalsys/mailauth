@@ -251,7 +251,31 @@ const argv = yargs(hideBin(process.argv))
                     description:
                         'ARC instance number (i= tag). Only used together with --auth-results or --auth-results-file. Defaults to the next instance number based on the existing ARC chain, or 1.'
                 })
-                .conflicts('auth-results', 'auth-results-file');
+                .conflicts('auth-results', 'auth-results-file')
+                .check(argv => {
+                    for (let key of ['auth-results', 'auth-results-file', 'cv', 'instance']) {
+                        if (Array.isArray(argv[key])) {
+                            throw new Error(`--${key} can only be provided once`);
+                        }
+                    }
+                    // a missing value would silently flip the command back into full
+                    // authentication mode, the opposite of what the caller asked for
+                    if ('auth-results' in argv && (typeof argv.authResults !== 'string' || !argv.authResults.trim())) {
+                        throw new Error('--auth-results must not be empty');
+                    }
+                    if ('auth-results-file' in argv && (typeof argv.authResultsFile !== 'string' || !argv.authResultsFile.trim())) {
+                        throw new Error('--auth-results-file must not be empty');
+                    }
+                    // .implies() cannot express "requires one of", so enforce it here
+                    if (!argv.authResults && !argv.authResultsFile) {
+                        for (let key of ['cv', 'instance']) {
+                            if (key in argv) {
+                                throw new Error(`--${key} can only be used together with --auth-results or --auth-results-file`);
+                            }
+                        }
+                    }
+                    return true;
+                });
             yargs.positional('email', {
                 describe: 'Path to the email message file in EML format. If not specified, the content is read from standard input.'
             });
