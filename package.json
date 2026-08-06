@@ -8,7 +8,7 @@
         "test": "eslint \"lib/**/*.js\" \"test/**/*.js\" && mocha --recursive \"./test/**/*-test.js\" --reporter spec",
         "format": "prettier --write .",
         "build-source": "rm -rf node_modules package-lock.json && npm install && npm run licenses && rm -rf node_modules package-lock.json && npm install --production && rm -rf package-lock.json",
-        "build-dist": "npx pkg --compress Brotli package.json && rm -rf package-lock.json && npm install && node winconf.js",
+        "build-dist": "pkg --compress Brotli package.json && rm -rf package-lock.json && npm install && node winconf.js",
         "build-dist-fast": "pkg --debug package.json && npm install && node winconf.js",
         "licenses": "license-report --only=prod --output=table --config license-report-config.json > licenses.txt",
         "update": "rm -rf node_modules package-lock.json && npx ncu -u && npm install"
