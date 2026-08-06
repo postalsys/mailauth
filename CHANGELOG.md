@@ -1,5 +1,29 @@
 # Changelog
 
+## [5.0.0](https://github.com/postalsys/mailauth/compare/v4.13.3...v5.0.0) (2026-08-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* Node.js 20 is no longer supported, the minimum is now 22.19.0 (the engine floor of undici 8).
+* **dmarc:** adkim=s and aspf=s now actually fail when only the organizational domains match. Previously strict alignment fell through to the relaxed comparison, so these records behaved as adkim=r/aspf=r and such messages passed. Senders that publish strict alignment but sign or send from a different host under the same organizational domain will flip from pass to fail. dmarc.status.header.from now reports the From domain rather than the organizational domain, dmarc.status.header.d reports the domain the record was found at, and dkim.results[].status.aligned is false for org-level-only matches when the domain publishes adkim=s.
+
+### Features
+
+* add seal-only mode to the seal CLI command ([#119](https://github.com/postalsys/mailauth/issues/119)) ([afdfc3d](https://github.com/postalsys/mailauth/commit/afdfc3d1cb7b61aecbf60eda96f2c0be87b0c9cf))
+
+
+### Bug Fixes
+
+* **arc:** report public key failures instead of a bare arc=fail ([3464be7](https://github.com/postalsys/mailauth/commit/3464be70dd2449038e3c0381acbe4565d28370ba))
+* **cli:** validate seal-only options and dedupe the seal command paths ([17dd59c](https://github.com/postalsys/mailauth/commit/17dd59ca472efc477fe041de48d2c2d8a730f3e7))
+* close residual parser and DMARC discovery edge cases ([f1c28e1](https://github.com/postalsys/mailauth/commit/f1c28e10f331bea1f23ff2d861e00c7700f3b97f))
+* **dmarc:** normalize tag values and report the correct identifiers ([e5dc758](https://github.com/postalsys/mailauth/commit/e5dc75827ff190912515572546bea0745c3629ff))
+* enforce DMARC strict identifier alignment (adkim=s/aspf=s) ([0c4bab7](https://github.com/postalsys/mailauth/commit/0c4bab7f747c70121f72b76b53ad704712f3a56d))
+* harden tag and header parsers against crafted property keys ([7eb9ea2](https://github.com/postalsys/mailauth/commit/7eb9ea24ed19032b63e9f9993971b77b8d77109e))
+* require Node.js &gt;= 22.19.0 ([1c689c5](https://github.com/postalsys/mailauth/commit/1c689c5444821e5e188cef35c5aa3de3b2d8cfbe))
+* **tools:** do not treat a legacy getAlignment options object as strict ([2007ab4](https://github.com/postalsys/mailauth/commit/2007ab41cccc41b531f3e5ec65899264b6e3441d))
+
 ## [4.13.3](https://github.com/postalsys/mailauth/compare/v4.13.2...v4.13.3) (2026-05-14)
 
 
