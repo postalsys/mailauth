@@ -5,6 +5,7 @@ const chai = require('chai');
 const expect = chai.expect;
 
 const getDmarcRecord = require('../../lib/dmarc/get-dmarc-record');
+const { zoneResolver } = require('../helpers/dns-zone');
 
 chai.config.includeStack = true;
 
@@ -306,6 +307,19 @@ describe('getDmarcRecord Tests', () => {
             expect(result.isOrgRecord).to.be.false;
         });
 
+        it('Should not query "_dmarc.null" when no org domain can be derived', async () => {
+            // tldts returns null for single labels and IPs; the fallback used to coerce
+            // that into a lookup for the literal hostname "_dmarc.null"
+            const resolver = zoneResolver({});
+
+            for (let domain of ['localhost', '192.0.2.1']) {
+                const result = await getDmarcRecord(domain, resolver);
+                expect(result).to.be.false;
+            }
+
+            expect(resolver.calls.map(call => call.name)).to.deep.equal(['_dmarc.localhost', '_dmarc.192.0.2.1']);
+        });
+
         it('Should not fallback when org domain equals the domain', async () => {
             const stubResolver = (domain, type) => {
                 if (type === 'TXT' && domain === '_dmarc.example.com') {
@@ -355,10 +369,11 @@ describe('getDmarcRecord Tests', () => {
             expect(result).to.be.false;
         });
 
-        it('Should handle case-insensitive v=DMARC1 prefix', async () => {
+        it('Should accept an upper-case tag name with an exact version value (V=DMARC1)', async () => {
+            // the tag name is a quoted ABNF literal (case insensitive), the value is not
             const stubResolver = (domain, type) => {
                 if (type === 'TXT' && domain === '_dmarc.example.com') {
-                    return [['V=dmarc1; p=reject']];
+                    return [['V=DMARC1; p=reject']];
                 }
                 const err = new Error('Not found');
                 err.code = 'ENOTFOUND';
@@ -367,8 +382,23 @@ describe('getDmarcRecord Tests', () => {
 
             const result = await getDmarcRecord('example.com', stubResolver);
 
-            expect(result.v).to.equal('dmarc1');
+            expect(result.v).to.equal('DMARC1');
             expect(result.p).to.equal('reject');
+        });
+
+        it('Should reject a version value that is not exactly DMARC1 (v=dmarc1)', async () => {
+            const stubResolver = (domain, type) => {
+                if (type === 'TXT' && domain === '_dmarc.example.com') {
+                    return [['v=dmarc1; p=reject']];
+                }
+                const err = new Error('Not found');
+                err.code = 'ENOTFOUND';
+                throw err;
+            };
+
+            const result = await getDmarcRecord('example.com', stubResolver);
+
+            expect(result).to.be.false;
         });
 
         it('Should filter non-DMARC records from response', async () => {

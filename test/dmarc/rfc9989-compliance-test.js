@@ -427,7 +427,7 @@ describe('RFC 9989 DMARC compliance', () => {
     // #8 Version tag is case sensitive
     // RFC 9989 §4.7: the v tag value is case sensitive and must be exactly "DMARC1".
     // ---------------------------------------------------------------------------
-    describe.skip('#8 version tag is case-sensitive [§4.7 v]', () => {
+    describe('#8 version tag is case-sensitive [§4.7 v]', () => {
         it('ignores a record whose version is not exactly DMARC1 (e.g. v=dmarc1)', async () => {
             const resolver = zoneResolver({
                 '_dmarc.example.com': { TXT: [['v=dmarc1; p=reject']] }
@@ -439,6 +439,35 @@ describe('RFC 9989 DMARC compliance', () => {
                 resolver
             });
             expect(result.status.result).to.equal('none');
+        });
+
+        it('ignores a record whose version value has trailing garbage (v=DMARC1x)', async () => {
+            const resolver = zoneResolver({
+                '_dmarc.example.com': { TXT: [['v=DMARC1x; p=reject']] }
+            });
+            const result = await verifyDmarc({
+                headerFrom: 'user@example.com',
+                dkimDomains: [{ domain: 'example.com' }],
+                spfDomains: [],
+                resolver
+            });
+            expect(result.status.result).to.equal('none');
+        });
+
+        it('accepts WSP around "=" in the version tag (v = DMARC1)', async () => {
+            // The ABNF allows *WSP around "=", so this record is valid and the domain
+            // is protected. Discarding it would silently fail open to dmarc=none.
+            const resolver = zoneResolver({
+                '_dmarc.example.com': { TXT: [['v = DMARC1; p=reject']] }
+            });
+            const result = await verifyDmarc({
+                headerFrom: 'user@example.com',
+                dkimDomains: [{ domain: 'example.com' }],
+                spfDomains: [],
+                resolver
+            });
+            expect(result.status.result).to.equal('pass');
+            expect(result.policy).to.equal('reject');
         });
     });
 

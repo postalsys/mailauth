@@ -66,6 +66,14 @@ describe('ARC Hardening Tests', () => {
             expect(result.arc.status.comment).to.equal('i=1 spf=pass dkim=pass dmarc=pass');
         });
 
+        it('Should keep the authserv-id a string when a crafted value= part is present', async () => {
+            const result = await authenticateSelfSealed('dkim=pass; value=evil');
+
+            expect(result.arc.status.result).to.equal('pass');
+            // a "value=" part used to overwrite the parsed authserv-id with an object
+            expect(result.arc.authenticationResults.mta).to.equal('mx.evil.example');
+        });
+
         it('Should still report dkdomain for a well formed header.i', async () => {
             const result = await authenticateSelfSealed('dkim=pass header.i=@ok.example');
 

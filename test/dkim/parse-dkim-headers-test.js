@@ -56,6 +56,19 @@ describe('parseDkimHeaders Tests', () => {
             }
         });
 
+        it('Should not let a crafted part overwrite the authserv-id value', () => {
+            // "value" at the part level holds the authserv-id picked from the first
+            // key-only part; a "value=" part used to replace that string with an object
+            let parsed = parseDkimHeaders('ARC-Authentication-Results: i=1; mx.example.com; value=evil; dkim=pass');
+            expect(parsed.parsed.value).to.equal('mx.example.com');
+        });
+
+        it('Should not let a crafted part overwrite the header name', () => {
+            // "header" is the other key the result shape pre-seeds
+            let parsed = parseDkimHeaders('Authentication-Results: mx.example.com; header=evil; dkim=pass');
+            expect(parsed.parsed.header).to.equal('authentication-results');
+        });
+
         it('Should drop propspecs deeper than ptype.property', () => {
             // RFC 8601 2.2: a propspec is exactly "ptype.property", so a third segment would
             // only ever nest an object where the readers of this shape expect a string

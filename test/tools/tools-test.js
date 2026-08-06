@@ -433,6 +433,15 @@ describe('Tools Tests', () => {
             expect(getAlignment('mail.example.com.', ['example.com'], false)).to.deep.include({ domain: 'example.com' });
         });
 
+        it('Should not align a bare root label with anything', () => {
+            // "." and "" both normalize to an empty string once the root label is
+            // stripped, and empty must never equal empty here
+            expect(getAlignment('.', ['.'], true)).to.be.false;
+            expect(getAlignment('', [''], true)).to.be.false;
+            expect(getAlignment('.', ['.'], false)).to.be.false;
+            expect(getAlignment('', ['example.com'], true)).to.be.false;
+        });
+
         it('Should return false when no match', () => {
             const result = getAlignment('example.com', ['other.com']);
             expect(result).to.be.false;
