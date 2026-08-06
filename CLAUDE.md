@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-mailauth is a Node.js library and CLI tool for email authentication. It implements SPF, DKIM, DMARC, ARC, BIMI, and MTA-STS protocols. Pure JavaScript, no native dependencies. Requires Node.js >= 20.18.1.
+mailauth is a Node.js library and CLI tool for email authentication. It implements SPF, DKIM, DMARC, ARC, BIMI, and MTA-STS protocols. Pure JavaScript, no native dependencies. Requires Node.js >= 22.19.0.
 
 ## Commands
 
