@@ -47,7 +47,7 @@ Each protocol lives in its own directory under `lib/`:
 
 ### CLI
 
-`bin/mailauth.js` — yargs-based CLI with subcommands: `report`, `sign`, `seal`, `spf`, `vmc`, `bodyhash`. Command implementations in `lib/commands/`.
+`bin/mailauth.js` — commander-based CLI with subcommands: `report`, `sign`, `seal`, `spf`, `vmc`, `bodyhash`. Command implementations in `lib/commands/`.
 
 ### Tests
 
