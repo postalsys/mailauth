@@ -15,12 +15,18 @@ const commandBodyhash = require('../lib/commands/bodyhash');
 const fs = require('node:fs');
 const pathlib = require('node:path');
 
+const packageData = require('../package.json');
+
 // Commander hands every option value over as a string, so numeric options have
-// to be coerced. Values that are not numbers are passed through unchanged and
-// left for the command implementation to deal with.
+// to be coerced. A value that is not a number is rejected instead of being
+// passed on: a non-numeric --max-lookups would disable the SPF lookup limit
+// entirely, and a non-numeric --time would produce an empty t= tag.
 const numberArg = value => {
     let num = Number(value);
-    return isNaN(num) ? value : num;
+    if (isNaN(num)) {
+        throw new InvalidArgumentError('Not a number.');
+    }
+    return num;
 };
 
 // Repeating a single-value option is a mistake worth reporting instead of
@@ -71,6 +77,8 @@ const program = new Command();
 program
     .name('mailauth')
     .description('Email authentication tools for Node.js')
+    // yargs registered --version automatically, commander does not
+    .version(packageData.version, '--version', 'Show version number.')
     .option('-v, --verbose', 'Enable verbose logging for debugging purposes.')
     // sign/seal use -h as an alias for --header-fields, so free it up from the
     // built-in help option and expose help via --help only.
