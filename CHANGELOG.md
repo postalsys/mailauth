@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.1](https://github.com/postalsys/mailauth/compare/v5.0.0...v5.0.1) (2026-08-07)
+
+
+### Bug Fixes
+
+* **cli:** replace yargs with commander ([#120](https://github.com/postalsys/mailauth/issues/120)) ([7a8a527](https://github.com/postalsys/mailauth/commit/7a8a5273413137482890519b0185cb9ef14ebea3))
+
 ## [5.0.0](https://github.com/postalsys/mailauth/compare/v4.13.3...v5.0.0) (2026-08-06)
 
 
