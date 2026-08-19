@@ -38,4 +38,20 @@ describe('SPF Macro Tests', () => {
             '1.0.b.c.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6._spf.example.com'
         );
     });
+
+    it('Should expand %{d} using the currently evaluated domain, not the sender domain', async () => {
+        let sender = 'strong-bad@email.example.com';
+        let domain = 'included.example.net';
+        let ipv4 = '192.0.2.3';
+
+        // %{d} follows <domain>, %{o} and %{s} stay on the sender (RFC 7208 sections 7.2, 7.3)
+        expect(macro('%{d}', { sender, domain })).to.equal('included.example.net');
+        expect(macro('%{d2}', { sender, domain })).to.equal('example.net');
+        expect(macro('%{o}', { sender, domain })).to.equal('email.example.com');
+        expect(macro('%{s}', { sender, domain })).to.equal('strong-bad@email.example.com');
+        expect(macro('%{ir}.%{v}.%{d}.spf.example.org', { sender, domain, ip: ipv4 })).to.equal('3.2.0.192.in-addr.included.example.net.spf.example.org');
+
+        // without an explicit domain, %{d} falls back to the sender domain (top-level evaluation)
+        expect(macro('%{d}', { sender })).to.equal('email.example.com');
+    });
 });
