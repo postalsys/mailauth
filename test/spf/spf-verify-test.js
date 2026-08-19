@@ -505,4 +505,78 @@ describe('SPF Verifier Tests', () => {
             expect(err.spfResult.error).to.equal('temperror');
         }
     });
+
+    it('Should expand %{d} to the included domain in nested includes', async () => {
+        // Regression test for https://github.com/postalsys/mailauth/issues/125
+        // sender.example -> include:mid.example -> include:policy.example
+        // policy.example uses include:%{ir}.%{v}.%{d}.spf.provider.example where
+        // %{d} must expand to policy.example (the domain being evaluated), not sender.example
+        const queried = [];
+        const stubResolver = (domain, type) => {
+            queried.push(`${type} ${domain}`);
+            if (type === 'TXT') {
+                switch (domain) {
+                    case 'sender.example':
+                        return [['v=spf1 include:mid.example ~all']];
+                    case 'mid.example':
+                        return [['v=spf1 include:policy.example ~all']];
+                    case 'policy.example':
+                        return [['v=spf1 include:%{ir}.%{v}.%{d}.spf.provider.example ~all']];
+                    case '3.2.0.192.in-addr.policy.example.spf.provider.example':
+                        return [['v=spf1 ip4:192.0.2.3 -all']];
+                }
+            }
+            let err = new Error(`ENOTFOUND ${domain}`);
+            err.code = 'ENOTFOUND';
+            throw err;
+        };
+
+        let result = await spfVerify('sender.example', { ip: '192.0.2.3', sender: 'user@sender.example', resolver: stubResolver });
+        expect(result.qualifier).to.equal('+');
+        expect(queried).to.include('TXT 3.2.0.192.in-addr.policy.example.spf.provider.example');
+        expect(queried.filter(q => q.includes('sender.example.spf.provider.example'))).to.be.empty;
+    });
+
+    it('Should keep %{o} on the sender domain in nested includes', async () => {
+        const stubResolver = (domain, type) => {
+            if (type === 'TXT') {
+                switch (domain) {
+                    case 'sender.example':
+                        return [['v=spf1 include:policy.example -all']];
+                    case 'policy.example':
+                        return [['v=spf1 include:%{o}.spf.provider.example -all']];
+                    case 'sender.example.spf.provider.example':
+                        return [['v=spf1 ip4:192.0.2.3 -all']];
+                }
+            }
+            let err = new Error(`ENOTFOUND ${domain}`);
+            err.code = 'ENOTFOUND';
+            throw err;
+        };
+
+        let result = await spfVerify('sender.example', { ip: '192.0.2.3', sender: 'user@sender.example', resolver: stubResolver });
+        expect(result.qualifier).to.equal('+');
+    });
+
+    it('Should expand %{d} to the redirect target domain after a redirect', async () => {
+        const stubResolver = (domain, type) => {
+            if (type === 'TXT') {
+                switch (domain) {
+                    case 'sender.example':
+                        return [['v=spf1 redirect=redirected.example']];
+                    case 'redirected.example':
+                        return [['v=spf1 exists:%{ir}.%{d}.spf.provider.example -all']];
+                }
+            }
+            if (type === 'A' && domain === '3.2.0.192.redirected.example.spf.provider.example') {
+                return ['127.0.0.2'];
+            }
+            let err = new Error(`ENOTFOUND ${domain}`);
+            err.code = 'ENOTFOUND';
+            throw err;
+        };
+
+        let result = await spfVerify('sender.example', { ip: '192.0.2.3', sender: 'user@sender.example', resolver: stubResolver });
+        expect(result.qualifier).to.equal('+');
+    });
 });
