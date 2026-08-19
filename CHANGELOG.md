@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.2](https://github.com/postalsys/mailauth/compare/v5.0.1...v5.0.2) (2026-08-19)
+
+
+### Bug Fixes
+
+* **spf:** expand %{d} macro to the domain currently being evaluated ([#126](https://github.com/postalsys/mailauth/issues/126)) ([53c4522](https://github.com/postalsys/mailauth/commit/53c45220a1af41febb5b901c251ed4cc66de511e))
+
 ## [5.0.1](https://github.com/postalsys/mailauth/compare/v5.0.0...v5.0.1) (2026-08-07)
 
 
