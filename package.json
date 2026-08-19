@@ -1,6 +1,6 @@
 {
     "name": "mailauth",
-    "version": "5.0.1",
+    "version": "5.0.2",
     "description": "Email authentication library for Node.js",
     "main": "lib/mailauth.js",
     "types": "index.d.ts",
