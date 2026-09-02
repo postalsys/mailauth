@@ -155,4 +155,77 @@ describe('DKIM RelaxedBody Tests', () => {
 
         expect(buf).to.exist;
     });
+
+    describe('Canonicalization edge cases', () => {
+        const hashOf = body => crypto.createHash('sha256').update(Buffer.from(body, 'binary')).digest('base64');
+
+        // hashes a body handed over in the given chunks
+        const hashChunks = chunks => {
+            const s = new RelaxedHash('rsa-sha256');
+            for (const chunk of chunks) {
+                s.update(chunk);
+            }
+            return s.digest('base64');
+        };
+
+        // line based reference of RFC 6376 section 3.4.4: the <CR> of a terminated line is part
+        // of the line ending, a <CR> at the end of an unterminated last line is content
+        const reference = body => {
+            const lines = body.split('\n');
+            const last = lines.pop();
+            const canon = line => line.replace(/[ \t]+/g, ' ').replace(/ $/, '');
+            const out = lines.map(line => canon(line.replace(/\r$/, '')));
+            out.push(canon(last));
+            while (out.length && out[out.length - 1] === '') {
+                out.pop();
+            }
+            return out.length ? out.join('\r\n') + '\r\n' : '';
+        };
+
+        // small deterministic PRNG (Park-Miller minimal standard) so a failure is reproducible
+        const prng = seed => () => {
+            seed = (seed * 48271) % 2147483647;
+            return seed / 2147483647;
+        };
+
+        // every row fails with the canonicalization this file pinned before
+        const cases = [
+            ['a trailing space on an unterminated last line', 'abc ', 'abc\r\n'],
+            ['a space only unterminated last line', 'abc\r\n ', 'abc\r\n'],
+            ['a CR at the end of the body as content', 'abc\r', 'abc\r\r\n'],
+            ['a CR before the line ending CR as content', 'abc\r\r\n', 'abc\r\r\n'],
+            ['whitespace before a content CR as a space', ' \r', ' \r\r\n'],
+            ['whitespace between a content CR and the line ending as trailing', 'a\r \r\n', 'a\r\r\n'],
+            ['a body of a single CR', '\r', '\r\r\n'],
+            ['a lone CR after a line break as content, not an empty line', 'a\r\n\r', 'a\r\n\r\r\n']
+        ];
+
+        for (const [name, body, expected] of cases) {
+            it('Should handle ' + name, () => {
+                expect(hashChunks([Buffer.from(body, 'binary')])).to.equal(hashOf(expected));
+            });
+        }
+
+        it('Should match the line based reference for generated bodies', () => {
+            const random = prng(20260902);
+            const pick = n => Math.floor(random() * n);
+            const alphabet = ['a', 'b', ' ', ' ', '\t', '\r\n', '\r\n', '\n', '\r'];
+
+            for (let i = 0; i < 2000; i++) {
+                let body = '';
+                const len = pick(24);
+                for (let j = 0; j < len; j++) {
+                    body += alphabet[pick(alphabet.length)];
+                }
+                const bytes = Buffer.from(body, 'binary');
+                const chunks = [];
+                for (let pos = 0; pos < bytes.length;) {
+                    const size = 1 + pick(5);
+                    chunks.push(bytes.subarray(pos, pos + size));
+                    pos += size;
+                }
+                expect(hashChunks(chunks), 'body ' + JSON.stringify(body)).to.equal(hashOf(reference(body)));
+            }
+        });
+    });
 });
