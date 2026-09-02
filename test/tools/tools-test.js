@@ -310,6 +310,25 @@ describe('Tools Tests', () => {
         });
     });
 
+    describe('parseHeaders folding', () => {
+        it('Should fold a line that starts with SP or HTAB', () => {
+            const parsed = parseHeaders(Buffer.from('From: a@example.com\r\nSubject: first\r\n\tsecond\r\n continued\r\n', 'binary')).parsed;
+            expect(parsed.map(row => row.key)).to.deep.equal(['from', 'subject']);
+            expect(parsed[1].line.toString('binary')).to.equal('Subject: first\r\n\tsecond\r\n continued');
+        });
+
+        it('Should start a new header on a line that begins with another whitespace byte', () => {
+            // 0xA0 is the second byte of a UTF-8 non-breaking space, not WSP
+            const parsed = parseHeaders(Buffer.from('From: a@example.com\r\n\xa0Subject: x\r\n', 'binary')).parsed;
+            expect(parsed.map(row => row.key)).to.deep.equal(['from', '\xa0subject']);
+        });
+
+        it('Should trim only SP and HTAB from the header name', () => {
+            const parsed = parseHeaders(Buffer.from('Subject \t : value\r\n', 'binary')).parsed;
+            expect(parsed[0].casedKey).to.equal('Subject');
+        });
+    });
+
     describe('formatRelaxedLine', () => {
         it('Should lowercase header name', () => {
             const result = formatRelaxedLine(Buffer.from('FROM: user@example.com'));
@@ -334,6 +353,30 @@ describe('Tools Tests', () => {
         it('Should trim whitespace around colon', () => {
             const result = formatRelaxedLine(Buffer.from('Subject  :  value'));
             expect(result.toString()).to.equal('subject:value');
+        });
+
+        it('Should collapse runs of SP and HTAB and drop trailing whitespace', () => {
+            const result = formatRelaxedLine(Buffer.from('Subject: a \t b\r\n\t c  \r\n d \t'));
+            expect(result.toString()).to.equal('subject:a b c d');
+        });
+
+        it('Should keep an empty value', () => {
+            const result = formatRelaxedLine(Buffer.from('Subject: \t '));
+            expect(result.toString()).to.equal('subject:');
+        });
+
+        it('Should treat only SP and HTAB as whitespace', () => {
+            // the line is handled as a 'binary' string, so the 0xA0 byte of a UTF-8
+            // non-breaking space (C2 A0) and the bytes of an ideographic space (E3 80 80)
+            // are content
+            const nbsp = formatRelaxedLine(Buffer.from('Subject: a\u00a0b', 'utf-8'));
+            expect(nbsp.toString('utf-8')).to.equal('subject:a\u00a0b');
+
+            const ideographic = formatRelaxedLine(Buffer.from('Subject: 日本\u3000語 ', 'utf-8'));
+            expect(ideographic.toString('utf-8')).to.equal('subject:日本\u3000語');
+
+            const latin1 = formatRelaxedLine(Buffer.from('Subject: j\xf5geva ', 'binary'));
+            expect(latin1.toString('binary')).to.equal('subject:j\xf5geva');
         });
     });
 
