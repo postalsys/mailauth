@@ -725,12 +725,14 @@ describe('Tools Tests', () => {
         });
 
         it('Should handle invalid string value', () => {
+            const now = Date.now();
             const result = getCurTime('not-a-date-at-all');
 
-            // The function returns the Invalid Date since the bug in the code
-            // checks toString !== 'Invalid Date' but toString is a function.
-            // This matches the actual current behavior.
+            // an unparseable value falls back to the current time. Handing back an Invalid
+            // Date instead put a NaN timestamp into signatures and made every comparison
+            // against it false in the verifier
             expect(result).to.be.instanceof(Date);
+            expect(Math.abs(result.getTime() - now)).to.be.lessThan(1000);
         });
     });
 });
