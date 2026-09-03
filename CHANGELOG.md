@@ -1,5 +1,18 @@
 # Changelog
 
+## [5.0.3](https://github.com/postalsys/mailauth/compare/v5.0.2...v5.0.3) (2026-09-03)
+
+
+### Bug Fixes
+
+* **dkim:** canonicalize a CR that is not a line ending as body content ([68dfb42](https://github.com/postalsys/mailauth/commit/68dfb4262fdae1bedb17019ab8c3c59bc2f4cf8d))
+* **dkim:** canonicalize a lone CR as body content in the simple algorithm ([aa54b0e](https://github.com/postalsys/mailauth/commit/aa54b0e75f65a274d2f56ea4df6f58bc86c080fc))
+* **dkim:** fold a header line that is not a well formed field ([227cf48](https://github.com/postalsys/mailauth/commit/227cf48fb42dbb93bcebfd1acbc8484032e03db9))
+* **dkim:** read the signature timestamp once per signature ([c8c6cd8](https://github.com/postalsys/mailauth/commit/c8c6cd8d41fd176d59522bde85022b7ab0f1e324))
+* **dkim:** sign and verify a message that has no body ([0b7c6ed](https://github.com/postalsys/mailauth/commit/0b7c6ed6723a8cdf2f65334af7d0783a373ab5e8))
+* **dkim:** stop emitting signatures and seals that cover nothing ([4eefa97](https://github.com/postalsys/mailauth/commit/4eefa9793fa6755d2e11b1fcaa4581b7f1b32515))
+* **dkim:** treat only SP and HTAB as whitespace in header canonicalization ([734db62](https://github.com/postalsys/mailauth/commit/734db62d09376c631e548f6c8b44a56ba38659c5))
+
 ## [5.0.2](https://github.com/postalsys/mailauth/compare/v5.0.1...v5.0.2) (2026-08-19)
 
 
