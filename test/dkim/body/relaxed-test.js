@@ -227,5 +227,54 @@ describe('DKIM RelaxedBody Tests', () => {
                 expect(hashChunks(chunks), 'body ' + JSON.stringify(body)).to.equal(hashOf(reference(body)));
             }
         });
+
+        it('Should drop the trailing whitespace of every line it crosses', () => {
+            // fixLineBuffer walks a line backwards, so it has to forget what it saw on the
+            // line to the right of a line ending before it looks at the line to the left
+            const s = new RelaxedHash('rsa-sha256');
+            const fix = input => s.fixLineBuffer(Buffer.from(input, 'binary')).toString('binary');
+
+            expect(fix('a \nb')).to.equal('a\r\nb');
+            expect(fix('a\t\r\nb')).to.equal('a\r\nb');
+            expect(fix(' \na')).to.equal('\r\na');
+            expect(fix('a  \nb  \nc')).to.equal('a\r\nb\r\nc');
+            expect(fix('a b \nc  d')).to.equal('a b\r\nc d');
+        });
+
+        it('Should count empty lines at the end of the body instead of buffering them', () => {
+            // one buffer per empty line, each pinning the pool it was allocated from, made
+            // a body of bare line breaks retain about 200 times its own size
+            const s = new RelaxedHash('rsa-sha256');
+            for (let i = 0; i < 5000; i++) {
+                s.update(Buffer.from('\r\n'));
+            }
+            expect(s.pendingLineBreaks).to.equal(5000);
+            expect(s.digest('base64')).to.equal(hashOf(''));
+        });
+
+        it('Should not canonicalize a last line that needs no fixing', () => {
+            // counts how often the last line was handed to fixLineBuffer
+            const fixCalls = body => {
+                const s = new RelaxedHash('rsa-sha256');
+                const fixLineBuffer = s.fixLineBuffer.bind(s);
+                let calls = 0;
+                s.fixLineBuffer = buf => {
+                    calls++;
+                    return fixLineBuffer(buf);
+                };
+
+                s.update(Buffer.from(body, 'binary'));
+                // the last line is only canonicalized by digest(), so read the count after
+                const digest = s.digest('base64');
+                return { calls, digest };
+            };
+
+            for (const [body, expected, calls] of [
+                ['abc\r\ndef', 'abc\r\ndef\r\n', 0],
+                ['abc\r\ndef ', 'abc\r\ndef\r\n', 1]
+            ]) {
+                expect(fixCalls(body)).to.deep.equal({ calls, digest: hashOf(expected) }, 'body ' + JSON.stringify(body));
+            }
+        });
     });
 });
