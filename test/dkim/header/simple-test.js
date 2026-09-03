@@ -323,6 +323,19 @@ describe('DKIM Simple Header Canonicalization Tests', () => {
             expect(result.dkimHeaderOpts.bh).to.equal('base64bodyhash==');
         });
 
+        it('Should strip the b= value from the signature header it hashes', () => {
+            // the byte class this relies on is covered on stripSignatureValue itself
+            const result = simpleHeaders(
+                'DKIM',
+                { keys: 'From', headers: [] },
+                {
+                    signatureHeaderLine: 'DKIM-Signature: v=1; a=rsa-sha256; d=example.com; s=test; h=from; bh=AAA; b=REALSIGNATURE'
+                }
+            );
+
+            expect(result.canonicalizedHeader.toString('binary')).to.not.include('REALSIGNATURE');
+        });
+
         it('Should return false for dkimHeaderOpts when signatureHeaderLine provided', () => {
             const signingHeaderLines = {
                 keys: 'From',

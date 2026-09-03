@@ -14,6 +14,7 @@ const {
     formatAuthHeaderRow,
     escapeCommentValue,
     formatRelaxedLine,
+    stripSignatureValue,
     formatDomain,
     getAlignment,
     validateAlgorithm,
@@ -171,6 +172,21 @@ describe('Tools Tests', () => {
             expect(result).to.include('d=example.com');
         });
 
+        it('Should serialize l=0 as a value, not as an empty tag', () => {
+            // sig-l-tag is 1*76DIGIT (RFC 6376 section 3.5), so `l=` is not a legal tag
+            const result = formatSignatureHeaderLine('DKIM', {
+                a: 'rsa-sha256',
+                d: 'example.com',
+                s: 'selector1',
+                h: 'from',
+                l: 0,
+                bh: 'bodyhash==',
+                b: 'signature=='
+            });
+
+            expect(result).to.include('l=0');
+        });
+
         it('Should format ARC-Message-Signature header', () => {
             const result = formatSignatureHeaderLine('ARC', {
                 i: 1,
@@ -317,15 +333,45 @@ describe('Tools Tests', () => {
             expect(parsed[1].line.toString('binary')).to.equal('Subject: first\r\n\tsecond\r\n continued');
         });
 
-        it('Should start a new header on a line that begins with another whitespace byte', () => {
-            // 0xA0 is the second byte of a UTF-8 non-breaking space, not WSP
-            const parsed = parseHeaders(Buffer.from('From: a@example.com\r\n\xa0Subject: x\r\n', 'binary')).parsed;
-            expect(parsed.map(row => row.key)).to.deep.equal(['from', '\xa0subject']);
+        it('Should fold a line that begins with another whitespace byte', () => {
+            // 0xA0 is latin1 NBSP and the second byte of UTF-8 NBSP. RFC 5322 does not
+            // fold on it, but libmime and MUAs do, so folding it in here keeps the line
+            // inside the value a reader sees instead of hiding it from the signature
+            for (const wsp of [' ', '\t', '\v', '\f', '\xa0']) {
+                const parsed = parseHeaders(Buffer.from(`From: a@example.com\r\n${wsp}Subject: x\r\n`, 'binary')).parsed;
+                expect(parsed.map(row => row.key)).to.deep.equal(['from']);
+            }
         });
 
         it('Should trim only SP and HTAB from the header name', () => {
             const parsed = parseHeaders(Buffer.from('Subject \t : value\r\n', 'binary')).parsed;
             expect(parsed[0].casedKey).to.equal('Subject');
+        });
+
+        it('Should not leave a fold line break in the header name', () => {
+            // the colon of this From sits on the continuation line. Every MUA unfolds it
+            // and shows a From, so DMARC has to find one too
+            const parsed = parseHeaders(Buffer.from('From\r\n : boss@example.com\r\nSubject: t\r\n', 'binary')).parsed;
+            expect(parsed.map(row => row.key)).to.deep.equal(['from', 'subject']);
+            expect(parsed[0].casedKey).to.equal('From');
+        });
+
+        it('Should lowercase the header name without shifting non-ASCII bytes', () => {
+            // toLowerCase() is Unicode aware and would map 0xC3 to 0xE3
+            const parsed = parseHeaders(Buffer.from('Sö: value\r\n', 'utf-8')).parsed;
+            expect([...Buffer.from(parsed[0].key, 'binary')]).to.deep.equal([0x73, 0xc3, 0xb6]);
+        });
+    });
+
+    describe('getSigningHeaderLines', () => {
+        it('Should normalize h= field names the same way parseHeaders does', () => {
+            // an h= entry is read off the wire as a 'binary' string, so it has to be
+            // lowercased and trimmed by the same rules that produced the parsed keys
+            const parsed = parseHeaders(Buffer.from('S\xc3\xb6: v\r\nFrom: a@example.com\r\n', 'binary')).parsed;
+            expect(parsed.map(row => row.key)).to.deep.equal(['s\xc3\xb6', 'from']);
+
+            const selected = getSigningHeaderLines(parsed, ' from \t:S\xc3\xb6', true);
+            expect(selected.headers.map(header => header.key)).to.deep.equal(['from', 's\xc3\xb6']);
         });
     });
 
@@ -377,6 +423,50 @@ describe('Tools Tests', () => {
 
             const latin1 = formatRelaxedLine(Buffer.from('Subject: j\xf5geva ', 'binary'));
             expect(latin1.toString('binary')).to.equal('subject:j\xf5geva');
+        });
+
+        it('Should lowercase the header name without shifting non-ASCII bytes', () => {
+            // toLowerCase() is Unicode aware and maps the latin1 bytes 0xC0-0xDE to
+            // 0xE0-0xFE, which would corrupt the UTF-8 sequence of this header name
+            const result = formatRelaxedLine(Buffer.from('Sö: value', 'utf-8'));
+            expect([...result]).to.deep.equal([...Buffer.from('sö:value', 'utf-8')]);
+        });
+
+        it('Should drop whitespace in front of a line that is not a header field', () => {
+            expect(formatRelaxedLine(Buffer.from(' garbage', 'binary')).toString('binary')).to.equal('garbage');
+        });
+
+        it('Should canonicalize a missing line as nothing', () => {
+            // optional chaining here would resolve to undefined and hash the string
+            // "undefined" as if it were a header line
+            expect(formatRelaxedLine(undefined).toString('binary')).to.equal('');
+            expect(formatRelaxedLine(undefined, '\r\n').toString('binary')).to.equal('\r\n');
+        });
+    });
+
+    describe('stripSignatureValue', () => {
+        it('Should strip the b= value', () => {
+            const line = Buffer.from('DKIM-Signature: v=1; bh=AAA; b=REALSIGNATURE', 'binary');
+            expect(stripSignatureValue(line).toString('binary')).to.equal('DKIM-Signature: v=1; bh=AAA; b=');
+        });
+
+        it('Should strip a b= that a fold pushed onto a continuation line', () => {
+            // simple canonicalization does not unfold, so the CRLF is what separates the
+            // tag from the one before it
+            const line = Buffer.from('DKIM-Signature: v=1; bh=AAA;\r\n b=REALSIGNATURE', 'binary');
+            expect(stripSignatureValue(line).toString('binary')).to.not.include('REALSIGNATURE');
+        });
+
+        it('Should treat only SP and HTAB as whitespace in front of b=', () => {
+            // JS \s matches 0x0B, 0x0C and 0xA0, RFC 6376 does not. Matching them would
+            // strip a decoy tag and leave the real signature inside the hashed header
+            for (const byte of ['\x0b', '\x0c', '\xa0']) {
+                const line = Buffer.from(`DKIM-Signature: v=1; bh=AAA;${byte}b=DECOY; b=REALSIGNATURE`, 'binary');
+                const stripped = stripSignatureValue(line).toString('binary');
+
+                expect(stripped).to.include(`${byte}b=DECOY`);
+                expect(stripped).to.not.include('REALSIGNATURE');
+            }
         });
     });
 
