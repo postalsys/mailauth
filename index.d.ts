@@ -349,6 +349,12 @@ export interface ARCResult {
     authResults?: string;
 
     /**
+     * Why sealing failed, when a seal was requested but could not be created.
+     * The message is left unsealed in that case
+     */
+    sealErrors?: Error[];
+
+    /**
      * ARC chain entries (non-enumerable property)
      * Access with result.chain or Object.getOwnPropertyDescriptor()
      */
@@ -1089,9 +1095,9 @@ export function verifyASChain(data: ARCData, opts: ARCOptions): Promise<boolean>
  *
  * @param input - RFC822 formatted message or false for pre-calculated data
  * @param data - Seal creation data
- * @returns Seal headers
+ * @returns Seal headers, empty if the ARC-Message-Signature could not be signed, and any errors
  */
-export function createSeal(input: MessageInput | false, data: any): Promise<{ headers: string[] }>;
+export function createSeal(input: MessageInput | false, data: any): Promise<{ headers: string[]; errors: Error[] }>;
 
 // ============================================================================
 // BIMI

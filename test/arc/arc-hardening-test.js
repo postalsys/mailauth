@@ -6,6 +6,7 @@ const chai = require('chai');
 const expect = chai.expect;
 
 const { authenticate, sealMessage } = require('../../lib/mailauth');
+const { createSeal } = require('../../lib/arc');
 const { zoneResolver } = require('../helpers/dns-zone');
 const { dkimTxtRecord, privateKey } = require('../helpers/keys');
 const { buildMessage } = require('../helpers/message');
@@ -115,5 +116,40 @@ describe('ARC Hardening Tests', () => {
                 }
             });
         }
+    });
+
+    describe('Sealing failures', () => {
+        // The ARC-Message-Signature is always signed as rsa-sha256, so an ed25519 key makes
+        // it fail the key type check while the ARC-Seal, which follows seal.algorithm,
+        // still signs. That used to leave a seal computed over a header that was never
+        // created, and an empty line where the header should have been
+        const brokenSeal = {
+            signingDomain: 'evil.example',
+            selector: 'test',
+            privateKey: privateKey('private-ed25519.pem'),
+            algorithm: 'ed25519-sha256',
+            cv: 'none',
+            i: 1,
+            authResults: 'mx.evil.example; dkim=pass'
+        };
+
+        it('Should not seal a message whose ARC-Message-Signature could not be signed', async () => {
+            const { headers, errors } = await createSeal(message, { seal: Object.assign({}, brokenSeal) });
+
+            expect(headers).to.deep.equal([]);
+            expect(errors).to.have.lengthOf(1);
+            expect(errors[0].err.code).to.equal('EINVALIDTYPE');
+        });
+
+        it('Should not emit a header block ending empty line instead of the missing header', async () => {
+            const sealHeaders = await sealMessage(message, Object.assign({}, brokenSeal));
+
+            expect(sealHeaders.length).to.equal(0);
+
+            // an empty line here would push everything after it into the message body
+            const sealed = Buffer.concat([sealHeaders, message]);
+            const headerBlock = sealed.toString('binary').split('\r\n\r\n')[0];
+            expect(headerBlock).to.include('From:');
+        });
     });
 });

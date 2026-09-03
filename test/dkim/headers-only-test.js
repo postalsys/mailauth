@@ -5,7 +5,7 @@ const { Buffer } = require('node:buffer');
 const chai = require('chai');
 const expect = chai.expect;
 
-const { dkimSign, dkimVerify } = require('../../lib/mailauth');
+const { authenticate, dkimSign, dkimVerify } = require('../../lib/mailauth');
 const { zoneResolver } = require('../helpers/dns-zone');
 const { dkimTxtRecord, privateKey } = require('../helpers/keys');
 
@@ -36,4 +36,35 @@ describe('DKIM headers-only message Tests', () => {
             expect(result.results[0].status.result).to.equal('pass');
         });
     }
+
+    // RFC 6376 section 5.4 requires the From header to be signed, and section 6.1.1 makes
+    // a signature that leaves it out a PERMFAIL. An input with nothing to sign used to
+    // produce a signature with an empty h= tag, which is not valid sig-h-tag syntax either
+    for (const [name, input] of [
+        ['an input with no header that can be signed', 'X-Foo: bar'],
+        ['an input that is not a message at all', 'Hello world, this is not a message'],
+        ['an input with no bytes', '']
+    ]) {
+        it('Should refuse to sign ' + name, async () => {
+            const { signatures, errors } = await dkimSign(Buffer.from(input), signOptions);
+
+            expect(signatures.trim()).to.equal('');
+            expect(errors).to.have.lengthOf(1);
+            expect(errors[0].err.code).to.equal('ENOFROM');
+        });
+    }
+
+    it('Should not throw when sealing an input with no bytes', async () => {
+        const result = await authenticate(Buffer.from(''), {
+            ip: '192.0.2.1',
+            helo: 'x.test',
+            mta: 'mx.test',
+            sender: 'a@example.com',
+            resolver: zoneResolver({}),
+            seal: { signingDomain: 'example.com', selector: 'test', privateKey: privateKey('private-rsa.pem') }
+        });
+
+        expect(result.headers).to.be.a('string');
+        expect(result.arc.status.result).to.equal('none');
+    });
 });
