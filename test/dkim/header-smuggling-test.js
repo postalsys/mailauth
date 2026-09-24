@@ -31,8 +31,9 @@ describe('DKIM header smuggling Tests', () => {
     describe('A line an MUA appends to the header above it', () => {
         const message = 'From: real@example.com\r\nSubject: hello\r\n\r\nbody\r\n';
 
-        // Everything JS \s matches, and so libmime folds in, in every spelling it has on
-        // the wire. A test on the leading byte alone catches only the first three of these
+        // Some mail readers treat these whitespace characters as continuations. Keeping
+        // them in the signed value prevents a forged line from passing verification.
+        // A test on the leading byte alone catches only the first three of these.
         for (const bytes of [
             '\x0b', // vertical tab
             '\x0c', // form feed
@@ -53,7 +54,7 @@ describe('DKIM header smuggling Tests', () => {
             });
         }
 
-        it('Should keep a non-ASCII line inside the value libmime reads', async () => {
+        it('Should keep a non-ASCII line inside the signed header value', async () => {
             // the byte class this used to test only ever saw the first byte, so a UTF-8
             // spelling of the same character walked straight past it
             const tampered = message.replace('From: real@example.com\r\n', 'From: real@example.com\r\n\xc2\xa0, evil@attacker.test\r\n');
@@ -63,12 +64,11 @@ describe('DKIM header smuggling Tests', () => {
             expect(parsed[0].line.toString('binary')).to.include('evil@attacker.test');
         });
 
-        it('Should read the From the same way libmime does', async () => {
-            const tampered = message.replace('From: real@example.com\r\n', 'From: real@example.com\r\n\xa0, evil@attacker.test\r\n');
+        it('Should read a folded From the same way libmime does', async () => {
+            const { signatures } = await dkimSign(Buffer.from(message), signOptions);
+            const tampered = (signatures + message).replace('From: real@example.com\r\n', 'From: real@example.com\r\n , evil@attacker.test\r\n');
             const decoded = libmime.decodeHeaders(tampered.split('\r\n\r\n')[0]);
 
-            // libmime folds the line in, so the value carries both addresses. mailauth has
-            // to see the same bytes or the signature covers something else than is read
             expect(decoded.from[0]).to.include('evil@attacker.test');
 
             const result = await authenticate(Buffer.from(tampered, 'binary'), {
@@ -79,7 +79,9 @@ describe('DKIM header smuggling Tests', () => {
                 resolver
             });
 
-            expect(result.dkim.headers.parsed.map(row => row.key)).to.deep.equal(['from', 'subject']);
+            expect(result.dkim.headers.parsed.map(row => row.key)).to.deep.equal(['dkim-signature', 'from', 'subject']);
+            expect(result.dkim.headers.parsed[1].line.toString('binary')).to.include('evil@attacker.test');
+            expect(result.dkim.results[0].status.result).to.equal('fail');
         });
     });
 
