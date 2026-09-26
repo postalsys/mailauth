@@ -84,12 +84,12 @@ describe('RFC 9989 DMARC compliance', () => {
             expect(result.status.result).to.equal('none');
         });
 
-        it('does not inherit the org policy when the author domain publishes multiple records (§4.10 step 2)', async () => {
-            // A multi-record set terminates policy discovery. Falling back to the org domain
-            // here would silently apply p=none to a subdomain the owner meant to protect.
+        it('discards a multi-record set at the author domain and continues the walk (§4.10 steps 2 and 6, §4.10.1)', async () => {
+            // RFC 7489 6.6.3 ended policy discovery here. RFC 9989 discards the records and,
+            // as no valid record was found by the first query, performs a Tree Walk.
             const resolver = zoneResolver({
                 '_dmarc.mail.example.com': { TXT: [['v=DMARC1; p=reject'], ['v=DMARC1; p=quarantine']] },
-                '_dmarc.example.com': { TXT: [['v=DMARC1; p=none']] }
+                '_dmarc.example.com': { TXT: [['v=DMARC1; p=none; sp=quarantine']] }
             });
             const result = await verifyDmarc({
                 headerFrom: 'user@mail.example.com',
@@ -97,8 +97,9 @@ describe('RFC 9989 DMARC compliance', () => {
                 spfDomains: [],
                 resolver
             });
-            expect(result.status.result).to.equal('none');
-            expect(result).to.not.have.property('policy');
+            expect(result.status.result).to.equal('fail');
+            expect(result.status.header.d).to.equal('example.com');
+            expect(result.policy).to.equal('quarantine');
         });
 
         it('continues to the org domain when the author domain publishes only non-DMARC TXT records (§4.10)', async () => {
@@ -154,8 +155,7 @@ describe('RFC 9989 DMARC compliance', () => {
             expect(unaligned.status.result).to.equal('fail');
         });
 
-        // RFC 9989 Appendix B.4.1: outcome matches today (PSL agrees with the Tree Walk
-        // for simple names); kept active so the eventual Tree Walk keeps these correct.
+        // RFC 9989 Appendix B.4.1, the query sequence is asserted in the #1 suite below
         it('B.4.1: org domain and alignment for a simple hierarchy', async () => {
             const resolver = zoneResolver({
                 '_dmarc.example.com': { TXT: [['v=DMARC1; p=reject']] },
@@ -171,8 +171,8 @@ describe('RFC 9989 DMARC compliance', () => {
             expect(result.domain).to.equal('example.com');
         });
 
-        // RFC 9989 Appendix B.4.2: deep name, records only at example.com. Outcome
-        // matches today; the bounded query *sequence* is asserted in the #1 suite below.
+        // RFC 9989 Appendix B.4.2: deep name, records only at example.com. The bounded
+        // query sequence is asserted in the #1 suite below.
         it('B.4.2: org domain for a deep author name resolves to example.com', async () => {
             const resolver = zoneResolver({
                 '_dmarc.example.com': { TXT: [['v=DMARC1; p=reject']] },
@@ -193,7 +193,7 @@ describe('RFC 9989 DMARC compliance', () => {
     // #1 DNS Tree Walk: policy discovery and organizational domain
     // RFC 9989 §4.10, §4.10.1, §4.10.2. Replaces the Public Suffix List.
     // ---------------------------------------------------------------------------
-    describe.skip('#1 DNS Tree Walk: policy discovery and organizational domain [§4.10, §4.10.2]', () => {
+    describe('#1 DNS Tree Walk: policy discovery and organizational domain [§4.10, §4.10.2]', () => {
         it('uses a record published at an intermediate label marked psd=n as the org domain', async () => {
             // Author a.b.example.com: walk finds _dmarc.b.example.com with psd=n and stops there.
             // b.example.com is the Organizational Domain, so its policy (reject) applies, not example.com's.
@@ -232,6 +232,265 @@ describe('RFC 9989 DMARC compliance', () => {
                 '_dmarc.example.com',
                 '_dmarc.com'
             ]);
+        });
+
+        const dmarcQueries = resolver => resolver.calls.filter(c => c.type === 'TXT').map(c => c.name);
+
+        it('B.4.1: queries the author walk and each differing identifier walk once', async () => {
+            const resolver = zoneResolver({
+                '_dmarc.example.com': { TXT: [['v=DMARC1; p=reject']] },
+                '_dmarc.signing.example.com': { TXT: [['v=DMARC1; p=reject']] }
+            });
+            const result = await verifyDmarc({
+                headerFrom: 'user@example.com',
+                spfDomains: [{ domain: 'example.com' }],
+                dkimDomains: [{ domain: 'signing.example.com' }],
+                resolver
+            });
+            expect(result.status.result).to.equal('pass');
+            expect(result.alignment.spf.result).to.equal('example.com');
+            expect(result.alignment.dkim.result).to.equal('signing.example.com');
+            expect(dmarcQueries(resolver)).to.deep.equal(['_dmarc.example.com', '_dmarc.com', '_dmarc.signing.example.com']);
+        });
+
+        it('B.4.2: an identifier walk reuses the names the author walk already queried', async () => {
+            const resolver = zoneResolver({
+                '_dmarc.example.com': { TXT: [['v=DMARC1; p=reject']] },
+                '_dmarc.signing.example.com': { TXT: [['v=DMARC1; p=reject']] }
+            });
+            const result = await verifyDmarc({
+                headerFrom: 'user@a.b.c.d.e.f.g.h.i.j.k.example.com',
+                spfDomains: [{ domain: 'example.com' }],
+                dkimDomains: [{ domain: 'signing.example.com' }],
+                resolver
+            });
+            expect(result.status.result).to.equal('pass');
+            expect(result.status.header.d).to.equal('example.com');
+            expect(result.alignment.spf.result).to.equal('example.com');
+            expect(result.alignment.dkim.result).to.equal('signing.example.com');
+            expect(dmarcQueries(resolver)).to.have.lengthOf(9);
+            expect(dmarcQueries(resolver).slice(-1)).to.deep.equal(['_dmarc.signing.example.com']);
+        });
+
+        it('shortens an author of exactly eight labels by one label and one of nine labels to seven (§4.10 step 4)', async () => {
+            let resolver = zoneResolver({});
+            await verifyDmarc({ headerFrom: 'user@a.b.c.d.e.f.example.com', resolver });
+            expect(dmarcQueries(resolver).slice(0, 2)).to.deep.equal(['_dmarc.a.b.c.d.e.f.example.com', '_dmarc.b.c.d.e.f.example.com']);
+            expect(dmarcQueries(resolver)).to.have.lengthOf(8);
+
+            resolver = zoneResolver({});
+            await verifyDmarc({ headerFrom: 'user@x.a.b.c.d.e.f.example.com', resolver });
+            expect(dmarcQueries(resolver).slice(0, 2)).to.deep.equal(['_dmarc.x.a.b.c.d.e.f.example.com', '_dmarc.b.c.d.e.f.example.com']);
+            expect(dmarcQueries(resolver)).to.have.lengthOf(8);
+        });
+
+        it('makes the author domain its own org domain when no record is published above it (§4.10.2 rule 3)', async () => {
+            // the Public Suffix List would say example.com, and d=example.com would align
+            const resolver = zoneResolver({
+                '_dmarc.mail.example.com': { TXT: [['v=DMARC1; p=reject']] }
+            });
+            const result = await verifyDmarc({
+                headerFrom: 'user@mail.example.com',
+                dkimDomains: [{ domain: 'example.com' }],
+                spfDomains: [{ domain: 'bounce.example.com' }],
+                resolver
+            });
+            expect(result.status.result).to.equal('fail');
+            expect(result.domain).to.equal('mail.example.com');
+            expect(result.policy).to.equal('reject');
+        });
+
+        it('takes the policy of the record with the fewest labels, not an intermediate one (§4.10.1)', async () => {
+            const resolver = zoneResolver({
+                '_dmarc.b.example.com': { TXT: [['v=DMARC1; p=none']] },
+                '_dmarc.example.com': { TXT: [['v=DMARC1; p=reject']] }
+            });
+            const result = await verifyDmarc({ headerFrom: 'user@a.b.example.com', resolver });
+            expect(result.domain).to.equal('example.com');
+            expect(result.status.header.d).to.equal('example.com');
+            expect(result.policy).to.equal('reject');
+        });
+
+        it('inherits a policy from a name the Public Suffix List lists as a suffix', async () => {
+            const resolver = zoneResolver({
+                '_dmarc.blogspot.com': { TXT: [['v=DMARC1; p=reject']] }
+            });
+            const result = await verifyDmarc({
+                headerFrom: 'user@alice.blogspot.com',
+                dkimDomains: [{ domain: 'bob.blogspot.com' }],
+                resolver
+            });
+            expect(result.domain).to.equal('blogspot.com');
+            expect(result.status.header.d).to.equal('blogspot.com');
+            expect(result.policy).to.equal('reject');
+            // both names share the Organizational Domain blogspot.com
+            expect(result.status.result).to.equal('pass');
+        });
+
+        it('lets psd=n on the author record keep a parent from becoming its org domain', async () => {
+            const resolver = zoneResolver({
+                '_dmarc.mail.example.com': { TXT: [['v=DMARC1; p=reject; psd=n']] },
+                '_dmarc.example.com': { TXT: [['v=DMARC1; p=reject']] }
+            });
+            const result = await verifyDmarc({
+                headerFrom: 'user@mail.example.com',
+                dkimDomains: [{ domain: 'example.com' }],
+                resolver
+            });
+            expect(result.domain).to.equal('mail.example.com');
+            expect(result.status.result).to.equal('fail');
+            // the walk stops at the psd tag
+            expect(dmarcQueries(resolver)).to.deep.equal(['_dmarc.mail.example.com']);
+        });
+
+        it('discards a multi-record set above the author domain and keeps walking', async () => {
+            const resolver = zoneResolver({
+                '_dmarc.b.example.com': { TXT: [['v=DMARC1; p=reject; psd=n'], ['v=DMARC1; p=none']] },
+                '_dmarc.example.com': { TXT: [['v=DMARC1; p=quarantine']] }
+            });
+            const result = await verifyDmarc({ headerFrom: 'user@a.b.example.com', resolver });
+            expect(result.domain).to.equal('example.com');
+            expect(result.policy).to.equal('quarantine');
+        });
+
+        it('does not walk identifiers outside the author org domain', async () => {
+            const resolver = zoneResolver({
+                '_dmarc.example.com': { TXT: [['v=DMARC1; p=reject']] }
+            });
+            const result = await verifyDmarc({
+                headerFrom: 'user@example.com',
+                spfDomains: [{ domain: 'bounces.esp.example.net' }],
+                dkimDomains: [{ domain: 'esp.example.net' }, { domain: 'example.org' }],
+                resolver
+            });
+            expect(result.status.result).to.equal('fail');
+            expect(dmarcQueries(resolver)).to.deep.equal(['_dmarc.example.com', '_dmarc.com']);
+        });
+
+        it('caps relaxed alignment walks per message and checks SPF before DKIM', async () => {
+            const resolver = zoneResolver({
+                '_dmarc.example.com': { TXT: [['v=DMARC1; p=reject']] }
+            });
+            const dkimDomains = [];
+            for (let i = 0; i < 20; i++) {
+                dkimDomains.push({ domain: `s${i}.example.com` });
+            }
+            const result = await verifyDmarc({
+                headerFrom: 'user@example.com',
+                spfDomains: [{ domain: 'bounces.example.com' }],
+                dkimDomains,
+                resolver
+            });
+            expect(result.status.result).to.equal('pass');
+            expect(result.alignment.spf.result).to.equal('bounces.example.com');
+            // SPF plus nine signing domains, one query each on top of the author walk
+            expect(dmarcQueries(resolver)).to.have.lengthOf(2 + 10);
+            expect(dmarcQueries(resolver)).to.include('_dmarc.bounces.example.com');
+            expect(dmarcQueries(resolver)).to.not.include('_dmarc.s9.example.com');
+        });
+
+        it('does not query names that can not exist, and treats EBADNAME as no record', async () => {
+            let resolver = zoneResolver({
+                '_dmarc.example.com': { TXT: [['v=DMARC1; p=reject']] }
+            });
+            let result = await verifyDmarc({ headerFrom: `user@${'a'.repeat(64)}.example.com`, resolver });
+            expect(result.policy).to.equal('reject');
+            expect(dmarcQueries(resolver)).to.deep.equal(['_dmarc.example.com', '_dmarc.com']);
+
+            result = await verifyDmarc({ headerFrom: 'user@[192.0.2.1]', resolver: zoneResolver({}) });
+            expect(result.status.result).to.equal('none');
+
+            const badName = async name => {
+                if (name === '_dmarc.example.com') {
+                    return [['v=DMARC1; p=quarantine']];
+                }
+                const err = new Error('bad name');
+                err.code = name === '_dmarc.com' ? 'ENOTFOUND' : 'EBADNAME';
+                throw err;
+            };
+            result = await verifyDmarc({ headerFrom: 'user@mail.example.com', resolver: badName });
+            expect(result.status.result).to.equal('fail');
+            expect(result.policy).to.equal('quarantine');
+        });
+
+        it('ignores a trailing root dot on the author domain and identifiers', async () => {
+            const resolver = zoneResolver({
+                '_dmarc.example.com': { TXT: [['v=DMARC1; p=reject']] }
+            });
+            const result = await verifyDmarc({
+                headerFrom: 'user@mail.example.com.',
+                dkimDomains: [{ domain: 'example.com.' }],
+                resolver
+            });
+            expect(result.status.result).to.equal('pass');
+            expect(result.domain).to.equal('example.com');
+        });
+
+        describe('DNS failures', () => {
+            // a resolver that fails for the listed names and serves the zone otherwise
+            const failingResolver = (zone, failing) => {
+                const resolver = zoneResolver(zone);
+                return async (name, type) => {
+                    if (failing.includes(name)) {
+                        const err = new Error(`SERVFAIL: ${name}`);
+                        err.code = 'ESERVFAIL';
+                        throw err;
+                    }
+                    return resolver(name, type);
+                };
+            };
+
+            it('returns temperror when the policy can not be discovered', async () => {
+                const resolver = failingResolver({ '_dmarc.example.com': { TXT: [['v=DMARC1; p=reject']] } }, ['_dmarc.example.com']);
+                const result = await verifyDmarc({ headerFrom: 'user@mail.example.com', dkimDomains: [{ domain: 'example.com' }], resolver });
+                expect(result.status.result).to.equal('temperror');
+                expect(result.domain).to.equal('mail.example.com');
+                expect(result).to.not.have.property('policy');
+            });
+
+            it('keeps the author record when the walk above it fails and an identical identifier aligns', async () => {
+                const resolver = failingResolver({ '_dmarc.example.com': { TXT: [['v=DMARC1; p=reject']] } }, ['_dmarc.com']);
+                const result = await verifyDmarc({ headerFrom: 'user@example.com', dkimDomains: [{ domain: 'example.com' }], resolver });
+                expect(result.status.result).to.equal('pass');
+                expect(result.policy).to.equal('reject');
+                expect(result.domain).to.equal('example.com');
+            });
+
+            it('returns temperror with the policy when the walk above the author fails and only a differing identifier could align', async () => {
+                const resolver = failingResolver({ '_dmarc.example.com': { TXT: [['v=DMARC1; p=reject']] } }, ['_dmarc.com']);
+                const result = await verifyDmarc({ headerFrom: 'user@example.com', dkimDomains: [{ domain: 'mail.example.com' }], resolver });
+                expect(result.status.result).to.equal('temperror');
+                expect(result.error).to.equal('SERVFAIL: _dmarc.com');
+                expect(result.policy).to.equal('reject');
+                expect(result.p).to.equal('reject');
+                expect(result.rr).to.equal('v=DMARC1; p=reject');
+            });
+
+            it('returns temperror when an identifier walk fails and nothing else aligns', async () => {
+                const resolver = failingResolver({ '_dmarc.example.com': { TXT: [['v=DMARC1; p=reject']] } }, ['_dmarc.mail.example.com']);
+                const result = await verifyDmarc({ headerFrom: 'user@example.com', dkimDomains: [{ domain: 'mail.example.com' }], resolver });
+                expect(result.status.result).to.equal('temperror');
+                expect(result.policy).to.equal('reject');
+            });
+
+            it('passes when an identifier walk fails but another identifier aligns', async () => {
+                const resolver = failingResolver({ '_dmarc.example.com': { TXT: [['v=DMARC1; p=reject']] } }, ['_dmarc.mail.example.com']);
+                const result = await verifyDmarc({
+                    headerFrom: 'user@example.com',
+                    spfDomains: [{ domain: 'bounces.example.com' }],
+                    dkimDomains: [{ domain: 'mail.example.com' }],
+                    resolver
+                });
+                expect(result.status.result).to.equal('pass');
+                expect(result.alignment.spf.result).to.equal('bounces.example.com');
+            });
+
+            it('does not turn a strict alignment failure into a temperror', async () => {
+                const resolver = failingResolver({ '_dmarc.example.com': { TXT: [['v=DMARC1; p=reject; adkim=s']] } }, ['_dmarc.mail.example.com']);
+                const result = await verifyDmarc({ headerFrom: 'user@example.com', dkimDomains: [{ domain: 'mail.example.com', underSized: 10 }], resolver });
+                expect(result.status.result).to.equal('fail');
+                expect(result.alignment.dkim.underSized).to.be.undefined;
+            });
         });
     });
 
@@ -292,7 +551,7 @@ describe('RFC 9989 DMARC compliance', () => {
     // #4 psd: Public Suffix Domain discovery
     // RFC 9989 §4.7 (psd), §4.10.2, §5.2. Worked example: Appendix B.4.3.
     // ---------------------------------------------------------------------------
-    describe.skip('#4 psd / PSD discovery [§4.7 psd, §4.10.2, §5.2; example B.4.3]', () => {
+    describe('#4 psd / PSD discovery [§4.7 psd, §4.10.2, §5.2; example B.4.3]', () => {
         it('B.4.3: psd=y stops the walk and the org domain is one label below the PSD', async () => {
             // Author giant.bank.example. Walk: _dmarc.giant.bank.example (record) then
             // _dmarc.bank.example (psd=y -> stop). Org domain = giant.bank.example.
@@ -310,12 +569,20 @@ describe('RFC 9989 DMARC compliance', () => {
             });
             expect(result.status.result).to.equal('pass');
             expect(result.domain).to.equal('giant.bank.example');
-            expect(result.alignment.spf.result).to.equal('giant.bank.example');
+            // the aligned identifier itself is reported, not its Organizational Domain
+            expect(result.alignment.spf.result).to.equal('mail.giant.bank.example');
             expect(result.alignment.dkim.result).to.not.be.ok;
+            // every walk stops at the psd=y record, so "_dmarc.example" is never queried. The DKIM
+            // domain is not below giant.bank.example, so its Organizational Domain can not be
+            // giant.bank.example either and the walk the example makes for it is skipped.
+            expect(resolver.calls.filter(c => c.type === 'TXT').map(c => c.name)).to.deep.equal([
+                '_dmarc.giant.bank.example',
+                '_dmarc.bank.example',
+                '_dmarc.mail.giant.bank.example'
+            ]);
         });
 
         it('PSD policy is not used when the org domain publishes its own record (§4.10.1 note)', async () => {
-            // Already passes today, but only because PSD records are never consulted at all.
             // foo.example has its own record; the psd=y record above it must not override it.
             const resolver = zoneResolver({
                 '_dmarc.example': { TXT: [['v=DMARC1; p=reject; psd=y; rua=mailto:psd@example']] },
@@ -329,6 +596,51 @@ describe('RFC 9989 DMARC compliance', () => {
             });
             expect(result.domain).to.equal('foo.example');
             expect(result.policy).to.equal('none');
+        });
+
+        it('applies the PSD policy, with sp, when the org domain publishes no record (§4.10.1)', async () => {
+            const resolver = zoneResolver({
+                '_dmarc.bank.example': { TXT: [['v=DMARC1; p=reject; sp=quarantine; psd=y']] }
+            });
+            const result = await verifyDmarc({
+                headerFrom: 'user@mail.giant.bank.example',
+                dkimDomains: [{ domain: 'giant.bank.example' }],
+                resolver
+            });
+            expect(result.domain).to.equal('giant.bank.example');
+            expect(result.status.header.d).to.equal('bank.example');
+            expect(result.policy).to.equal('quarantine');
+            expect(result.status.result).to.equal('pass');
+        });
+
+        it('does not align two registrants below the same PSD', async () => {
+            const resolver = zoneResolver({
+                '_dmarc.bank.example': { TXT: [['v=DMARC1; p=reject; psd=y']] }
+            });
+            const result = await verifyDmarc({
+                headerFrom: 'user@giant.bank.example',
+                spfDomains: [{ domain: 'bank.example' }],
+                dkimDomains: [{ domain: 'mega.bank.example' }],
+                resolver
+            });
+            expect(result.domain).to.equal('giant.bank.example');
+            expect(result.policy).to.equal('reject');
+            expect(result.status.result).to.equal('fail');
+        });
+
+        it('treats a PSD sending as itself as its own org domain (§4.10.2 rule 2 skips the start)', async () => {
+            const resolver = zoneResolver({
+                '_dmarc.bank.example': { TXT: [['v=DMARC1; p=reject; sp=none; psd=y']] }
+            });
+            const result = await verifyDmarc({
+                headerFrom: 'user@bank.example',
+                spfDomains: [{ domain: 'mail.bank.example' }],
+                resolver
+            });
+            expect(result.domain).to.equal('bank.example');
+            expect(result.policy).to.equal('reject');
+            // the walk from mail.bank.example stops at the psd=y record, one label below it
+            expect(result.status.result).to.equal('fail');
         });
     });
 

@@ -433,7 +433,7 @@ See [DMARC Result Reference](docs/dmarc.md) for details on the result object str
 
 ##### `getDmarcRecord(domain [, resolver])`
 
-Fetches and parses the DMARC DNS record for a domain or subdomain. Returns `false` if no record exists.
+Fetches and parses the DMARC record that applies to a domain, found with the DNS Tree Walk of RFC 9989 section 4.10. That is the domain's own record, or else the record of its Organizational Domain, or else a record published with `psd=y` above it. Returns `false` if no record applies.
 
 ###### Syntax
 
@@ -469,9 +469,13 @@ console.log(dmarcRecord);
     "sp": "none",
     "aspf": "r",
     "rr": "v=DMARC1; p=none; pct=100; rua=mailto:re+joqy8fpatm3@dmarc.postmarkapp.com; sp=none; aspf=r;",
-    "isOrgRecord": false
+    "isOrgRecord": false,
+    "recordDomain": "ethereal.email",
+    "orgDomain": "ethereal.email"
 }
 ```
+
+`isOrgRecord` is `true` when the record was inherited from the Organizational Domain or a PSD, and `recordDomain` is where it was published. `orgDomain` is `null` when the record was found at the domain itself but the rest of the Tree Walk failed.
 
 ### BIMI
 
