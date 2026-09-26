@@ -498,7 +498,7 @@ describe('RFC 9989 DMARC compliance', () => {
     // #3 np: Domain Owner Assessment Policy for non-existent subdomains
     // RFC 9989 §4.7 (np), §4.10.1, §3.2.13, Appendix A.4 (domain existence test).
     // ---------------------------------------------------------------------------
-    describe.skip('#3 np + domain-existence test [§4.7 np, §4.10.1, §3.2.13, §A.4]', () => {
+    describe('#3 np + domain-existence test [§4.7 np, §4.10.1, §3.2.13, §A.4]', () => {
         it('applies np for a non-existent (NXDOMAIN) author subdomain', async () => {
             // sub.example.com does not exist (NXDOMAIN). np must be applied, not sp/p.
             const resolver = zoneResolver({
@@ -514,8 +514,6 @@ describe('RFC 9989 DMARC compliance', () => {
         });
 
         it('applies sp (not np) for an existing author subdomain', async () => {
-            // Already passes today, but only because sp is applied to every subdomain without
-            // an existence test at all. Re-verify once the existence test is implemented.
             // sub.example.com exists (has an A record), so the existing-subdomain policy (sp) applies.
             const resolver = zoneResolver({
                 '_dmarc.example.com': { TXT: [['v=DMARC1; p=reject; sp=none; np=quarantine']] },
@@ -531,7 +529,6 @@ describe('RFC 9989 DMARC compliance', () => {
         });
 
         it('treats a name with any RR (NODATA on TXT) as existing for the existence test', async () => {
-            // Passes today for the same incidental reason as the test above.
             // mail.example.com has an MX but no TXT: it exists, so np must not be applied.
             const resolver = zoneResolver({
                 '_dmarc.example.com': { TXT: [['v=DMARC1; p=reject; sp=none; np=quarantine']] },
@@ -544,6 +541,58 @@ describe('RFC 9989 DMARC compliance', () => {
                 resolver
             });
             expect(result.policy).to.equal('none');
+        });
+
+        const npZone = extra => ({ '_dmarc.example.com': { TXT: [['v=DMARC1; p=reject; sp=none; np=quarantine']] }, ...extra });
+
+        it('does not apply np to the org domain itself and skips the existence query', async () => {
+            const resolver = zoneResolver(npZone());
+            const result = await verifyDmarc({ headerFrom: 'user@example.com', resolver });
+            expect(result.policy).to.equal('reject');
+            expect(result.np).to.equal('quarantine');
+            expect(resolver.calls.filter(c => c.type !== 'TXT')).to.have.lengthOf(0);
+        });
+
+        it('does not query for existence when the record has no np', async () => {
+            const resolver = zoneResolver({ '_dmarc.example.com': { TXT: [['v=DMARC1; p=reject; sp=none']] } });
+            const result = await verifyDmarc({ headerFrom: 'user@sub.example.com', resolver });
+            expect(result.policy).to.equal('none');
+            expect(resolver.calls.filter(c => c.type !== 'TXT')).to.have.lengthOf(0);
+        });
+
+        it('falls back to p for a non-existent subdomain without sp', async () => {
+            const resolver = zoneResolver({ '_dmarc.example.com': { TXT: [['v=DMARC1; p=quarantine; np=reject']] }, 'sub.example.com': { A: ['192.0.2.1'] } });
+            const result = await verifyDmarc({ headerFrom: 'user@sub.example.com', resolver });
+            expect(result.policy).to.equal('quarantine');
+        });
+
+        it('applies a PSD np to a non-existent registration below it (.gov style)', async () => {
+            const resolver = zoneResolver({ '_dmarc.gov.example': { TXT: [['v=DMARC1; p=reject; sp=none; np=reject; psd=y']] } });
+            const result = await verifyDmarc({ headerFrom: 'user@fake-agency.gov.example', resolver });
+            expect(result.status.header.d).to.equal('gov.example');
+            expect(result.policy).to.equal('reject');
+        });
+
+        it('treats a name that can not exist as non-existent without querying it', async () => {
+            const resolver = zoneResolver(npZone());
+            const result = await verifyDmarc({ headerFrom: `user@${'a'.repeat(64)}.example.com`, resolver });
+            expect(result.policy).to.equal('quarantine');
+            expect(resolver.calls.filter(c => c.type !== 'TXT')).to.have.lengthOf(0);
+        });
+
+        it('returns temperror when the existence query fails', async () => {
+            const zone = zoneResolver(npZone());
+            const resolver = async (name, type) => {
+                if (type === 'A') {
+                    const err = new Error('SERVFAIL');
+                    err.code = 'ESERVFAIL';
+                    throw err;
+                }
+                return zone(name, type);
+            };
+            const result = await verifyDmarc({ headerFrom: 'user@sub.example.com', dkimDomains: [{ domain: 'example.com' }], resolver });
+            expect(result.status.result).to.equal('temperror');
+            expect(result.error).to.equal('SERVFAIL');
         });
     });
 
@@ -646,11 +695,10 @@ describe('RFC 9989 DMARC compliance', () => {
 
     // ---------------------------------------------------------------------------
     // #5 t: DMARC policy test mode
-    // RFC 9989 §4.7 (t), Appendix A.6. t=y downgrades the applied policy one level.
-    // TODO: confirm the output contract for the downgrade (effective `policy` vs declared
-    // `p`, or a dedicated `testMode` flag) when implementing.
+    // RFC 9989 §4.7 (t), Appendix A.6. t=y downgrades the applied policy one level:
+    // `policy` is the downgraded one, `p` and `sp` stay as published, and `testMode` is set.
     // ---------------------------------------------------------------------------
-    describe.skip('#5 t: policy test mode [§4.7 t, §A.6]', () => {
+    describe('#5 t: policy test mode [§4.7 t, §A.6]', () => {
         it('t=y downgrades reject to quarantine for a failing message', async () => {
             const resolver = zoneResolver({
                 '_dmarc.example.com': { TXT: [['v=DMARC1; p=reject; t=y']] }
@@ -678,16 +726,32 @@ describe('RFC 9989 DMARC compliance', () => {
             expect(result.status.result).to.equal('fail');
             expect(result.policy).to.equal('none');
         });
+
+        it('t=y keeps the published p and sp and reports testMode', async () => {
+            const resolver = zoneResolver({ '_dmarc.example.com': { TXT: [['v=DMARC1; p=reject; sp=quarantine; t=Y']] } });
+            const result = await verifyDmarc({ headerFrom: 'user@sub.example.com', resolver });
+            expect(result.policy).to.equal('none');
+            expect(result.p).to.equal('reject');
+            expect(result.sp).to.equal('quarantine');
+            expect(result.testMode).to.be.true;
+        });
+
+        it('t=n and an invalid t value apply the policy as published', async () => {
+            for (let t of ['n', 'yes']) {
+                const resolver = zoneResolver({ '_dmarc.example.com': { TXT: [[`v=DMARC1; p=reject; t=${t}`]] } });
+                const result = await verifyDmarc({ headerFrom: 'user@example.com', resolver });
+                expect(result.policy).to.equal('reject');
+                expect(result.testMode).to.be.false;
+            }
+        });
     });
 
     // ---------------------------------------------------------------------------
     // #6 pct is historic in RFC 9989 (§9.3, §A.6).
-    // pct already does not affect pass/fail (asserted in the active block above).
-    // The spec below proposes also dropping pct from the result object. This is a
-    // BREAKING output change for consumers that read result.pct, so it is left for
-    // the implementer to decide; enable only if that change is adopted.
+    // pct does not affect pass/fail (asserted in the active block above) and is not
+    // reported in the result either.
     // ---------------------------------------------------------------------------
-    describe.skip('#6 pct is historic, not surfaced in the result [§9.3, §A.6]', () => {
+    describe('#6 pct is historic, not surfaced in the result [§9.3, §A.6]', () => {
         it('does not expose a pct property on the result', async () => {
             const resolver = zoneResolver({
                 '_dmarc.example.com': { TXT: [['v=DMARC1; p=reject; pct=50']] }
@@ -706,7 +770,7 @@ describe('RFC 9989 DMARC compliance', () => {
     // #7 Records with no valid policy
     // RFC 9989 §4.10.1, §4.7.
     // ---------------------------------------------------------------------------
-    describe.skip('#7 invalid/absent p ⇒ p=none when rua present, else no processing [§4.10.1, §4.7]', () => {
+    describe('#7 invalid/absent p ⇒ p=none when rua present, else no processing [§4.10.1, §4.7]', () => {
         it('treats a record with no p but a valid rua as p=none and continues processing', async () => {
             const resolver = zoneResolver({
                 '_dmarc.example.com': { TXT: [['v=DMARC1; rua=mailto:dmarc@example.com']] }
@@ -731,6 +795,42 @@ describe('RFC 9989 DMARC compliance', () => {
                 spfDomains: [],
                 resolver
             });
+            expect(result.status.result).to.equal('none');
+        });
+
+        it('treats an invalid p with a valid rua as p=none, keeping other tags', async () => {
+            const resolver = zoneResolver({ '_dmarc.example.com': { TXT: [['v=DMARC1; p=block; adkim=s; rua=mailto:dmarc@example.com!10m']] } });
+            const result = await verifyDmarc({ headerFrom: 'user@example.com', dkimDomains: [{ domain: 'mail.example.com' }], resolver });
+            expect(result.status.result).to.equal('fail');
+            expect(result.policy).to.equal('none');
+            expect(result.p).to.equal('none');
+            expect(result.alignment.dkim.strict).to.be.true;
+        });
+
+        it('treats a valid p with an invalid sp or np as p=none when rua is valid', async () => {
+            for (let tag of ['sp=bounce', 'np=']) {
+                const resolver = zoneResolver({ '_dmarc.example.com': { TXT: [[`v=DMARC1; p=reject; ${tag}; rua=mailto:dmarc@example.com`]] } });
+                const result = await verifyDmarc({ headerFrom: 'user@sub.example.com', resolver });
+                expect(result.policy).to.equal('none');
+                expect(result.sp).to.equal('none');
+            }
+        });
+
+        it('applies no DMARC processing when rua has no syntactically valid URI', async () => {
+            for (let rua of ['rua=dmarc@example.com', 'rua=', 'rua=mailto:']) {
+                const resolver = zoneResolver({ '_dmarc.example.com': { TXT: [[`v=DMARC1; p=reject; sp=nope; ${rua}`]] } });
+                const result = await verifyDmarc({ headerFrom: 'user@example.com', resolver });
+                expect(result.status.result).to.equal('none');
+                expect(result).to.not.have.property('policy');
+            }
+        });
+
+        it('does not continue the walk past an author record without a valid policy', async () => {
+            const resolver = zoneResolver({
+                '_dmarc.mail.example.com': { TXT: [['v=DMARC1; adkim=s']] },
+                '_dmarc.example.com': { TXT: [['v=DMARC1; p=reject']] }
+            });
+            const result = await verifyDmarc({ headerFrom: 'user@mail.example.com', resolver });
             expect(result.status.result).to.equal('none');
         });
     });

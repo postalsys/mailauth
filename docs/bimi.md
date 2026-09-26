@@ -68,7 +68,7 @@ The `status.comment` field explains why BIMI was skipped:
 | ----------------------------------- | -------------------------------------------------------- |
 | `"DMARC not enabled"`               | DMARC result was `none`                                  |
 | `"message failed DMARC"`            | DMARC result was not `pass`                              |
-| `"too lax DMARC policy"`            | DMARC policy is `none` or `quarantine` with `pct < 100`  |
+| `"too lax DMARC policy"`            | DMARC policy is `none`, or the record has `t=y`          |
 | `"Aligned DKIM signature required"` | `bimiWithAlignedDkim` option set but no aligned DKIM     |
 | `"undersized DKIM signature"`       | DKIM signature has unsigned body bytes (due to `l=` tag) |
 | `"could not determine domain"`      | Unable to extract domain from headers                    |
