@@ -307,17 +307,17 @@ describe('getDmarcRecord Tests', () => {
             expect(result.isOrgRecord).to.be.false;
         });
 
-        it('Should not query "_dmarc.null" when no org domain can be derived', async () => {
-            // tldts returns null for single labels and IPs; the fallback used to coerce
-            // that into a lookup for the literal hostname "_dmarc.null"
+        it('Should not query "_dmarc.null" or walk an address', async () => {
+            // a single label has no parent to walk to, and an IP address or a domain literal
+            // is not a DNS name that could publish a record
             const resolver = zoneResolver({});
 
-            for (let domain of ['localhost', '192.0.2.1']) {
+            for (let domain of ['localhost', '192.0.2.1', '[192.0.2.1]', '2001:db8::1']) {
                 const result = await getDmarcRecord(domain, resolver);
                 expect(result).to.be.false;
             }
 
-            expect(resolver.calls.map(call => call.name)).to.deep.equal(['_dmarc.localhost', '_dmarc.192.0.2.1']);
+            expect(resolver.calls.map(call => call.name)).to.deep.equal(['_dmarc.localhost']);
         });
 
         it('Should not fallback when org domain equals the domain', async () => {

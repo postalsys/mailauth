@@ -180,7 +180,9 @@ export interface DKIMResult {
      */
     status: AuthStatus & {
         /**
-         * Signing domain if it aligns with the From domain, false otherwise
+         * Signing domain if it aligns with the From domain, false otherwise. For a passing
+         * signature this follows the DMARC verdict once DMARC found a record, before that it
+         * only guesses relaxed alignment from the Public Suffix List.
          */
         aligned?: string | false;
 
@@ -366,7 +368,7 @@ export interface ARCResult {
  */
 export interface DMARCResult {
     /**
-     * Organization domain
+     * Organizational Domain of the author domain, found with the DNS Tree Walk (RFC 9989 4.10)
      */
     domain: string;
 

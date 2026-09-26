@@ -6,6 +6,8 @@ This document describes the result object returned by DMARC verification.
 
 DMARC (Domain-based Message Authentication, Reporting, and Conformance) is verified during the authentication process. The DMARC result depends on both SPF and DKIM verification results.
 
+Policy discovery and Organizational Domains follow the DNS Tree Walk of RFC 9989 section 4.10, not the Public Suffix List. The policy is taken from the record of the author domain, or else from the record of its Organizational Domain, or else from a record published with `psd=y` above it. Relaxed alignment compares the Organizational Domains of the author domain and of each authenticated identifier, which can take further walks. A walk makes at most eight queries, lookups are shared within a message, only identifiers at or below the author's Organizational Domain are walked, and at most ten identifiers per message are walked.
+
 ```javascript
 const { authenticate } = require('mailauth');
 
@@ -21,7 +23,7 @@ const { dmarc } = await authenticate(message, {
 | Field       | Type     | Presence     | Description                                                |
 | ----------- | -------- | ------------ | ---------------------------------------------------------- |
 | `status`    | `object` | Always       | Verification status object (see below)                     |
-| `domain`    | `string` | Always       | Organizational domain used for DMARC lookup                |
+| `domain`    | `string` | Always       | Organizational Domain of the author domain (Tree Walk)     |
 | `policy`    | `string` | Record found | Effective policy (`"reject"`, `"quarantine"`, or `"none"`) |
 | `p`         | `string` | Record found | Policy from `p=` tag                                       |
 | `sp`        | `string` | Record found | Subdomain policy from `sp=` tag (defaults to `p` value)    |
@@ -29,7 +31,9 @@ const { dmarc } = await authenticate(message, {
 | `rr`        | `string` | Record found | Raw DMARC DNS TXT record                                   |
 | `alignment` | `object` | Record found | SPF and DKIM alignment details (see below)                 |
 | `error`     | `string` | On temperror | Error message                                              |
-| `info`      | `string` | Always       | Formatted Authentication-Results header value              |
+
+On a `temperror` that happens after a record was found, because a Tree Walk needed for relaxed alignment failed and no other identifier aligned, `policy`, `p`, `sp`, `rr` and `alignment` are still set.
+| `info` | `string` | Always | Formatted Authentication-Results header value |
 
 ## status Object
 
@@ -41,10 +45,10 @@ const { dmarc } = await authenticate(message, {
 
 ### status.header Object
 
-| Field  | Type     | Description                         |
-| ------ | -------- | ----------------------------------- |
-| `from` | `string` | Domain of the From header address   |
-| `d`    | `string` | Domain where DMARC record was found |
+| Field  | Type     | Description                                                                             |
+| ------ | -------- | --------------------------------------------------------------------------------------- |
+| `from` | `string` | Domain of the From header address                                                       |
+| `d`    | `string` | Domain where the applied DMARC record was found (author, Organizational Domain, or PSD) |
 
 ## alignment Object
 
@@ -72,12 +76,12 @@ const { dmarc } = await authenticate(message, {
 
 ## Result Values
 
-| Result      | Description                                           |
-| ----------- | ----------------------------------------------------- |
-| `pass`      | Message passed DMARC (SPF or DKIM aligned and passed) |
-| `fail`      | Message failed DMARC (neither SPF nor DKIM aligned)   |
-| `none`      | No DMARC record found                                 |
-| `temperror` | Temporary error during DNS lookup                     |
+| Result      | Description                                                    |
+| ----------- | -------------------------------------------------------------- |
+| `pass`      | Message passed DMARC (SPF or DKIM aligned and passed)          |
+| `fail`      | Message failed DMARC (neither SPF nor DKIM aligned)            |
+| `none`      | No DMARC record found                                          |
+| `temperror` | Temporary error during a DNS lookup that the result depends on |
 
 ## Policy Values
 
@@ -168,7 +172,7 @@ For example: `"p=REJECT sp=REJECT arc=pass"`
             "from": "no-dmarc.example.com"
         }
     },
-    "domain": "example.com",
+    "domain": "no-dmarc.example.com",
     "info": "dmarc=none header.from=no-dmarc.example.com"
 }
 ```
