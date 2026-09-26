@@ -1,5 +1,16 @@
 # Changelog
 
+## [6.0.0](https://github.com/postalsys/mailauth/compare/v5.0.3...v6.0.0) (2026-09-26)
+
+
+### ⚠ BREAKING CHANGES
+
+* **dmarc:** DMARC verdicts can change. A subdomain whose parent publishes no record is now its own Organizational Domain, so a signature or SPF domain of the parent no longer aligns with it. Subdomains of names the Public Suffix List lists as suffixes but that publish a DMARC record (for example blogspot.com) now inherit that policy. The result's domain is the Tree Walk Organizational Domain, and is the author domain when no record is found.
+
+### Features
+
+* **dmarc:** find policies and organizational domains with the RFC 9989 DNS Tree Walk ([8ab1da2](https://github.com/postalsys/mailauth/commit/8ab1da24aa5f1be7939393bd79a9834802aa911d))
+
 ## [5.0.3](https://github.com/postalsys/mailauth/compare/v5.0.2...v5.0.3) (2026-09-03)
 
 
