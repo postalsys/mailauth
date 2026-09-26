@@ -20,20 +20,25 @@ const { dmarc } = await authenticate(message, {
 
 ## Result Object Fields
 
-| Field       | Type     | Presence     | Description                                                |
-| ----------- | -------- | ------------ | ---------------------------------------------------------- |
-| `status`    | `object` | Always       | Verification status object (see below)                     |
-| `domain`    | `string` | Always       | Organizational Domain of the author domain (Tree Walk)     |
-| `policy`    | `string` | Record found | Effective policy (`"reject"`, `"quarantine"`, or `"none"`) |
-| `p`         | `string` | Record found | Policy from `p=` tag                                       |
-| `sp`        | `string` | Record found | Subdomain policy from `sp=` tag (defaults to `p` value)    |
-| `pct`       | `number` | Record found | Percentage of messages to apply policy (0-100)             |
-| `rr`        | `string` | Record found | Raw DMARC DNS TXT record                                   |
-| `alignment` | `object` | Record found | SPF and DKIM alignment details (see below)                 |
-| `error`     | `string` | On temperror | Error message                                              |
+| Field       | Type      | Presence     | Description                                                           |
+| ----------- | --------- | ------------ | --------------------------------------------------------------------- |
+| `status`    | `object`  | Always       | Verification status object (see below)                                |
+| `domain`    | `string`  | Always       | Organizational Domain of the author domain (Tree Walk)                |
+| `policy`    | `string`  | Record found | Effective policy (`"reject"`, `"quarantine"`, or `"none"`), see below |
+| `p`         | `string`  | Record found | Policy from `p=` tag                                                  |
+| `sp`        | `string`  | Record found | Subdomain policy from `sp=` tag (defaults to `p` value)               |
+| `np`        | `string`  | Record found | Non-existent subdomain policy from `np=` tag, if published            |
+| `testMode`  | `boolean` | Record found | `true` when the record has `t=y`                                      |
+| `rr`        | `string`  | Record found | Raw DMARC DNS TXT record                                              |
+| `alignment` | `object`  | Record found | SPF and DKIM alignment details (see below)                            |
+| `error`     | `string`  | On temperror | Error message                                                         |
 
 On a `temperror` that happens after a record was found, because a Tree Walk needed for relaxed alignment failed and no other identifier aligned, `policy`, `p`, `sp`, `rr` and `alignment` are still set.
 | `info` | `string` | Always | Formatted Authentication-Results header value |
+
+`policy` is `p` for the author domain's own record. For a record inherited from the Organizational Domain or a PSD it is `np` when the author domain does not exist (NXDOMAIN, RFC 9989 A.4), otherwise `sp`, both falling back to `p`. The existence query is only made when the record has `np`. With `t=y` the policy is one level below that, so `reject` becomes `quarantine` and `quarantine` becomes `none`, while `p`, `sp` and `np` stay as published.
+
+A record without a valid `p`, or with an invalid `sp` or `np`, is applied as `p=none` when its `rua` lists a valid URI, and otherwise gets no DMARC processing (result `none`). `pct` is historic in RFC 9989 and is ignored.
 
 ## status Object
 

@@ -373,7 +373,8 @@ export interface DMARCResult {
     domain: string;
 
     /**
-     * DMARC policy ('none', 'quarantine', 'reject')
+     * Effective DMARC policy ('none', 'quarantine', 'reject'): p for the author domain's own
+     * record, np or sp for an inherited one, one level lower with t=y
      */
     policy: string;
 
@@ -388,9 +389,14 @@ export interface DMARCResult {
     sp: string;
 
     /**
-     * Percentage of messages subject to filtering (0-100)
+     * Policy for non-existent subdomains, if published
      */
-    pct?: number;
+    np?: string;
+
+    /**
+     * True when the record has t=y, in which case policy is one level below the published one
+     */
+    testMode: boolean;
 
     /**
      * DMARC DNS record

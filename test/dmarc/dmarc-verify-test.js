@@ -131,7 +131,8 @@ describe('DMARC Verify Tests', () => {
 
             expect(result.p).to.equal('quarantine');
             expect(result.sp).to.equal('reject');
-            expect(result.pct).to.equal(50);
+            // pct is historic in RFC 9989 (A.6) and no longer reported
+            expect(result).to.not.have.property('pct');
         });
 
         it('Should handle minimal DMARC record', async () => {
@@ -173,7 +174,7 @@ describe('DMARC Verify Tests', () => {
             });
 
             expect(result.p).to.equal('reject');
-            expect(result.pct).to.equal(100);
+            expect(result).to.not.have.property('pct');
         });
     });
 
