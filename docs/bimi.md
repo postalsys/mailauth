@@ -4,7 +4,15 @@ This document describes the result object returned by BIMI (Brand Indicators for
 
 ## Overview
 
-BIMI allows organizations to display brand logos in email clients. BIMI information is resolved during the authentication step, provided the message passes DMARC validation with a policy other than "none".
+BIMI allows organizations to display brand logos in email clients. BIMI information is resolved during the authentication step, provided the message passes DMARC validation with an enforcing policy. Record discovery and the result keywords follow [draft-brand-indicators-for-message-identification-14](https://datatracker.ietf.org/doc/html/draft-brand-indicators-for-message-identification). Local-part selectors (`lps=`) are not supported.
+
+Before looking up a BIMI record, mailauth checks the requirements of section 7.1 of the draft:
+
+- The message has one From header field with one address. DMARC evaluates several addresses that share a domain, BIMI does not.
+- DMARC passed, with an effective policy other than `none` and without `t=y`.
+- Neither the DMARC record of the author domain nor the one of its Organizational Domain has `p=none` or `sp=none`, or `p=quarantine` with a `pct` other than 100. A record found at the author domain itself does not hide a lax record of the Organizational Domain. `dmarc()` passes both records to `bimi()`, for a DMARC result built elsewhere `bimi()` looks up the Organizational Domain's record itself.
+
+The record is looked up at `<selector>._bimi.<author domain>` and then at `<selector>._bimi.<organizational domain>`, where the selector comes from the `BIMI-Selector` header and defaults to `default`. A custom selector does not fall back to `default`. TXT records that do not start with `v=BIMI1` are ignored, several BIMI records are a failure.
 
 ```javascript
 const { authenticate } = require('mailauth');
@@ -29,12 +37,12 @@ const { bimi } = await authenticate(message, {
 
 ## status Object
 
-| Field     | Type     | Presence     | Description                  |
-| --------- | -------- | ------------ | ---------------------------- |
-| `result`  | `string` | Always       | BIMI result code (see below) |
-| `comment` | `string` | On skip/fail | Reason for skip or failure   |
-| `header`  | `object` | Always       | Header information           |
-| `policy`  | `object` | VMC found    | Authority policy details     |
+| Field     | Type     | Presence               | Description                  |
+| --------- | -------- | ---------------------- | ---------------------------- |
+| `result`  | `string` | Always                 | BIMI result code (see below) |
+| `comment` | `string` | On skip/fail/temperror | Reason for skip or failure   |
+| `header`  | `object` | Always                 | Header information           |
+| `policy`  | `object` | VMC found              | Authority policy details     |
 
 ### status.header Object
 
@@ -52,39 +60,51 @@ const { bimi } = await authenticate(message, {
 
 ## Result Values
 
-| Result    | Description                                  |
-| --------- | -------------------------------------------- |
-| `pass`    | BIMI record found and valid                  |
-| `skipped` | BIMI lookup skipped (see skip reasons below) |
-| `fail`    | BIMI record found but invalid                |
-| `none`    | No BIMI record found                         |
-| `temperr` | Temporary error during DNS lookup            |
+| Result      | Description                                                    |
+| ----------- | -------------------------------------------------------------- |
+| `pass`      | BIMI record found and valid                                    |
+| `skipped`   | BIMI lookup skipped (see skip reasons below)                   |
+| `fail`      | BIMI record found but invalid                                  |
+| `none`      | No BIMI record found                                           |
+| `declined`  | The domain published a Declination to Publish (`v=BIMI1; l=;`) |
+| `temperror` | Temporary error during a DNS lookup                            |
+
+Earlier versions reported a DNS error as `temperr`, a keyword the draft does not define. It is now `temperror`, the keyword of the draft and of the other methods in RFC 8601.
 
 ## Skip Reasons
 
 The `status.comment` field explains why BIMI was skipped:
 
-| Comment                             | Description                                              |
-| ----------------------------------- | -------------------------------------------------------- |
-| `"DMARC not enabled"`               | DMARC result was `none`                                  |
-| `"message failed DMARC"`            | DMARC result was not `pass`                              |
-| `"too lax DMARC policy"`            | DMARC policy is `none`, or the record has `t=y`          |
-| `"Aligned DKIM signature required"` | `bimiWithAlignedDkim` option set but no aligned DKIM     |
-| `"undersized DKIM signature"`       | DKIM signature has unsigned body bytes (due to `l=` tag) |
-| `"could not determine domain"`      | Unable to extract domain from headers                    |
+| Comment                                              | Description                                              |
+| ---------------------------------------------------- | -------------------------------------------------------- |
+| `"DMARC not enabled"`                                | DMARC result was `none`                                  |
+| `"message failed DMARC"`                             | DMARC result was not `pass`                              |
+| `"multiple From addresses"`                          | More than one From header field or address               |
+| `"too lax DMARC policy"`                             | DMARC policy is `none`, or the record has `t=y`          |
+| `"too lax DMARC subdomain policy"`                   | The author or Organizational Domain record has `sp=none` |
+| `"DMARC policy applied to a percentage of messages"` | `p=quarantine` with a `pct` other than 100               |
+| `"Aligned DKIM signature required"`                  | `bimiWithAlignedDkim` option set but no aligned DKIM     |
+| `"undersized DKIM signature"`                        | DKIM signature has unsigned body bytes (due to `l=` tag) |
+| `"could not determine domain"`                       | Unable to extract domain from headers                    |
 
 ## Fail Reasons
 
-| Comment                                     | Description                                    |
-| ------------------------------------------- | ---------------------------------------------- |
-| `"multiple BIMI-Selector headers"`          | Message has more than one BIMI-Selector header |
-| `"missing bimi version in selector header"` | BIMI-Selector header missing `v=BIMI1`         |
-| `"missing bimi version in dns record"`      | DNS record missing `v=BIMI1`                   |
-| `"missing location value in dns record"`    | Record has neither `l=` nor `a=` tag           |
-| `"invalid location value in dns record"`    | `l=` value is not a valid HTTPS URL            |
-| `"invalid authority value in dns record"`   | `a=` value is not a valid HTTPS URL            |
-| `"failed to resolve {domain}"`              | DNS lookup error                               |
-| `"invalid BIMI response for {domain}"`      | DNS response format invalid                    |
+| Comment                                     | Description                                                              |
+| ------------------------------------------- | ------------------------------------------------------------------------ |
+| `"multiple BIMI-Selector headers"`          | Message has more than one BIMI-Selector header                           |
+| `"missing bimi version in selector header"` | BIMI-Selector header missing `v=BIMI1`                                   |
+| `"missing bimi version in dns record"`      | DNS record missing `v=BIMI1`                                             |
+| `"missing location value in dns record"`    | Record has no `l=` value (and is not a declination), even if it has `a=` |
+| `"invalid location value in dns record"`    | `l=` value is not a valid HTTPS URL                                      |
+| `"invalid authority value in dns record"`   | `a=` value is not a valid HTTPS URL                                      |
+| `"multiple BIMI records for {name}"`        | More than one `v=BIMI1` record at the name                               |
+
+## Temperror Reasons
+
+| Comment                                                             | Description                                                          |
+| ------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `"failed to resolve {name}"`                                        | DNS lookup error for a BIMI record                                   |
+| `"failed to resolve the DMARC policy of the organizational domain"` | The DMARC record of the Organizational Domain could not be looked up |
 
 ## VMC Validation Result
 
@@ -210,12 +230,9 @@ These headers should be added to messages after successful BIMI validation. The 
 {
     "status": {
         "result": "none",
-        "header": {
-            "selector": "default",
-            "d": "example.com"
-        }
+        "header": {}
     },
-    "info": "bimi=none header.selector=default header.d=example.com"
+    "info": "bimi=none"
 }
 ```
 

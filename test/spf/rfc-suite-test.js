@@ -15,33 +15,23 @@ const files = suiteFile
     .filter(f => f.match(/^[^#\s]/m))
     .map(f => yaml.load(f));
 
-const ignoreTests = [
-    // SPF record specific issue
-    /^non-ascii-non-spf$/,
+// The default (lax) mode evaluates records lazily and keeps a few lenient rules, so these
+// cases give a different, documented result there. Strict mode must pass every case.
+const laxResults = {
+    // syntax errors after the matching term are not detected
+    'bare-ip6': 'fail',
+    'exp-syntax-error': 'neutral',
+    'exp-twice': 'fail',
+    // c, r and t are accepted outside of explanation text
+    'exp-only-macro-char': 'fail',
+    // an invalid name after macro expansion is a permerror (RFC 7208 section 4.8 allows both)
+    'invalid-hello-macro': 'permerror',
+    'hello-domain-literal': 'permerror',
+    'require-valid-helo': 'permerror'
+};
 
-    /^bytes-bug$/,
-
-    // this implementation is more relaxed
-    /^two-spaces$/,
-    /^trailing-space$/,
-
-    // should fail but does not as failing ip6 is not tested
-    /^bare-ip6$/,
-
-    // failing ip6 address is not tested for ip4 check
-    /^cidr6-129$/,
-
-    // exp is not supported
-    /^exp-/,
-
-    // validated domain macros are not perfect
-    /^p-/,
-
-    // macro domain implementation not compatible
-    /^invalid-hello-macro$/,
-    /^hello-domain-literal$/,
-    /^require-valid-helo$/
-];
+// the case of the hex digits in %{i} is not specified, the suite expects them in upper case
+const caseInsensitiveExplanation = ['v-macro-ip6'];
 
 let replyErr = code => {
     // default response
@@ -122,30 +112,48 @@ let getResolver = zonedata => {
     return resolver;
 };
 
-describe(`SPF Suite`, () => {
-    for (let file of files) {
-        let resolver = getResolver(file.zonedata);
-        describe(`${file.description}`, () => {
-            for (let test of Object.keys(file.tests)) {
-                if (ignoreTests.some(re => re.test(test))) {
-                    continue;
-                }
-                let testdata = file.tests[test];
-                it(test, async () => {
-                    let result = await spf({
-                        ip: testdata.host,
-                        sender: testdata.mailfrom,
-                        helo: testdata.helo,
-                        resolver
-                    });
-
-                    if (Array.isArray(testdata.result)) {
-                        expect(testdata.result).to.include(result?.status?.result);
-                    } else {
-                        expect(testdata.result).to.equal(result?.status?.result);
-                    }
-                });
-            }
-        });
+const checkExplanation = (test, testdata, result) => {
+    if (!testdata.explanation) {
+        return;
     }
-});
+    if (testdata.explanation === 'DEFAULT') {
+        // no explanation string, the default comment is used
+        expect(result.explanation).to.not.exist;
+    } else if (caseInsensitiveExplanation.includes(test)) {
+        expect((result.explanation || '').toLowerCase()).to.equal(testdata.explanation.toLowerCase());
+    } else {
+        expect(result.explanation).to.equal(testdata.explanation);
+    }
+};
+
+for (let strict of [true, false]) {
+    describe(`SPF Suite (${strict ? 'strict' : 'default'} mode)`, () => {
+        for (let file of files) {
+            let resolver = getResolver(file.zonedata);
+            describe(`${file.description}`, () => {
+                for (let test of Object.keys(file.tests)) {
+                    let testdata = file.tests[test];
+                    let expected = [].concat(testdata.result);
+                    if (!strict && laxResults[test]) {
+                        expected = [laxResults[test]];
+                    }
+                    it(test, async () => {
+                        let result = await spf({
+                            ip: testdata.host,
+                            sender: testdata.mailfrom,
+                            helo: testdata.helo,
+                            mta: 'receiver.test',
+                            resolver,
+                            strict
+                        });
+
+                        expect(expected).to.include(result?.status?.result);
+                        if ([].concat(testdata.result).includes(result.status.result)) {
+                            checkExplanation(test, testdata, result);
+                        }
+                    });
+                }
+            });
+        }
+    });
+}

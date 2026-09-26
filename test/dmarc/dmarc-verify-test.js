@@ -540,13 +540,29 @@ describe('DMARC Verify Tests', () => {
             expect(result.status.result).to.equal('pass');
         });
 
-        it('Should return false for headerFrom array with multiple elements', async () => {
+        it('Should evaluate several From addresses in the same domain', async () => {
+            // RFC 9989 5.3.1 only stops when more than one domain is found
+            const resolver = zoneResolver({ '_dmarc.example.com': { TXT: [['v=DMARC1; p=reject']] } });
+
+            const result = await verifyDmarc({
+                headerFrom: ['user1@example.com', 'user2@EXAMPLE.com.'],
+                dkimDomains: [],
+                spfDomains: [],
+                resolver
+            });
+
+            expect(result.status.result).to.equal('fail');
+            expect(result.policy).to.equal('reject');
+            expect(result.status.header.from).to.equal('example.com');
+        });
+
+        it('Should return false for From addresses in different domains', async () => {
             const stubResolver = () => {
                 return [['v=DMARC1; p=reject']];
             };
 
             const result = await verifyDmarc({
-                headerFrom: ['user1@example.com', 'user2@example.com'],
+                headerFrom: ['user1@example.com', 'user2@example.net'],
                 dkimDomains: [{ domain: 'example.com' }],
                 spfDomains: [],
                 resolver: stubResolver

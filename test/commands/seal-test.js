@@ -100,10 +100,15 @@ describe('CLI seal command', function () {
         });
 
         it('should use an explicitly provided instance number', async () => {
-            let { stdout } = await runSeal(keyArgs.concat(['--auth-results', AUTH_RESULTS, '--instance', '5', '-o', path.join(FIXTURES_PATH, 'message1.eml')]));
+            let { stdout, stderr } = await runSeal(
+                keyArgs.concat(['--auth-results', AUTH_RESULTS, '--instance', '5', '-o', path.join(FIXTURES_PATH, 'message1.eml')])
+            );
 
             expect(stdout).to.match(/^ARC-Seal: i=5;/m);
             expect(stdout).to.include(`ARC-Authentication-Results: i=5; ${AUTH_RESULTS}`);
+            // the message has no chain, so this can not validate, which the lenient mode allows
+            // as an explicit override
+            expect(stderr).to.include('does not follow the existing ARC chain');
         });
 
         it('should reject using --auth-results and --auth-results-file together', async () => {
@@ -139,6 +144,55 @@ describe('CLI seal command', function () {
             }
         });
 
+        it('should refuse an explicit instance that does not follow the chain in strict mode', async () => {
+            let err = await runSeal(
+                keyArgs.concat(['--auth-results', AUTH_RESULTS, '--instance', '5', '--strict', '-o', path.join(FIXTURES_PATH, 'message1.eml')])
+            ).then(
+                () => null,
+                e => e
+            );
+            expect(err).to.be.an('error');
+            expect(err.stderr).to.include('does not follow the highest existing instance');
+            expect(err.stdout).to.not.match(/^ARC-Seal:/m);
+        });
+
+        it('should refuse an instance that already exists on the message', async () => {
+            let err = await runSeal(
+                keyArgs.concat(['--auth-results', AUTH_RESULTS, '--cv', 'pass', '--instance', '2', '-o', path.join(FIXTURES_PATH, 'arc-pass.eml')])
+            ).then(
+                () => null,
+                e => e
+            );
+            expect(err).to.be.an('error');
+            expect(err.stderr).to.include('already exists on the message');
+            expect(err.stdout).to.not.match(/^ARC-Seal:/m);
+        });
+
+        it('should refuse cv=none for an existing chain in strict mode', async () => {
+            let err = await runSeal(keyArgs.concat(['--auth-results', AUTH_RESULTS, '--strict', '-o', path.join(FIXTURES_PATH, 'arc-pass.eml')])).then(
+                () => null,
+                e => e
+            );
+            expect(err).to.be.an('error');
+            expect(err.stderr).to.include('cv=none is not valid for ARC instance 3');
+        });
+
+        it('should refuse to seal a chain whose newest seal is cv=fail', async () => {
+            let source = await fs.promises.readFile(path.join(FIXTURES_PATH, 'arc-pass.eml'), 'binary');
+            // mark the newest seal as failed, its signature does not matter for the sealer
+            let failed = source.replace(/^(ARC-Seal: i=2;[\s\S]*?)cv=pass/m, '$1cv=fail');
+            expect(failed).to.not.equal(source);
+            let failedPath = path.join(tmpDir, 'arc-fail.eml');
+            await fs.promises.writeFile(failedPath, failed, 'binary');
+
+            let err = await runSeal(keyArgs.concat(['--auth-results', AUTH_RESULTS, '--cv', 'fail', '-o', failedPath])).then(
+                () => null,
+                e => e
+            );
+            expect(err).to.be.an('error');
+            expect(err.stderr).to.include('has cv=fail');
+        });
+
         it('should warn when sealing an existing chain with the default cv=none', async () => {
             let { stderr } = await runSeal(keyArgs.concat(['--auth-results', AUTH_RESULTS, '-o', path.join(FIXTURES_PATH, 'arc-pass.eml')]));
             expect(stderr).to.include('only validates when cv=pass');
@@ -156,6 +210,18 @@ describe('CLI seal command', function () {
             expect(stdout).to.match(/^Authentication-Results:/m);
             expect(stdout).to.match(/^ARC-Seal: i=1;/m);
             expect(stdout).to.match(/^ARC-Authentication-Results: i=1;/m);
+        });
+
+        it('should report arc=none in strict mode', async () => {
+            let dnsCacheFile = path.join(tmpDir, 'dns-cache-strict.json');
+            await fs.promises.writeFile(dnsCacheFile, '{}');
+
+            let { stdout } = await runSeal(
+                keyArgs.concat(['--dns-cache', dnsCacheFile, '--strict', '-i', '192.0.2.1', path.join(FIXTURES_PATH, 'message1.eml')])
+            );
+
+            expect(stdout).to.match(/^ARC-Seal: i=1;/m);
+            expect(stdout).to.include('arc=none smtp.remote-ip=192.0.2.1');
         });
     });
 });

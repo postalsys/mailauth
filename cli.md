@@ -78,7 +78,7 @@ mailauth report [options] [email]
 
 #### Options
 
-- `--client-ip x.x.x.x`, `-i x.x.x.x`: IP address of the remote client that sent the email. If not provided, it's parsed from the latest `Received` header.
+- `--client-ip x.x.x.x`, `-i x.x.x.x`: IP address of the remote client that sent the email. If not provided, it's parsed from the latest `Received` header: the connecting address in the TCP-info comment of its `from` clause (RFC 5321 section 4.4), never an address the client gave in its HELO.
 - `--sender user@example.com`, `-f user@example.com`: Email address from the MAIL FROM command. If not provided, it's parsed from the latest `Return-Path` header.
 - `--helo hostname`, `-e hostname`: Hostname from the HELO/EHLO command. Used in some SPF validations.
 - `--mta hostname`, `-m hostname`: Hostname of the server performing validations. Defaults to the local hostname.
@@ -86,6 +86,7 @@ mailauth report [options] [email]
 - `--verbose`, `-v`: Enables verbose output, displaying debugging information.
 - `--max-lookups number`, `-x number`: Sets the maximum number of DNS lookups for SPF checks. Defaults to `10`.
 - `--max-void-lookups number`, `-z number`: Sets the maximum number of void DNS lookups for SPF checks. Defaults to `2`.
+- `--strict`: Follows the RFCs exactly instead of the lenient defaults, for example an `rsa-sha1` DKIM signature is reported as `dkim=policy`. See [Strict mode](README.md#strict-mode).
 
 #### Example
 
@@ -125,12 +126,13 @@ mailauth sign [options] [email]
 - `--private-key /path/to/private.key`, `-k /path/to/private.key`: Path to the private key used for signing.
 - `--domain example.com`, `-d example.com`: Domain name for the DKIM signature (`d=` tag).
 - `--selector selector`, `-s selector`: Selector for the DKIM key (`s=` tag).
-- `--algo algorithm`, `-a algorithm`: Signing algorithm (e.g., `rsa-sha256`). Defaults based on the private key type.
+- `--algo algorithm`, `-a algorithm`: Signing algorithm (e.g., `rsa-sha256`). Defaults to `rsa-sha256` for an RSA key and `ed25519-sha256` for an Ed25519 key.
 - `--canonicalization method`, `-c method`: Canonicalization method (e.g., `relaxed/relaxed`). Defaults to `relaxed/relaxed`.
 - `--time timestamp`, `-t timestamp`: Signing time as a Unix timestamp (`t=` tag).
-- `--header-fields "field1:field2"`, `-h "field1:field2"`: Colon-separated list of header fields to include in the signature (`h=` tag).
+- `--header-fields "field1:field2"`, `-h "field1:field2"`: Colon-separated list of header fields to include in the signature (`h=` tag). It must include `From`.
 - `--body-length length`, `-l length`: Maximum length of the body to include in the signature (`l=` tag).
 - `--headers-only`, `-o`: Outputs only the DKIM signature headers without the entire message.
+- `--strict`: Refuses to sign with `rsa-sha1` or with an RSA key shorter than 1024 bits (RFC 8301), and with a domain or selector that is not valid RFC 6376 syntax. Without it these are signed, and `--verbose` prints a warning.
 
 #### Example
 
@@ -176,6 +178,7 @@ mailauth seal [options] [email]
 - `--time timestamp`, `-t timestamp`: Sealing time as a Unix timestamp (`t=` tag).
 - `--header-fields "field1:field2"`, `-h "field1:field2"`: Colon-separated list of header fields to include in the seal (`h=` tag).
 - `--headers-only`, `-o`: Outputs only the ARC seal headers without the entire message.
+- `--strict`: Follows the RFCs exactly instead of the lenient defaults.
 
 **Seal-Only Options:**
 
@@ -244,6 +247,8 @@ mailauth spf [options]
 - `--headers-only`, `-o`: Outputs only the SPF authentication header.
 - `--max-lookups number`, `-x number`: Sets the maximum number of DNS lookups. Defaults to `10`.
 - `--max-void-lookups number`, `-z number`: Sets the maximum number of void DNS lookups. Defaults to `2`.
+- `--max-elapsed-time ms`: Maximum time in milliseconds for the whole SPF evaluation, after which the result is `temperror`. Not limited by default.
+- `--strict`: Follows RFC 7208 exactly instead of the lenient defaults.
 
 #### Example
 
