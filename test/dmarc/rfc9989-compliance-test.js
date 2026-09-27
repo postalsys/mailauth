@@ -545,6 +545,14 @@ describe('RFC 9989 DMARC compliance', () => {
 
         const npZone = extra => ({ '_dmarc.example.com': { TXT: [['v=DMARC1; p=reject; sp=none; np=quarantine']] }, ...extra });
 
+        it('treats a subdomain with a dangling CNAME as existing and applies sp', async () => {
+            // the A query for shop.example.com follows its CNAME to a missing target and gets that
+            // NXDOMAIN (RFC 6604 3), but the CNAME is an RR, so the name exists (RFC 9989 A.4)
+            const resolver = zoneResolver(npZone({ 'shop.example.com': { CNAME: ['gone.example.net'] } }));
+            const result = await verifyDmarc({ headerFrom: 'user@shop.example.com', resolver });
+            expect(result.policy).to.equal('none');
+        });
+
         it('does not apply np to the org domain itself and skips the existence query', async () => {
             const resolver = zoneResolver(npZone());
             const result = await verifyDmarc({ headerFrom: 'user@example.com', resolver });
@@ -580,10 +588,10 @@ describe('RFC 9989 DMARC compliance', () => {
             expect(resolver.calls.filter(c => c.type !== 'TXT')).to.have.lengthOf(0);
         });
 
-        const existenceServfail = () => {
+        const existenceServfail = (failingType = 'A') => {
             const zone = zoneResolver(npZone());
             return async (name, type) => {
-                if (type === 'A') {
+                if (type === failingType) {
                     const err = new Error('SERVFAIL');
                     err.code = 'ESERVFAIL';
                     throw err;
@@ -605,6 +613,18 @@ describe('RFC 9989 DMARC compliance', () => {
 
         it('returns temperror for a failing message when the existence query fails', async () => {
             const result = await verifyDmarc({ headerFrom: 'user@sub.example.com', dkimDomains: [{ domain: 'other.example' }], resolver: existenceServfail() });
+            expect(result.status.result).to.equal('temperror');
+            expect(result.error).to.equal('SERVFAIL');
+        });
+
+        it('returns temperror for a failing message when the CNAME query after an NXDOMAIN fails', async () => {
+            // the A query found nothing, so the name's own CNAME decides, and without an answer the
+            // policy is not known
+            const result = await verifyDmarc({
+                headerFrom: 'user@sub.example.com',
+                dkimDomains: [{ domain: 'other.example' }],
+                resolver: existenceServfail('CNAME')
+            });
             expect(result.status.result).to.equal('temperror');
             expect(result.error).to.equal('SERVFAIL');
         });

@@ -5,6 +5,7 @@ const chai = require('chai');
 const expect = chai.expect;
 
 const getDmarcRecord = require('../../lib/dmarc/get-dmarc-record');
+const { domainExists } = getDmarcRecord;
 const { zoneResolver } = require('../helpers/dns-zone');
 
 chai.config.includeStack = true;
@@ -414,6 +415,48 @@ describe('getDmarcRecord Tests', () => {
             const result = await getDmarcRecord('example.com', stubResolver);
 
             expect(result.p).to.equal('reject');
+        });
+    });
+
+    describe('Domain existence test', () => {
+        const queries = resolver => resolver.calls.map(call => `${call.name} ${call.type}`);
+
+        it('Should treat a name with a dangling CNAME as existing', async () => {
+            // the A query follows the CNAME and gets the NXDOMAIN of the missing target
+            const resolver = zoneResolver({ 'shop.example.com': { CNAME: ['gone.example.net'] } });
+            expect(await domainExists('shop.example.com', resolver)).to.be.true;
+            expect(queries(resolver)).to.deep.equal(['shop.example.com A', 'shop.example.com CNAME']);
+        });
+
+        it('Should query the CNAME after an NXDOMAIN and keep it when there is none', async () => {
+            const resolver = zoneResolver({});
+            expect(await domainExists('missing.example.com', resolver)).to.be.false;
+            expect(queries(resolver)).to.deep.equal(['missing.example.com A', 'missing.example.com CNAME']);
+        });
+
+        it('Should keep the NXDOMAIN when a resolver has no answer for CNAME', async () => {
+            // a custom resolver that only knows some record types
+            const zone = zoneResolver({});
+            const resolver = async (name, type) => (type === 'CNAME' ? undefined : zone(name, type));
+            expect(await domainExists('missing.example.com', resolver)).to.be.false;
+        });
+
+        it('Should pass a failed CNAME query on to the caller', async () => {
+            const zone = zoneResolver({});
+            const resolver = async (name, type) => {
+                if (type === 'CNAME') {
+                    const err = new Error('SERVFAIL');
+                    err.code = 'ESERVFAIL';
+                    throw err;
+                }
+                return zone(name, type);
+            };
+            try {
+                await domainExists('missing.example.com', resolver);
+                expect.fail('Should have thrown');
+            } catch (err) {
+                expect(err.code).to.equal('ESERVFAIL');
+            }
         });
     });
 });
