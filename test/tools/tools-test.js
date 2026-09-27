@@ -19,7 +19,8 @@ const {
     getAlignment,
     validateAlgorithm,
     getPtrHostname,
-    getCurTime
+    getCurTime,
+    parseDkimHeaders
 } = require('../../lib/tools');
 
 chai.config.includeStack = true;
@@ -310,9 +311,11 @@ describe('Tools Tests', () => {
             expect(result).to.equal('path\\\\to\\\\file');
         });
 
-        it('Should escape closing parenthesis', () => {
+        it('Should escape both parentheses', () => {
+            // an unescaped "(" opens a nested comment that the closing ")" of the outer one
+            // then ends, so everything after it would be read as comment text (RFC 5322 3.2.2)
             const result = escapeCommentValue('comment (with parens)');
-            expect(result).to.equal('comment (with parens\\)');
+            expect(result).to.equal('comment \\(with parens\\)');
         });
 
         it('Should handle empty string', () => {
@@ -457,15 +460,27 @@ describe('Tools Tests', () => {
             expect(stripSignatureValue(line).toString('binary')).to.not.include('REALSIGNATURE');
         });
 
-        it('Should treat only SP and HTAB as whitespace in front of b=', () => {
-            // JS \s matches 0x0B, 0x0C and 0xA0, RFC 6376 does not. Matching them would
-            // strip a decoy tag and leave the real signature inside the hashed header
+        it('Should strip the b= value the parser reads as the signature', () => {
+            // An earlier tag that only looks like b= must not be stripped, whatever byte is
+            // in front of it, the parser keeps the last b= value
             for (const byte of ['\x0b', '\x0c', '\xa0']) {
                 const line = Buffer.from(`DKIM-Signature: v=1; bh=AAA;${byte}b=DECOY; b=REALSIGNATURE`, 'binary');
                 const stripped = stripSignatureValue(line).toString('binary');
 
                 expect(stripped).to.include(`${byte}b=DECOY`);
                 expect(stripped).to.not.include('REALSIGNATURE');
+            }
+
+            // and when such a tag is the last one, it is the one stripped exactly when the
+            // parser takes the signature from it. A lone 0xA0 byte is not whitespace once the
+            // line is decoded, VT and FF are
+            for (const byte of ['\x0b', '\x0c', '\xa0']) {
+                const line = Buffer.from(`DKIM-Signature: v=1; b=FIRST; bh=AAA;${byte}b=LAST`, 'binary');
+                const signature = parseDkimHeaders(line).parsed.b.value;
+                const stripped = stripSignatureValue(line).toString('binary');
+
+                expect(stripped).to.not.include(`=${signature}`);
+                expect(stripped).to.include(signature === 'LAST' ? 'b=FIRST' : `${byte}b=LAST`);
             }
         });
     });

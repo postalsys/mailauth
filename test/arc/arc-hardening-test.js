@@ -119,15 +119,17 @@ describe('ARC Hardening Tests', () => {
     });
 
     describe('Sealing failures', () => {
-        // The ARC-Message-Signature is always signed as rsa-sha256, so an ed25519 key makes
-        // it fail the key type check while the ARC-Seal, which follows seal.algorithm,
-        // still signs. That used to leave a seal computed over a header that was never
-        // created, and an empty line where the header should have been
+        // An rsa-sha256 algorithm with an ed25519 key makes the ARC-Message-Signature fail
+        // the key type check. The ARC-Seal used to be signed anyway, which left a seal
+        // computed over a header that was never created, and an empty line where the header
+        // should have been. (The ARC-Message-Signature used to be rsa-sha256 regardless of the
+        // key, which is why ed25519-sha256 was the failing case here before ed25519 sealing
+        // was supported)
         const brokenSeal = {
             signingDomain: 'evil.example',
             selector: 'test',
             privateKey: privateKey('private-ed25519.pem'),
-            algorithm: 'ed25519-sha256',
+            algorithm: 'rsa-sha256',
             cv: 'none',
             i: 1,
             authResults: 'mx.evil.example; dkim=pass'

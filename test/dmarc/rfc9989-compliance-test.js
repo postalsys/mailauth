@@ -580,8 +580,37 @@ describe('RFC 9989 DMARC compliance', () => {
             expect(resolver.calls.filter(c => c.type !== 'TXT')).to.have.lengthOf(0);
         });
 
-        it('returns temperror when the existence query fails', async () => {
+        const existenceServfail = () => {
             const zone = zoneResolver(npZone());
+            return async (name, type) => {
+                if (type === 'A') {
+                    const err = new Error('SERVFAIL');
+                    err.code = 'ESERVFAIL';
+                    throw err;
+                }
+                return zone(name, type);
+            };
+        };
+
+        it('passes an aligned message when the existence query fails', async () => {
+            // the policy only matters for a message that does not pass (RFC 9989 5.3.5)
+            const result = await verifyDmarc({ headerFrom: 'user@sub.example.com', dkimDomains: [{ domain: 'example.com' }], resolver: existenceServfail() });
+            expect(result.status.result).to.equal('pass');
+            expect(result).to.not.have.property('error');
+            // sp=none or np=quarantine, whichever is weaker, and no policy.dmarc since it is not known
+            expect(result.policy).to.equal('none');
+            expect(result.status).to.not.have.property('policy');
+            expect(result.info).to.not.include('policy.dmarc');
+        });
+
+        it('returns temperror for a failing message when the existence query fails', async () => {
+            const result = await verifyDmarc({ headerFrom: 'user@sub.example.com', dkimDomains: [{ domain: 'other.example' }], resolver: existenceServfail() });
+            expect(result.status.result).to.equal('temperror');
+            expect(result.error).to.equal('SERVFAIL');
+        });
+
+        it('ignores a failed existence query when np and sp are the same policy', async () => {
+            const zone = zoneResolver({ '_dmarc.example.com': { TXT: [['v=DMARC1; p=none; sp=reject; np=reject']] } });
             const resolver = async (name, type) => {
                 if (type === 'A') {
                     const err = new Error('SERVFAIL');
@@ -590,9 +619,10 @@ describe('RFC 9989 DMARC compliance', () => {
                 }
                 return zone(name, type);
             };
-            const result = await verifyDmarc({ headerFrom: 'user@sub.example.com', dkimDomains: [{ domain: 'example.com' }], resolver });
-            expect(result.status.result).to.equal('temperror');
-            expect(result.error).to.equal('SERVFAIL');
+            const result = await verifyDmarc({ headerFrom: 'user@sub.example.com', dkimDomains: [{ domain: 'other.example' }], resolver });
+            expect(result.status.result).to.equal('fail');
+            expect(result.policy).to.equal('reject');
+            expect(result.info).to.include('policy.dmarc=reject');
         });
     });
 
@@ -816,8 +846,17 @@ describe('RFC 9989 DMARC compliance', () => {
             }
         });
 
+        it('accepts any syntactically valid URI in rua, including an empty mailto: (RFC 3986)', async () => {
+            for (let rua of ['rua=mailto:', 'rua=mailto:dmarc@example.com!10m', 'rua=bogus, https://report.example/dmarc', 'rua=mailto:d%2Cmarc@example.com']) {
+                const resolver = zoneResolver({ '_dmarc.example.com': { TXT: [[`v=DMARC1; p=reject; sp=nope; ${rua}`]] } });
+                const result = await verifyDmarc({ headerFrom: 'user@example.com', resolver });
+                expect(result.status.result, rua).to.equal('fail');
+                expect(result.policy, rua).to.equal('none');
+            }
+        });
+
         it('applies no DMARC processing when rua has no syntactically valid URI', async () => {
-            for (let rua of ['rua=dmarc@example.com', 'rua=', 'rua=mailto:']) {
+            for (let rua of ['rua=dmarc@example.com', 'rua=', 'rua=nothing', 'rua=<mailto:dmarc@example.com>', 'rua=mailto:a b@example.com']) {
                 const resolver = zoneResolver({ '_dmarc.example.com': { TXT: [[`v=DMARC1; p=reject; sp=nope; ${rua}`]] } });
                 const result = await verifyDmarc({ headerFrom: 'user@example.com', resolver });
                 expect(result.status.result).to.equal('none');

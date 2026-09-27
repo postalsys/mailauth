@@ -79,4 +79,47 @@ describe('CLI argument handling', function () {
             expect(stdout.trim()).to.not.be.empty;
         });
     });
+
+    describe('sign', () => {
+        const tagsOf = stdout =>
+            Object.fromEntries(
+                stdout
+                    .replace(/\r?\n[ \t]+/g, ' ')
+                    .replace(/^DKIM-Signature:/, '')
+                    .split(';')
+                    .map(part => part.trim())
+                    .filter(part => part)
+                    .map(part => [part.slice(0, part.indexOf('=')), part.slice(part.indexOf('=') + 1)])
+            );
+
+        it('should sign the header fields given with --header-fields', async () => {
+            let { stdout } = await runCli(['sign'].concat(signArgs, ['-h', 'From:X-Custom:Subject', '-o', MESSAGE]));
+            let h = tagsOf(stdout)
+                .h.split(':')
+                .map(name => name.trim().toLowerCase());
+            expect(h).to.include('from');
+            expect(h).to.include('subject');
+            expect(h).to.not.include('to');
+        });
+
+        it('should pick the algorithm from an ed25519 key when --algo is not set', async () => {
+            let { stdout } = await runCli(['sign', '-k', path.join(FIXTURES_PATH, 'private-ed25519.pem'), '-d', 'tahvel.info', '-s', 'test.ed', '-o', MESSAGE]);
+            expect(tagsOf(stdout).a).to.equal('ed25519-sha256');
+        });
+
+        it('should pick rsa-sha256 for an RSA key when --algo is not set', async () => {
+            let { stdout } = await runCli(['sign'].concat(signArgs, ['-o', MESSAGE]));
+            expect(tagsOf(stdout).a).to.equal('rsa-sha256');
+        });
+
+        it('should refuse rsa-sha1 with --strict only', async () => {
+            let { stdout } = await runCli(['sign'].concat(signArgs, ['-a', 'rsa-sha1', '-o', MESSAGE]));
+            expect(tagsOf(stdout).a).to.equal('rsa-sha1');
+
+            let err = await runCliExpectingError(['sign'].concat(signArgs, ['-a', 'rsa-sha1', '--strict', '-o', MESSAGE]));
+            expect(err).to.be.an('error');
+            expect(err.code).to.equal(1);
+            expect(err.stdout).to.not.include('DKIM-Signature');
+        });
+    });
 });

@@ -84,6 +84,24 @@ export interface AuthenticateOptions {
      * ARC sealing options
      */
     seal?: ARCSealOptions;
+
+    /**
+     * Follow the RFCs exactly instead of the lenient defaults (default: false). Passed on
+     * to every check (DKIM, SPF, ARC, DMARC, BIMI and ARC sealing), BIMI only uses it for the
+     * format of its Authentication-Results entry. In strict mode:
+     *
+     * - rsa-sha1 DKIM signatures are reported as `dkim=policy` (`policy.dkim-rules=weak-algorithm`)
+     * - DKIM-Signature and key record syntax is validated (RFC 6376 sections 3.2, 3.5, 3.6.1, 6.1.1)
+     * - a body hash mismatch is reported as `dkim=fail`, and a signature that can not be
+     *   processed as `dkim=neutral` instead of being left out
+     * - DKIM results report `header.d` and the AUID as `header.i`
+     * - email identities in Authentication-Results use the `local-part@domain` form of RFC 8601 section 2.2
+     * - Authentication-Results is placed above Received-SPF (RFC 8601 section 5)
+     *
+     * What the lenient default accepts and strict mode would reject is listed in the
+     * `warnings` array of the affected result. It is never written into the headers
+     */
+    strict?: boolean;
 }
 
 /**
@@ -111,20 +129,47 @@ export interface ARCSealOptions {
     canonicalization?: string;
 
     /**
-     * Signing algorithm (default: 'rsa-sha256')
-     * Supported: 'rsa-sha256', 'ed25519-sha256'
+     * Signing algorithm, 'rsa-sha256' or 'ed25519-sha256'. Follows the private key type when
+     * not set. Used for both the ARC-Message-Signature and the ARC-Seal
      */
     algorithm?: string;
 
     /**
-     * Headers to include in signature
+     * Chain validation status for the ARC-Seal cv= tag: 'none', 'pass' or 'fail' (compared
+     * case-insensitively). Defaults to 'none' for the first set and is required for any later
+     * set. `authenticate()` sets it from the ARC validation result
      */
-    headerList?: string[];
+    cv?: 'none' | 'pass' | 'fail' | string;
+
+    /**
+     * ARC instance (i= tag), 1 to 50. Defaults to one more than the highest instance on the
+     * message. An instance that already exists is refused, and one that leaves a gap is
+     * refused in strict mode (the default mode seals it and adds an `arc-instance-gap` warning)
+     */
+    i?: number;
+
+    /**
+     * Authentication-Results payload for the ARC-Authentication-Results header (the part after
+     * "i=N;"). `authenticate()` sets it from its own results
+     */
+    authResults?: string;
+
+    /**
+     * Header fields to include in the ARC-Message-Signature, as an array or a colon separated
+     * string. Defaults to DKIM-Signature and the default DKIM header list. ARC header fields and
+     * Authentication-Results are never included (RFC 8617 section 4.1.2)
+     */
+    headerList?: string[] | string;
 
     /**
      * Signing timestamp
      */
     signTime?: Date | string | number;
+
+    /**
+     * Follow the RFCs exactly instead of the lenient defaults (default: false)
+     */
+    strict?: boolean;
 }
 
 /**
@@ -132,7 +177,8 @@ export interface ARCSealOptions {
  */
 export interface AuthPolicy {
     /**
-     * DKIM policy rules (e.g., 'weak-key' when key is undersized)
+     * DKIM policy rules: 'weak-key' when the key is shorter than minBitLength, 'weak-algorithm'
+     * for an rsa-sha1 signature in strict mode
      */
     'dkim-rules'?: string;
 
@@ -146,7 +192,10 @@ export interface AuthPolicy {
  * Status result from authentication checks
  */
 export interface AuthStatus {
-    result: 'pass' | 'fail' | 'neutral' | 'none' | 'temperror' | 'temperr' | 'permerror' | 'policy' | 'softfail' | 'skipped';
+    /**
+     * The result keyword. `temperr` is deprecated, BIMI reports `temperror` now
+     */
+    result: 'pass' | 'fail' | 'neutral' | 'none' | 'temperror' | 'temperr' | 'permerror' | 'policy' | 'softfail' | 'skipped' | 'declined';
     comment?: string;
     header?: Record<string, any>;
     smtp?: {
@@ -157,23 +206,92 @@ export interface AuthStatus {
 }
 
 /**
+ * Lax acceptance markers of a DKIM result: what the default mode accepted and strict mode
+ * would reject
+ *
+ * - `rsa-sha1`: the signature uses rsa-sha1 (RFC 8301 section 3.1)
+ * - `tag-syntax`: the signature is not valid tag-list syntax (duplicate tags, upper case tag
+ *   names, a malformed t=, x= or l= value, or a d= or s= that is not a domain name)
+ * - `missing-v`, `missing-h` (and the other `missing-*`): a required tag is missing
+ * - `invalid-v`: v= is not "1"
+ * - `identity-domain`: the i= domain is not d= or its subdomain, or it is a subdomain while
+ *   the key has t=s
+ * - `invalid-expiration`: x= is equal to t=
+ * - `query-method`: q= does not list dns/txt
+ * - `key-syntax`: the key record is not valid tag-list syntax
+ * - `key-v-syntax`: the key record v= is not the first tag, or not exactly "DKIM1"
+ * - `key-type-inferred`: an ed25519 key was found from its length, without k=ed25519
+ */
+export type DKIMWarning =
+    | 'rsa-sha1'
+    | 'tag-syntax'
+    | 'missing-v'
+    | 'missing-a'
+    | 'missing-b'
+    | 'missing-bh'
+    | 'missing-d'
+    | 'missing-h'
+    | 'missing-s'
+    | 'invalid-v'
+    | 'identity-domain'
+    | 'invalid-expiration'
+    | 'query-method'
+    | 'key-syntax'
+    | 'key-v-syntax'
+    | 'key-type-inferred';
+
+/**
  * DKIM verification result for a single signature
  */
 export interface DKIMResult {
     /**
-     * Signature identifier
+     * Signature identifier, the sha256 hash of the signature value
      */
     id?: string;
 
     /**
-     * Signing domain
+     * Signing domain (d= tag)
      */
-    signingDomain: string;
+    signingDomain?: string;
 
     /**
-     * Key selector
+     * Key selector (s= tag)
      */
     selector?: string;
+
+    /**
+     * Signature value (b= tag)
+     */
+    signature?: string;
+
+    /**
+     * Signature algorithm (a= tag), eg. 'rsa-sha256'
+     */
+    algo?: string;
+
+    /**
+     * Canonicalization (c= tag), eg. 'relaxed/relaxed'
+     */
+    format?: string;
+
+    /**
+     * Body hash calculated for the message
+     */
+    bodyHash?: string;
+
+    /**
+     * Body hash from the bh= tag
+     */
+    bodyHashExpecting?: string;
+
+    /**
+     * Signed header fields and the canonicalized header data (base64)
+     */
+    signingHeaders?: {
+        keys: string;
+        headers: string[];
+        canonicalizedHeader: string;
+    };
 
     /**
      * Verification status
@@ -190,6 +308,18 @@ export interface DKIMResult {
          * Number of body bytes left unsigned by an l= tag
          */
         underSized?: number;
+
+        /**
+         * True when the key record has the t=y flag, the signing domain is testing DKIM
+         * (RFC 6376 section 3.6.1)
+         */
+        testing?: boolean;
+
+        /**
+         * What the default mode accepted and strict mode would reject. Only present when
+         * there is something to report, never written into the Authentication-Results text
+         */
+        warnings?: DKIMWarning[];
     };
 
     /**
@@ -198,22 +328,82 @@ export interface DKIMResult {
     info: string;
 
     /**
-     * Signature algorithm
+     * Signing time from the t= tag, as an ISO string
+     */
+    signTime?: string | null;
+
+    /**
+     * Expiration time from the x= tag, as an ISO string
+     */
+    expiresAfter?: string | null;
+
+    /**
+     * False when t= is in the future or x= has passed
+     */
+    signatureTimeValid?: boolean;
+
+    /**
+     * Size of the message body in bytes
+     */
+    sourceBodyLength?: number;
+
+    /**
+     * Number of canonicalized body bytes covered by the signature
+     */
+    canonBodyLength?: number;
+
+    /**
+     * Number of canonicalized body bytes in total
+     */
+    canonBodyLengthTotal?: number;
+
+    /**
+     * True when the signature has an l= tag
+     */
+    canonBodyLengthLimited?: boolean;
+
+    /**
+     * The l= value
+     */
+    canonBodyLengthLimit?: number;
+
+    /**
+     * Where the MIME structure starts in the body, for multipart messages
+     */
+    mimeStructureStart?: number;
+
+    /**
+     * Public key in PEM format
+     */
+    publicKey?: string;
+
+    /**
+     * RSA key size in bits
+     */
+    modulusLength?: number;
+
+    /**
+     * Key record as found in DNS
+     */
+    rr?: string;
+
+    /**
+     * @deprecated Never set, use `algo`
      */
     algorithm?: string;
 
     /**
-     * Canonicalization method
+     * @deprecated Never set, use `format`
      */
     canonicalization?: string;
 
     /**
-     * Signing timestamp
+     * @deprecated Never set, use `signTime`
      */
     signingTime?: Date;
 
     /**
-     * Signature expiration
+     * @deprecated Never set, use `expiresAfter`
      */
     expiration?: Date;
 }
@@ -223,9 +413,15 @@ export interface DKIMResult {
  */
 export interface DKIMVerifyResult {
     /**
-     * Domain from From header
+     * Addresses from the From header, as full addr-specs (the domain is what follows the last
+     * "@"). The mailboxes of a group (RFC 6854) are included
      */
     headerFrom: string[];
+
+    /**
+     * Number of From header fields in the message. RFC 5322 allows only one
+     */
+    fromFields: number;
 
     /**
      * Domain from Return-Path header
@@ -242,8 +438,8 @@ export interface DKIMVerifyResult {
      * Access with result.headers or Object.getOwnPropertyDescriptor()
      */
     readonly headers?: {
-        parsed: Array<{ key: string; line: string }>;
-        [key: string]: any;
+        parsed: Array<{ key: string; casedKey: string; line: Buffer }>;
+        original: Buffer;
     };
 
     /**
@@ -312,6 +508,18 @@ export interface SPFResult {
         void: number;
         subqueries: Record<string, number>;
     };
+
+    /**
+     * Explanation string published by the domain owner with the "exp" modifier
+     * (RFC 7208 section 6.2). Only set for a "fail" result. This is third party text
+     */
+    explanation?: string;
+
+    /**
+     * Set in the default mode when something was accepted that strict mode would have
+     * rejected: "syntax-error", "void-lookup-limit" or "non-ascii-local-part"
+     */
+    warnings?: string[];
 }
 
 /**
@@ -354,7 +562,18 @@ export interface ARCResult {
      * Why sealing failed, when a seal was requested but could not be created.
      * The message is left unsealed in that case
      */
-    sealErrors?: Error[];
+    sealErrors?: ARCSealError[];
+
+    /**
+     * What the default mode accepted in the chain that strict mode would reject, for example
+     * 'arc-tag-syntax' (a tag-list syntax error or a tag name that is not lower case),
+     * 'arc-instance-syntax' (an i= value that is not 1*2DIGIT, an ARC-Authentication-Results
+     * whose i= is not first, or an ARC header field that was ignored for its i= value),
+     * 'ams-c-default' (an ARC-Message-Signature without c= that only verified with
+     * relaxed/relaxed), and the key record warnings of the DKIM result. Not set for a failing
+     * chain, and never written into the headers
+     */
+    warnings?: string[];
 
     /**
      * ARC chain entries (non-enumerable property)
@@ -377,6 +596,11 @@ export interface DMARCResult {
      * record, np or sp for an inherited one, one level lower with t=y
      */
     policy: string;
+
+    /**
+     * Domain whose DMARC record the policy was taken from
+     */
+    policyDomain?: string;
 
     /**
      * Policy for organizational domain
@@ -406,7 +630,26 @@ export interface DMARCResult {
     /**
      * Verification status
      */
-    status: AuthStatus;
+    status: AuthStatus & {
+        header?: {
+            /**
+             * Author Domain
+             */
+            from?: string;
+
+            /**
+             * Domain of the DMARC record, omitted in strict mode (not a registered property for dmarc)
+             */
+            d?: string;
+        };
+
+        policy?: {
+            /**
+             * The policy that was applied (RFC 8601 section 2.7.2 policy.dmarc)
+             */
+            dmarc?: string;
+        };
+    };
 
     /**
      * Alignment results
@@ -444,6 +687,12 @@ export interface DMARCResult {
      * Error message if verification failed
      */
     error?: string;
+
+    /**
+     * What the default mode accepted and strict mode would reject, only present when there
+     * is something to report
+     */
+    warnings?: string[];
 }
 
 /**
@@ -451,9 +700,12 @@ export interface DMARCResult {
  */
 export interface BIMIResult {
     /**
-     * Verification status
+     * Verification status. `declined` means the domain published a declination record,
+     * `temperror` a DNS failure. `temperr` is deprecated and no longer reported
      */
-    status: AuthStatus;
+    status: AuthStatus & {
+        result: 'pass' | 'none' | 'fail' | 'skipped' | 'declined' | 'temperror' | 'temperr';
+    };
 
     /**
      * BIMI DNS record
@@ -490,7 +742,8 @@ export interface ReceivedChainEntry {
         value: string;
 
         /**
-         * Additional comment (often contains IP in parentheses)
+         * The comments after the value, joined with spaces. Usually the TCP-info of
+         * RFC 5321 section 4.4, whose last address literal is the connecting IP address
          */
         comment?: string;
     };
@@ -587,6 +840,13 @@ export interface AuthenticateResult {
      * Combined authentication headers to prepend to message
      */
     headers: string;
+
+    /**
+     * Why DMARC was not evaluated when `dmarc` is false because the From header has no
+     * domain or more than one (RFC 9989 section 5.3.1). Such a message can be treated as
+     * suspicious (RFC 9989 section 11.5)
+     */
+    dmarcSkipReason?: 'no-author-domain' | 'multiple-author-domains' | 'invalid-author-domain' | 'multiple-from-fields';
 }
 
 /**
@@ -628,16 +888,17 @@ export interface DKIMSignOptions {
     canonicalization?: string;
 
     /**
-     * Signing algorithm (default: 'rsa-sha256')
-     * Supported: 'rsa-sha256', 'rsa-sha1', 'ed25519-sha256'
+     * Signing algorithm, defaults to 'rsa-sha256' or 'ed25519-sha256' depending on the key type.
+     * Supported: 'rsa-sha256', 'ed25519-sha256' and 'rsa-sha1'. rsa-sha1 is historic
+     * (RFC 8301): it adds the 'rsa-sha1' warning, and strict mode refuses it
      */
     algorithm?: string;
 
     /**
-     * List of header fields to sign
-     * Default includes From, Subject, Date, To, etc.
+     * Header fields to sign, as an array or a colon separated string. Default includes
+     * From, Subject, Date, To, etc. Set per signature in `signatureData` or for all of them
      */
-    headerList?: string[];
+    headerList?: string[] | string;
 
     /**
      * Signing timestamp (defaults to current time)
@@ -655,7 +916,7 @@ export interface DKIMSignOptions {
     maxBodyLength?: number;
 
     /**
-     * Identity (i= tag)
+     * Identity (i= tag), an address whose domain is the signing domain or its subdomain
      */
     identity?: string;
 
@@ -663,6 +924,15 @@ export interface DKIMSignOptions {
      * Multiple signature configurations
      */
     signatureData?: DKIMSignOptions[];
+
+    /**
+     * Follow the RFCs exactly (default: false). Strict mode refuses rsa-sha1, RSA keys
+     * shorter than 1024 bits, an expiration that is not after the signing time, a signing
+     * time that does not fit into t=, and a d=, s= or i= that is not valid RFC 6376 syntax.
+     * The default mode signs these and lists them in `warnings`. A d=, s= or identity that
+     * would break out of its tag is refused in both modes
+     */
+    strict?: boolean;
 }
 
 /**
@@ -836,11 +1106,42 @@ export interface ARCSigningData {
 }
 
 /**
+ * A signature that could not be created
+ */
+export interface DKIMSignError {
+    /**
+     * Why the signature was not created. `err.code` is eg. 'ENOFROM', 'EINVALIDALGO',
+     * 'EINVALIDTYPE', 'ESHORTKEY', 'EINVALIDDOMAIN', 'EINVALIDSELECTOR', 'EINVALIDIDENTITY',
+     * 'EINVALIDTIME', 'EINVALIDCANON' or 'EINVALIDINSTANCE'
+     */
+    err: Error & { code?: string };
+
+    type?: 'DKIM' | 'ARC';
+    selector?: string;
+    signingDomain?: string;
+    algorithm?: string;
+    canonicalization?: string;
+}
+
+/**
+ * What the default mode signed although strict mode would have refused it
+ *
+ * - `rsa-sha1`: signed with rsa-sha1
+ * - `weak-key`: signed with an RSA key shorter than 1024 bits
+ * - `invalid-expiration`: the expiration is not after the signing time, or does not fit into x=
+ * - `invalid-signtime`: the signing time does not fit into t=, which was left out
+ * - `d-syntax`, `s-syntax`: d= or s= is not valid RFC 6376 syntax
+ * - `identity-domain`: the identity domain is not the signing domain or its subdomain
+ */
+export type DKIMSignWarning = 'rsa-sha1' | 'weak-key' | 'invalid-expiration' | 'invalid-signtime' | 'd-syntax' | 's-syntax' | 'identity-domain';
+
+/**
  * DKIM signing result
  */
 export interface DKIMSignResult {
     /**
-     * DKIM-Signature header(s) to prepend to message
+     * DKIM-Signature header(s) to prepend to message, each ending with a CRLF. An empty
+     * string when no signature was created
      */
     signatures: string;
 
@@ -850,9 +1151,14 @@ export interface DKIMSignResult {
     arc?: ARCSigningData;
 
     /**
-     * Any errors encountered during signing
+     * The signatures that could not be created, and why
      */
-    errors: Error[];
+    errors: DKIMSignError[];
+
+    /**
+     * What was signed although strict mode would have refused it
+     */
+    warnings: DKIMSignWarning[];
 }
 
 /**
@@ -877,9 +1183,14 @@ export class DkimSignStream extends Transform {
     constructor(options: DKIMSignOptions);
 
     /**
-     * Any errors encountered during signing
+     * The signatures that could not be created, set when the stream ends
      */
-    errors: Error[] | null;
+    errors: DKIMSignError[] | null;
+
+    /**
+     * What was signed although strict mode would have refused it, set when the stream ends
+     */
+    warnings: DKIMSignWarning[] | null;
 }
 
 // ============================================================================
@@ -914,6 +1225,12 @@ export interface DKIMVerifyOptions {
      * ARC sealing options (if sealing should be prepared)
      */
     seal?: ARCSealOptions;
+
+    /**
+     * Follow RFC 6376, RFC 8301 and RFC 8463 exactly instead of the lenient default
+     * (default: false). See `DKIMWarning` for what the default mode accepts
+     */
+    strict?: boolean;
 }
 
 /**
@@ -967,6 +1284,17 @@ export interface SPFOptions {
      * Custom DNS resolver function
      */
     resolver?: DNSResolver;
+
+    /**
+     * Follow RFC 7208 exactly instead of the lenient default (default: false)
+     */
+    strict?: boolean;
+
+    /**
+     * Maximum time in milliseconds for the whole evaluation, after which the result is
+     * temperror (RFC 7208 section 4.6.4). No limit by default
+     */
+    maxElapsedTime?: number;
 }
 
 /**
@@ -989,6 +1317,12 @@ export interface DMARCOptions {
      * Domain from From header
      */
     headerFrom: string | string[];
+
+    /**
+     * Number of From header fields the addresses came from. With more than one, DMARC
+     * validation is not possible (reason "multiple-from-fields")
+     */
+    fromFields?: number;
 
     /**
      * Domains that passed SPF
@@ -1014,6 +1348,11 @@ export interface DMARCOptions {
      * Custom DNS resolver function
      */
     resolver?: DNSResolver;
+
+    /**
+     * Follow RFC 9989 exactly instead of the lenient default (default: false)
+     */
+    strict?: boolean;
 }
 
 /**
@@ -1049,6 +1388,24 @@ export interface ARCData {
 }
 
 /**
+ * An error from ARC sealing
+ */
+export interface ARCSealError {
+    /**
+     * The error. Codes include EINVALIDCV (a missing or invalid cv), EINVALIDINSTANCE (an
+     * instance out of 1-50, a chain that already has 50 sets, one that already exists, or in
+     * strict mode one that leaves a gap),
+     * EARCCHAINFAILED (the newest ARC-Seal already has cv=fail, RFC 8617 section 5.1 step 2),
+     * EINVALIDALGO and EINVALIDTYPE (an algorithm that is not supported or does not match the key)
+     */
+    err: Error & { code?: string };
+    type?: string;
+    selector?: string;
+    signingDomain?: string;
+    [key: string]: any;
+}
+
+/**
  * ARC verification options
  */
 export interface ARCOptions {
@@ -1061,6 +1418,47 @@ export interface ARCOptions {
      * Minimal allowed public key length in bits (default: 1024)
      */
     minBitLength?: number;
+
+    /**
+     * Follow RFC 8617 exactly instead of the lenient default (default: false). In strict mode
+     * ARC-Seal and ARC-Message-Signature tag lists must be valid RFC 6376 section 3.2 syntax
+     * with lower case tag names and every required tag, instance values must be 1*2DIGIT from
+     * 1 to 50 (and come first in ARC-Authentication-Results), ARC header fields with an
+     * invalid instance fail the chain instead of being ignored, an ARC-Message-Signature
+     * without c= is only verified as simple/simple, and the arc= result also reports
+     * arc=none and smtp.remote-ip
+     */
+    strict?: boolean;
+
+    /**
+     * Client IP address, reported as smtp.remote-ip in strict mode (RFC 8617 section 6)
+     */
+    ip?: string;
+}
+
+/**
+ * Seal creation data for createSeal()
+ */
+export interface ARCCreateSealData {
+    /**
+     * Parsed message headers, when `input` is false
+     */
+    headers?: any;
+
+    /**
+     * ARC chain data of the message, when `input` is false
+     */
+    arc?: ARCData | ARCSigningData;
+
+    /**
+     * Sealing options, with `bodyHash` (the relaxed/relaxed sha256 body hash) when `input` is false
+     */
+    seal: ARCSealOptions & { bodyHash?: string };
+
+    /**
+     * Follow the RFCs exactly (default: false, or `seal.strict`)
+     */
+    strict?: boolean;
 }
 
 /**
@@ -1082,30 +1480,34 @@ export function arc(data: ARCData, opts?: ARCOptions): Promise<ARCResult>;
 export function sealMessage(input: MessageInput, seal: ARCSealOptions): Promise<Buffer>;
 
 /**
- * Gets ARC chain from parsed headers
+ * Gets ARC chain from parsed headers and validates its structure. Throws for a chain that is not valid
  *
  * @param headers - Parsed message headers
+ * @param opts - `strict` applies the RFC 8617 syntax rules, lenient acceptances are added to `warnings`
  * @returns ARC chain or false if no chain found
  */
-export function getARChain(headers: any): ARCChainEntry[] | false;
+export function getARChain(headers: any, opts?: { strict?: boolean; warnings?: string[] }): ARCChainEntry[] | false;
 
 /**
- * Verifies ARC seal chain
+ * Verifies ARC seal chain. Throws if any seal of the chain is not valid, including a chain whose
+ * newest seal has cv=fail
  *
  * @param data - ARC chain data
  * @param opts - ARC verification options
- * @returns true if chain is valid
+ * @returns true if chain is valid, false if there is no chain
  */
-export function verifyASChain(data: ARCData, opts: ARCOptions): Promise<boolean>;
+export function verifyASChain(data: ARCData, opts: ARCOptions & { warnings?: string[] }): Promise<boolean>;
 
 /**
  * Creates ARC seal headers
  *
  * @param input - RFC822 formatted message or false for pre-calculated data
  * @param data - Seal creation data
- * @returns Seal headers, empty if the ARC-Message-Signature could not be signed, and any errors
+ * @returns Seal headers (empty when no set was created), the errors that say why, and what the
+ *          default mode sealed that strict mode would have refused ('arc-instance-gap',
+ *          'arc-cv-instance', and the DKIM signing warnings)
  */
-export function createSeal(input: MessageInput | false, data: any): Promise<{ headers: string[]; errors: Error[] }>;
+export function createSeal(input: MessageInput | false, data: ARCCreateSealData): Promise<{ headers: string[]; errors: ARCSealError[]; warnings: string[] }>;
 
 // ============================================================================
 // BIMI
@@ -1134,6 +1536,12 @@ export interface BIMIOptions {
      * Custom DNS resolver function
      */
     resolver?: DNSResolver;
+
+    /**
+     * Format the Authentication-Results entry in the RFC 8601 section 2.2 form (default: false).
+     * BIMI has no other strict-only rules, the draft checks apply in both modes
+     */
+    strict?: boolean;
 }
 
 /**
@@ -1344,9 +1752,32 @@ export interface MTASTSPolicyResult {
 
     /**
      * Status of the fetch operation
+     *
+     * - `found`: a new or changed policy was fetched
+     * - `renewed`: the cached policy has the same id and has not expired, it is returned without a fetch
+     * - `not_found`: the domain has no MTA-STS policy
+     * - `errored`: the policy could not be fetched. With a valid cached policy, that policy is
+     *   returned with `error` set
      */
     status: 'found' | 'renewed' | 'not_found' | 'errored';
+
+    /**
+     * Lax acceptance markers, only present when the default lax mode accepted something strict mode would reject
+     */
+    warnings?: MTASTSWarning[];
 }
+
+/**
+ * Markers for input that the default lax mode accepted but `strict: true` would reject
+ *
+ * - `txt-syntax`: the TXT record does not match the RFC 8461 3.1 syntax
+ * - `http-status`: the policy was served with a 2xx status other than 200
+ * - `content-type`: the policy was not served as `text/plain`
+ * - `policy-syntax`: the policy file does not match the RFC 8461 3.2 syntax
+ * - `cert-identity`: the Policy Host certificate matched only through the CN or a partial-label wildcard
+ * - `expired-cache`: an expired cached policy was returned because the policy could not be fetched
+ */
+export type MTASTSWarning = 'txt-syntax' | 'http-status' | 'content-type' | 'policy-syntax' | 'cert-identity' | 'expired-cache';
 
 /**
  * MTA-STS MX validation result
@@ -1381,6 +1812,21 @@ export interface MTASTSOptions {
      * Custom DNS resolver function
      */
     resolver?: DNSResolver;
+
+    /**
+     * Apply the RFC 8461 rules exactly (default false)
+     */
+    strict?: boolean;
+
+    /**
+     * Overall time limit for the HTTPS policy request in milliseconds (default 60000)
+     */
+    timeout?: number;
+
+    /**
+     * Maximum size of the policy file in bytes (default 65536)
+     */
+    maxPolicySize?: number;
 }
 
 // Note: MTA-STS functions (resolvePolicy, fetchPolicy, parsePolicy, validateMx, getPolicy)

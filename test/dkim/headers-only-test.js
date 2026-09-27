@@ -48,7 +48,8 @@ describe('DKIM headers-only message Tests', () => {
         it('Should refuse to sign ' + name, async () => {
             const { signatures, errors } = await dkimSign(Buffer.from(input), signOptions);
 
-            expect(signatures.trim()).to.equal('');
+            // exactly empty, a lone CRLF in front of the message would end its header section
+            expect(signatures).to.equal('');
             expect(errors).to.have.lengthOf(1);
             expect(errors[0].err.code).to.equal('ENOFROM');
         });

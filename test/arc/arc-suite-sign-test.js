@@ -43,63 +43,70 @@ let getResolver = txtRecords => {
     return resolver;
 };
 
-describe(`ARC Signing Suite`, () => {
-    for (let file of tests) {
-        let resolver = getResolver(file['txt-records']);
-        describe(`${file.description}`, () => {
-            for (let test of Object.keys(file.tests)) {
-                if (ignoreTests.includes(test)) {
-                    // skip this test
-                    continue;
-                }
-                let testdata = file.tests[test];
-                it(test, async () => {
-                    // 1st step - Seal the message
-                    let { headers } = await authenticate(Buffer.from(testdata.message || ''), {
-                        ip: '127.0.0.1', // SMTP client IP
-                        helo: 'example.com', // EHLO/HELO hostname
-                        mta: testdata['srv-id'], // server processing this message, defaults to os.hostname()
-                        sender: 'jqd@d1.example', // MAIL FROM address
-
-                        seal: {
-                            signingDomain: file.domain,
-                            selector: file.sel,
-                            privateKey: file.privatekey,
-                            signTime: new Date(testdata.t * 1000),
-                            headerList: testdata['sig-headers']
-                        },
-
-                        disableDmarc: true,
-                        resolver
-                    });
-
-                    expect(headers).to.exist;
-
-                    if (!testdata.AS) {
-                        // no added header
-                        expect(/^arc-seal/im.test(headers.toString())).to.be.false;
-                        return;
+for (let mode of [
+    { name: 'lax', strict: false },
+    { name: 'strict', strict: true }
+]) {
+    describe(`ARC Signing Suite (${mode.name})`, () => {
+        for (let file of tests) {
+            let resolver = getResolver(file['txt-records']);
+            describe(`${file.description}`, () => {
+                for (let test of Object.keys(file.tests)) {
+                    if (ignoreTests.includes(test)) {
+                        // skip this test
+                        continue;
                     }
+                    let testdata = file.tests[test];
+                    it(test, async () => {
+                        // 1st step - Seal the message
+                        let { headers } = await authenticate(Buffer.from(testdata.message || ''), {
+                            ip: '127.0.0.1', // SMTP client IP
+                            helo: 'example.com', // EHLO/HELO hostname
+                            mta: testdata['srv-id'], // server processing this message, defaults to os.hostname()
+                            sender: 'jqd@d1.example', // MAIL FROM address
 
-                    expect(/^arc-seal/im.test(headers.toString())).to.be.true;
+                            seal: {
+                                signingDomain: file.domain,
+                                selector: file.sel,
+                                privateKey: file.privatekey,
+                                signTime: new Date(testdata.t * 1000),
+                                headerList: testdata['sig-headers']
+                            },
 
-                    let expectToFail = testdata.AS.match(/\bcv=(\w+)\b/)?.[1] === 'fail';
+                            disableDmarc: true,
+                            strict: mode.strict,
+                            resolver
+                        });
 
-                    // step 2. validate signatures
+                        expect(headers).to.exist;
 
-                    let { arc } = await authenticate(Buffer.from(headers.toString() + testdata.message || ''), {
-                        ip: '127.0.0.1', // SMTP client IP
-                        helo: 'example.com', // EHLO/HELO hostname
-                        mta: testdata['srv-id'], // server processing this message, defaults to os.hostname()
-                        sender: 'jqd@d1.example', // MAIL FROM address
-                        disableDmarc: true,
-                        resolver
+                        if (!testdata.AS) {
+                            // no added header
+                            expect(/^arc-seal/im.test(headers.toString())).to.be.false;
+                            return;
+                        }
+
+                        expect(/^arc-seal/im.test(headers.toString())).to.be.true;
+
+                        let expectToFail = testdata.AS.match(/\bcv=(\w+)\b/)?.[1] === 'fail';
+
+                        // step 2. validate signatures
+
+                        let { arc } = await authenticate(Buffer.from(headers.toString() + testdata.message || ''), {
+                            ip: '127.0.0.1', // SMTP client IP
+                            helo: 'example.com', // EHLO/HELO hostname
+                            mta: testdata['srv-id'], // server processing this message, defaults to os.hostname()
+                            sender: 'jqd@d1.example', // MAIL FROM address
+                            disableDmarc: true,
+                            strict: mode.strict,
+                            resolver
+                        });
+
+                        expect(arc).to.exist;
+                        expect(arc.status.result).to.equal(expectToFail ? 'fail' : 'pass');
                     });
-
-                    expect(arc).to.exist;
-                    expect(arc.status.result).to.equal(expectToFail ? 'fail' : 'pass');
-                });
-            }
-        });
-    }
-});
+                }
+            });
+        }
+    });
+}

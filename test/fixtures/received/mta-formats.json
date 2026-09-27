@@ -1,0 +1,122 @@
+[
+    {
+        "mta": "Postfix, reverse DNS known",
+        "header": "Received: from mail.example.org (mail.example.org [192.0.2.10])\r\n\tby mx.example.net (Postfix) with ESMTPS id 4XyzAbCdEf\r\n\tfor <user@example.net>; Mon, 21 Sep 2026 10:00:00 +0000 (UTC)",
+        "ip": "192.0.2.10",
+        "from": "mail.example.org"
+    },
+    {
+        "mta": "Postfix, no reverse DNS",
+        "header": "Received: from helo.example.org (unknown [198.51.100.7])\r\n\tby mx.example.net (Postfix) with ESMTP id 4XyzAbCdEf\r\n\tfor <user@example.net>; Mon, 21 Sep 2026 10:00:00 +0000 (UTC)",
+        "ip": "198.51.100.7",
+        "from": "helo.example.org"
+    },
+    {
+        "mta": "Postfix, IPv6",
+        "header": "Received: from mail.example.org (mail.example.org [IPv6:2001:db8::25])\r\n\tby mx.example.net (Postfix) with ESMTPS id 4XyzAbCdEf\r\n\tfor <user@example.net>; Mon, 21 Sep 2026 10:00:00 +0000 (UTC)",
+        "ip": "2001:db8::25",
+        "from": "mail.example.org"
+    },
+    {
+        "mta": "Postfix, HELO with an address literal",
+        "header": "Received: from [203.0.113.5] (unknown [198.51.100.7])\r\n\tby mx.example.net (Postfix) with ESMTP id 4XyzAbCdEf; Mon, 21 Sep 2026 10:00:00 +0000 (UTC)",
+        "ip": "198.51.100.7",
+        "from": "[203.0.113.5]"
+    },
+    {
+        "mta": "Postfix, HELO with parentheses and an address literal in it",
+        "header": "Received: from x([203.0.113.5]) (unknown [198.51.100.7])\r\n\tby mx.example.net (Postfix) with ESMTP id 4XyzAbCdEf; Mon, 21 Sep 2026 10:00:00 +0000 (UTC)",
+        "ip": "198.51.100.7",
+        "from": "x"
+    },
+    {
+        "mta": "Exim, reverse DNS matches HELO",
+        "header": "Received: from mail.example.org ([192.0.2.10])\r\n\tby mx.example.net with esmtps (TLS1.3) tls TLS_AES_256_GCM_SHA384\r\n\t(Exim 4.96)\r\n\t(envelope-from <a@example.org>)\r\n\tid 1abcDE-000001-AB\r\n\tfor user@example.net;\r\n\tMon, 21 Sep 2026 10:00:00 +0000",
+        "ip": "192.0.2.10",
+        "from": "mail.example.org"
+    },
+    {
+        "mta": "Exim, reverse DNS differs from HELO",
+        "header": "Received: from mail.example.org ([192.0.2.10] helo=claimed.example)\r\n\tby mx.example.net with esmtp (Exim 4.96)\r\n\t(envelope-from <a@example.org>)\r\n\tid 1abcDE-000001-AB; Mon, 21 Sep 2026 10:00:00 +0000",
+        "ip": "192.0.2.10",
+        "from": "mail.example.org"
+    },
+    {
+        "mta": "Exim, reverse DNS differs from an address literal HELO",
+        "header": "Received: from mail.example.org ([192.0.2.10] helo=[203.0.113.5])\r\n\tby mx.example.net with esmtp (Exim 4.96)\r\n\t(envelope-from <a@example.org>)\r\n\tid 1abcDE-000001-AB; Mon, 21 Sep 2026 10:00:00 +0000",
+        "ip": "192.0.2.10",
+        "from": "mail.example.org"
+    },
+    {
+        "mta": "Exim, no reverse DNS, address literal HELO",
+        "header": "Received: from [192.0.2.66] (helo=[203.0.113.5])\r\n\tby mx.example.net with esmtp (Exim 4.96)\r\n\t(envelope-from <ceo@bank.example>)\r\n\tid 1abcDE-000001-AB; Mon, 21 Sep 2026 10:00:00 +0000",
+        "ip": "192.0.2.66",
+        "from": "[192.0.2.66]"
+    },
+    {
+        "mta": "Exim, no reverse DNS, port logging",
+        "header": "Received: from [192.0.2.66] (port=40000 helo=[203.0.113.5])\r\n\tby mx.example.net with esmtp (Exim 4.96)\r\n\t(envelope-from <ceo@bank.example>)\r\n\tid 1abcDE-000001-AB; Mon, 21 Sep 2026 10:00:00 +0000",
+        "ip": "192.0.2.66",
+        "from": "[192.0.2.66]"
+    },
+    {
+        "mta": "Exim, reverse DNS known, port logging",
+        "header": "Received: from mail.example.org ([192.0.2.10]:40000 helo=claimed.example)\r\n\tby mx.example.net with esmtp (Exim 4.96)\r\n\t(envelope-from <a@example.org>)\r\n\tid 1abcDE-000001-AB; Mon, 21 Sep 2026 10:00:00 +0000",
+        "ip": "192.0.2.10",
+        "from": "mail.example.org"
+    },
+    {
+        "mta": "Exim, IPv6 without reverse DNS",
+        "header": "Received: from [2001:db8::66] (helo=claimed.example)\r\n\tby mx.example.net with esmtp (Exim 4.96)\r\n\tid 1abcDE-000001-AB; Mon, 21 Sep 2026 10:00:00 +0000",
+        "ip": "2001:db8::66",
+        "from": "[2001:db8::66]"
+    },
+    {
+        "mta": "Sendmail",
+        "header": "Received: from mail.example.org (mail.example.org [192.0.2.10])\r\n\tby mx.example.net (8.17.1/8.17.1) with ESMTPS id 48LA0000012345\r\n\t(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT)\r\n\tfor <user@example.net>; Mon, 21 Sep 2026 10:00:00 GMT",
+        "ip": "192.0.2.10",
+        "from": "mail.example.org"
+    },
+    {
+        "mta": "Sendmail, may be forged",
+        "header": "Received: from helo.example (rdns.example [192.0.2.10] (may be forged))\r\n\tby mx.example.net (8.17.1/8.17.1) with ESMTP id 48LA0000012345\r\n\tfor <user@example.net>; Mon, 21 Sep 2026 10:00:00 GMT",
+        "ip": "192.0.2.10",
+        "from": "helo.example"
+    },
+    {
+        "mta": "Sendmail, ident",
+        "header": "Received: from helo.example (user@rdns.example [192.0.2.10])\r\n\tby mx.example.net (8.17.1/8.17.1) with ESMTP id 48LA0000012345; Mon, 21 Sep 2026 10:00:00 GMT",
+        "ip": "192.0.2.10",
+        "from": "helo.example"
+    },
+    {
+        "mta": "Gmail",
+        "header": "Received: from mail-sor-f41.google.com (mail-sor-f41.google.com. [209.85.220.41])\r\n        by mx.google.com with SMTPS id a640c23a62f3a-a9a1234567sor1234567.66.2026.09.21.03.00.00\r\n        for <user@example.net>\r\n        (Google Transport Security);\r\n        Mon, 21 Sep 2026 03:00:00 -0700 (PDT)",
+        "ip": "209.85.220.41",
+        "from": "mail-sor-f41.google.com"
+    },
+    {
+        "mta": "Haraka",
+        "header": "Received: from mail-oi1-f179.google.com (mail-oi1-f179.google.com [209.85.167.179])\r\n\tby zonemx.eu (Haraka/2.8.25) with ESMTPS id B3C0198B-A390-42E9-9DDC-C57D8D207298.1\r\n\tenvelope-from <andris.reinman@gmail.com>\r\n\t(cipher=TLS_AES_256_GCM_SHA384);\r\n\tFri, 06 Nov 2020 12:20:14 +0000",
+        "ip": "209.85.167.179",
+        "from": "mail-oi1-f179.google.com"
+    },
+    {
+        "mta": "qmail, no address literal",
+        "header": "Received: from unknown (HELO mail.example.org) (192.0.2.10)\r\n  by mx.example.net with SMTP; 21 Sep 2026 10:00:00 -0000",
+        "ip": false,
+        "from": "unknown"
+    },
+    {
+        "mta": "Microsoft Exchange, no address literal",
+        "header": "Received: from DM6PR11MB1234.namprd11.prod.outlook.com (2603:10b6:5:1b0::12)\r\n by SA1PR11MB5678.namprd11.prod.outlook.com (2603:10b6:806:22e::5) with\r\n Microsoft SMTP Server (version=TLS1_2,\r\n cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.7000.1; Mon, 21 Sep\r\n 2026 10:00:00 +0000",
+        "ip": false,
+        "from": "DM6PR11MB1234.namprd11.prod.outlook.com"
+    },
+    {
+        "mta": "Address literal HELO without TCP-info",
+        "header": "Received: from [203.0.113.5]\r\n\tby mx.example.net with SMTP; Mon, 21 Sep 2026 10:00:00 +0000",
+        "ip": false,
+        "from": "[203.0.113.5]"
+    }
+]

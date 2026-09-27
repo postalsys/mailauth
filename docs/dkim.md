@@ -9,17 +9,19 @@ The `dkimVerify` function verifies all DKIM-Signature headers in an email messag
 ```javascript
 const { dkimVerify } = require('mailauth/lib/dkim/verify');
 
-const result = await dkimVerify(message);
+const result = await dkimVerify(message, { strict: false });
 // result.results is an array of signature verification results
 ```
 
+With `strict: true` the verification follows RFC 6376, RFC 8301 and RFC 8463 exactly. The default mode is lenient about weak and non-conforming signatures, and marks what it accepted in `status.warnings` (see [Warnings](#warnings)).
+
 ## Top-Level Result Object
 
-| Field          | Type            | Description                                            |
-| -------------- | --------------- | ------------------------------------------------------ |
-| `headerFrom`   | `string[]`      | Array of email addresses from the From header          |
-| `envelopeFrom` | `string\|false` | Email address from Return-Path header or sender option |
-| `results`      | `object[]`      | Array of verification results for each DKIM signature  |
+| Field          | Type            | Description                                                                                          |
+| -------------- | --------------- | ---------------------------------------------------------------------------------------------------- |
+| `headerFrom`   | `string[]`      | Addresses from the From header, as full addr-specs. The mailboxes of a group (RFC 6854) are included |
+| `envelopeFrom` | `string\|false` | Email address from Return-Path header or sender option                                               |
+| `results`      | `object[]`      | Array of verification results for each DKIM signature                                                |
 
 ## Signature Result Object
 
@@ -61,51 +63,88 @@ Each entry in the `results` array has the following structure:
 
 ### status Object
 
-| Field        | Type            | Presence        | Description                          |
-| ------------ | --------------- | --------------- | ------------------------------------ |
-| `result`     | `string`        | Always          | Verification result code (see below) |
-| `comment`    | `string`        | On error/info   | Human-readable explanation           |
-| `aligned`    | `string\|false` | DKIM signatures | DMARC-aligned domain, or false       |
-| `header`     | `object`        | Always          | Signature header info                |
-| `policy`     | `object`        | Policy result   | Policy violation details             |
-| `underSized` | `number`        | Body limited    | Number of unsigned bytes             |
+| Field        | Type            | Presence        | Description                                                                                           |
+| ------------ | --------------- | --------------- | ----------------------------------------------------------------------------------------------------- |
+| `result`     | `string`        | Always          | Verification result code (see below)                                                                  |
+| `comment`    | `string`        | On error/info   | Human-readable explanation                                                                            |
+| `aligned`    | `string\|false` | DKIM signatures | DMARC-aligned domain, or false                                                                        |
+| `header`     | `object`        | Always          | Signature header info                                                                                 |
+| `policy`     | `object`        | Policy result   | Policy violation details                                                                              |
+| `underSized` | `number`        | Body limited    | Number of unsigned bytes                                                                              |
+| `testing`    | `boolean`       | Key has `t=y`   | The signing domain is testing DKIM (RFC 6376 section 3.6.1)                                           |
+| `warnings`   | `string[]`      | Default mode    | What was accepted that strict mode would reject, see [Warnings](#warnings). Never written into `info` |
 
 #### status.header Object
 
-| Field | Type            | Description                                           |
-| ----- | --------------- | ----------------------------------------------------- |
-| `i`   | `string\|false` | Signing domain with @ prefix (e.g., `"@example.com"`) |
-| `s`   | `string`        | DKIM selector                                         |
-| `a`   | `string`        | Algorithm                                             |
-| `b`   | `string`        | First 8 characters of signature value                 |
+| Field | Type            | Description                                                                                                                                                                  |
+| ----- | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `d`   | `string`        | Strict mode only: the signing domain (`d=` tag)                                                                                                                              |
+| `i`   | `string\|false` | Signing domain with @ prefix (e.g., `"@example.com"`). In strict mode the AUID: the `i=` value, or `@` and the signing domain when there is no `i=` (RFC 8601 section 2.7.1) |
+| `s`   | `string`        | DKIM selector                                                                                                                                                                |
+| `a`   | `string`        | Algorithm                                                                                                                                                                    |
+| `b`   | `string`        | First 8 characters of signature value                                                                                                                                        |
 
 ## Result Values
 
-| Result      | Description                                                                |
-| ----------- | -------------------------------------------------------------------------- |
-| `pass`      | Signature verified successfully                                            |
-| `fail`      | Signature verification failed (bad signature)                              |
-| `neutral`   | Signature could not be verified (missing key, expired, body hash mismatch) |
-| `policy`    | Signature failed policy check (e.g., weak key)                             |
-| `temperror` | Temporary error (DNS failure)                                              |
-| `none`      | Message not signed                                                         |
+| Result      | Description                                                                                                                                                                                |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `pass`      | Signature verified successfully                                                                                                                                                            |
+| `fail`      | Signature verification failed (bad signature). In strict mode also a body hash mismatch                                                                                                    |
+| `neutral`   | Signature could not be verified (missing key, expired, body hash mismatch in the default mode, invalid signature)                                                                          |
+| `policy`    | Signature failed policy check (a key shorter than `minBitLength`, or rsa-sha1 in strict mode)                                                                                              |
+| `temperror` | Temporary error (DNS failure)                                                                                                                                                              |
+| `none`      | Message not signed. In the default mode also a message whose only signatures use an unknown algorithm or canonicalization, or have no `d=` or `s=`. Strict mode reports those as `neutral` |
 
 ## Comment Values
 
 Common values for `status.comment`:
 
-| Comment                      | Description                                      |
-| ---------------------------- | ------------------------------------------------ |
-| `"body hash did not verify"` | Calculated body hash does not match `bh=` tag    |
-| `"bad signature"`            | Cryptographic signature verification failed      |
-| `"invalid expiration"`       | Expiration timestamp is before signing timestamp |
-| `"expired"`                  | Signature has expired (past `x=` timestamp)      |
-| `"no key"`                   | No DKIM key found in DNS                         |
-| `"unknown key version"`      | Unsupported key version in DNS record            |
-| `"unknown key type"`         | Unsupported key type in DNS record               |
-| `"invalid public key"`       | Public key in DNS record is malformed            |
-| `"DNS failure: {code}"`      | DNS lookup failed with error code                |
-| `"message not signed"`       | No DKIM-Signature headers found                  |
+| Comment                                             | Description                                                                                          |
+| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `"body hash did not verify"`                        | Calculated body hash does not match `bh=` tag                                                        |
+| `"bad signature"`                                   | Cryptographic signature verification failed                                                          |
+| `"invalid expiration"`                              | Expiration timestamp is before signing timestamp                                                     |
+| `"expired"`                                         | Signature has expired (past `x=` timestamp)                                                          |
+| `"no key"`                                          | No DKIM key found in DNS                                                                             |
+| `"unknown key version"`                             | Unsupported key version in DNS record                                                                |
+| `"unknown key type"`                                | Unsupported key type in DNS record                                                                   |
+| `"invalid public key"`                              | Public key in DNS record is malformed, or revoked (empty `p=`)                                       |
+| `"inappropriate hash algorithm"`                    | The key record `h=` tag does not list the hash algorithm of the signature (both modes)               |
+| `"key not for email"`                               | The key record `s=` tag does not list `email` or `*` (both modes)                                    |
+| `"From field not signed"`                           | The `h=` tag does not include From (both modes, RFC 6376 section 6.1.1)                              |
+| `"weak algorithm"`                                  | Strict mode: rsa-sha1 signature (RFC 8301)                                                           |
+| `"signature syntax error"`                          | Strict mode: the signature is not valid RFC 6376 syntax                                              |
+| `"signature missing required tag"`                  | Strict mode: `v=`, `a=`, `b=`, `bh=`, `d=`, `h=` or `s=` is missing                                  |
+| `"incompatible version"`                            | Strict mode: `v=` is not 1                                                                           |
+| `"domain mismatch"`                                 | Strict mode: the `i=` domain is not `d=` or its subdomain, or is a subdomain while the key has `t=s` |
+| `"unsupported query method"`                        | Strict mode: `q=` does not list `dns/txt`                                                            |
+| `"inappropriate key algorithm"`                     | Strict mode: the key type does not match the signature algorithm                                     |
+| `"unknown algorithm"`, `"unknown canonicalization"` | Strict mode: the signature can not be processed                                                      |
+| `"DNS failure: {code}"`                             | DNS lookup failed with error code                                                                    |
+| `"message not signed"`                              | No DKIM-Signature headers found                                                                      |
+
+## Warnings
+
+In the default mode `status.warnings` lists what was accepted although strict mode would have rejected it. The array is only present when there is something to report, and it is never written into the Authentication-Results text.
+
+| Warning                                              | Meaning                                                                                                                                                       |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `rsa-sha1`                                           | The signature uses rsa-sha1, which RFC 8301 section 3.1 does not allow. A domain can refuse it with `h=sha256` in its key record, which applies in both modes |
+| `tag-syntax`                                         | Duplicate tags, upper case tag names, a malformed `t=`, `x=` or `l=` value, or a `d=` or `s=` that is not a domain name                                       |
+| `missing-v`, `missing-h` (and the other `missing-*`) | A required tag is missing. Without `h=` the default header list is used, which includes From                                                                  |
+| `invalid-v`                                          | `v=` is not `1`                                                                                                                                               |
+| `identity-domain`                                    | The `i=` domain is not `d=` or its subdomain, or it is a subdomain while the key record has `t=s`                                                             |
+| `invalid-expiration`                                 | `x=` is equal to `t=`. An `x=` before `t=` is `neutral (invalid expiration)` in both modes                                                                    |
+| `query-method`                                       | `q=` does not list `dns/txt`                                                                                                                                  |
+| `key-syntax`                                         | The key record is not valid tag-list syntax                                                                                                                   |
+| `key-v-syntax`                                       | The key record `v=` is not the first tag, or not exactly `DKIM1`                                                                                              |
+| `key-type-inferred`                                  | An Ed25519 key was recognized from its length, the key record has no `k=ed25519`                                                                              |
+
+A negative `l=` value is read as no limit in the default mode, so the whole body is covered and nothing is left unsigned. Strict mode reports it as a syntax error.
+
+## Tag parsing
+
+DKIM-Signature headers and key records are tag-lists (RFC 6376 section 3.2): semicolons separate the tags, and quotes, parentheses and backslashes are ordinary value characters. A note such as `n=it's` or a copied header in `z=` with a parenthesis in it does not affect the other tags. When the signature is hashed, only the value of its own `b=` tag is emptied, even when another tag contains the text `b=`.
 
 ## Example Output
 

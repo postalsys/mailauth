@@ -103,6 +103,7 @@ program
     )
     .option('-x, --max-lookups <number>', 'Maximum allowed DNS lookups during SPF checks. Defaults to 10.', numberArg, 10)
     .option('-z, --max-void-lookups <number>', 'Maximum allowed DNS lookups that return no data (void lookups) during SPF checks. Defaults to 2.', numberArg, 2)
+    .option('--strict', 'Follow the RFCs exactly instead of the lenient defaults (for example, reject rsa-sha1 DKIM signatures).')
     .action(runCommand(commandReport, 'Failed to generate report for the input message.'));
 
 program
@@ -113,7 +114,9 @@ program
     .requiredOption('-k, --private-key <file>', 'Path to the private key file used for signing.')
     .requiredOption('-d, --domain <domain>', 'Domain name to use in the DKIM signature (d= tag).')
     .requiredOption('-s, --selector <selector>', 'Selector to use in the DKIM signature (s= tag).')
-    .option('-a, --algo <algorithm>', 'Signing algorithm. Defaults to "rsa-sha256" or "ed25519-sha256" depending on the private key type.', 'rsa-sha256')
+    // no default value: without one the algorithm follows the key type, so an ed25519 key
+    // signs with ed25519-sha256 as the description says
+    .option('-a, --algo <algorithm>', 'Signing algorithm. Defaults to "rsa-sha256" or "ed25519-sha256" depending on the private key type.')
     .option('-c, --canonicalization <method>', 'Canonicalization method (c= tag). Defaults to "relaxed/relaxed".', 'relaxed/relaxed')
     .option('-t, --time <timestamp>', 'Signing time as a UNIX timestamp (t= tag). Defaults to the current time.', numberArg)
     .option(
@@ -123,6 +126,7 @@ program
     )
     .option('-h, --header-fields <fields>', 'Colon-separated list of header field names to include in the signature (h= tag).')
     .option('-o, --headers-only', 'If set, outputs only the DKIM signature headers without the message body.')
+    .option('--strict', 'Follow the RFCs exactly (for example, refuse to sign with rsa-sha1 or with an RSA key shorter than 1024 bits).')
     .action(runCommand(commandSign, 'Failed to sign the input message.'));
 
 program
@@ -133,11 +137,8 @@ program
     .requiredOption('-k, --private-key <file>', 'Path to the private key file used for sealing.')
     .requiredOption('-d, --domain <domain>', 'Domain name to use in the ARC seal (d= tag).')
     .requiredOption('-s, --selector <selector>', 'Selector to use in the ARC seal (s= tag).')
-    .option(
-        '-a, --algo <algorithm>',
-        'Sealing algorithm. Defaults to "rsa-sha256" or "ed25519-sha256" depending on the private key type. Note: RFC8617 only allows "rsa-sha256" (a= tag).',
-        'rsa-sha256'
-    )
+    // no default value: without one the algorithm follows the key type
+    .option('-a, --algo <algorithm>', 'Sealing algorithm. Defaults to "rsa-sha256" or "ed25519-sha256" depending on the private key type.')
     .option('-c, --canonicalization <method>', 'Canonicalization method. Note: RFC8617 only allows "relaxed/relaxed" (c= tag).', 'relaxed/relaxed')
     .option('-t, --time <timestamp>', 'Sealing time as a UNIX timestamp (t= tag). Defaults to the current time.', numberArg)
     .option('-h, --header-fields <fields>', 'Colon-separated list of header field names to include in the seal (h= tag).')
@@ -154,6 +155,7 @@ program
         'Path to a JSON file with cached DNS responses. When provided, DNS queries use these cached responses instead of performing actual DNS lookups.'
     )
     .option('-o, --headers-only', 'If set, outputs only the ARC seal headers without the message body.')
+    .option('--strict', 'Follow the RFCs exactly instead of the lenient defaults.')
     .addOption(
         rejectRepeated(
             new Option(
@@ -231,6 +233,12 @@ program
     .option('-o, --headers-only', 'If set, outputs only the SPF authentication header.')
     .option('-x, --max-lookups <number>', 'Maximum allowed DNS lookups during SPF checks. Defaults to 10.', numberArg, 10)
     .option('-z, --max-void-lookups <number>', 'Maximum allowed DNS lookups that return no data (void lookups) during SPF checks. Defaults to 2.', numberArg, 2)
+    .option(
+        '--max-elapsed-time <ms>',
+        'Maximum time in milliseconds for the whole SPF evaluation, after which the result is temperror. Not limited by default.',
+        numberArg
+    )
+    .option('--strict', 'Follow RFC 7208 exactly instead of the lenient defaults.')
     .action(runCommand(commandSpf, 'Failed to verify SPF for the email address.'));
 
 program
