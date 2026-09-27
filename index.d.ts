@@ -56,6 +56,13 @@ export interface AuthenticateOptions {
     minBitLength?: number;
 
     /**
+     * If true, rsa-sha1 DKIM signatures get `policy` (weak-algorithm) as in strict mode and are
+     * not counted for DMARC, while every other check keeps the lenient default. Verification
+     * only (default: false)
+     */
+    rejectRsaSha1?: boolean;
+
+    /**
      * Custom DNS resolver function
      */
     resolver?: DNSResolver;
@@ -1215,6 +1222,12 @@ export interface DKIMVerifyOptions {
      * Minimal allowed public key length in bits (default: 1024)
      */
     minBitLength?: number;
+
+    /**
+     * If true, rsa-sha1 signatures get `policy` (weak-algorithm) as in strict mode, while every
+     * other check keeps the lenient default (default: false)
+     */
+    rejectRsaSha1?: boolean;
 
     /**
      * Current time for signature expiration checks

@@ -136,6 +136,17 @@ describe('authenticate Tests', () => {
             expect(result.dmarc.status.result).to.equal('fail');
         });
 
+        it('Should pass rejectRsaSha1 to the DKIM verification and keep the lenient defaults', async () => {
+            const result = await run(await signWith('rsa-sha1'), { rejectRsaSha1: true });
+            expect(result.dkim.results[0].status.result).to.equal('policy');
+            expect(result.dkim.results[0].status.policy).to.deep.equal({ 'dkim-rules': 'weak-algorithm' });
+            // the only DKIM signature does not count, so DMARC has nothing aligned
+            expect(result.dmarc.status.result).to.equal('fail');
+            // everything else is the default mode, for example the header order and header.i without header.d
+            expect(result.headers).to.match(/^Received-SPF: /);
+            expect(result.dkim.results[0].info).to.match(/^dkim=policy \(weak algorithm\) policy\.dkim-rules=weak-algorithm header\.i=@mail\.example\.com /);
+        });
+
         it('Should put Authentication-Results above Received-SPF only in strict mode', async () => {
             // RFC 8601 section 5: above any other trace header field
             let result = await run(await signWith('rsa-sha256'));
