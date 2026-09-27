@@ -1,5 +1,18 @@
 # Changelog
 
+## [7.1.0](https://github.com/postalsys/mailauth/compare/v7.0.0...v7.1.0) (2026-09-27)
+
+
+### Features
+
+* **cli:** add --reject-rsa-sha1 to the report command ([#140](https://github.com/postalsys/mailauth/issues/140)) ([fc8e965](https://github.com/postalsys/mailauth/commit/fc8e9651e304ff6d9f3249e2f3c1db7e481c7d8c))
+* **dkim:** add rejectRsaSha1 to reject rsa-sha1 signatures without the strict mode ([#138](https://github.com/postalsys/mailauth/issues/138)) ([92d2c23](https://github.com/postalsys/mailauth/commit/92d2c23027d443dc62dc93a49b54d561beb3f2ed))
+
+
+### Bug Fixes
+
+* **dmarc:** count a subdomain with a dangling CNAME as existing for np ([#137](https://github.com/postalsys/mailauth/issues/137)) ([b38ecef](https://github.com/postalsys/mailauth/commit/b38ecef53b56e479863dd96cae1a6fe24c970353))
+
 ## [7.0.0](https://github.com/postalsys/mailauth/compare/v6.0.0...v7.0.0) (2026-09-27)
 
 
