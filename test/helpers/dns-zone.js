@@ -16,6 +16,10 @@
 //   - name present with the queried RR type -> return the records
 //   - name present without that RR type     -> NODATA  (err.code = 'ENODATA')
 //   - name absent                           -> NXDOMAIN (err.code = 'ENOTFOUND')
+//   - name with a CNAME, other RR type      -> the answer for the CNAME target, like a recursive
+//                                              resolver (RFC 1034 §3.6.2), so a missing target
+//                                              gives NXDOMAIN (RFC 6604 §3), and a chain of more
+//                                              than 8 CNAMEs, a loop, gives SERVFAIL
 //
 // The returned resolver exposes a `calls` array ([{ name, type }, ...]) so tests
 // can assert the query sequence and the 8-query tree-walk cap.
@@ -25,9 +29,7 @@ const zoneResolver = zone => {
         normalized.set(name.toLowerCase().replace(/\.$/, ''), records);
     }
 
-    const resolver = async (name, type) => {
-        resolver.calls.push({ name, type });
-
+    const lookup = (name, type, hops) => {
         const key = String(name).toLowerCase().replace(/\.$/, '');
         const node = normalized.get(key);
 
@@ -37,6 +39,15 @@ const zoneResolver = zone => {
             throw err;
         }
 
+        if (node.CNAME && node.CNAME.length && type !== 'CNAME') {
+            if (hops >= 8) {
+                const err = new Error(`SERVFAIL: ${name}`);
+                err.code = 'ESERVFAIL';
+                throw err;
+            }
+            return lookup(node.CNAME[0], type, hops + 1);
+        }
+
         if (node[type] && node[type].length) {
             return node[type];
         }
@@ -44,6 +55,11 @@ const zoneResolver = zone => {
         const err = new Error(`NODATA: ${name} ${type}`);
         err.code = 'ENODATA';
         throw err;
+    };
+
+    const resolver = async (name, type) => {
+        resolver.calls.push({ name, type });
+        return lookup(name, type, 0);
     };
 
     resolver.calls = [];
