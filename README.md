@@ -85,6 +85,7 @@ await authenticate(message [, options])
     - **trustReceived** (`boolean`): If `true`, parses `ip` and `helo` from the latest `Received` header if not provided. The IP address is the connecting address from the TCP-info comment of the `from` clause (RFC 5321 section 4.4), never an address literal the client sent in its HELO. Postfix, Sendmail, Exim (including its `from [ip] (helo=...)` form) and similar formats are understood. Defaults to `false`.
     - **mta** (`string`): Hostname of the server performing the authentication. Defaults to `os.hostname()`. Used as the authserv-id of the Authentication headers, so it should be a host name: an internationalized name is converted to A-labels, and a value that is not a valid token (for example one with a space or a semicolon) is written as a quoted string. With `strict` such a value throws an error with the code `EINVALIDAUTHSERVID` instead.
     - **minBitLength** (`number`): Minimum allowed bits for RSA public keys. Defaults to `1024`. Keys with fewer bits will fail validation.
+    - **rejectRsaSha1** (`boolean`): If `true`, an rsa-sha1 DKIM signature gives `dkim=policy` with `policy.dkim-rules=weak-algorithm`, as in strict mode, and is not counted for DMARC. Every other check keeps the lenient default. It only affects verification. Defaults to `false`, and `strict` implies it.
     - **disableArc** (`boolean`): If `true`, skips ARC checks.
     - **disableDmarc** (`boolean`): If `true`, skips DMARC checks, also disabling dependent checks like BIMI.
     - **disableBimi** (`boolean`): If `true`, skips BIMI checks.
@@ -151,7 +152,7 @@ You can see the full output, including structured data for DKIM, SPF, DMARC, and
 
 By default mailauth is lenient where accepting non-conforming input costs little security, mostly weak signatures that still bind the signing domain to the content. With `strict: true` every check follows its RFC exactly.
 
-Whatever the default mode accepts that strict mode would reject is marked in a `warnings` array on the affected result (for example `dkim.results[0].status.warnings` is `['rsa-sha1']`), so that you can apply your own policy without switching modes. The markers are never written into the generated headers.
+Whatever the default mode accepts that strict mode would reject is marked in a `warnings` array on the affected result (for example `dkim.results[0].status.warnings` is `['rsa-sha1']`), so that you can apply your own policy without switching modes. The markers are never written into the generated headers. For rsa-sha1 verification the `rejectRsaSha1` option applies the strict rule on its own, which also keeps such a signature out of DMARC in `authenticate()`.
 
 Some rules apply in both modes, because breaking them is a defect and not leniency. For DKIM these are: a signature must sign the From header, the key record's `h=` (hash algorithms) and `s=` (service types) restrictions are honored, `ed25519-sha1` is not an algorithm, and signing refuses a domain, selector or identity that would break out of its tag.
 
@@ -296,6 +297,7 @@ const result = await dkimVerify(message [, options]);
 - **options** (optional):
     - **resolver** (`async function`): Custom DNS resolver function. Defaults to `dns.promises.resolve`. A U-label signing domain is converted to A-labels before it is looked up (RFC 8616).
     - **minBitLength** (`number`): Minimum allowed bits for RSA public keys. Defaults to `1024`. A shorter key gives `dkim=policy` with `policy.dkim-rules=weak-key`.
+    - **rejectRsaSha1** (`boolean`): If `true`, an rsa-sha1 signature gives `dkim=policy` with `policy.dkim-rules=weak-algorithm`, as in strict mode, while every other check keeps the lenient default. Signing is not affected. Defaults to `false`, and `strict` implies it.
     - **sender** (`string`): Envelope sender. Defaults to the `Return-Path` header.
     - **curTime** (`Date`): The time to check `t=` and `x=` against. Defaults to now.
     - **strict** (`boolean`): If `true`, follows RFC 6376, RFC 8301 and RFC 8463 exactly. Defaults to `false`. See [Strict mode](#strict-mode).

@@ -91,7 +91,7 @@ Each entry in the `results` array has the following structure:
 | `pass`      | Signature verified successfully                                                                                                                                                            |
 | `fail`      | Signature verification failed (bad signature). In strict mode also a body hash mismatch                                                                                                    |
 | `neutral`   | Signature could not be verified (missing key, expired, body hash mismatch in the default mode, invalid signature)                                                                          |
-| `policy`    | Signature failed policy check (a key shorter than `minBitLength`, or rsa-sha1 in strict mode)                                                                                              |
+| `policy`    | Signature failed policy check (a key shorter than `minBitLength`, or rsa-sha1 in strict mode or with `rejectRsaSha1`)                                                                      |
 | `temperror` | Temporary error (DNS failure)                                                                                                                                                              |
 | `none`      | Message not signed. In the default mode also a message whose only signatures use an unknown algorithm or canonicalization, or have no `d=` or `s=`. Strict mode reports those as `neutral` |
 
@@ -112,7 +112,7 @@ Common values for `status.comment`:
 | `"inappropriate hash algorithm"`                    | The key record `h=` tag does not list the hash algorithm of the signature (both modes)               |
 | `"key not for email"`                               | The key record `s=` tag does not list `email` or `*` (both modes)                                    |
 | `"From field not signed"`                           | The `h=` tag does not include From (both modes, RFC 6376 section 6.1.1)                              |
-| `"weak algorithm"`                                  | Strict mode: rsa-sha1 signature (RFC 8301)                                                           |
+| `"weak algorithm"`                                  | Strict mode or `rejectRsaSha1`: rsa-sha1 signature (RFC 8301)                                        |
 | `"signature syntax error"`                          | Strict mode: the signature is not valid RFC 6376 syntax                                              |
 | `"signature missing required tag"`                  | Strict mode: `v=`, `a=`, `b=`, `bh=`, `d=`, `h=` or `s=` is missing                                  |
 | `"incompatible version"`                            | Strict mode: `v=` is not 1                                                                           |

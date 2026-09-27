@@ -554,6 +554,19 @@ describe('DKIM verification RFC compliance', () => {
         });
     });
 
+    describe('rejectRsaSha1', () => {
+        it('Should reject an rsa-sha1 signature as in strict mode, without a key query', async () => {
+            let outcome = await verify(std('', { algo: 'rsa-sha1' }), { [KEYNAME]: [rsaRec] }, { rejectRsaSha1: true });
+            check(outcome, { result: 'policy', comment: 'weak algorithm', policy: { 'dkim-rules': 'weak-algorithm' }, warnings: ['rsa-sha1'], noDns: true });
+        });
+
+        it('Should keep the other lenient defaults for the same signature', async () => {
+            // a body hash mismatch is neutral by default and fail in strict mode
+            let outcome = await verify(std('', { algo: 'rsa-sha1' }).replace('Joe.', 'Bob.'), { [KEYNAME]: [rsaRec] }, { rejectRsaSha1: true });
+            check(outcome, { result: 'neutral', comment: 'body hash did not verify' });
+        });
+    });
+
     describe('Body length (l=)', () => {
         it('Should report the content after l=0 as unsigned', async () => {
             let msg = std(' l=0;', { l: 0 }) + 'APPENDED\r\n';
