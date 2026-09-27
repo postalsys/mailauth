@@ -87,6 +87,7 @@ mailauth report [options] [email]
 - `--max-lookups number`, `-x number`: Sets the maximum number of DNS lookups for SPF checks. Defaults to `10`.
 - `--max-void-lookups number`, `-z number`: Sets the maximum number of void DNS lookups for SPF checks. Defaults to `2`.
 - `--strict`: Follows the RFCs exactly instead of the lenient defaults, for example an `rsa-sha1` DKIM signature is reported as `dkim=policy`. See [Strict mode](README.md#strict-mode).
+- `--reject-rsa-sha1`: Reports an `rsa-sha1` DKIM signature as `dkim=policy` and does not count it for DMARC, as `--strict` does, while every other check keeps the lenient default.
 
 #### Example
 

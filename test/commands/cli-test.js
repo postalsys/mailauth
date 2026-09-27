@@ -3,6 +3,8 @@
 
 const chai = require('chai');
 const expect = chai.expect;
+const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const util = require('node:util');
 const execFile = util.promisify(require('node:child_process').execFile);
@@ -120,6 +122,33 @@ describe('CLI argument handling', function () {
             expect(err).to.be.an('error');
             expect(err.code).to.equal(1);
             expect(err.stdout).to.not.include('DKIM-Signature');
+        });
+    });
+
+    describe('report', () => {
+        it('should reject rsa-sha1 with --reject-rsa-sha1 only', async () => {
+            let dir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'mailauth-cli-'));
+            try {
+                let { stdout: signature } = await runCli(['sign'].concat(signArgs, ['-a', 'rsa-sha1', '-o', MESSAGE]));
+                let messagePath = path.join(dir, 'message.eml');
+                let cachePath = path.join(dir, 'dns.json');
+                await fs.promises.writeFile(messagePath, Buffer.concat([Buffer.from(signature), await fs.promises.readFile(MESSAGE)]));
+                await fs.promises.writeFile(cachePath, '{}');
+
+                let report = async extra => JSON.parse((await runCli(['report', '-n', cachePath].concat(extra, [messagePath]))).stdout).dkim.results[0];
+
+                // the key is not in the cache, so without the option the signature is neutral
+                let lenient = await report([]);
+                expect(lenient.status.result).to.equal('neutral');
+                expect(lenient.status.comment).to.not.include('body hash');
+                expect(lenient.status.warnings).to.deep.equal(['rsa-sha1']);
+
+                let rejected = await report(['--reject-rsa-sha1']);
+                expect(rejected.status.result).to.equal('policy');
+                expect(rejected.status.policy).to.deep.equal({ 'dkim-rules': 'weak-algorithm' });
+            } finally {
+                await fs.promises.rm(dir, { recursive: true, force: true });
+            }
         });
     });
 });
