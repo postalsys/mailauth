@@ -104,6 +104,7 @@ program
     .option('-x, --max-lookups <number>', 'Maximum allowed DNS lookups during SPF checks. Defaults to 10.', numberArg, 10)
     .option('-z, --max-void-lookups <number>', 'Maximum allowed DNS lookups that return no data (void lookups) during SPF checks. Defaults to 2.', numberArg, 2)
     .option('--strict', 'Follow the RFCs exactly instead of the lenient defaults (for example, reject rsa-sha1 DKIM signatures).')
+    .option('--reject-rsa-sha1', 'Report rsa-sha1 DKIM signatures as dkim=policy and do not count them for DMARC, while keeping the other lenient defaults.')
     .action(runCommand(commandReport, 'Failed to generate report for the input message.'));
 
 program
