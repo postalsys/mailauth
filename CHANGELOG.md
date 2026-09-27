@@ -1,5 +1,17 @@
 # Changelog
 
+## [7.0.0](https://github.com/postalsys/mailauth/compare/v6.0.0...v7.0.0) (2026-09-27)
+
+
+### ⚠ BREAKING CHANGES
+
+* **dmarc:** the DMARC result no longer has pct, which is historic in RFC 9989, and BIMI no longer reads it. policy can differ from before for non-existent subdomains (np), for t=y records, and for records with an invalid p, sp or np.
+
+### Features
+
+* **dmarc:** apply np, t and the RFC 9989 rules for invalid policies ([c11740c](https://github.com/postalsys/mailauth/commit/c11740c0c9b18a9329e82c5eacfb63cfb3a3420a))
+* fix RFC compliance findings and add a strict mode ([#136](https://github.com/postalsys/mailauth/issues/136)) ([62e0dd1](https://github.com/postalsys/mailauth/commit/62e0dd16359b3964cb579230035a980bf054a06f))
+
 ## [6.0.0](https://github.com/postalsys/mailauth/compare/v5.0.3...v6.0.0) (2026-09-26)
 
 
