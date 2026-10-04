@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.1.1](https://github.com/postalsys/mailauth/compare/v7.1.0...v7.1.1) (2026-10-04)
+
+
+### Bug Fixes
+
+* **deps:** update libmime to 5.4.7 and nodemailer to 10.0.14 ([0c39b00](https://github.com/postalsys/mailauth/commit/0c39b007889bb58aaf55d39d1867fc7b0df73158))
+
 ## [7.1.0](https://github.com/postalsys/mailauth/compare/v7.0.0...v7.1.0) (2026-09-27)
 
 
