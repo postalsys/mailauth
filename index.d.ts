@@ -433,6 +433,14 @@ export interface DKIMVerifyResult {
     fromFields: number;
 
     /**
+     * Syntax of the From header fields: "valid" (RFC 5322), "lax" (accepted only by the lenient
+     * parsing, such as an unquoted comma in a display name) or "invalid" (no reliable addresses,
+     * for example text after the angle-addr). DMARC is not evaluated for an "invalid" field, nor
+     * for a "lax" one in strict mode
+     */
+    fromSyntax: 'valid' | 'lax' | 'invalid';
+
+    /**
      * Domain from Return-Path header
      */
     envelopeFrom: string | false;
@@ -1342,6 +1350,13 @@ export interface DMARCOptions {
      * validation is not possible (reason "multiple-from-fields")
      */
     fromFields?: number;
+
+    /**
+     * Syntax of the From header field the addresses came from (see DKIMVerifyResult.fromSyntax).
+     * With "invalid", or "lax" in strict mode, DMARC validation is not possible (reason
+     * "invalid-author-domain"). "lax" adds the "from-syntax" warning in the default mode
+     */
+    fromSyntax?: 'valid' | 'lax' | 'invalid';
 
     /**
      * Domains that passed SPF

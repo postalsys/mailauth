@@ -633,7 +633,8 @@ describe('DKIM verification RFC compliance', () => {
         it('Should keep the full addr-spec', async () => {
             // the domain is after the last "@", the DMARC module reads it from there
             expect(await fromOf('"a@good.example"@evil.example')).to.deep.equal(['"a@good.example"@evil.example']);
-            expect(await fromOf('a@good.example <b@evil.example>')).to.deep.equal(['b@evil.example']);
+            // an addr-spec used as a display name is an address a reader may take for the author
+            expect(await fromOf('a@good.example <b@evil.example>')).to.deep.equal(['a@good.example', 'b@evil.example']);
         });
     });
 

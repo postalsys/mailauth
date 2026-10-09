@@ -18,7 +18,7 @@ const { dmarc } = await authenticate(message, {
 });
 ```
 
-The author domain is the domain of the addr-spec in the From header (RFC 9989 5.3.1, RFC 5322 3.4.1). An "@" inside a quoted local-part (`"ceo@x"@bank.example`) or an obsolete source route (`<@relay.example:ceo@bank.example>`) does not change it. It is lower-cased, converted to an A-label, and a trailing dot is ignored. Several From addresses are evaluated when they all have the same domain. When there is no domain, or more than one, or a mailbox has no usable domain, or the message has more than one From header field, DMARC validation is not possible: `dmarc()` returns `false` and `authenticate()` returns `dmarc: false`, as for a message without a From address. The lower level `evaluateDmarc()` from `mailauth/lib/dmarc` also returns `reason` (`"no-author-domain"`, `"multiple-author-domains"`, `"invalid-author-domain"` or `"multiple-from-fields"`) and `authorDomains` in that case. RFC 9989 11.5 warns that such messages are often abusive, so a receiver should handle them by local policy instead of treating them as mail without DMARC.
+The author domain is the domain of the addr-spec in the From header (RFC 9989 5.3.1, RFC 5322 3.4.1). An "@" inside a quoted local-part (`"ceo@x"@bank.example`) or an obsolete source route (`<@relay.example:ceo@bank.example>`) does not change it. The From header is parsed by the RFC 5322 grammar, including the obsolete syntax of section 4, so whitespace or a comment between the atoms of the domain is removed (`ceo@bank (x).example` is `bank.example`). A From header that does not follow the grammar, for example text after the angle-addr or two addresses without a comma between them (`<bob@evil.example> alice@bank.example`), has no reliable author domain and gives `invalid-author-domain`. The default mode accepts a few common deviations and lists `"from-syntax"` in `warnings`: an unquoted comma in a display name (`Doe, John <john@example.com>`), a group without the closing `;`, a domain with a trailing dot, a domain literal in a display name, and an address used as a display name (`john@example.com <john@example.com>`, where both addresses count as author addresses). Strict mode treats these as `invalid-author-domain`. It is lower-cased, converted to an A-label, and a trailing dot is ignored. Several From addresses are evaluated when they all have the same domain. When there is no domain, or more than one, or a mailbox has no usable domain, or the message has more than one From header field, DMARC validation is not possible: `dmarc()` returns `false` and `authenticate()` returns `dmarc: false`, as for a message without a From address. The lower level `evaluateDmarc()` from `mailauth/lib/dmarc` also returns `reason` (`"no-author-domain"`, `"multiple-author-domains"`, `"invalid-author-domain"` or `"multiple-from-fields"`) and `authorDomains` in that case. RFC 9989 11.5 warns that such messages are often abusive, so a receiver should handle them by local policy instead of treating them as mail without DMARC.
 
 ```javascript
 const { dmarc } = require('mailauth/lib/dmarc');
@@ -27,6 +27,7 @@ const result = await dmarc({
     headerFrom: 'user@example.com', // or a list of From addresses
     spfDomains: ['example.com'], // the MAIL FROM domain, if SPF passed
     dkimDomains: [{ domain: 'example.com' }], // signing domains of passing DKIM signatures
+    fromSyntax: 'valid', // optional, the From header syntax ('valid', 'lax' or 'invalid'), see above
     strict: false, // true for the RFC tag-list rules and no header.d, see below
     resolver // optional, defaults to dns.promises.resolve
 });
@@ -37,6 +38,7 @@ const result = await dmarc({
 With `strict: true`, which `authenticate(message, { strict: true })` passes on:
 
 - Records are parsed by the tag-list rules of RFC 6376 3.2 that DMARC uses (RFC 9989 4.7). Tag names are case sensitive, so `P=reject` is an unknown tag (only the version tag may be `V`, which the DMARC ABNF allows), and a record with a duplicated tag is invalid and ignored, as if it was not published. By default tag names are case-folded and the last of duplicated tags wins, and the result lists `"tag-case"` or `"duplicate-tag"` in `warnings`.
+- A From header that only the lenient parsing accepts (see above) gives `invalid-author-domain` instead of the `"from-syntax"` warning.
 - `status.header.d` is not set and `header.d` is left out of the Authentication-Results entry, because it is not a registered property for `dmarc` (RFC 9989 9.1). `policyDomain` still has the domain.
 
 ## Result Object Fields

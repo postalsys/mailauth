@@ -144,7 +144,7 @@ You can see the full output, including structured data for DKIM, SPF, DMARC, and
 
 **Note:** The `receivedChain` property is an array of parsed representations of the `Received:` headers.
 
-**Note:** `dmarc` is `false` when DMARC can not be evaluated because the From header has no domain or more than one (RFC 9989 section 5.3.1). `dmarcSkipReason` then says why: `no-author-domain`, `multiple-author-domains`, `invalid-author-domain` (a From mailbox has no usable domain) or `multiple-from-fields` (the message has more than one From header field, which RFC 5322 does not allow). RFC 9989 section 11.5 suggests treating such a message as suspicious.
+**Note:** `dmarc` is `false` when DMARC can not be evaluated because the From header has no domain or more than one (RFC 9989 section 5.3.1). `dmarcSkipReason` then says why: `no-author-domain`, `multiple-author-domains`, `invalid-author-domain` (a From mailbox has no usable domain, or the From header is malformed) or `multiple-from-fields` (the message has more than one From header field, which RFC 5322 does not allow). RFC 9989 section 11.5 suggests treating such a message as suspicious.
 
 **Note:** An ARC set is only added while the chain has fewer than 50 sets (RFC 8617 section 4.2.1). Otherwise the message is not sealed and `arc.sealErrors` says why.
 

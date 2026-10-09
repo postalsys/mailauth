@@ -95,6 +95,19 @@ describe('DMARC Author Domain extraction (RFC 9989 5.3.1, RFC 5322 3.4.1)', () =
             }
         });
 
+        it('Should report a domain part that is not a domain name as invalid', () => {
+            for (let headerFrom of ['ceo@bank　.example', ['ceo@bank .example'], 'u@exa"mple.com']) {
+                expect(getAuthorDomain(headerFrom).reason, JSON.stringify(headerFrom)).to.equal('invalid-author-domain');
+            }
+        });
+
+        it('Should report a From field that could not be parsed as invalid', () => {
+            let author = getAuthorDomain(['bob@evil.example'], 1, true);
+            expect(author.authorDomain).to.not.exist;
+            expect(author.reason).to.equal('invalid-author-domain');
+            expect(getAuthorDomain([], 1, true).reason).to.equal('invalid-author-domain');
+        });
+
         it('Should not merge the addresses of several From header fields', () => {
             // RFC 5322 allows one From field. DKIM signs the bottom-most one (RFC 6376 5.4.2)
             // while a mail client may show the top one, so a same-domain pair is no Author Domain
