@@ -1,5 +1,58 @@
 # Changelog
 
+## [7.2.0](https://github.com/postalsys/mailauth/compare/v7.1.1...v7.2.0) (2026-10-09)
+
+
+### Features
+
+* **bimi:** apply the exact Assertion Record syntax in strict mode ([85c4363](https://github.com/postalsys/mailauth/commit/85c4363f3238ce0ba80cbece81abf5af92bb0840)), closes [#166](https://github.com/postalsys/mailauth/issues/166)
+* **dkim:** over-sign header field names repeated in headerList ([021218f](https://github.com/postalsys/mailauth/commit/021218fd733ccb86f941e8aa9a80e2add7967b0e)), closes [#153](https://github.com/postalsys/mailauth/issues/153)
+
+
+### Bug Fixes
+
+* **arc:** check a large authResults value without running out of stack ([624e8a3](https://github.com/postalsys/mailauth/commit/624e8a3bfd881d81f783f496a1ffc7c8a24bebba))
+* **arc:** do not modify the caller's seal options ([5c57a9d](https://github.com/postalsys/mailauth/commit/5c57a9dd1be2b24dbb32ee78b04f2ca41f47c26d)), closes [#159](https://github.com/postalsys/mailauth/issues/159)
+* **arc:** fail a chain whose d= is not a host name ([2f0babe](https://github.com/postalsys/mailauth/commit/2f0babeac0fe41b17bde53c110d54c3f04a748b3))
+* **arc:** refuse an ARC-Authentication-Results value that breaks the header ([43713b4](https://github.com/postalsys/mailauth/commit/43713b4aa9cd7e3efff5bc35e11385d0c4be758a)), closes [#161](https://github.com/postalsys/mailauth/issues/161)
+* **arc:** seal a malformed chain with cv=fail ([c9a4e85](https://github.com/postalsys/mailauth/commit/c9a4e8555d7e1f525d67d855a3a6737d69124dbe)), closes [#162](https://github.com/postalsys/mailauth/issues/162)
+* **arc:** seal with the computed chain status and AAR in authenticate() ([d6f7efc](https://github.com/postalsys/mailauth/commit/d6f7efcd35fa14489c3adc089b430818e5bab806)), closes [#160](https://github.com/postalsys/mailauth/issues/160)
+* **auth-results:** write a U-label domain unquoted in strict mode ([a24ffd6](https://github.com/postalsys/mailauth/commit/a24ffd631bdae835edcbe65a28e357d33f60be00)), closes [#169](https://github.com/postalsys/mailauth/issues/169)
+* **bimi:** check the SVG Tiny PS document rules, add strict mode ([4cf9bfc](https://github.com/postalsys/mailauth/commit/4cf9bfc31ece9b8f2a477db841808c038da65b49)), closes [#165](https://github.com/postalsys/mailauth/issues/165)
+* **bimi:** count From addresses with the parser of the DMARC check ([0fb165e](https://github.com/postalsys/mailauth/commit/0fb165eb00a06b0fd372e7bb757e99528479f583))
+* **bimi:** ignore an invalid BIMI-Selector header ([7f62164](https://github.com/postalsys/mailauth/commit/7f6216476b2eda34c91dde23f3c047e07ed67471)), closes [#167](https://github.com/postalsys/mailauth/issues/167)
+* **bimi:** read the avp= avatar preference tag ([f577b50](https://github.com/postalsys/mailauth/commit/f577b5056476a5ffda325d44e7cfe0d7a8eb7547)), closes [#164](https://github.com/postalsys/mailauth/issues/164)
+* **bimi:** report validateVMC() results in Authentication-Results ([6b03caa](https://github.com/postalsys/mailauth/commit/6b03caa9ffba2bc0e1d86177ad5a2b1f4f9d55d6)), closes [#168](https://github.com/postalsys/mailauth/issues/168)
+* **bimi:** restrict logo and evidence downloads ([658d8c2](https://github.com/postalsys/mailauth/commit/658d8c22fb3087a37f5ccbd4f0b1e874d7f53fd2))
+* **bimi:** validate logos against an SVG Tiny PS element allowlist ([0cf9679](https://github.com/postalsys/mailauth/commit/0cf9679c3fb185a63fd3541350a62cf68eda04c8))
+* **bimi:** validate the logo from l= before building BIMI headers ([bdc7b90](https://github.com/postalsys/mailauth/commit/bdc7b907f329c1af1a983e7f845e901621aaee09))
+* **dkim:** check the key type against a= in both modes ([4b9ef52](https://github.com/postalsys/mailauth/commit/4b9ef52f446486611b622e2f1e2fb82656e85223)), closes [#146](https://github.com/postalsys/mailauth/issues/146)
+* **dkim:** encode i= as dkim-quoted-printable and check its syntax ([59f63e1](https://github.com/postalsys/mailauth/commit/59f63e1334565605979d4e9d8b8d364cd1f9c365)), closes [#150](https://github.com/postalsys/mailauth/issues/150)
+* **dkim:** never align a signature when From has no single Author Domain ([ac882e2](https://github.com/postalsys/mailauth/commit/ac882e26bca1dd0c88ee7afc3cffecbb4d47db51))
+* **dkim:** parse key records without removing whitespace inside values ([4b40376](https://github.com/postalsys/mailauth/commit/4b4037603d5b45e628f962ae2e986221b4eb4fdb)), closes [#149](https://github.com/postalsys/mailauth/issues/149)
+* **dkim:** read the canonicalization option like a c= value ([1383056](https://github.com/postalsys/mailauth/commit/1383056d50220a0f61698964f35493a381335143)), closes [#152](https://github.com/postalsys/mailauth/issues/152)
+* **dkim:** reject a d= that is not a host name and never align it ([387db0c](https://github.com/postalsys/mailauth/commit/387db0c639903fab54fa49d2674329664e7ffeca))
+* **dkim:** reject an l= larger than the canonicalized body in strict mode ([5139833](https://github.com/postalsys/mailauth/commit/5139833901adeef37443d53fd3ad8960188dabae)), closes [#147](https://github.com/postalsys/mailauth/issues/147)
+* **dkim:** report a key record name that can not exist as no key ([d4f60ca](https://github.com/postalsys/mailauth/commit/d4f60cace9e8a555964a140476aa616aa2de005c)), closes [#145](https://github.com/postalsys/mailauth/issues/145)
+* **dkim:** report signatures that are skipped for a missing key ([bda5402](https://github.com/postalsys/mailauth/commit/bda540242cc93e6cefe73c5b75efbb8f41544163)), closes [#151](https://github.com/postalsys/mailauth/issues/151)
+* **dkim:** validate the c= syntax and canonicalize with the parsed value ([5da00a5](https://github.com/postalsys/mailauth/commit/5da00a553f45482e6ef5209d6894c196401a0fbc)), closes [#148](https://github.com/postalsys/mailauth/issues/148)
+* **dmarc:** discard a policy record with whitespace before v=DMARC1 in strict mode ([d84decf](https://github.com/postalsys/mailauth/commit/d84decf7db25efd3385d0102410d0e2aa1f458d7)), closes [#143](https://github.com/postalsys/mailauth/issues/143)
+* **dmarc:** discard record fragments without "=" ([0cdcf56](https://github.com/postalsys/mailauth/commit/0cdcf56e1ea9d55c4c614cd7214c74fc783729fb)), closes [#142](https://github.com/postalsys/mailauth/issues/142)
+* **dmarc:** parse the From header by the RFC 5322 grammar ([08da841](https://github.com/postalsys/mailauth/commit/08da8419de7aa987cd04a366c3d04fe6b858d4d9))
+* **dmarc:** reject a From local-part with a domain literal between its words ([ec0af9e](https://github.com/postalsys/mailauth/commit/ec0af9e7adc895170357e408c1598cbdb8f3fc03))
+* **dmarc:** reject an Author Domain with control or format characters ([e1f1bb7](https://github.com/postalsys/mailauth/commit/e1f1bb7e79327e9cc92d665cb85c645cc36ab35f))
+* **mailauth:** use the HELO name from the Received header with trustReceived ([f7e2869](https://github.com/postalsys/mailauth/commit/f7e2869f1b6009863945698b337527be289d3fab)), closes [#156](https://github.com/postalsys/mailauth/issues/156)
+* **mta-sts:** limit retries of a new policy ID while a cached policy is used ([599b988](https://github.com/postalsys/mailauth/commit/599b988b992be4a5b4ddda6b69cfb32565c95924)), closes [#170](https://github.com/postalsys/mailauth/issues/170)
+* **received:** do not guess the client IP when the HELO adds ";" or Exim comments ([49b9a45](https://github.com/postalsys/mailauth/commit/49b9a45422aa8973e4c8b0de7004bfd4ef705a20))
+* **received:** take the client IP only from an unambiguous from clause ([be23ede](https://github.com/postalsys/mailauth/commit/be23edebe3115040367fc77f0c30323fa6726f70))
+* **spf:** accept 0 for maxVoidCount and maxResolveCount ([e1826d7](https://github.com/postalsys/mailauth/commit/e1826d7a25d5f3121b109bed467b4e3834100ded)), closes [#158](https://github.com/postalsys/mailauth/issues/158)
+* **spf:** accept a MAIL FROM or HELO domain with a single trailing dot ([11256ae](https://github.com/postalsys/mailauth/commit/11256ae23a8c653394e5998e7c39c58b5e0ff04d))
+* **spf:** check the expanded explanation string for US-ASCII ([b4e844e](https://github.com/postalsys/mailauth/commit/b4e844e814b368769466dff063246972271a8f36)), closes [#155](https://github.com/postalsys/mailauth/issues/155)
+* **spf:** do not count the %{p} PTR query as a void lookup ([46f3298](https://github.com/postalsys/mailauth/commit/46f3298fcb672a5897d94e6b792219a68091bb9f)), closes [#154](https://github.com/postalsys/mailauth/issues/154)
+* **spf:** report the reason of macro syntax errors in the permerror comment ([d3fe2bf](https://github.com/postalsys/mailauth/commit/d3fe2bfbce43550a27b8dac5a27931e55297203f)), closes [#157](https://github.com/postalsys/mailauth/issues/157)
+* **spf:** split macro values on exactly the delimiters that are listed ([98c32c0](https://github.com/postalsys/mailauth/commit/98c32c09054a6651cacda089c07ddd22ff5fd470))
+* **types:** mark DMARCResult policy fields optional and cite RFC 9989 9.1 ([10dd7fe](https://github.com/postalsys/mailauth/commit/10dd7fee7e7fa8994649ffd7409d97a3a722c316)), closes [#144](https://github.com/postalsys/mailauth/issues/144)
+
 ## [7.1.1](https://github.com/postalsys/mailauth/compare/v7.1.0...v7.1.1) (2026-10-04)
 
 
