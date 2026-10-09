@@ -663,4 +663,116 @@ describe('BIMI SVG Validation Tests', () => {
             expect(validateSvg(Buffer.from(svg))).to.be.true;
         });
     });
+
+    describe('SVG Tiny PS document rules', () => {
+        const svgNs = 'xmlns="http://www.w3.org/2000/svg"';
+
+        const run = (svg, strict) => {
+            let warnings = [];
+            try {
+                validateSvg(Buffer.from(svg), { strict, warnings });
+            } catch (err) {
+                return { error: err, warnings };
+            }
+            return { warnings };
+        };
+
+        it('Should reject a root element without the SVG namespace in both modes', () => {
+            for (let svg of [
+                '<svg xmlns="http://example.com/not-svg" version="1.2" baseProfile="tiny-ps"><title>t</title></svg>',
+                '<svg version="1.2" baseProfile="tiny-ps"><title>t</title></svg>',
+                '<x:svg xmlns:x="http://example.com/not-svg" version="1.2" baseProfile="tiny-ps"><title>t</title></x:svg>'
+            ]) {
+                for (let strict of [false, true]) {
+                    expect(run(svg, strict).error?.code, svg).to.equal('INVALID_SVG_FILE');
+                }
+            }
+        });
+
+        it('Should accept a prefixed root element in the SVG namespace', () => {
+            const svg = '<s:svg xmlns:s="http://www.w3.org/2000/svg" version="1.2" baseProfile="tiny-ps"><s:title>t</s:title></s:svg>';
+            expect(run(svg, true).error).to.not.exist;
+        });
+
+        const laxCases = {
+            'missing version': [`<svg ${svgNs} baseProfile="tiny-ps"><title>t</title></svg>`, 'INVALID_SVG_VERSION', 'svg-version'],
+            'other version': [`<svg ${svgNs} version="1.1" baseProfile="tiny-ps"><title>t</title></svg>`, 'INVALID_SVG_VERSION', 'svg-version'],
+            'two titles': [
+                `<svg ${svgNs} version="1.2" baseProfile="tiny-ps"><title>t</title><title>u</title></svg>`,
+                'LOGO_MULTIPLE_TITLES',
+                'svg-title-count'
+            ],
+            'title that is not the first child': [
+                `<svg ${svgNs} version="1.2" baseProfile="tiny-ps"><desc>d</desc><title>t</title></svg>`,
+                'LOGO_INVALID_ELEMENT',
+                'svg-title-position'
+            ],
+            'nested title': [
+                `<svg ${svgNs} version="1.2" baseProfile="tiny-ps"><title>t</title><g><title>u</title></g></svg>`,
+                'LOGO_INVALID_ELEMENT',
+                'svg-title-position'
+            ],
+            'zoomAndPan="magnify"': [
+                `<svg ${svgNs} version="1.2" baseProfile="tiny-ps" zoomAndPan="magnify"><title>t</title></svg>`,
+                'LOGO_INVALID_ATTRIBUTE',
+                'svg-attribute-value'
+            ],
+            'externalResourcesRequired="true"': [
+                `<svg ${svgNs} version="1.2" baseProfile="tiny-ps" externalResourcesRequired="true"><title>t</title></svg>`,
+                'LOGO_INVALID_ATTRIBUTE',
+                'svg-attribute-value'
+            ],
+            'editable text': [
+                `<svg ${svgNs} version="1.2" baseProfile="tiny-ps"><title>t</title><text editable="simple">x</text></svg>`,
+                'LOGO_INVALID_ATTRIBUTE',
+                'svg-attribute-value'
+            ],
+            'empty desc': [`<svg ${svgNs} version="1.2" baseProfile="tiny-ps"><title>t</title><desc> </desc></svg>`, 'LOGO_INVALID_CONTENT', 'svg-empty-desc'],
+            'element outside the profile': [
+                `<svg ${svgNs} version="1.2" baseProfile="tiny-ps"><title>t</title><clipPath id="c"><rect width="1" height="1"/></clipPath></svg>`,
+                'LOGO_INVALID_ELEMENT',
+                'svg-element'
+            ],
+            'element in another namespace': [
+                `<svg ${svgNs} xmlns:i="http://www.inkscape.org/namespaces/inkscape" version="1.2" baseProfile="tiny-ps"><title>t</title><i:grid/></svg>`,
+                'LOGO_INVALID_ELEMENT',
+                'svg-foreign-element'
+            ],
+            'element in metadata': [
+                `<svg ${svgNs} xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" version="1.2" baseProfile="tiny-ps"><title>t</title><metadata><rdf:RDF/></metadata></svg>`,
+                'LOGO_INVALID_ELEMENT',
+                'svg-metadata-content'
+            ]
+        };
+
+        for (let [name, [svg, code, warning]] of Object.entries(laxCases)) {
+            it(`Should accept ${name} with a warning, and reject it in strict mode`, () => {
+                let lax = run(svg, false);
+                expect(lax.error).to.not.exist;
+                expect(lax.warnings).to.deep.equal([warning]);
+
+                let strict = run(svg, true);
+                expect(strict.error?.code).to.equal(code);
+            });
+        }
+
+        it('Should accept zoomAndPan="disable" and the example document of the profile in strict mode', () => {
+            const svg = `<?xml version="1.0"?>
+<svg width="400px" height="400px" xmlns="http://www.w3.org/2000/svg"
+    version="1.2" baseProfile="tiny-ps"
+    zoomAndPan="disable" externalResourcesRequired="false">
+  <title>Example, Inc.</title>
+  <desc>Logo for Example, Inc.</desc>
+  <rect x="1" y="1" width="399" height="399" fill="teal"
+     stroke="gray" stroke-width="9"/>
+  <circle cx="200" cy="200" r="125" fill="white"
+     stroke="black" stroke-width="2"/>
+  <polyline fill="gray" stroke="silver" stroke-width="9"
+     points="40,30 25,40 100,330 310,270 290,250 120,300 40,26"/>
+</svg>`;
+            let result = run(svg, true);
+            expect(result.error).to.not.exist;
+            expect(result.warnings).to.deep.equal([]);
+        });
+    });
 });

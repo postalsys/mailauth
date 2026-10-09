@@ -119,23 +119,25 @@ const vmcResult = await validateVMC(bimiResult, options);
 
 ### Options
 
-| Option            | Type         | Default  | Description                                                                             |
-| ----------------- | ------------ | -------- | --------------------------------------------------------------------------------------- |
-| `now`             | `Date`       | now      | Time used for the certificate validity checks (passed to `@postalsys/vmc`)              |
-| `maxLogoSize`     | `number`     | `65536`  | Maximum size of the logo file in bytes, also the limit for an uncompressed SVGZ file    |
-| `maxEvidenceSize` | `number`     | `262144` | Maximum size of the evidence document in bytes                                          |
-| `timeout`         | `number`     | `30000`  | Time limit in milliseconds for each download, including redirects and the response body |
-| `dispatcher`      | `Dispatcher` |          | undici dispatcher for the downloads, for example to use a proxy                         |
+| Option            | Type         | Default  | Description                                                                                                      |
+| ----------------- | ------------ | -------- | ---------------------------------------------------------------------------------------------------------------- |
+| `strict`          | `boolean`    | `false`  | Validate the logo files exactly against the SVG Tiny PS profile, see [Logo SVG Validation](#logo-svg-validation) |
+| `now`             | `Date`       | now      | Time used for the certificate validity checks (passed to `@postalsys/vmc`)                                       |
+| `maxLogoSize`     | `number`     | `65536`  | Maximum size of the logo file in bytes, also the limit for an uncompressed SVGZ file                             |
+| `maxEvidenceSize` | `number`     | `262144` | Maximum size of the evidence document in bytes                                                                   |
+| `timeout`         | `number`     | `30000`  | Time limit in milliseconds for each download, including redirects and the response body                          |
+| `dispatcher`      | `Dispatcher` |          | undici dispatcher for the downloads, for example to use a proxy                                                  |
 
 Downloads only use HTTPS URLs whose host is a domain name. Redirects are followed up to 3 times when the target is such a URL as well, and the body is read up to the size limit only (section 7.6 of the draft allows a retrieval limit). The limits also apply to `locationPath` and `authorityPath` buffers.
 
 ### VMC Result Object
 
-| Field       | Type     | Description                                             |
-| ----------- | -------- | ------------------------------------------------------- |
-| `location`  | `object` | Logo file fetch result                                  |
-| `authority` | `object` | VMC/CMC fetch and validation result                     |
-| `headers`   | `object` | Ready-to-use email headers (only on validation success) |
+| Field       | Type     | Description                                                       |
+| ----------- | -------- | ----------------------------------------------------------------- |
+| `location`  | `object` | Logo file fetch result                                            |
+| `authority` | `object` | VMC/CMC fetch and validation result                               |
+| `headers`   | `object` | Ready-to-use email headers (only on validation success)           |
+| `warnings`  | `array`  | Accepted SVG Tiny PS profile deviations of the logo files, if any |
 
 ### location Object
 
@@ -193,9 +195,29 @@ These headers should be added to messages after successful BIMI validation. The 
 
 ## Logo SVG Validation
 
-`validateBimiSvg(logo)` (also `validateSvg` in `mailauth/lib/bimi/validate-svg`) checks a logo against the SVG Tiny Portable/Secure profile of [draft-svg-tiny-ps-abrotman](https://datatracker.ietf.org/doc/html/draft-svg-tiny-ps-abrotman). It returns `true` or throws an error with one of the codes below. `validateVMC()` runs it on the logo from `l=` and on the logo embedded in the evidence document.
+`validateBimiSvg(logo, options)` (also `validateSvg` in `mailauth/lib/bimi/validate-svg`) checks a logo against the SVG Tiny Portable/Secure profile of [draft-svg-tiny-ps-abrotman](https://datatracker.ietf.org/doc/html/draft-svg-tiny-ps-abrotman). It returns `true` or throws an error with one of the codes below. `validateVMC()` runs it on the logo from `l=` and on the logo embedded in the evidence document, with the `strict` option of `validateVMC()`, and lists the warnings in `warnings` of its result.
 
-Namespaces are resolved, and elements are checked against an allowlist: the element set of the validation schema in section 7 of the profile, plus static SVG 1.1 rendering elements found in published logos (`style`, `clipPath`, `mask`, `pattern`, `symbol`, `marker`, `tspan`, `textPath`, filter primitives other than `feImage`, and a few font elements). Script, interactivity, linking, multimedia, `image`, `switch`, `foreignObject` and animation elements are rejected, as are XHTML and MathML elements and SVG elements inside `metadata`. Elements in other namespaces, such as RDF metadata, are allowed.
+```javascript
+const { validateBimiSvg } = require('mailauth');
+
+const warnings = [];
+validateBimiSvg(logo, { strict: false, warnings }); // throws if the logo is not valid
+```
+
+The root element must be `svg` in the `http://www.w3.org/2000/svg` namespace. Some rules of the profile do not make a logo unsafe. By default a logo that breaks them is accepted and a marker is added to the `warnings` array, with `strict: true` it is rejected:
+
+| Warning                | Rule                                                                                                                                                                             |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `svg-version`          | The root element has `version="1.2"` (`INVALID_SVG_VERSION`)                                                                                                                     |
+| `svg-title-count`      | Only one `title` child of the root element (`LOGO_MULTIPLE_TITLES`)                                                                                                              |
+| `svg-title-position`   | `title` is the first child of the root element, and not used elsewhere (`LOGO_INVALID_ELEMENT`)                                                                                  |
+| `svg-attribute-value`  | `zoomAndPan`, `externalResourcesRequired`, `focusable`, `snapshotTime`, `playbackOrder`, `timelineBegin` and `editable` have their only allowed value (`LOGO_INVALID_ATTRIBUTE`) |
+| `svg-empty-desc`       | A `desc` element is not empty (`LOGO_INVALID_CONTENT`)                                                                                                                           |
+| `svg-element`          | Only the elements of the validation schema, not the other static SVG elements listed below (`LOGO_INVALID_ELEMENT`)                                                              |
+| `svg-foreign-element`  | No elements in other namespaces outside `metadata` (`LOGO_INVALID_ELEMENT`)                                                                                                      |
+| `svg-metadata-content` | `metadata` has text content only (`LOGO_INVALID_ELEMENT`)                                                                                                                        |
+
+The rules below apply in both modes. Namespaces are resolved, and elements are checked against an allowlist: the element set of the validation schema in section 7 of the profile, plus static SVG 1.1 rendering elements found in published logos (`style`, `clipPath`, `mask`, `pattern`, `symbol`, `marker`, `tspan`, `textPath`, filter primitives other than `feImage`, and a few font elements). Script, interactivity, linking, multimedia, `image`, `switch`, `foreignObject` and animation elements are rejected, as are XHTML and MathML elements and SVG elements inside `metadata`. Elements in other namespaces, such as RDF metadata, are allowed by default.
 
 These are rejected in every element and namespace:
 
@@ -209,7 +231,7 @@ These are rejected in every element and namespace:
 | Code                      | Description                                                              |
 | ------------------------- | ------------------------------------------------------------------------ |
 | `INVALID_XML_FILE`        | Not well-formed XML, or XML features that are not allowed (DTD, entity)  |
-| `INVALID_SVG_FILE`        | The root element is not `svg`                                            |
+| `INVALID_SVG_FILE`        | The root element is not `svg` in the SVG namespace                       |
 | `INVALID_BASE_PROFILE`    | `baseProfile` is not `tiny-ps`                                           |
 | `LOGO_MISSING_TITLE`      | No `title` child of the root element, or it is empty                     |
 | `LOGO_INVALID_ROOT_ATTRS` | The root element has `x` or `y` attributes                               |

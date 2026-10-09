@@ -94,4 +94,36 @@ describe('BIMI validateVMC Tests', () => {
             expect(result.location.error.details.code).to.equal('INVALID_SVGZ_FILE');
         });
     });
+
+    describe('SVG Tiny PS profile rules', () => {
+        const noVersion = '<svg xmlns="http://www.w3.org/2000/svg" baseProfile="tiny-ps"><title>Example</title><rect width="10" height="10" fill="red"/></svg>';
+
+        it('Should report a lax logo in warnings', async () => {
+            const result = await validateVMC({ location: 'https://example.com/logo.svg', locationPath: Buffer.from(noVersion), status: { header: {} } });
+            expect(result.location.success).to.be.true;
+            expect(result.headers).to.exist;
+            expect(result.warnings).to.deep.equal(['svg-version']);
+        });
+
+        it('Should reject a lax logo in strict mode', async () => {
+            const result = await validateVMC(
+                { location: 'https://example.com/logo.svg', locationPath: Buffer.from(noVersion), status: { header: {} } },
+                { strict: true }
+            );
+            expect(result.location.success).to.be.false;
+            expect(result.location.error.code).to.equal('SVG_VALIDATION_FAILED');
+            expect(result.location.error.details.code).to.equal('INVALID_SVG_VERSION');
+            expect(result.headers).to.not.exist;
+            expect(result.warnings).to.not.exist;
+        });
+
+        it('Should not report warnings for a valid logo', async () => {
+            const result = await validateVMC(
+                { location: 'https://example.com/logo.svg', locationPath: Buffer.from(LOGO), status: { header: {} } },
+                { strict: true }
+            );
+            expect(result.location.success).to.be.true;
+            expect(result.warnings).to.not.exist;
+        });
+    });
 });

@@ -1738,6 +1738,12 @@ export interface VMCValidationResult {
     };
 
     /**
+     * SVG Tiny PS profile deviations of the logo files that were accepted because `strict` was not set,
+     * for example 'svg-version'
+     */
+    warnings?: string[];
+
+    /**
      * BIMI headers for the message, set only when the logo and the evidence document (if any) validated
      */
     headers?: {
@@ -1770,6 +1776,12 @@ export interface BIMIData extends BIMIResult {
  * VMC validation options
  */
 export interface VMCValidationOptions {
+    /**
+     * Validate the logo files exactly against the SVG Tiny PS profile (default: false). Without it,
+     * the deviations that do not make a logo unsafe are accepted and listed in `warnings`
+     */
+    strict?: boolean;
+
     /**
      * Maximum size of the logo file in bytes, also applied to an uncompressed SVGZ file (default: 65536)
      */
@@ -1814,12 +1826,29 @@ export function bimi(opts: BIMIOptions): Promise<BIMIResult | false>;
 export function validateBimiVmc(bimiData: BIMIData | null, opts?: VMCValidationOptions): Promise<VMCValidationResult | false>;
 
 /**
+ * SVG logo validation options
+ */
+export interface BIMISvgValidationOptions {
+    /**
+     * Apply the SVG Tiny PS profile exactly (default: false)
+     */
+    strict?: boolean;
+
+    /**
+     * Markers of the accepted profile deviations are added to this array when `strict` is not set
+     */
+    warnings?: string[];
+}
+
+/**
  * Validates BIMI SVG logo file
  *
  * @param logo - SVG logo file buffer
+ * @param opts - validation options
+ * @returns true
  * @throws Error if validation fails
  */
-export function validateBimiSvg(logo: Buffer): void;
+export function validateBimiSvg(logo: Buffer | string, opts?: BIMISvgValidationOptions): true;
 
 // ============================================================================
 // MTA-STS
