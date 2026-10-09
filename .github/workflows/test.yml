@@ -10,6 +10,10 @@ jobs:
             matrix:
                 node: [22.x, 24.x]
                 os: [ubuntu-latest, windows-latest]
+                include:
+                    # The minimum version allowed by "engines" in package.json
+                    - node: 22.19.0
+                      os: ubuntu-latest
         runs-on: ${{ matrix.os }}
         steps:
             - uses: actions/checkout@v7
