@@ -154,7 +154,7 @@ By default mailauth is lenient where accepting non-conforming input costs little
 
 Whatever the default mode accepts that strict mode would reject is marked in a `warnings` array on the affected result (for example `dkim.results[0].status.warnings` is `['rsa-sha1']`), so that you can apply your own policy without switching modes. The markers are never written into the generated headers. For rsa-sha1 verification the `rejectRsaSha1` option applies the strict rule on its own, which also keeps such a signature out of DMARC in `authenticate()`.
 
-Some rules apply in both modes, because breaking them is a defect and not leniency. For DKIM these are: a signature must sign the From header, the key record's `h=` (hash algorithms) and `s=` (service types) restrictions are honored, `ed25519-sha1` is not an algorithm, and signing refuses a domain, selector or identity that would break out of its tag.
+Some rules apply in both modes, because breaking them is a defect and not leniency. For DKIM these are: a signature must sign the From header, the key record's `h=` (hash algorithms) and `s=` (service types) restrictions are honored, `ed25519-sha1` is not an algorithm, a `d=` with a character that can not be in a host name (such as `/`, `?` or `#`) makes the signature invalid, and signing refuses a domain, selector or identity that would break out of its tag.
 
 DKIM differences between the modes:
 

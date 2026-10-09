@@ -615,6 +615,25 @@ describe('Tools Tests', () => {
             expect(getAlignment('', ['example.com'], true)).to.be.false;
         });
 
+        it('Should not read a domain as a URL', () => {
+            // the Public Suffix List lookup would otherwise return the host part of the "URL"
+            for (let sep of ['/', '?', '#', '\\', '@', ':', ' ']) {
+                for (let strict of [false, true]) {
+                    expect(getAlignment('example.com', [`example.com${sep}x.attacker.test`], strict), `${sep} ${strict}`).to.be.false;
+                    expect(getAlignment(`example.com${sep}x.attacker.test`, ['example.com'], strict), `${sep} ${strict}`).to.be.false;
+                }
+            }
+            expect(getAlignment('attacker.test', ['example.com/x.attacker.test'])).to.be.false;
+            expect(getAlignment('example.com', ['http://example.com'])).to.be.false;
+            expect(getAlignment('example.com', ['example..com'])).to.be.false;
+        });
+
+        it('Should still compare IDN and underscore domains in relaxed mode', () => {
+            expect(getAlignment('mail.bücher.example', ['xn--bcher-kva.example'])).to.deep.include({ domain: 'xn--bcher-kva.example' });
+            expect(getAlignment('sub.xn--e1afmkfd.xn--p1ai', ['пример.рф'])).to.deep.include({ domain: 'пример.рф' });
+            expect(getAlignment('example.com', ['_sub.Example.COM.'])).to.deep.include({ domain: '_sub.Example.COM.' });
+        });
+
         it('Should return false when no match', () => {
             const result = getAlignment('example.com', ['other.com']);
             expect(result).to.be.false;

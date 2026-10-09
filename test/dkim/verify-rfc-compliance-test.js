@@ -484,8 +484,8 @@ const cases = [
     },
     {
         title: 'a d= that is not a domain name',
-        msg: () => std('', { d: 'exa mple..com' }),
-        records: { [`${SEL}._domainkey.exa mple..com`]: [rsaRec] },
+        msg: () => std('', { d: 'exa_mple..com' }),
+        records: { [`${SEL}._domainkey.exa_mple..com`]: [rsaRec] },
         lax: { result: 'pass', warnings: ['tag-syntax'] },
         strict: { result: 'neutral', comment: 'signature syntax error' }
     },
@@ -524,6 +524,23 @@ describe('DKIM verification RFC compliance', () => {
             }
         });
     }
+
+    describe('A d= that is not a host name', () => {
+        // RFC 6376 section 3.5: "The SDID MUST correspond to a valid DNS name under which the
+        // DKIM key record is published", a signature that does not is invalid in every mode.
+        // The key would otherwise be looked up in the zone after the delimiter, while the
+        // Public Suffix List lookup read the value as a URL and aligned it with the part before
+        for (let sep of ['/', '?', '#', '\\', '@', ':', ' ']) {
+            let d = `${D}${sep}x.attacker.test`;
+            for (let strict of [false, true]) {
+                it(`Should reject d=${d} without a key query (${strict ? 'strict' : 'default'} mode)`, async () => {
+                    let outcome = await verify(std('', { d }), { [`${SEL}._domainkey.${d}`]: [rsaRec] }, { strict });
+                    check(outcome, { result: 'neutral', comment: 'signature syntax error', noDns: true });
+                    expect(outcome.result.status.aligned).to.be.false;
+                });
+            }
+        }
+    });
 
     describe('EAI (RFC 8616)', () => {
         const u = x => Buffer.from(x, 'utf8').toString('binary');
