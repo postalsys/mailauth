@@ -228,7 +228,8 @@ export interface AuthStatus {
  *   the key has t=s
  * - `invalid-expiration`: x= is equal to t=
  * - `query-method`: q= does not list dns/txt
- * - `key-syntax`: the key record is not valid tag-list syntax
+ * - `key-syntax`: the key record is not valid tag-list syntax, or a k=, s= or t= value has
+ *   whitespace inside it
  * - `key-v-syntax`: the key record v= is not the first tag, or not exactly "DKIM1"
  * - `key-type-inferred`: an ed25519 key was found from its length, without k=ed25519
  * - `key-ed25519-spki`: an ed25519 key was published as a SubjectPublicKeyInfo structure, not

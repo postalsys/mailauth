@@ -340,6 +340,36 @@ describe('Header formatting RFC compliance', () => {
             await rejects(get(`v=DKIM1; v=DKIM1; p=${spkiB64(RSA_PUBLIC)}`, { strict: true }), 'EINVALIDVAL');
         });
 
+        it('Should not remove whitespace from inside a key record value', async () => {
+            // RFC 6376 section 3.6.1: key-v-tag is exactly "DKIM1", FWS is only allowed around "="
+            let lax = await get(`v=DKIM 1; k=rsa; p=${spkiB64(RSA_PUBLIC)}`);
+            expect(lax.keyType).to.equal('rsa');
+            expect(lax.warnings).to.deep.equal(['key-v-syntax']);
+            await rejects(get(`v=DKIM 1; k=rsa; p=${spkiB64(RSA_PUBLIC)}`, { strict: true }), 'EINVALIDVER');
+            await rejects(get(`v=DKIM 2; k=rsa; p=${spkiB64(RSA_PUBLIC)}`), 'EINVALIDVER');
+
+            for (let rec of [
+                `v=DKIM1; k=r sa; p=${spkiB64(RSA_PUBLIC)}`,
+                `v=DKIM1; s=em ail; p=${spkiB64(RSA_PUBLIC)}`,
+                `v=DKIM1; t=y : s s; p=${spkiB64(RSA_PUBLIC)}`
+            ]) {
+                lax = await get(rec);
+                expect(lax.keyType, rec).to.equal('rsa');
+                expect(lax.warnings, rec).to.deep.equal(['key-syntax']);
+                await rejects(get(rec, { strict: true }), 'EINVALIDVAL');
+            }
+            expect((await get(`v=DKIM1; t=y : s s; p=${spkiB64(RSA_PUBLIC)}`)).flags).to.deep.equal(['y', 'ss']);
+        });
+
+        it('Should accept FWS where the key record grammar allows it, in strict mode too', async () => {
+            let b64 = spkiB64(RSA_PUBLIC);
+            let folded = b64.match(/.{1,40}/g).join(' \r\n ');
+            let res = await get(`v = DKIM1 ;\tk = rsa ; t = y : s ; s = email : * ; p = ${folded} `, { strict: true });
+            expect(res.keyType).to.equal('rsa');
+            expect(res.flags).to.deep.equal(['y', 's']);
+            expect(res.warnings).to.deep.equal([]);
+        });
+
         it('Should read quotes, parentheses and backslashes as value characters', async () => {
             for (let n of ["it's", 'see(below', 'a\\b', '"quoted"']) {
                 let res = await get(`v=DKIM1; k=rsa; n=${n}; p=${spkiB64(RSA_PUBLIC)}`, { strict: true });

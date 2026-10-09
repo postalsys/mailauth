@@ -274,6 +274,14 @@ const cases = [
         strict: { result: 'neutral', comment: 'unknown key version' }
     },
     {
+        // RFC 6376 section 3.6.1 key-v-tag, whitespace inside the value is not FWS
+        title: 'a key with v=DKIM 1',
+        msg: () => std(),
+        records: { [KEYNAME]: [`v=DKIM 1; k=rsa; p=${spkiB64(rsa2048.publicKey)}`] },
+        lax: { result: 'pass', warnings: ['key-v-syntax'] },
+        strict: { result: 'neutral', comment: 'unknown key version' }
+    },
+    {
         // k= defaults to rsa, the lenient mode finds an ed25519 key from its length
         title: 'an ed25519 key without k=',
         msg: () => std('', { algo: 'ed25519-sha256', key: ed.privateKey }),
