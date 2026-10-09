@@ -197,7 +197,7 @@ const signResult = await dkimSign(message, options);
 
 - **message**: A `String`, `Buffer`, or `Readable` stream representing the email message.
 - **options**:
-    - **canonicalization** (`string`): Canonicalization method. Defaults to `'relaxed/relaxed'`.
+    - **canonicalization** (`string`): Canonicalization method, as `header/body`. Defaults to `'relaxed/relaxed'`. Read like a `c=` value: case-insensitive, and a value without a body part, such as `'relaxed'`, uses `simple` for the body. A signature with an unknown method is not created and gets an `EINVALIDCANON` error.
     - **algorithm** (`string`): Signing and hashing algorithm. Defaults to `'rsa-sha256'` for an RSA key and `'ed25519-sha256'` for an Ed25519 key. `'rsa-sha1'` is historic (RFC 8301) and adds a warning.
     - **signTime** (`Date`): Signing time. Defaults to current time.
     - **expires** (`Date`): Signature expiration time (`x=` tag). Optional. It must be later than the signing time.

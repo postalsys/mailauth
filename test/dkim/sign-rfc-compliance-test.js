@@ -278,6 +278,55 @@ describe('DKIM signing RFC compliance', () => {
         });
     });
 
+    describe('Canonicalization option', () => {
+        const verifyStrict = out =>
+            dkimVerify(Buffer.from(out), {
+                strict: true,
+                resolver: resolverFrom({
+                    's._domainkey.example.com': [`v=DKIM1; k=rsa; p=${spkiB64(RSA_PUBLIC)}`],
+                    't._domainkey.example.com': [`v=DKIM1; k=rsa; p=${spkiB64(RSA_PUBLIC)}`]
+                })
+            });
+
+        it('Should report an unknown canonicalization and still create the other signatures', async () => {
+            for (let [canonicalization, message, value] of [
+                ['relaxed/foo', 'Unknown body canonicalization', 'foo'],
+                ['foo/relaxed', 'Unknown header canonicalization', 'foo'],
+                ['relaxed/relaxed/x', 'Unknown body canonicalization', 'relaxed/x'],
+                ['/relaxed', 'Unknown header canonicalization', '']
+            ]) {
+                const result = await signMessage({
+                    signatureData: [base({ canonicalization }), base({ selector: 't', canonicalization: 'relaxed/relaxed', maxBodyLength: 5 })]
+                });
+                expect(errorCodes(result)).to.deep.equal(['EINVALIDCANON']);
+                expect(result.errors[0].err.message).to.equal(message);
+                expect(result.errors[0].err.canonicalization).to.equal(value);
+                expect(result.errors[0]).to.include({ selector: 's', signingDomain: 'example.com' });
+
+                const tags = tagsOf(result.signatures);
+                expect(tags).to.include({ s: 't', c: 'relaxed/relaxed', l: '5' });
+                expect((await verifyStrict(result.out)).results[0].status.result).to.equal('pass');
+            }
+        });
+
+        it('Should read the canonicalization like a c= value', async () => {
+            for (let [canonicalization, c] of [
+                ['relaxed', 'relaxed/simple'],
+                ['simple', 'simple/simple'],
+                ['Relaxed/Simple', 'relaxed/simple'],
+                [' RELAXED / relaxed ', 'relaxed/relaxed']
+            ]) {
+                for (let options of [{ canonicalization, signatureData: [base()] }, { signatureData: [base({ canonicalization })] }]) {
+                    const result = await signMessage(options);
+                    expect(result.errors).to.deep.equal([]);
+                    expect(tagsOf(result.signatures).c).to.equal(c);
+                    expect(referenceVerify(result.out, RSA_PUBLIC).ok).to.be.true;
+                    expect((await verifyStrict(result.out)).results[0].status.result).to.equal('pass');
+                }
+            }
+        });
+    });
+
     describe('Header list and identity options', () => {
         const CUSTOM = 'From: a@example.com\r\nX-Custom: one\r\nSubject: s\r\nX-Priority: 1\r\n\r\nbody\r\n';
 
