@@ -776,6 +776,28 @@ describe('SPF RFC 7208 compliance', () => {
             }
         });
 
+        it('Should use an explicit limit of 0', async () => {
+            const zone = record('v=spf1 a:x1.example.test -all');
+            const { lax, strict } = await both({ maxVoidCount: 0 }, zone);
+            for (const res of [lax, strict]) {
+                expect(res.status.result).to.equal('permerror');
+                expect(res.status.comment).to.include('Too many void DNS results');
+                expect(res.lookups.void).to.equal(1);
+            }
+
+            const lookups = await both({ maxResolveCount: 0 }, zone);
+            for (const res of [lookups.lax, lookups.strict]) {
+                expect(res.status.result).to.equal('permerror');
+                expect(res.status.comment).to.include('Too many DNS requests');
+                expect(res.lookups.limit).to.equal(0);
+            }
+
+            // values that are not a non-negative number use the defaults
+            const defaults = await check({ maxVoidCount: -1, maxResolveCount: '0' }, zone);
+            expect(defaults.status.result).to.equal('fail');
+            expect(defaults.lookups.limit).to.equal(10);
+        });
+
         it('Should not warn below the void limit', async () => {
             const lax = await check(
                 {},

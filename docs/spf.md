@@ -19,17 +19,17 @@ const result = await spf({
 
 ## Options
 
-| Option            | Type       | Default           | Description                                                                                                    |
-| ----------------- | ---------- | ----------------- | -------------------------------------------------------------------------------------------------------------- |
-| `sender`          | `string`   | `postmaster@helo` | MAIL FROM address. An empty value means a null reverse-path, so the HELO identity is checked                   |
-| `ip`              | `string`   | Required          | SMTP client IP address. IPv4-mapped IPv6 addresses (`::ffff:192.0.2.1`, `::ffff:c000:201`) are checked as IPv4 |
-| `helo`            | `string`   |                   | EHLO/HELO hostname                                                                                             |
-| `mta`             | `string`   | `os.hostname()`   | Hostname of the MTA performing the check                                                                       |
-| `resolver`        | `function` | `dns.resolve`     | Custom DNS resolver                                                                                            |
-| `maxResolveCount` | `number`   | `10`              | Maximum DNS lookups allowed                                                                                    |
-| `maxVoidCount`    | `number`   | `2`               | Maximum void (empty) DNS lookups allowed                                                                       |
-| `maxElapsedTime`  | `number`   | No limit          | Maximum time in milliseconds for the whole evaluation. If exceeded, the result is `temperror` (RFC 7208 4.6.4) |
-| `strict`          | `boolean`  | `false`           | Follow RFC 7208 exactly instead of the lenient default, see [Strict Mode](#strict-mode)                        |
+| Option            | Type       | Default           | Description                                                                                                                |
+| ----------------- | ---------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `sender`          | `string`   | `postmaster@helo` | MAIL FROM address. An empty value means a null reverse-path, so the HELO identity is checked                               |
+| `ip`              | `string`   | Required          | SMTP client IP address. IPv4-mapped IPv6 addresses (`::ffff:192.0.2.1`, `::ffff:c000:201`) are checked as IPv4             |
+| `helo`            | `string`   |                   | EHLO/HELO hostname                                                                                                         |
+| `mta`             | `string`   | `os.hostname()`   | Hostname of the MTA performing the check                                                                                   |
+| `resolver`        | `function` | `dns.resolve`     | Custom DNS resolver                                                                                                        |
+| `maxResolveCount` | `number`   | `10`              | Maximum DNS lookups allowed                                                                                                |
+| `maxVoidCount`    | `number`   | `2`               | Maximum void (empty) DNS lookups allowed. `0` is a valid limit, a value that is not a non-negative number uses the default |
+| `maxElapsedTime`  | `number`   | No limit          | Maximum time in milliseconds for the whole evaluation. If exceeded, the result is `temperror` (RFC 7208 4.6.4)             |
+| `strict`          | `boolean`  | `false`           | Follow RFC 7208 exactly instead of the lenient default, see [Strict Mode](#strict-mode)                                    |
 
 A missing or invalid `ip` gives a `temperror` result with the comment `missing or invalid client IP address`.
 

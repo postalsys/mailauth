@@ -80,6 +80,25 @@ describe('CLI argument handling', function () {
             let { stdout } = await runCli(['bodyhash', '-l', '10', MESSAGE]);
             expect(stdout.trim()).to.not.be.empty;
         });
+
+        it('should pass a limit of 0 to the SPF check', async () => {
+            let tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mailauth-cli-'));
+            try {
+                let dnsCache = path.join(tmpDir, 'dns.json');
+                fs.writeFileSync(dnsCache, JSON.stringify({ 'example.com': { TXT: [['v=spf1 a:x1.example.com -all']] } }));
+                let base = ['spf', '-f', 'user@example.com', '-i', '192.0.2.1', '--dns-cache', dnsCache];
+
+                let result = JSON.parse((await runCli(base.concat(['-z', '0']))).stdout);
+                expect(result.status.result).to.equal('permerror');
+                expect(result.status.comment).to.include('Too many void DNS results');
+
+                result = JSON.parse((await runCli(base.concat(['-x', '0']))).stdout);
+                expect(result.status.result).to.equal('permerror');
+                expect(result.status.comment).to.include('Too many DNS requests');
+            } finally {
+                fs.rmSync(tmpDir, { recursive: true, force: true });
+            }
+        });
     });
 
     describe('sign', () => {
