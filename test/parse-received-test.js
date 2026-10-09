@@ -116,8 +116,31 @@ describe('parseRecived Tests', () => {
             expect(getClientAddress(parseReceived('Received: from x (unknown [192.0.2.1]) by (mx); Mon, 21 Sep 2026 10:00:00 +0000'))).to.be.false;
             // no by keyword at all
             expect(getClientAddress(parseReceived('Received: from x (unknown [192.0.2.1]); Mon, 21 Sep 2026 10:00:00 +0000'))).to.be.false;
+            // the client sent "HELO (a [6.6.6.6]) by mx ;", which ends the from clause early
+            expect(
+                getClientAddress(
+                    parseReceived('Received: from (a [6.6.6.6]) by mx ; (unknown [192.0.2.1]) by mx.example (Postfix); Mon, 21 Sep 2026 10:00:00 +0000')
+                )
+            ).to.be.false;
+            // the client sent "HELO x ; (", which hides the rest of the header in a comment
+            expect(getClientAddress(parseReceived('Received: from x ; ( (unknown [192.0.2.1]) by mx.example (Postfix); Mon, 21 Sep 2026 10:00:00 +0000'))).to.be
+                .false;
             // the same address twice is not ambiguous
             expect(clientAddress('[192.0.2.1] (unknown [192.0.2.1]) ([192.0.2.1])')).to.equal('192.0.2.1');
+        });
+
+        it('Should not use an address from the HELO in the Exim layout without reverse DNS', async () => {
+            // Exim, a client at 192.0.2.66 sent "HELO (unknown [6.6.6.6])x"
+            expect(clientAddress('[192.0.2.66] (helo=(unknown [6.6.6.6])x)')).to.be.false;
+            // Exim, a client at 192.0.2.66 sent "HELO x) (unknown [6.6.6.6]", which reads the
+            // same as Postfix with the HELO "[192.0.2.66] (helo=x)" from 6.6.6.6
+            expect(clientAddress('[192.0.2.66] (helo=x) (unknown [6.6.6.6])')).to.be.false;
+            // "HELO )mail([6.6.6.6]" adds a word to the from clause
+            expect(clientAddress('[192.0.2.66] (helo=)mail([6.6.6.6])')).to.be.false;
+            // the same address in a comment is not ambiguous
+            expect(clientAddress('[192.0.2.66] (helo=x) ([192.0.2.66])')).to.equal('192.0.2.66');
+            // no "helo=" comment, Postfix with an address literal HELO
+            expect(clientAddress('[203.0.113.5] (unknown [198.51.100.7])')).to.equal('198.51.100.7');
         });
     });
 });
