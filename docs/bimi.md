@@ -12,7 +12,7 @@ Before looking up a BIMI record, mailauth checks the requirements of section 7.1
 - DMARC passed, with an effective policy other than `none` and without `t=y`.
 - Neither the DMARC record of the author domain nor the one of its Organizational Domain has `p=none` or `sp=none`, or `p=quarantine` with a `pct` other than 100. A record found at the author domain itself does not hide a lax record of the Organizational Domain. `dmarc()` passes both records to `bimi()`, for a DMARC result built elsewhere `bimi()` looks up the Organizational Domain's record itself.
 
-The record is looked up at `<selector>._bimi.<author domain>` and then at `<selector>._bimi.<organizational domain>`, where the selector comes from the `BIMI-Selector` header and defaults to `default`. A custom selector does not fall back to `default`. TXT records that do not start with `v=BIMI1` are ignored, several BIMI records are a failure.
+The record is looked up at `<selector>._bimi.<author domain>` and then at `<selector>._bimi.<organizational domain>`, where the selector comes from the `BIMI-Selector` header and defaults to `default`. A `BIMI-Selector` header without `v=BIMI1` or without a valid `s=` selector is ignored, and `default` is used (sections 5.1 and 7.2). A custom selector does not fall back to `default`. TXT records that do not start with `v=BIMI1` are ignored, several BIMI records are a failure.
 
 ```javascript
 const { authenticate } = require('mailauth');
@@ -38,15 +38,17 @@ const { bimi } = await authenticate(message, {
 
 ## Strict Mode
 
-The Assertion Record uses the DKIM tag-list syntax, and the draft says that receivers must not fix syntax or capitalization errors (section 4.3). By default mailauth accepts the deviations below and lists them in `warnings`, with `strict: true` the record is handled exactly:
+The Assertion Record uses the DKIM tag-list syntax, and the draft says that receivers must not fix syntax or capitalization errors (section 4.3). By default mailauth accepts the deviations below in the record and in the `BIMI-Selector` header, and lists them in `warnings`. With `strict: true` they are handled exactly:
 
-| Input                                                          | Default                                               | `strict: true`                                                     |
-| -------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------ |
-| `v=` value in another case, such as `v=bimi1`                  | used, warning `record-version-case`                   | record ignored (`none` if it is the only one)                      |
-| Upper case tag names, such as `L=`                             | used as the lower case tag, warning `record-tag-case` | unknown tag, ignored                                               |
-| Duplicate tags or other tag-list syntax errors                 | last duplicate wins, warning `record-syntax`          | `fail` (`invalid syntax in dns record`)                            |
-| Unencoded comma in `l=` or `a=`                                | used, warning `uri-comma`                             | `fail` (`invalid location value...`, `invalid authority value...`) |
-| `l=` URI ending in another image format suffix, such as `.png` | used, warning `location-format`                       | `fail` (`unsupported image format in location value`)              |
+| Input                                                                                        | Default                                                    | `strict: true`                                                     |
+| -------------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------ |
+| `v=` value in another case, such as `v=bimi1`                                                | used, warning `record-version-case`                        | record ignored (`none` if it is the only one)                      |
+| Upper case tag names, such as `L=`                                                           | used as the lower case tag, warning `record-tag-case`      | unknown tag, ignored                                               |
+| Duplicate tags or other tag-list syntax errors                                               | last duplicate wins, warning `record-syntax`               | `fail` (`invalid syntax in dns record`)                            |
+| Unencoded comma in `l=` or `a=`                                                              | used, warning `uri-comma`                                  | `fail` (`invalid location value...`, `invalid authority value...`) |
+| `l=` URI ending in another image format suffix, such as `.png`                               | used, warning `location-format`                            | `fail` (`unsupported image format in location value`)              |
+| `BIMI-Selector` header with `v=` in another case, `v=` not first, or a tag-list syntax error | used, warning `selector-version-case` or `selector-syntax` | header ignored, `default` is used                                  |
+| `BIMI-Selector` selector with underscores                                                    | used, warning `selector-syntax`                            | header ignored, `default` is used                                  |
 
 ## status Object
 
@@ -105,7 +107,6 @@ The `status.comment` field explains why BIMI was skipped:
 | Comment                                        | Description                                                                                                                |
 | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | `"multiple BIMI-Selector headers"`             | Message has more than one BIMI-Selector header                                                                             |
-| `"missing bimi version in selector header"`    | BIMI-Selector header missing `v=BIMI1`                                                                                     |
 | `"missing bimi version in dns record"`         | DNS record missing `v=BIMI1`                                                                                               |
 | `"missing location value in dns record"`       | Record has no `l=` value (and is not a declination), even if it has `a=`                                                   |
 | `"invalid location value in dns record"`       | `l=` value is not a valid HTTPS URL with a domain name (IP addresses, `localhost` and single-label hosts are not accepted) |

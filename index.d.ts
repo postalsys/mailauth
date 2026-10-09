@@ -757,8 +757,9 @@ export interface BIMIResult {
     preference?: 'personal' | 'brand';
 
     /**
-     * Assertion Record syntax deviations that were accepted because `strict` was not set:
-     * 'record-version-case', 'record-tag-case', 'record-syntax', 'uri-comma', 'location-format'
+     * Assertion Record and BIMI-Selector syntax deviations that were accepted because `strict` was not set:
+     * 'record-version-case', 'record-tag-case', 'record-syntax', 'uri-comma', 'location-format',
+     * 'selector-version-case', 'selector-syntax'
      */
     warnings?: string[];
 

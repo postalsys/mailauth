@@ -162,4 +162,70 @@ describe('BIMI Assertion Record Tests', () => {
             expect(result.location).to.equal('https://example.com/b.svg');
         });
     });
+
+    describe('5.1 BIMI-Selector header', () => {
+        const records = {
+            'default._bimi.example.com': 'v=BIMI1; l=https://example.com/default.svg',
+            'brand._bimi.example.com': 'v=BIMI1; l=https://example.com/brand.svg',
+            'brand_x._bimi.example.com': 'v=BIMI1; l=https://example.com/brand_x.svg'
+        };
+
+        const withSelector = (line, strict) =>
+            lookup(records, {
+                strict,
+                headers: {
+                    parsed: [
+                        { key: 'from', line: 'From: a@example.com' },
+                        { key: 'bimi-selector', line }
+                    ]
+                }
+            });
+
+        for (let line of [
+            'BIMI-Selector: s=brand',
+            'BIMI-Selector: v=BIMI2; s=brand',
+            'BIMI-Selector: v=BIMI1',
+            'BIMI-Selector: v=BIMI1; s=',
+            'BIMI-Selector: v=BIMI1; s=bad selector',
+            'BIMI-Selector: v=BIMI1; s=-brand',
+            'BIMI-Selector: v=BIMI1; s=brand..x'
+        ]) {
+            it(`Should ignore ${JSON.stringify(line)} and use the default selector`, async () => {
+                for (let strict of [false, true]) {
+                    const result = await withSelector(line, strict);
+                    expect(result.status.result).to.equal('pass');
+                    expect(result.status.header).to.deep.equal({ selector: 'default', d: 'example.com' });
+                    expect(result.info).to.equal('bimi=pass header.selector=default header.d=example.com');
+                }
+            });
+        }
+
+        it('Should use a valid selector', async () => {
+            for (let strict of [false, true]) {
+                const result = await withSelector('BIMI-Selector: v=BIMI1; s=brand;', strict);
+                expect(result.status.header).to.deep.equal({ selector: 'brand', d: 'example.com' });
+                expect(result.location).to.equal('https://example.com/brand.svg');
+                expect(result.warnings).to.not.exist;
+            }
+        });
+
+        const laxCases = {
+            'BIMI-Selector: v=bimi1; s=brand': ['brand', 'selector-version-case'],
+            'BIMI-Selector: s=brand; v=BIMI1': ['brand', 'selector-syntax'],
+            'BIMI-Selector: v=BIMI1; s=other; s=brand': ['brand', 'selector-syntax'],
+            'BIMI-Selector: v=BIMI1; s=brand_x': ['brand_x', 'selector-syntax']
+        };
+
+        for (let [line, [selector, warning]] of Object.entries(laxCases)) {
+            it(`Should use ${JSON.stringify(line)} only without strict`, async () => {
+                let result = await withSelector(line, true);
+                expect(result.status.header.selector).to.equal('default');
+                expect(result.warnings).to.not.exist;
+
+                result = await withSelector(line, false);
+                expect(result.status.header.selector).to.equal(selector);
+                expect(result.warnings).to.deep.equal([warning]);
+            });
+        }
+    });
 });

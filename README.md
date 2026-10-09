@@ -574,7 +574,7 @@ if (bimi?.location) {
 **Note:**
 
 - The `BIMI-Location` header is ignored by mailauth.
-- The `BIMI-Selector` header can be used for selector selection if available. A selector that is not found at the author domain is looked up at the Organizational Domain, it does not fall back to `default`.
+- The `BIMI-Selector` header can be used for selector selection if available. A header without `v=BIMI1` or a valid selector is ignored. A selector that is not found at the author domain is looked up at the Organizational Domain, it does not fall back to `default`.
 
 #### Verified Mark Certificate (VMC)
 
