@@ -171,7 +171,7 @@ DKIM differences between the modes:
 | Body hash mismatch                                                 | `neutral`                                             | `fail`                                                                     |
 | Signature with an unknown algorithm or no `d=`/`s=`                | left out of the results                               | `neutral`                                                                  |
 | `header.i` in Authentication-Results                               | always `@d`                                           | the AUID (`i=` or `@d`), plus `header.d`                                   |
-| Email identities in Authentication-Results                         | a value that needs quoting is quoted as a whole       | `local-part@domain` with only the local-part quoted (RFC 8601 section 2.2) |
+| Email identities in Authentication-Results                         | a value that needs quoting is quoted as a whole       | `local-part@domain` with only the local-part quoted, U-label domains unquoted (RFC 8601 sections 1.5.2 and 2.2) |
 | Header order                                                       | Received-SPF above Authentication-Results             | Authentication-Results on top (RFC 8601 section 5)                         |
 | Signing with rsa-sha1 or an RSA key under 1024 bits                | signed, warning `rsa-sha1`/`weak-key`                 | error                                                                      |
 

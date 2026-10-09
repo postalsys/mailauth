@@ -905,6 +905,18 @@ describe('SPF RFC 7208 compliance', () => {
             expect(lax.info).to.include(' smtp.mailfrom="a b@example.test"');
         });
 
+        it('Should write a U-label smtp.mailfrom domain unquoted in strict mode', async () => {
+            const policy = { 'xn--bcher-kva.example': { TXT: ['v=spf1 ip4:192.0.2.1 -all'] } };
+
+            const strict = await check({ strict: true, sender: 'user@bücher.example' }, policy);
+            expect(strict.status.result).to.equal('pass');
+            expect(strict.info).to.match(/ smtp\.mailfrom=bücher\.example$/);
+
+            // the lenient output is unchanged
+            const lax = await check({ sender: 'user@bücher.example' }, policy);
+            expect(lax.info).to.include(' smtp.mailfrom="user@bücher.example"');
+        });
+
         it('Should report only the HELO identity in strict mode for a null sender', async () => {
             const res = await check({ strict: true, sender: '', helo: 'example.test' }, zone);
             expect(res.status.result).to.equal('pass');

@@ -126,7 +126,16 @@ describe('Header formatting RFC compliance', () => {
             ['x; dkim=pass', '"x; dkim=pass"', '"x; dkim=pass"'],
             ['a"b\\c', '"a\\"b\\\\c"', '"a\\"b\\\\c"'],
             ['a\x7fb', '"a b"', '"a b"'],
-            ['bücher.example', '"bücher.example"', '"bücher.example"'],
+            // U-labels are a domain-name in strict mode (RFC 8601 section 1.5.2)
+            ['bücher.example', '"bücher.example"', 'bücher.example'],
+            ['user@bücher.example', '"user@bücher.example"', 'user@bücher.example'],
+            ['@bücher.example', '"@bücher.example"', '@bücher.example'],
+            ['john doe@bücher.example', '"john doe@bücher.example"', '"john doe"@bücher.example'],
+            ['Bücher.Example', '"Bücher.Example"', 'Bücher.Example'],
+            // not a domain name in either form
+            ['bücher..example', '"bücher..example"', '"bücher..example"'],
+            ['bücher', '"bücher"', '"bücher"'],
+            ['user@bü cher.example', '"user@bü cher.example"', '"user@bü cher.example"'],
             ['   ', '', '']
         ];
 
