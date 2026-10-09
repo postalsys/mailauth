@@ -1,0 +1,11 @@
+{
+    "all": true,
+    "include": ["lib/**/*.js"],
+    "exclude": ["test/**", "bin/**"],
+    "reporter": ["text", "text-summary", "lcov"],
+    "reports-dir": "coverage",
+    "statements": 93,
+    "branches": 90,
+    "functions": 95,
+    "lines": 93
+}

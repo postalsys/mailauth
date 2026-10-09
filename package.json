@@ -6,6 +6,8 @@
     "types": "index.d.ts",
     "scripts": {
         "test": "eslint \"lib/**/*.js\" \"test/**/*.js\" && mocha --recursive \"./test/**/*-test.js\" --reporter spec",
+        "coverage": "c8 mocha --recursive \"./test/**/*-test.js\" --reporter dot",
+        "coverage:check": "c8 check-coverage",
         "format": "prettier --write .",
         "build-source": "rm -rf node_modules package-lock.json && npm install && npm run licenses && rm -rf node_modules package-lock.json && npm install --production && rm -rf package-lock.json",
         "build-dist": "pkg --compress Brotli package.json && rm -rf package-lock.json && npm install && node winconf.js",
@@ -34,6 +36,7 @@
     },
     "homepage": "https://github.com/postalsys/mailauth",
     "devDependencies": {
+        "c8": "12.0.0",
         "chai": "4.4.1",
         "eslint": "10.12.0",
         "eslint-config-nodemailer": "1.2.0",
