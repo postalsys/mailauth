@@ -53,6 +53,51 @@ describe('DKIM signing RFC compliance', () => {
             expect(noFrom.signatures).to.equal('');
         });
 
+        it('Should report a signature that has no private key', async () => {
+            for (let privateKey of [undefined, null, '']) {
+                const result = await signMessage({ signatureData: [base({ privateKey })] });
+                expect(errorCodes(result)).to.deep.equal(['ENOKEY']);
+                expect(result.errors[0]).to.include({ type: 'DKIM', signingDomain: 'example.com', selector: 's' });
+                expect(result.signatures).to.equal('');
+            }
+
+            // the other signatures are still created
+            const result = await signMessage({ signatureData: [base({ privateKey: process.env.MAILAUTH_UNSET_KEY }), base({ selector: 't' })] });
+            expect(errorCodes(result)).to.deep.equal(['ENOKEY']);
+            expect(tagsOf(result.signatures).s).to.equal('t');
+            expect(referenceVerify(result.out, RSA_PUBLIC).ok).to.be.true;
+        });
+
+        it('Should report that no signature was configured', async () => {
+            for (let options of [
+                // the signing values are only read from signatureData
+                { signingDomain: 'example.com', selector: 's', privateKey: RSA },
+                { signatureData: [] },
+                {},
+                undefined
+            ]) {
+                const result = await signMessage(options);
+                expect(errorCodes(result)).to.deep.equal(['ENOSIGNATURE']);
+                expect(result.signatures).to.equal('');
+            }
+        });
+
+        it('Should report an ARC signature that has no private key', async () => {
+            const result = await signMessage({ signatureData: [base()], arc: { signingDomain: 'example.com', selector: 's' } });
+            expect(result.errors).to.have.lengthOf(1);
+            expect(result.errors[0]).to.include({ type: 'ARC', signingDomain: 'example.com' });
+            expect(result.errors[0].err.code).to.equal('ENOKEY');
+            expect(result.arc.messageSignature).to.be.undefined;
+            expect(referenceVerify(result.out, RSA_PUBLIC).ok).to.be.true;
+
+            const sealed = await createSeal(false, {
+                headers: { parsed: [], original: Buffer.from('From: a@example.com\r\n') },
+                seal: { signingDomain: 'example.com', selector: 's', authResults: 'mx.example.com; none', cv: 'none' }
+            });
+            expect(sealed.headers).to.deep.equal([]);
+            expect(sealed.errors.map(e => e.err.code)).to.include('ENOKEY');
+        });
+
         it('Should not prepend an empty line in DkimSignStream when no signature was created', async () => {
             const stream = new DkimSignStream(bad);
             const chunks = [];

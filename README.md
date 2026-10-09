@@ -191,7 +191,7 @@ const signResult = await dkimSign(message, options);
 // Returns: { signatures: String, errors: Array, warnings: Array }
 ```
 
-`signatures` holds the `DKIM-Signature` header lines, each ending with a line break. It is an empty string when no signature could be created, in which case `errors` says why. Each entry of `errors` is an object with an `err` property (an `Error` with a `code`, such as `ENOFROM`, `EINVALIDALGO`, `ESHORTKEY` or `EINVALIDDOMAIN`) and the `signingDomain` and `selector` it applies to. `warnings` lists what was signed although `strict` mode would have refused it (`rsa-sha1`, `weak-key`, `invalid-expiration`, `invalid-signtime`, `d-syntax`, `s-syntax`, `identity-syntax`, `identity-domain`).
+`signatures` holds the `DKIM-Signature` header lines, each ending with a line break. It is an empty string when no signature could be created, in which case `errors` says why. Each entry of `errors` is an object with an `err` property (an `Error` with a `code`, such as `ENOFROM`, `ENOKEY`, `EINVALIDALGO`, `ESHORTKEY` or `EINVALIDDOMAIN`) and the `signingDomain` and `selector` it applies to. When no signature is configured at all, the only entry has the code `ENOSIGNATURE`. `warnings` lists what was signed although `strict` mode would have refused it (`rsa-sha1`, `weak-key`, `invalid-expiration`, `invalid-signtime`, `d-syntax`, `s-syntax`, `identity-syntax`, `identity-domain`).
 
 ##### Parameters
 
@@ -203,10 +203,10 @@ const signResult = await dkimSign(message, options);
     - **expires** (`Date`): Signature expiration time (`x=` tag). Optional. It must be later than the signing time.
     - **headerList** (`Array` or `string`): Header field names to sign, as an array or a colon separated string. Optional; uses default set if not specified. `From` must be included.
     - **strict** (`boolean`): If `true`, refuses to sign with `rsa-sha1`, with an RSA key shorter than 1024 bits, with an expiration that is not after the signing time, and with a domain, selector or identity that is not valid RFC 6376 syntax. Defaults to `false`, which signs these and lists them in `warnings`. A value that would break out of its tag (a semicolon, whitespace or a line break in the domain, selector or identity) is refused in both modes.
-    - **signatureData** (`Array`): Array of signature objects. Each object may contain:
+    - **signatureData** (`Array`): Array of signature objects, one for each signature to create. The domain, selector and key are only read from here, not from the top level of the options. Each object may contain:
         - **signingDomain** (`string`): DKIM key domain name. An internationalized domain name is converted to A-labels.
         - **selector** (`string`): DKIM key selector.
-        - **privateKey** (`string` or `Buffer`): Private key for signing (RSA or Ed25519).
+        - **privateKey** (`string` or `Buffer`): Private key for signing (RSA or Ed25519). An entry without a key is not signed and gets an `ENOKEY` error.
         - **algorithm** (`string`, optional): Overrides parent `algorithm`.
         - **canonicalization** (`string`, optional): Overrides parent `canonicalization`.
         - **headerList** (`Array` or `string`, optional): Overrides parent `headerList`.

@@ -886,9 +886,9 @@ export function authenticate(input: MessageInput, opts?: AuthenticateOptions): P
 // ============================================================================
 
 /**
- * DKIM signing options
+ * A single DKIM signature to create, an entry of `DKIMSignOptions.signatureData`
  */
-export interface DKIMSignOptions {
+export interface DKIMSignatureData {
     /**
      * Signing domain (d= tag)
      */
@@ -900,10 +900,44 @@ export interface DKIMSignOptions {
     selector: string;
 
     /**
-     * Private key for signing (PEM format)
+     * Private key for signing (PEM format). An entry without a key is not signed and gets an
+     * `ENOKEY` error
      */
     privateKey: string | Buffer;
 
+    /**
+     * Overrides the shared `canonicalization`
+     */
+    canonicalization?: string;
+
+    /**
+     * Overrides the shared `algorithm`
+     */
+    algorithm?: string;
+
+    /**
+     * Overrides the shared `headerList`
+     */
+    headerList?: string[] | string;
+
+    /**
+     * Maximum body length to sign (l= tag)
+     */
+    maxBodyLength?: number;
+
+    /**
+     * Identity (i= tag), an address whose domain is the signing domain or its subdomain.
+     * Given unencoded, it is written as dkim-quoted-printable (`jõgi@example.com` as
+     * `i=j=C3=B5gi@example.com`)
+     */
+    identity?: string;
+}
+
+/**
+ * DKIM signing options. The values of each signature are set in `signatureData`, the other
+ * options apply to all of them
+ */
+export interface DKIMSignOptions {
     /**
      * Canonicalization algorithm (default: 'relaxed/relaxed')
      * Format: 'header/body' where each can be 'simple' or 'relaxed'
@@ -934,21 +968,10 @@ export interface DKIMSignOptions {
     expires?: Date | string | number;
 
     /**
-     * Maximum body length to sign (l= tag)
+     * The signatures to create. Without any, nothing is signed and `errors` holds an
+     * `ENOSIGNATURE` error
      */
-    maxBodyLength?: number;
-
-    /**
-     * Identity (i= tag), an address whose domain is the signing domain or its subdomain.
-     * Given unencoded, it is written as dkim-quoted-printable (`jõgi@example.com` as
-     * `i=j=C3=B5gi@example.com`)
-     */
-    identity?: string;
-
-    /**
-     * Multiple signature configurations
-     */
-    signatureData?: DKIMSignOptions[];
+    signatureData: DKIMSignatureData[];
 
     /**
      * Follow the RFCs exactly (default: false). Strict mode refuses rsa-sha1, RSA keys
@@ -1137,7 +1160,7 @@ export interface DKIMSignError {
     /**
      * Why the signature was not created. `err.code` is eg. 'ENOFROM', 'EINVALIDALGO',
      * 'EINVALIDTYPE', 'ESHORTKEY', 'EINVALIDDOMAIN', 'EINVALIDSELECTOR', 'EINVALIDIDENTITY',
-     * 'EINVALIDTIME', 'EINVALIDCANON' or 'EINVALIDINSTANCE'
+     * 'EINVALIDTIME', 'EINVALIDCANON', 'EINVALIDINSTANCE', 'ENOKEY' or 'ENOSIGNATURE'
      */
     err: Error & { code?: string };
 
