@@ -23,10 +23,7 @@ const laxIgnoreTests = [
     'as_format_inv_tag_key'
 ];
 
-const ignoreTests = [
-    // ARC-Message-Signature h includes a non-existing field
-    'ams_fields_h_empty_added'
-];
+const ignoreTests = [];
 
 // Cases where the suite, which was written against the ARC drafts, disagrees with RFC 8617
 const expectedOverrides = {

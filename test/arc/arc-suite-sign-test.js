@@ -43,6 +43,12 @@ let getResolver = txtRecords => {
     return resolver;
 };
 
+// the bh= tag of an ARC-Message-Signature value, without folding whitespace
+const bodyHashTag = value => (value.match(/(?:^|;)\s*bh=([^;]+)/)?.[1] || '').replace(/\s+/g, '');
+
+// the ARC-Message-Signature value from a block of header fields
+const amsValue = headers => headers.match(/^ARC-Message-Signature:(.*(?:\r?\n[ \t].*)*)/im)?.[1] || '';
+
 for (let mode of [
     { name: 'lax', strict: false },
     { name: 'strict', strict: true }
@@ -87,6 +93,12 @@ for (let mode of [
                         }
 
                         expect(/^arc-seal/im.test(headers.toString())).to.be.true;
+
+                        // the body hash of the new ARC-Message-Signature is the one the suite expects
+                        expect(testdata.AMS).to.be.a('string');
+                        expect(bodyHashTag(amsValue(headers.toString())))
+                            .to.equal(bodyHashTag(testdata.AMS))
+                            .and.not.equal('');
 
                         let expectToFail = testdata.AS.match(/\bcv=(\w+)\b/)?.[1] === 'fail';
 
