@@ -178,3 +178,44 @@ describe('DMARC From header parsing (RFC 5322 3.4, 3.6.2, 4.4)', () => {
         });
     });
 });
+
+describe('DMARC Author Domain with invisible or control characters', () => {
+    const recordingResolver = () => {
+        const resolver = zoneResolver(zone);
+        const wrapped = async (name, type) => {
+            wrapped.queries.push(name);
+            return resolver(name, type);
+        };
+        wrapped.queries = [];
+        return wrapped;
+    };
+
+    it('Should not evaluate a domain with a format character', async () => {
+        for (let strict of [false, true]) {
+            for (let c of ['​', '­', '⁠', '‎', '‮']) {
+                const res = await check(`ceo@ba${c}nk.example`, strict);
+                expect(res.dmarc, JSON.stringify(c)).to.be.false;
+                expect(res.dmarcSkipReason, JSON.stringify(c)).to.equal('invalid-author-domain');
+            }
+        }
+    });
+
+    it('Should not evaluate a domain with a control character or DEL', async () => {
+        for (let strict of [false, true]) {
+            for (let c of ['\x00', '\x01', '\x1b', '\x7f', '\x85', '\x9f']) {
+                const resolver = recordingResolver();
+                expect(await dmarc({ headerFrom: `ceo@bank${c}.example`, resolver, strict }), JSON.stringify(c)).to.be.false;
+                expect(resolver.queries, JSON.stringify(c)).to.deep.equal([]);
+            }
+        }
+    });
+
+    it('Should still accept a U-label and the CONTEXTJ joiners', async () => {
+        const resolver = recordingResolver();
+        let res = await dmarc({ headerFrom: 'ceo@bänk.example', resolver });
+        expect(res.status.header.from).to.equal('xn--bnk-qla.example');
+        // U+200C and U+200D are allowed by IDNA2008 in some scripts (RFC 5892 A.1, A.2)
+        res = await dmarc({ headerFrom: 'ceo@ن‌ا.example', resolver });
+        expect(res).to.not.be.false;
+    });
+});
