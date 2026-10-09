@@ -6,6 +6,7 @@ const expect = chai.expect;
 
 const getDmarcRecord = require('../../lib/dmarc/get-dmarc-record');
 const { domainExists } = getDmarcRecord;
+const { dmarc } = require('../../lib/dmarc');
 const { zoneResolver } = require('../helpers/dns-zone');
 
 chai.config.includeStack = true;
@@ -216,7 +217,9 @@ describe('getDmarcRecord Tests', () => {
 
             const result = await getDmarcRecord('example.com', stubResolver);
 
-            expect(result.tagonly).to.be.false;
+            // not a tag, the syntax error is discarded (RFC 9989 4.8)
+            expect(result).to.not.have.property('tagonly');
+            expect(result.p).to.equal('reject');
         });
 
         it('Should handle tags starting with equals', async () => {
@@ -231,7 +234,8 @@ describe('getDmarcRecord Tests', () => {
 
             const result = await getDmarcRecord('example.com', stubResolver);
 
-            expect(result.false).to.equal('=value');
+            expect(result).to.not.have.property('false');
+            expect(result.p).to.equal('reject');
         });
 
         it('Should lowercase tag names', async () => {
@@ -249,6 +253,27 @@ describe('getDmarcRecord Tests', () => {
             expect(result.v).to.equal('DMARC1');
             expect(result.p).to.equal('reject');
             expect(result.adkim).to.equal('s');
+        });
+
+        it('Should discard a fragment without "=" instead of letting it override a tag', async () => {
+            // RFC 9989 4.8: syntax errors in the record are discarded or ignored
+            for (let strict of [false, true]) {
+                let resolver = zoneResolver({ '_dmarc.bank.example': { TXT: [['v=DMARC1; p=reject; p']] } });
+                let result = await dmarc({ headerFrom: 'ceo@bank.example', spfDomains: [], dkimDomains: [], resolver, strict });
+                expect(result.status.result, String(strict)).to.equal('fail');
+                expect(result.policy, String(strict)).to.equal('reject');
+
+                resolver = zoneResolver({ '_dmarc.bank.example': { TXT: [['v=DMARC1; p=reject; adkim=s; adkim']] } });
+                result = await dmarc({ headerFrom: 'ceo@bank.example', spfDomains: [], dkimDomains: [{ domain: 'mail.bank.example' }], resolver, strict });
+                expect(result.status.result, String(strict)).to.equal('fail');
+                expect(result.policy, String(strict)).to.equal('reject');
+                expect(result.alignment.dkim.strict, String(strict)).to.be.true;
+            }
+
+            for (let record of ['v=DMARC1; p=reject; =none', 'v=DMARC1; p=reject; = none; p ; adkim']) {
+                let parsed = getDmarcRecord.parseDmarcRecord(record);
+                expect(parsed, record).to.deep.equal({ v: 'DMARC1', p: 'reject', rr: record });
+            }
         });
     });
 
