@@ -16,6 +16,7 @@ const {
     validateAlgorithm,
     getPublicKey,
     toALabel,
+    isHostNameDomain,
     formatSignatureHeaderLine,
     formatDomain,
     getAlignment,
@@ -240,6 +241,17 @@ describe('Header formatting RFC compliance', () => {
             expect(() => validateAlgorithm('ed25519-sha256')).to.not.throw();
             expect(() => validateAlgorithm('rsa-sha1')).to.not.throw();
             expect(() => validateAlgorithm('rsa-sha1', true)).to.throw();
+        });
+    });
+
+    describe('isHostNameDomain', () => {
+        it('Should accept host name characters after the A-label conversion', () => {
+            for (let domain of ['example.com', 'Bücher.example', '_dmarc.example.com', 'a-b.example.', 'localhost']) {
+                expect(isHostNameDomain(domain), domain).to.be.true;
+            }
+            for (let domain of ['', 'evil.example/x', 'a@example.com', 'example.com:25', 'a b.example', 'example.com#']) {
+                expect(isHostNameDomain(domain), domain).to.be.false;
+            }
         });
     });
 
