@@ -1650,13 +1650,19 @@ export interface VMCValidationResult {
             code?: string;
 
             /**
+             * Additional error details, for `SVG_VALIDATION_FAILED` the message and code of the SVG validation error
+             */
+            details?: any;
+
+            /**
              * Redirect URL if logo location redirected
              */
             redirect?: string;
         };
 
         /**
-         * Base64-encoded SVG logo file content
+         * Base64-encoded SVG logo file content, uncompressed if the file was SVGZ. Set only when the
+         * file passed SVG validation
          */
         logoFile?: string;
 
@@ -1724,6 +1730,26 @@ export interface VMCValidationResult {
          * Whether the logo hash in the certificate matches the fetched logo
          */
         hashMatch?: boolean;
+    };
+
+    /**
+     * BIMI headers for the message, set only when the logo and the evidence document (if any) validated
+     */
+    headers?: {
+        /**
+         * BIMI-Indicator header with the base64-encoded SVG logo
+         */
+        indicator: string;
+
+        /**
+         * BIMI-Location header
+         */
+        location: string;
+
+        /**
+         * BIMI-Logo-Preference header
+         */
+        preference?: string;
     };
 }
 

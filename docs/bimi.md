@@ -127,14 +127,16 @@ const vmcResult = await validateVMC(bimiResult, options);
 
 ### location Object
 
-| Field       | Type      | Description                          |
-| ----------- | --------- | ------------------------------------ |
-| `url`       | `string`  | Logo URL                             |
-| `success`   | `boolean` | Whether fetch succeeded              |
-| `logoFile`  | `string`  | Base64-encoded logo SVG (on success) |
-| `error`     | `object`  | Error details (on failure)           |
-| `hashAlgo`  | `string`  | Hash algorithm used for verification |
-| `hashValue` | `string`  | Calculated hash of the logo file     |
+| Field       | Type      | Description                                                    |
+| ----------- | --------- | -------------------------------------------------------------- |
+| `url`       | `string`  | Logo URL                                                       |
+| `success`   | `boolean` | Whether the logo was fetched and passed SVG validation         |
+| `logoFile`  | `string`  | Base64-encoded logo SVG, uncompressed if it was SVGZ (success) |
+| `error`     | `object`  | Error details (on failure)                                     |
+| `hashAlgo`  | `string`  | Hash algorithm used for verification                           |
+| `hashValue` | `string`  | Calculated hash of the logo file                               |
+
+The logo downloaded from `l=` is always checked with the SVG validator (section 7.6 of the draft), also when the record has no `a=` evidence document. An SVGZ file is uncompressed first. A logo that fails validation gives `success: false` with the error code `SVG_VALIDATION_FAILED`, and no headers are generated.
 
 ### authority Object
 
@@ -149,7 +151,7 @@ const vmcResult = await validateVMC(bimiResult, options);
 
 ### headers Object
 
-Present only when VMC validation succeeds. Contains ready-to-use email headers.
+Present only when the logo passes SVG validation and, if the record has an `a=` tag, the evidence document validates and its logo hash matches. Contains ready-to-use email headers.
 
 | Field        | Type     | Presence         | Description                                        |
 | ------------ | -------- | ---------------- | -------------------------------------------------- |
@@ -164,14 +166,14 @@ These headers should be added to messages after successful BIMI validation. The 
 
 ### VMC Error Codes
 
-| Code                    | Description                            |
-| ----------------------- | -------------------------------------- |
-| `HTTP_REQUEST_FAILED`   | HTTP request failed                    |
-| `MISSING_VMC_LOGO`      | VMC does not contain a logo file       |
-| `INVALID_MEDIATYPE`     | Logo media type is not `image/svg+xml` |
-| `INVALID_LOGO_HASH`     | Logo hash does not match certificate   |
-| `SVG_VALIDATION_FAILED` | SVG file failed validation             |
-| `VMC_DOMAIN_MISMATCH`   | Domain not found in certificate SAN    |
+| Code                    | Description                                                                                                                              |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `HTTP_REQUEST_FAILED`   | HTTP request failed                                                                                                                      |
+| `MISSING_VMC_LOGO`      | VMC does not contain a logo file                                                                                                         |
+| `INVALID_MEDIATYPE`     | Logo media type is not `image/svg+xml`                                                                                                   |
+| `INVALID_LOGO_HASH`     | Logo hash does not match certificate                                                                                                     |
+| `SVG_VALIDATION_FAILED` | SVG file failed validation, `details` has the validator's error code (`INVALID_SVGZ_FILE` for an SVGZ file that can not be uncompressed) |
+| `VMC_DOMAIN_MISMATCH`   | Domain not found in certificate SAN                                                                                                      |
 
 ## Example Output
 
