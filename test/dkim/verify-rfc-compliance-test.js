@@ -484,10 +484,41 @@ const cases = [
     },
     {
         title: 'a d= that is not a domain name',
-        msg: () => std('', { d: 'exa_mple..com' }),
-        records: { [`${SEL}._domainkey.exa_mple..com`]: [rsaRec] },
+        msg: () => std('', { d: 'exa_mple.com' }),
+        records: { [`${SEL}._domainkey.exa_mple.com`]: [rsaRec] },
         lax: { result: 'pass', warnings: ['tag-syntax'] },
         strict: { result: 'neutral', comment: 'signature syntax error' }
+    },
+    {
+        // a key record name that can not exist in the DNS is not looked up, the resolver would
+        // fail with EBADNAME, which is not a transient error (RFC 6376 section 6.1.2 step 3)
+        title: 'a d= with an empty label',
+        msg: () => std('', { d: 'example..com' }),
+        records: { [`${SEL}._domainkey.example..com`]: [rsaRec] },
+        lax: { result: 'neutral', comment: 'no key', warnings: ['tag-syntax'], noDns: true },
+        strict: { result: 'neutral', comment: 'signature syntax error', noDns: true }
+    },
+    {
+        title: 'a d= with a label longer than 63 octets',
+        msg: () => std('', { d: 'a'.repeat(64) + '.com' }),
+        records: { [`${SEL}._domainkey.${'a'.repeat(64)}.com`]: [rsaRec] },
+        lax: { result: 'neutral', comment: 'no key', warnings: ['tag-syntax'], noDns: true },
+        strict: { result: 'neutral', comment: 'signature syntax error', noDns: true }
+    },
+    {
+        // every label is valid, the key record name is longer than 253 octets
+        title: 'a d= that makes the key record name too long',
+        msg: () => std('', { d: ('a'.repeat(60) + '.').repeat(4) + 'com' }),
+        records: { [`${SEL}._domainkey.${('a'.repeat(60) + '.').repeat(4)}com`]: [rsaRec] },
+        lax: { result: 'neutral', comment: 'no key', warnings: ['tag-syntax'], noDns: true },
+        strict: { result: 'neutral', comment: 'signature syntax error', noDns: true }
+    },
+    {
+        title: 'a key lookup that fails with EBADNAME',
+        msg: () => std(),
+        records: { [KEYNAME]: Object.assign(new Error('queryTxt EBADNAME'), { code: 'EBADNAME' }) },
+        lax: { result: 'neutral', comment: 'no key' },
+        strict: { result: 'neutral', comment: 'no key' }
     },
     {
         // RFC 6376 section 3.6.1 key t=y, surfaced as a flag in both modes
