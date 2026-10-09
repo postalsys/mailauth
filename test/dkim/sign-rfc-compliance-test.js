@@ -10,6 +10,8 @@ const expect = chai.expect;
 const { dkimSign, DkimSignStream } = require('../../lib/dkim/sign');
 const { dkimVerify } = require('../../lib/dkim/verify');
 const { DkimSigner } = require('../../lib/dkim/dkim-signer');
+const { relaxedHeaders } = require('../../lib/dkim/header/relaxed');
+const { simpleHeaders } = require('../../lib/dkim/header/simple');
 const { sealMessage, createSeal } = require('../../lib/mailauth');
 const { verify: referenceVerify, parseTagList, resolverFrom, spkiB64 } = require('../helpers/dkim-reference');
 
@@ -290,6 +292,64 @@ describe('DKIM signing RFC compliance', () => {
                 const result = await signMessage({ strict, signatureData: [base({ identity: 'user@example.com; l=0' })] });
                 expect(errorCodes(result)).to.deep.equal(['EINVALIDIDENTITY']);
             }
+        });
+
+        const verifyStrict = out =>
+            dkimVerify(Buffer.from(out), {
+                strict: true,
+                resolver: resolverFrom({ 's._domainkey.example.com': [`v=DKIM1; k=rsa; p=${spkiB64(RSA_PUBLIC)}`] })
+            });
+
+        it('Should write the identity as dkim-quoted-printable', async () => {
+            const cases = [
+                ['jõgi@example.com', 'j=C3=B5gi@example.com'],
+                ['日本@example.com', '=E6=97=A5=E6=9C=AC@example.com'],
+                ['tag=41b@example.com', 'tag=3D41b@example.com'],
+                ['user@mail.example.com', 'user@mail.example.com']
+            ];
+
+            for (let canonicalization of ['relaxed/relaxed', 'simple/simple']) {
+                for (let [identity, encoded] of cases) {
+                    const result = await signMessage({ canonicalization, signatureData: [base({ identity })] });
+                    expect(result.errors).to.deep.equal([]);
+                    expect(result.warnings).to.deep.equal([]);
+                    expect(tagsOf(result.signatures).i).to.equal(encoded);
+                    expect(referenceVerify(result.out, RSA_PUBLIC).ok).to.be.true;
+
+                    const verified = await verifyStrict(result.out);
+                    expect(verified.results[0].status.result).to.equal('pass');
+                    expect(verified.results[0].status.header.i).to.equal(identity);
+                }
+            }
+        });
+
+        it('Should hash a non-ASCII signature header line as the UTF-8 bytes it is written as', async () => {
+            const line = 'DKIM-Signature: v=1; a=rsa-sha256; z=jõgi|日本; b=';
+            for (let canon of [relaxedHeaders, simpleHeaders]) {
+                const { canonicalizedHeader } = canon('DKIM', { headers: [] }, { signatureHeaderLine: line });
+                expect(canonicalizedHeader.includes(Buffer.from('z=jõgi|日本;'))).to.be.true;
+            }
+        });
+
+        it('Should warn about an identity that is not valid syntax by default and refuse it in strict mode', async () => {
+            for (let identity of ['x@@example.com', 'a@exa_mple.example.com', 'a@example.com.', 'a..b@example.com']) {
+                let result = await signMessage({ signatureData: [base({ identity })] });
+                expect(result.errors).to.deep.equal([]);
+                expect(result.warnings).to.include('identity-syntax');
+                const verified = await dkimVerify(Buffer.from(result.out), {
+                    resolver: resolverFrom({ 's._domainkey.example.com': [`v=DKIM1; k=rsa; p=${spkiB64(RSA_PUBLIC)}`] })
+                });
+                expect(verified.results[0].status.result).to.equal('pass');
+
+                result = await signMessage({ strict: true, signatureData: [base({ identity })] });
+                expect(errorCodes(result)).to.deep.equal(['EINVALIDIDENTITY']);
+                expect(result.signatures).to.equal('');
+            }
+
+            // the Local-part is optional
+            const result = await signMessage({ strict: true, signatureData: [base({ identity: '@mail.example.com' })] });
+            expect(result.errors).to.deep.equal([]);
+            expect(tagsOf(result.signatures).i).to.equal('@mail.example.com');
         });
 
         it('Should not put the ARC instance into the i= of a DKIM signature', async () => {

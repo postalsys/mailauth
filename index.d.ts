@@ -939,7 +939,9 @@ export interface DKIMSignOptions {
     maxBodyLength?: number;
 
     /**
-     * Identity (i= tag), an address whose domain is the signing domain or its subdomain
+     * Identity (i= tag), an address whose domain is the signing domain or its subdomain.
+     * Given unencoded, it is written as dkim-quoted-printable (`jõgi@example.com` as
+     * `i=j=C3=B5gi@example.com`)
      */
     identity?: string;
 
@@ -1154,9 +1156,11 @@ export interface DKIMSignError {
  * - `invalid-expiration`: the expiration is not after the signing time, or does not fit into x=
  * - `invalid-signtime`: the signing time does not fit into t=, which was left out
  * - `d-syntax`, `s-syntax`: d= or s= is not valid RFC 6376 syntax
+ * - `identity-syntax`: the identity is not valid RFC 6376 i= syntax
  * - `identity-domain`: the identity domain is not the signing domain or its subdomain
  */
-export type DKIMSignWarning = 'rsa-sha1' | 'weak-key' | 'invalid-expiration' | 'invalid-signtime' | 'd-syntax' | 's-syntax' | 'identity-domain';
+export type DKIMSignWarning =
+    'rsa-sha1' | 'weak-key' | 'invalid-expiration' | 'invalid-signtime' | 'd-syntax' | 's-syntax' | 'identity-syntax' | 'identity-domain';
 
 /**
  * DKIM signing result

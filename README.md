@@ -191,7 +191,7 @@ const signResult = await dkimSign(message, options);
 // Returns: { signatures: String, errors: Array, warnings: Array }
 ```
 
-`signatures` holds the `DKIM-Signature` header lines, each ending with a line break. It is an empty string when no signature could be created, in which case `errors` says why. Each entry of `errors` is an object with an `err` property (an `Error` with a `code`, such as `ENOFROM`, `EINVALIDALGO`, `ESHORTKEY` or `EINVALIDDOMAIN`) and the `signingDomain` and `selector` it applies to. `warnings` lists what was signed although `strict` mode would have refused it (`rsa-sha1`, `weak-key`, `invalid-expiration`, `invalid-signtime`, `d-syntax`, `s-syntax`, `identity-domain`).
+`signatures` holds the `DKIM-Signature` header lines, each ending with a line break. It is an empty string when no signature could be created, in which case `errors` says why. Each entry of `errors` is an object with an `err` property (an `Error` with a `code`, such as `ENOFROM`, `EINVALIDALGO`, `ESHORTKEY` or `EINVALIDDOMAIN`) and the `signingDomain` and `selector` it applies to. `warnings` lists what was signed although `strict` mode would have refused it (`rsa-sha1`, `weak-key`, `invalid-expiration`, `invalid-signtime`, `d-syntax`, `s-syntax`, `identity-syntax`, `identity-domain`).
 
 ##### Parameters
 
@@ -210,7 +210,7 @@ const signResult = await dkimSign(message, options);
         - **algorithm** (`string`, optional): Overrides parent `algorithm`.
         - **canonicalization** (`string`, optional): Overrides parent `canonicalization`.
         - **headerList** (`Array` or `string`, optional): Overrides parent `headerList`.
-        - **identity** (`string`, optional): Agent or User Identifier for the `i=` tag, such as `user@mail.example.com`. Its domain must be the signing domain or one of its subdomains.
+        - **identity** (`string`, optional): Agent or User Identifier for the `i=` tag, such as `user@mail.example.com`. Its domain must be the signing domain or one of its subdomains. Pass the address as it is, not encoded: it is written in dkim-quoted-printable, so `jõgi@example.com` becomes `i=j=C3=B5gi@example.com` and a `=` becomes `=3D`.
         - **maxBodyLength** (`number`, optional): Maximum number of canonicalized body bytes to sign (`l=` tag). Not recommended for general use.
 
 ##### Example
