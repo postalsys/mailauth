@@ -24,10 +24,52 @@
         "from": "[203.0.113.5]"
     },
     {
-        "mta": "Postfix, HELO with parentheses and an address literal in it",
+        "mta": "Postfix, HELO with parentheses and an address literal in it, ambiguous",
         "header": "Received: from x([203.0.113.5]) (unknown [198.51.100.7])\r\n\tby mx.example.net (Postfix) with ESMTP id 4XyzAbCdEf; Mon, 21 Sep 2026 10:00:00 +0000 (UTC)",
+        "ip": false,
+        "from": "x"
+    },
+    {
+        "mta": "Postfix, HELO with parentheses",
+        "header": "Received: from x(y) (unknown [198.51.100.7])\r\n\tby mx.example.net (Postfix) with ESMTP id 4XyzAbCdEf; Mon, 21 Sep 2026 10:00:00 +0000 (UTC)",
         "ip": "198.51.100.7",
         "from": "x"
+    },
+    {
+        "mta": "Postfix, TLS, client certificate and SMTP AUTH",
+        "header": "Received: from mail.example.org (mail.example.org [192.0.2.10])\r\n\t(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)\r\n\t key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)\r\n\t(Client CN \"mail.example.org\", Issuer \"R3\" (not verified))\r\n\t(Authenticated sender: user@example.org)\r\n\tby mx.example.net (Postfix) with ESMTPSA id 4XyzAbCdEf\r\n\tfor <\"x;y\"@example.net>; Mon, 21 Sep 2026 10:00:00 +0000 (UTC)",
+        "ip": "192.0.2.10",
+        "from": "mail.example.org"
+    },
+    {
+        "mta": "Postfix, HELO with a fake TCP-info comment and by keyword",
+        "header": "Received: from x (a [6.6.6.6]) by (unknown [192.0.2.1]) by mx.example.com (Postfix) with ESMTP id ABC; Thu, 1 Jan 2026 00:00:00 +0000",
+        "ip": false,
+        "from": "x"
+    },
+    {
+        "mta": "Postfix, HELO with an unclosed comment",
+        "header": "Received: from x (y [6.6.6.6] (unknown [192.0.2.1]) by mx.example.com (Postfix) with ESMTP id ABC for <u@[6.6.6.7]>; Thu, 1 Jan 2026 00:00:00 +0000",
+        "ip": false,
+        "from": "x"
+    },
+    {
+        "mta": "Postfix, HELO with a fake TCP-info comment and a TLS comment",
+        "header": "Received: from x (a [6.6.6.6]) (using TLS) (unknown [192.0.2.1]) by mx.example.com (Postfix) with ESMTP id ABC; Thu, 1 Jan 2026 00:00:00 +0000",
+        "ip": false,
+        "from": "x"
+    },
+    {
+        "mta": "Postfix, HELO with a quote",
+        "header": "Received: from x (a [6.6.6.6]) by z \" (unknown [192.0.2.1]) by mx.example.com (Postfix) with ESMTP id ABC for <\"u\"@example.com>; Thu, 1 Jan 2026 00:00:00 +0000",
+        "ip": false,
+        "from": "x"
+    },
+    {
+        "mta": "Postfix, HELO with a stray closing parenthesis",
+        "header": "Received: from x) (a [6.6.6.6] (unknown [192.0.2.1]) by mx.example.com (Postfix) with ESMTP id ABC; Thu, 1 Jan 2026 00:00:00 +0000",
+        "ip": false,
+        "from": "x)"
     },
     {
         "mta": "Exim, reverse DNS matches HELO",

@@ -70,20 +70,53 @@ describe('parseRecived Tests', () => {
             it(`Should find ${entry.ip || 'no address'} in ${entry.mta}`, async () => {
                 const res = parseReceived(entry.header);
                 expect(res.from.value).to.equal(entry.from);
-                expect(getClientAddress(res.from)).to.equal(entry.ip);
+                expect(getClientAddress(res)).to.equal(entry.ip);
             });
         }
 
+        const clientAddress = from =>
+            getClientAddress(parseReceived(`Received: from ${from} by mx.example.net with ESMTP id 1; Mon, 21 Sep 2026 10:00:00 +0000`));
+
         it('Should never use an address literal given as the HELO value', async () => {
-            expect(getClientAddress({ value: 'x', comment: 'helo=[203.0.113.5]' })).to.be.false;
-            expect(getClientAddress({ value: 'x', comment: 'port=1 ehlo=[203.0.113.5]' })).to.be.false;
-            expect(getClientAddress({ value: 'x', comment: '[192.0.2.1] helo=[203.0.113.5]' })).to.equal('192.0.2.1');
+            expect(clientAddress('x (helo=[203.0.113.5])')).to.be.false;
+            expect(clientAddress('x (port=1 ehlo=[203.0.113.5])')).to.be.false;
+            expect(clientAddress('x ([192.0.2.1] helo=[203.0.113.5])')).to.equal('192.0.2.1');
         });
 
         it('Should skip an address literal that is not an IP address', async () => {
-            expect(getClientAddress({ value: 'x', comment: 'rdns.example [192.0.2.1] [unknown]' })).to.equal('192.0.2.1');
-            expect(getClientAddress({ value: 'x', comment: '[999.0.0.1]' })).to.be.false;
+            expect(clientAddress('x (rdns.example [192.0.2.1] [unknown])')).to.equal('192.0.2.1');
+            expect(clientAddress('x ([999.0.0.1])')).to.be.false;
             expect(getClientAddress(undefined)).to.be.false;
+            expect(getClientAddress({ from: { value: 'x', comment: '[192.0.2.1]' } })).to.be.false;
+        });
+
+        it('Should not use an address from a HELO that contains a TCP-info comment and a by keyword', async () => {
+            // the client sent "HELO x (a [6.6.6.6]) by", which Postfix copies as it is
+            expect(clientAddress('x (a [6.6.6.6]) by (unknown [192.0.2.1])')).to.be.false;
+            // the client sent "HELO x (y [6.6.6.6]", the comment is never closed
+            expect(clientAddress('x (y [6.6.6.6] (unknown [192.0.2.1])')).to.be.false;
+            expect(
+                getClientAddress(
+                    parseReceived(
+                        'Received: from x (y [6.6.6.6] (unknown [192.0.2.1]) by mx.example.com (Postfix) with ESMTP id ABC for <u@[6.6.6.7]>; Thu, 1 Jan 2026 00:00:00 +0000'
+                    )
+                )
+            ).to.be.false;
+        });
+
+        it('Should not use an address from a header that can not be split unambiguously', async () => {
+            // a quoted string or a backslash in the from clause
+            expect(clientAddress('x "y" (unknown [192.0.2.1])')).to.be.false;
+            expect(clientAddress('x\\ (unknown [192.0.2.1])')).to.be.false;
+            expect(clientAddress('x (unknown\\ [192.0.2.1])')).to.be.false;
+            // an unclosed quoted string after the by keyword
+            expect(getClientAddress(parseReceived('Received: from x (unknown [192.0.2.1]) by mx " by y; Mon, 21 Sep 2026 10:00:00 +0000'))).to.be.false;
+            // by not followed by a host name
+            expect(getClientAddress(parseReceived('Received: from x (unknown [192.0.2.1]) by (mx); Mon, 21 Sep 2026 10:00:00 +0000'))).to.be.false;
+            // no by keyword at all
+            expect(getClientAddress(parseReceived('Received: from x (unknown [192.0.2.1]); Mon, 21 Sep 2026 10:00:00 +0000'))).to.be.false;
+            // the same address twice is not ambiguous
+            expect(clientAddress('[192.0.2.1] (unknown [192.0.2.1]) ([192.0.2.1])')).to.equal('192.0.2.1');
         });
     });
 });

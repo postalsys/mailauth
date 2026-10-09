@@ -308,6 +308,24 @@ describe('authenticate Tests', () => {
                 expect(result.dmarc.status.result).to.equal('fail');
             });
         }
+
+        for (const helo of ['x (a [203.0.113.5]) by', 'x (y [203.0.113.5]']) {
+            it(`Should not take a client address from the HELO "${helo}"`, async () => {
+                // Postfix copies the HELO argument as it is, and writes the TCP-info comment after it
+                const header = `Received: from ${helo} (unknown [${REAL}]) by mx.receiver.example (Postfix) with ESMTP id ABC for <u@[203.0.113.5]>; Thu, 1 Jan 2026 00:00:00 +0000`;
+                const result = await authenticate(Buffer.from(`${header}\r\nFrom: ceo@bank.example\r\nSubject: x\r\n\r\nhi\r\n`), {
+                    trustReceived: true,
+                    sender: 'ceo@bank.example',
+                    mta: 'mx.receiver.example',
+                    resolver,
+                    disableArc: true,
+                    disableBimi: true
+                });
+                expect(result.spf['client-ip']).to.be.undefined;
+                expect(result.spf.status.result).to.not.equal('pass');
+                expect(result.dmarc.status.result).to.equal('fail');
+            });
+        }
     });
 
     describe('ARC sealing', () => {
