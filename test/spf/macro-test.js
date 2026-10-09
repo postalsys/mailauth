@@ -5,6 +5,8 @@ const chai = require('chai');
 const expect = chai.expect;
 
 let macro = require('../../lib/spf/macro');
+const { spf } = require('../../lib/spf');
+const { zoneResolver } = require('../helpers/dns-zone');
 
 chai.config.includeStack = true;
 
@@ -53,5 +55,31 @@ describe('SPF Macro Tests', () => {
 
         // without an explicit domain, %{d} falls back to the sender domain (top-level evaluation)
         expect(macro('%{d}', { sender })).to.equal('email.example.com');
+    });
+
+    it('Should split on exactly the listed delimiters, in any order', async () => {
+        let sender = 'a.b-c+d,e/f=g_h@example.com';
+
+        // "-" between two other delimiters is not a range of characters
+        expect(macro('%{l.-+}', { sender })).to.equal('a.b.c.d,e/f=g_h');
+        expect(macro('%{l+-.}', { sender })).to.equal('a.b.c.d,e/f=g_h');
+        expect(macro('%{l,-/}', { sender })).to.equal('a.b.c+d.e.f=g_h');
+        // "," to "/" would also match ".", which shows once the parts are reversed
+        expect(macro('%{lr,-/}', { sender })).to.equal('f=g_h.e.c+d.a.b');
+        expect(macro('%{l=-_/,.+}', { sender })).to.equal('a.b.c.d.e.f.g.h');
+    });
+
+    it('Should evaluate a record with "-" between two other delimiters', async () => {
+        let res = await spf({
+            sender: 'a-b+c@example.com',
+            ip: '192.0.2.1',
+            helo: 'mx.example.com',
+            mta: 'mx.test',
+            resolver: zoneResolver({
+                'example.com': { TXT: [['v=spf1 exists:%{l.-+}._spf.example.com -all']] },
+                'a.b.c._spf.example.com': { A: ['127.0.0.2'] }
+            })
+        });
+        expect(res.status.result).to.equal('pass');
     });
 });
