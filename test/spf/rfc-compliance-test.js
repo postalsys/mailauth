@@ -267,6 +267,25 @@ describe('SPF RFC 7208 compliance', () => {
             expect(underLimit.status.result).to.equal('fail');
             expect(underLimit.lookups.count).to.equal(10);
         });
+
+        it('Should not count the PTR query of a %{p} expansion as a void lookup', async () => {
+            // no rDNS for the client, both terms are void, which is within the limit of two
+            const { lax, strict } = await both({}, record('v=spf1 exists:%{p}.a.example.test exists:%{i}.b.example.test -all'));
+            for (const res of [lax, strict]) {
+                expect(res.status.result).to.equal('fail');
+                expect(res.lookups.count).to.equal(3);
+                expect(res.lookups.void).to.equal(2);
+                expect(res.warnings).to.not.exist;
+            }
+        });
+
+        it('Should still count the PTR query of a ptr mechanism as a void lookup', async () => {
+            const { lax, strict } = await both({}, record('v=spf1 ptr exists:%{i}.b.example.test exists:%{i}.c.example.test -all'));
+            for (const res of [lax, strict]) {
+                expect(res.status.result).to.equal('permerror');
+                expect(res.status.comment).to.include('Too many void DNS results');
+            }
+        });
     });
 
     describe('%{p} macro (RFC 7208 7.3)', () => {
