@@ -75,6 +75,17 @@ describe('parseRecived Tests', () => {
             });
         }
 
+        it('Should read the current value of a parsed header that was changed', async () => {
+            const res = parseReceived('Received: from a.example (a.example [192.0.2.1]) by mx.example.net with ESMTP id 1; Mon, 21 Sep 2026 10:00:00 +0000');
+            expect(getClientAddress(res)).to.equal('192.0.2.1');
+            expect(getClientHelo(res)).to.equal('a.example');
+            const other = parseReceived('Received: from b.example (b.example [192.0.2.2]) by mx.example.net with ESMTP id 1; Mon, 21 Sep 2026 10:00:00 +0000');
+            res.full = other.full;
+            res.from = other.from;
+            expect(getClientAddress(res)).to.equal('192.0.2.2');
+            expect(getClientHelo(res)).to.equal('b.example');
+        });
+
         const clientAddress = from =>
             getClientAddress(parseReceived(`Received: from ${from} by mx.example.net with ESMTP id 1; Mon, 21 Sep 2026 10:00:00 +0000`));
 
