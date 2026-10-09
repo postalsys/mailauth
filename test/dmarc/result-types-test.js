@@ -13,7 +13,7 @@ chai.config.includeStack = true;
 
 // Top level properties of an interface in index.d.ts, mapped to whether they are optional
 const interfaceProperties = name => {
-    const source = fs.readFileSync(path.join(__dirname, '..', '..', 'index.d.ts'), 'utf8');
+    const source = fs.readFileSync(path.join(__dirname, '..', '..', 'index.d.ts'), 'utf8').replace(/\r\n/g, '\n');
     const start = source.indexOf(`export interface ${name} {`);
     expect(start, name).to.be.at.least(0);
     const body = source.slice(start, source.indexOf('\n}\n', start));
@@ -61,7 +61,7 @@ describe('DMARCResult type definition', () => {
     });
 
     it('Should cite RFC 9989 for the dmarc ptype properties', () => {
-        const source = fs.readFileSync(path.join(__dirname, '..', '..', 'index.d.ts'), 'utf8');
+        const source = fs.readFileSync(path.join(__dirname, '..', '..', 'index.d.ts'), 'utf8').replace(/\r\n/g, '\n');
         const start = source.indexOf('export interface DMARCResult {');
         const body = source.slice(start, source.indexOf('\n}\n', start));
         expect(body).to.not.include('RFC 8601 section 2.7.2');
