@@ -61,28 +61,29 @@ When ARC validation passes, the `authenticationResults` object contains parsed r
 
 ## Comment Values (on failure)
 
-| Comment Pattern                                                             | Description                                                                                                          |
-| --------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `"i={n} seal signature validation failed"`                                  | ARC-Seal cryptographic verification failed                                                                           |
-| `"i={n} no valid signature"`                                                | ARC-Message-Signature verification failed                                                                            |
-| `"i={n} multiple {header} values"`                                          | Duplicate ARC headers for same instance                                                                              |
-| `"chain-length={n}"`                                                        | Chain exceeds 50 instances                                                                                           |
-| `"i={n} expected={m}"`                                                      | Missing or out-of-order instance numbers                                                                             |
-| `"i={n} no {header} set"`                                                   | Missing required ARC header                                                                                          |
-| `"i=1 cv={value}"`                                                          | First instance must have `cv=none`                                                                                   |
-| `"i={n} cv={value}"`                                                        | Non-first instance must have `cv=pass`, and a newest seal with `cv=fail` fails the chain                             |
-| `"i={n} unexpected as h"`                                                   | ARC-Seal has an `h=` tag                                                                                             |
-| `"i={n} invalid ams h"`                                                     | ARC-Message-Signature signed arc-seal (forbidden)                                                                    |
-| `"i={n} as {problem}"`, `"i={n} ams {problem}"`                             | Strict mode: a tag-list syntax error, a missing required tag or a malformed `t=`/`x=`/`l=`                           |
-| `"invalid as instance"`, `"invalid ams instance"`, `"invalid aar instance"` | Strict mode: an ARC header field whose `i=` is not 1 to 50 written as 1*2DIGIT (first in ARC-Authentication-Results) |
-| `"no key for {domain}"`                                                     | DNS key not found                                                                                                    |
-| `"unknown key version for {domain}"`                                        | Key record `v=` is not `DKIM1`                                                                                       |
-| `"unknown key type for {domain}"`                                           | Unsupported key type                                                                                                 |
-| `"invalid public key for {domain}"`                                         | Malformed public key                                                                                                 |
-| `"inappropriate hash algorithm for {domain}"`                               | Key record `h=` does not list sha256                                                                                 |
-| `"key not for email for {domain}"`                                          | Key record `s=` does not list email                                                                                  |
-| `"inappropriate key algorithm for {domain}"`                                | The key type does not match the seal's `a=` algorithm                                                                |
-| `"weak key for {domain}"`                                                   | RSA key too short                                                                                                    |
+| Comment Pattern                                                             | Description                                                                                                            |
+| --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `"i={n} seal signature validation failed"`                                  | ARC-Seal cryptographic verification failed                                                                             |
+| `"i={n} no valid signature"`                                                | ARC-Message-Signature verification failed                                                                              |
+| `"i={n} multiple {header} values"`                                          | Duplicate ARC headers for same instance                                                                                |
+| `"chain-length={n}"`                                                        | Chain exceeds 50 instances                                                                                             |
+| `"i={n} expected={m}"`                                                      | Missing or out-of-order instance numbers                                                                               |
+| `"i={n} no {header} set"`                                                   | Missing required ARC header                                                                                            |
+| `"i=1 cv={value}"`                                                          | First instance must have `cv=none`                                                                                     |
+| `"i={n} cv={value}"`                                                        | Non-first instance must have `cv=pass`, and a newest seal with `cv=fail` fails the chain                               |
+| `"i={n} unexpected as h"`                                                   | ARC-Seal has an `h=` tag                                                                                               |
+| `"i={n} invalid ams h"`                                                     | ARC-Message-Signature signed arc-seal (forbidden)                                                                      |
+| `"i={n} as {problem}"`, `"i={n} ams {problem}"`                             | Strict mode: a tag-list syntax error, a missing required tag or a malformed `t=`/`x=`/`l=`                             |
+| `"i={n} as invalid d="`, `"i={n} ams invalid d="`                           | Both modes: an ARC-Seal or the newest ARC-Message-Signature has a `d=` with a character that can not be in a host name |
+| `"invalid as instance"`, `"invalid ams instance"`, `"invalid aar instance"` | Strict mode: an ARC header field whose `i=` is not 1 to 50 written as 1*2DIGIT (first in ARC-Authentication-Results)   |
+| `"no key for {domain}"`                                                     | DNS key not found                                                                                                      |
+| `"unknown key version for {domain}"`                                        | Key record `v=` is not `DKIM1`                                                                                         |
+| `"unknown key type for {domain}"`                                           | Unsupported key type                                                                                                   |
+| `"invalid public key for {domain}"`                                         | Malformed public key                                                                                                   |
+| `"inappropriate hash algorithm for {domain}"`                               | Key record `h=` does not list sha256                                                                                   |
+| `"key not for email for {domain}"`                                          | Key record `s=` does not list email                                                                                    |
+| `"inappropriate key algorithm for {domain}"`                                | The key type does not match the seal's `a=` algorithm                                                                  |
+| `"weak key for {domain}"`                                                   | RSA key too short                                                                                                      |
 
 An ARC-Message-Signature that does not sign the From header field is not valid (RFC 6376 section 6.1.1), which fails the chain with `"i={n} no valid signature"` in both modes. An ARC-Seal `c=` tag is not defined by RFC 8617, so it is ignored like any other unknown tag.
 
@@ -94,6 +95,7 @@ These rules apply in both modes:
 - An Ed25519 seal signs the SHA-256 hash of the canonicalized data (RFC 8463).
 - The seal's `a=` algorithm has to match the key type, and the key record's `v=`, `h=` and `s=` tags are honored.
 - An ARC-Message-Signature without `c=` uses `simple/simple`, the DKIM-Signature default.
+- A `d=` with a character that can not be in a host name (such as `/`, `?`, `#`, `@` or `:`) in any ARC-Seal or in the newest ARC-Message-Signature fails the chain, and its key is not looked up.
 
 Differences between the modes:
 

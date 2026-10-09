@@ -605,6 +605,60 @@ describe('ARC RFC 8617 compliance', function () {
         }
     });
 
+    describe('A d= that is not a host name (RFC 6376 section 3.5)', () => {
+        // The key of such a d= would be looked up in the zone after the delimiter, so the chain
+        // fails as a syntax error in every mode, without a key query
+        const aar = 'ARC-Authentication-Results: i=1; one.example; spf=pass smtp.mailfrom=example.com';
+        for (let sep of ['/', '?', '#', '\\', '@', ':']) {
+            let d = `one.example${sep}x.attacker.test`;
+            let records = { [`s._domainkey.${d}`]: 'k1', [`s._domainkey.one.example`]: 'k1' };
+            const variants = [
+                ['the ARC-Seal and the AMS', { d, aar }, 'i=1 as invalid d='],
+                ['the ARC-Seal', { d, aar, amsOpts: { d: 'one.example' } }, 'i=1 as invalid d='],
+                ['the AMS', { d: 'one.example', aar, amsOpts: { d } }, 'i=1 ams invalid d=']
+            ];
+            for (let [title, opts, comment] of variants) {
+                for (let mode of MODES) {
+                    it(`Should fail d=${d} in ${title} without a key query (${mode.name})`, async () => {
+                        let msg = singleSet(opts).msg;
+                        let resolver = ref.resolver(records);
+                        let res = await check(msg, {}, { strict: mode.strict, resolver });
+                        expect(res.arc.status.result).to.equal('fail');
+                        expect(res.arc.status.comment).to.equal(comment);
+                        expect(resolver.calls.filter(call => call.includes('_domainkey'))).to.deep.equal([]);
+                    });
+                }
+            }
+        }
+
+        it('Should fail an older ARC-Seal with such a d= (lax)', async () => {
+            let d = 'one.example/x.attacker.test';
+            let first = singleSet({ d, aar, amsOpts: { d: 'one.example' } });
+            let second = ref.seal(first.msg, first.sets, {
+                i: 2,
+                cv: 'pass',
+                d: 'one.example',
+                s: 's',
+                keyName: 'k1',
+                aar: 'ARC-Authentication-Results: i=2; one.example; arc=pass'
+            });
+            let resolver = ref.resolver({ [`s._domainkey.${d}`]: 'k1', 's._domainkey.one.example': 'k1' });
+            let res = await check(second.msg, {}, { resolver });
+            expect(res.arc.status.result).to.equal('fail');
+            expect(res.arc.status.comment).to.equal('i=1 as invalid d=');
+            expect(resolver.calls.filter(call => call.includes('_domainkey'))).to.deep.equal([]);
+        });
+
+        for (let mode of MODES) {
+            it(`Should accept a U-label d= (${mode.name})`, async () => {
+                let d = 'bücher.example';
+                let msg = singleSet({ d: Buffer.from(d, 'utf8').toString('binary'), aar }).msg;
+                let res = await check(Buffer.from(msg, 'binary'), { 's._domainkey.xn--bcher-kva.example': 'k1' }, { strict: mode.strict });
+                expect(res.arc.status.result).to.equal('pass');
+            });
+        }
+    });
+
     describe('AMS header list (RFC 8617 section 4.1.2, F14)', () => {
         const msg = ref.baseMessage().replace('\r\n\r\n', '\r\nDKIM-Signature: v=1; a=rsa-sha256; d=example.com; s=x; h=from; bh=AAAA; b=AAAA\r\n\r\n');
         const amsH = headers =>
