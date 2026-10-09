@@ -614,9 +614,11 @@ export interface DMARCResult {
 
     /**
      * Effective DMARC policy ('none', 'quarantine', 'reject'): p for the author domain's own
-     * record, np or sp for an inherited one, one level lower with t=y
+     * record, np or sp for an inherited one, one level lower with t=y. Like p, sp, testMode and
+     * alignment, only set when a policy record was applied, not for a none result or a
+     * temperror before a record was found
      */
-    policy: string;
+    policy?: string;
 
     /**
      * Domain whose DMARC record the policy was taken from
@@ -626,12 +628,12 @@ export interface DMARCResult {
     /**
      * Policy for organizational domain
      */
-    p: string;
+    p?: string;
 
     /**
      * Policy for subdomains
      */
-    sp: string;
+    sp?: string;
 
     /**
      * Policy for non-existent subdomains, if published
@@ -641,7 +643,7 @@ export interface DMARCResult {
     /**
      * True when the record has t=y, in which case policy is one level below the published one
      */
-    testMode: boolean;
+    testMode?: boolean;
 
     /**
      * DMARC DNS record
@@ -654,7 +656,7 @@ export interface DMARCResult {
     status: AuthStatus & {
         header?: {
             /**
-             * Author Domain
+             * Author Domain (RFC 9989 section 9.1 header.from)
              */
             from?: string;
 
@@ -666,16 +668,16 @@ export interface DMARCResult {
 
         policy?: {
             /**
-             * The policy that was applied (RFC 8601 section 2.7.2 policy.dmarc)
+             * The policy that was applied (RFC 9989 section 9.1 policy.dmarc)
              */
             dmarc?: string;
         };
     };
 
     /**
-     * Alignment results
+     * Alignment results, set when a policy record was applied
      */
-    alignment: {
+    alignment?: {
         spf: {
             /**
              * Aligned SPF domain, or undefined if no domain aligned
