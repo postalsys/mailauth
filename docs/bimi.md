@@ -68,10 +68,10 @@ The Assertion Record uses the DKIM tag-list syntax, and the draft says that rece
 
 ### status.policy Object
 
-| Field           | Type     | Description                                        |
-| --------------- | -------- | -------------------------------------------------- |
-| `authority`     | `string` | VMC validation status (`"none"` before validation) |
-| `authority-uri` | `string` | URL of the authority evidence document             |
+| Field           | Type     | Description                                                                              |
+| --------------- | -------- | ---------------------------------------------------------------------------------------- |
+| `authority`     | `string` | VMC validation status, `"none"` from `bimi()`, `"pass"` or `"fail"` from `validateVMC()` |
+| `authority-uri` | `string` | URL of the authority evidence document                                                   |
 
 ## Result Values
 
@@ -153,7 +153,11 @@ Downloads only use HTTPS URLs whose host is a domain name. Redirects are followe
 | `location`  | `object` | Logo file fetch result                                            |
 | `authority` | `object` | VMC/CMC fetch and validation result                               |
 | `headers`   | `object` | Ready-to-use email headers (only on validation success)           |
+| `status`    | `object` | Updated BIMI status, when `bimiData.status.result` was `pass`     |
+| `info`      | `string` | Updated Authentication-Results entry, along with `status`         |
 | `warnings`  | `array`  | Accepted SVG Tiny PS profile deviations of the logo files, if any |
+
+The `info` of `bimi()` covers record discovery only, it reports `bimi=pass policy.authority=none` before anything is downloaded. When `validateVMC()` is used, use its `info` for the Authentication-Results header instead (section 7.7 of the draft): the result is `fail` when the indicator can not be retrieved (`failed to retrieve indicator`), fails SVG validation (`invalid SVG indicator`), the evidence document does not validate (`evidence document validation failed`) or its logo does not match the indicator (`indicator does not match evidence document`). When the record has `a=`, `policy.authority` is `pass` if the evidence document validated and its logo matches, and `fail` otherwise. `authenticate()` does not download anything, so its `bimi.info` is the discovery result.
 
 ### location Object
 
@@ -183,11 +187,11 @@ The logo downloaded from `l=` is always checked with the SVG validator (section 
 
 Present only when the logo passes SVG validation and, if the record has an `a=` tag, the evidence document validates and its logo hash matches. Contains ready-to-use email headers.
 
-| Field        | Type     | Presence                              | Description                                                                |
-| ------------ | -------- | ------------------------------------- | -------------------------------------------------------------------------- |
-| `indicator`  | `string` | Always                                | BIMI-Indicator header with base64-encoded SVG logo                         |
-| `location`   | `string` | Always                                | BIMI-Location header with logo URL                                         |
-| `preference` | `string` | `preference` is `personal` or `brand` | BIMI-Logo-Preference header, for example `BIMI-Logo-Preference: avp=brand` |
+| Field        | Type     | Presence                              | Description                                                                                     |
+| ------------ | -------- | ------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `indicator`  | `string` | Always                                | BIMI-Indicator header with base64-encoded SVG logo                                              |
+| `location`   | `string` | Always                                | BIMI-Location header with the logo URL, and the `a=` evidence document URL when it was verified |
+| `preference` | `string` | `preference` is `personal` or `brand` | BIMI-Logo-Preference header, for example `BIMI-Logo-Preference: avp=brand`                      |
 
 These headers should be added to messages after successful BIMI validation. The MTA should:
 
@@ -366,8 +370,20 @@ These are rejected in every element and namespace:
     },
     "headers": {
         "indicator": "BIMI-Indicator: PHN2ZyB4bWxucz0i...",
-        "location": "BIMI-Location: v=BIMI1; l=https://example.com/bimi/logo.svg",
+        "location": "BIMI-Location: v=BIMI1; l=https://example.com/bimi/logo.svg; a=https://example.com/bimi/vmc.pem",
         "preference": "BIMI-Logo-Preference: avp=brand"
-    }
+    },
+    "status": {
+        "result": "pass",
+        "header": {
+            "selector": "default",
+            "d": "example.com"
+        },
+        "policy": {
+            "authority": "pass",
+            "authority-uri": "https://example.com/bimi/vmc.pem"
+        }
+    },
+    "info": "bimi=pass policy.authority=pass policy.authority-uri=\"https://example.com/bimi/vmc.pem\" header.selector=default header.d=example.com"
 }
 ```

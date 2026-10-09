@@ -327,5 +327,27 @@ describe('BIMI Tests', () => {
 
         expect(result).to.exist;
         expect(result.location.hashValue).to.equal('ea8c81da633c66a16262134a78576cdf067638e9');
+
+        // the result of bimi() for the record, updated with the evidence validation
+        bimiData.status = {
+            result: 'pass',
+            header: { selector: 'default', d: 'cnn.com' },
+            policy: { authority: 'none', 'authority-uri': bimiData.authority }
+        };
+        result = await validateVMC(bimiData, { now: new Date(CUR_DATE_FIXED) });
+
+        expect(result.authority.success).to.be.true;
+        expect(result.authority.domainVerified).to.be.true;
+        expect(result.authority.hashMatch).to.be.true;
+        expect(result.headers.location).to.equal(
+            'BIMI-Location: v=BIMI1; l=https://amplify.valimail.com/bimi/time-warner/yV3KRIg4nJW-cnn.svg; a=https://amplify.valimail.com/bimi/time-warner/yV3KRIg4nJW-cnn.pem'
+        );
+        expect(result.status.result).to.equal('pass');
+        expect(result.status.policy.authority).to.equal('pass');
+        expect(result.info).to.equal(
+            'bimi=pass policy.authority=pass policy.authority-uri="https://amplify.valimail.com/bimi/time-warner/yV3KRIg4nJW-cnn.pem" header.selector=default header.d=cnn.com'
+        );
+        // the input is not modified
+        expect(bimiData.status.policy.authority).to.equal('none');
     });
 });

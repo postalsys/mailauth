@@ -1747,6 +1747,18 @@ export interface VMCValidationResult {
     };
 
     /**
+     * The BIMI status of `bimiData` updated with the validation results (7.7): `fail` with a comment
+     * when the indicator or the evidence document failed, `policy.authority` set to `pass` or `fail`
+     * when an evidence document was checked. Set only when `bimiData.status.result` was `pass`
+     */
+    status?: BIMIResult['status'];
+
+    /**
+     * Authentication-Results entry for the updated status, use it instead of the `info` of `bimi()`
+     */
+    info?: string;
+
+    /**
      * SVG Tiny PS profile deviations of the logo files that were accepted because `strict` was not set,
      * for example 'svg-version'
      */
@@ -1762,7 +1774,7 @@ export interface VMCValidationResult {
         indicator: string;
 
         /**
-         * BIMI-Location header
+         * BIMI-Location header, with a= when the evidence document was verified
          */
         location: string;
 
@@ -1787,7 +1799,8 @@ export interface BIMIData extends BIMIResult {
 export interface VMCValidationOptions {
     /**
      * Validate the logo files exactly against the SVG Tiny PS profile (default: false). Without it,
-     * the deviations that do not make a logo unsafe are accepted and listed in `warnings`
+     * the deviations that do not make a logo unsafe are accepted and listed in `warnings`. Also
+     * formats `info` in the RFC 8601 section 2.2 form
      */
     strict?: boolean;
 

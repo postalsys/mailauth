@@ -126,4 +126,88 @@ describe('BIMI validateVMC Tests', () => {
             expect(result.warnings).to.not.exist;
         });
     });
+
+    describe('Authentication-Results after validation', () => {
+        const passStatus = authority => ({
+            result: 'pass',
+            header: { selector: 'default', d: 'example.com' },
+            policy: authority ? { authority: 'none', 'authority-uri': authority } : undefined
+        });
+
+        it('Should fail the result when the indicator and the evidence document fail', async () => {
+            const result = await validateVMC({
+                location: 'https://example.com/logo.svg',
+                locationPath: Buffer.from('<svg/>'),
+                authority: 'https://example.com/vmc.pem',
+                authorityPath: Buffer.from('not a certificate'),
+                status: passStatus('https://example.com/vmc.pem')
+            });
+            expect(result.authority.success).to.be.false;
+            expect(result.headers).to.not.exist;
+            expect(result.status.result).to.equal('fail');
+            expect(result.status.comment).to.equal('invalid SVG indicator');
+            expect(result.status.policy.authority).to.equal('fail');
+            expect(result.info).to.equal(
+                'bimi=fail (invalid SVG indicator) policy.authority=fail policy.authority-uri="https://example.com/vmc.pem" header.selector=default header.d=example.com'
+            );
+        });
+
+        it('Should fail the result when only the evidence document fails', async () => {
+            const result = await validateVMC({
+                location: 'https://example.com/logo.svg',
+                locationPath: Buffer.from(LOGO),
+                authority: 'https://example.com/vmc.pem',
+                authorityPath: Buffer.from('not a certificate'),
+                status: passStatus('https://example.com/vmc.pem')
+            });
+            expect(result.location.success).to.be.true;
+            expect(result.headers).to.not.exist;
+            expect(result.info).to.equal(
+                'bimi=fail (evidence document validation failed) policy.authority=fail policy.authority-uri="https://example.com/vmc.pem" header.selector=default header.d=example.com'
+            );
+        });
+
+        it('Should fail the result when the indicator can not be retrieved', async () => {
+            const result = await validateVMC({
+                location: 'https://127.0.0.1/logo.svg',
+                status: passStatus()
+            });
+            expect(result.location.success).to.be.false;
+            expect(result.info).to.equal('bimi=fail (failed to retrieve indicator) header.selector=default header.d=example.com');
+        });
+
+        it('Should keep the pass result for a valid indicator without evidence', async () => {
+            const bimiData = { location: 'https://example.com/logo.svg', locationPath: Buffer.from(LOGO), status: passStatus() };
+            const result = await validateVMC(bimiData);
+            expect(result.status.result).to.equal('pass');
+            expect(result.status.policy).to.not.exist;
+            expect(result.info).to.equal('bimi=pass header.selector=default header.d=example.com');
+            expect(result.headers.location).to.equal('BIMI-Location: v=BIMI1; l=https://example.com/logo.svg');
+        });
+
+        it('Should format the entry in strict mode', async () => {
+            const result = await validateVMC(
+                { location: 'https://example.com/logo.svg', locationPath: Buffer.from('<svg/>'), status: passStatus() },
+                { strict: true }
+            );
+            expect(result.status.result).to.equal('fail');
+            expect(result.info).to.match(/^bimi=fail \(invalid SVG indicator\)/);
+        });
+
+        it('Should not add a status for data that did not pass discovery', async () => {
+            const result = await validateVMC({ location: 'https://example.com/logo.svg', locationPath: Buffer.from(LOGO), status: { header: {} } });
+            expect(result.status).to.not.exist;
+            expect(result.info).to.not.exist;
+        });
+
+        it('Should not build headers from a location that is not a valid URL', async () => {
+            const result = await validateVMC({
+                location: 'https://example.com/logo.svg\r\nX-Injected: 1',
+                locationPath: Buffer.from(LOGO),
+                status: { header: {} }
+            });
+            expect(result.location.success).to.be.true;
+            expect(result.headers).to.not.exist;
+        });
+    });
 });

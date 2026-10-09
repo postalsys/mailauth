@@ -578,7 +578,7 @@ if (bimi?.location) {
 
 #### Verified Mark Certificate (VMC)
 
-If an Authority Evidence Document is specified in the BIMI record, its location is available in `bimi.authority`. mailauth exposes the certificate type (`"VMC"` or `"CMC"`) in `bimi.authority.vmc.type`.
+If an Authority Evidence Document is specified in the BIMI record, its location is available in `bimi.authority`. Use `validateVMC()` from `mailauth/lib/bimi` to download and validate the logo and the evidence document. Its result includes the BIMI headers for the message and an updated Authentication-Results entry in `info`, as `bimi.info` only covers record discovery. mailauth exposes the certificate type (`"VMC"` or `"CMC"`) in `bimi.authority.vmc.type`.
 
 **Example Authority Evidence Documents:**
 
