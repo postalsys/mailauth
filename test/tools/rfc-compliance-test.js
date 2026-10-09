@@ -330,6 +330,11 @@ describe('Header formatting RFC compliance', () => {
             await rejects(get(`v=DKIM1; p=${edRawB64(ED_PUBLIC)}`, { strict: true }), 'EINVALIDTYPE');
             expect((await get(`v=DKIM1; k=ed25519; p=${edRawB64(ED_PUBLIC)}`, { strict: true })).keyType).to.equal('ed25519');
 
+            lax = await get(`v=DKIM1; k=ed25519; p=${spkiB64(ED_PUBLIC)}`);
+            expect(lax.keyType).to.equal('ed25519');
+            expect(lax.warnings).to.deep.equal(['key-ed25519-spki']);
+            await rejects(get(`v=DKIM1; k=ed25519; p=${spkiB64(ED_PUBLIC)}`, { strict: true }), 'EINVALIDVAL');
+
             lax = await get(`v=DKIM1; v=DKIM1; p=${spkiB64(RSA_PUBLIC)}`);
             expect(lax.warnings).to.deep.equal(['key-syntax']);
             await rejects(get(`v=DKIM1; v=DKIM1; p=${spkiB64(RSA_PUBLIC)}`, { strict: true }), 'EINVALIDVAL');

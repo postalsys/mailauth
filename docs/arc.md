@@ -115,12 +115,12 @@ The position of `i=` in an ARC-Seal or ARC-Message-Signature is not checked in e
 
 In the default mode `warnings` lists what was accepted although strict mode would have rejected it. It is only present when there is something to report and the chain did not fail, and it is never written into the Authentication-Results text.
 
-| Warning                                           | Meaning                                                                                               |
-| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `arc-tag-syntax`                                  | An ARC-Seal or the newest ARC-Message-Signature has a tag-list syntax error or an upper case tag name |
-| `arc-instance-syntax`                             | An `i=` value is not valid RFC 8617 syntax, or an ARC header field was ignored because of its `i=`    |
-| `ams-c-default`                                   | The ARC-Message-Signature has no `c=` and only verified with `relaxed/relaxed`                        |
-| `key-syntax`, `key-v-syntax`, `key-type-inferred` | Key record leniencies, see the [DKIM result reference](dkim.md#warnings)                              |
+| Warning                                                               | Meaning                                                                                               |
+| --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `arc-tag-syntax`                                                      | An ARC-Seal or the newest ARC-Message-Signature has a tag-list syntax error or an upper case tag name |
+| `arc-instance-syntax`                                                 | An `i=` value is not valid RFC 8617 syntax, or an ARC header field was ignored because of its `i=`    |
+| `ams-c-default`                                                       | The ARC-Message-Signature has no `c=` and only verified with `relaxed/relaxed`                        |
+| `key-syntax`, `key-v-syntax`, `key-type-inferred`, `key-ed25519-spki` | Key record leniencies, see the [DKIM result reference](dkim.md#warnings)                              |
 
 ## Sealing
 

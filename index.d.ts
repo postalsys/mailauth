@@ -230,6 +230,8 @@ export interface AuthStatus {
  * - `key-syntax`: the key record is not valid tag-list syntax
  * - `key-v-syntax`: the key record v= is not the first tag, or not exactly "DKIM1"
  * - `key-type-inferred`: an ed25519 key was found from its length, without k=ed25519
+ * - `key-ed25519-spki`: an ed25519 key was published as a SubjectPublicKeyInfo structure, not
+ *   as the bare 32 octet key of RFC 8463 section 4.2
  */
 export type DKIMWarning =
     | 'rsa-sha1'
@@ -247,7 +249,8 @@ export type DKIMWarning =
     | 'query-method'
     | 'key-syntax'
     | 'key-v-syntax'
-    | 'key-type-inferred';
+    | 'key-type-inferred'
+    | 'key-ed25519-spki';
 
 /**
  * DKIM verification result for a single signature

@@ -285,8 +285,25 @@ const cases = [
         title: 'an rsa signature with an ed25519 key',
         msg: () => std(),
         records: { [KEYNAME]: [edRec] },
-        lax: { result: 'neutral' },
+        lax: { result: 'neutral', comment: 'inappropriate key algorithm' },
         strict: { result: 'neutral', comment: 'inappropriate key algorithm' }
+    },
+    {
+        // RFC 6376 section 6.1.2 step 8. b= is an RSA PKCS#1 v1.5 signature over the sha256
+        // digest of the header, which the RSA key would verify if the key type was not checked
+        title: 'an ed25519-sha256 signature made and verified with an RSA key',
+        msg: () => std('', { algo: 'ed25519-sha256', key: rsa2048.privateKey }),
+        records: { [KEYNAME]: [rsaRec] },
+        lax: { result: 'neutral', comment: 'inappropriate key algorithm' },
+        strict: { result: 'neutral', comment: 'inappropriate key algorithm' }
+    },
+    {
+        // RFC 8463 section 4.2: p= is the bare 32 octet key
+        title: 'an ed25519 key published as SubjectPublicKeyInfo',
+        msg: () => std('', { algo: 'ed25519-sha256', key: ed.privateKey }),
+        records: { [KEYNAME]: [`v=DKIM1; k=ed25519; p=${spkiB64(ed.publicKey)}`] },
+        lax: { result: 'pass', warnings: ['key-ed25519-spki'] },
+        strict: { result: 'neutral', comment: 'invalid public key' }
     },
     {
         // RFC 8463 defines ed25519-sha256 only
