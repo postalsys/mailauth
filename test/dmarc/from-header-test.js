@@ -88,7 +88,13 @@ describe('DMARC From header parsing (RFC 5322 3.4, 3.6.2, 4.4)', () => {
                 'a"b"@bank.example',
                 '@bank.example',
                 '<>',
-                'G: H: a@bank.example;;'
+                'G: H: a@bank.example;;',
+                // a domain literal is not a word, it can not take the place of the dot
+                // between the words of a local-part
+                'a[x]b@bank.example',
+                'bob[@evil.example]a@bank.example',
+                '""[192.0.2.1]y@bank.example',
+                'CEO a[x]b@bank.example'
             ]) {
                 expect(parseFromHeader(value).syntax, JSON.stringify(value)).to.equal('invalid');
             }
