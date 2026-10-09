@@ -94,4 +94,72 @@ describe('BIMI Assertion Record Tests', () => {
             expect(vmcResult.headers.preference).to.not.exist;
         });
     });
+
+    describe('4.3 Assertion Record syntax', () => {
+        const cases = {
+            'v=bimi1; l=https://example.com/logo.svg': { strict: ['none'], lax: ['pass', ['record-version-case']] },
+            'v=BIMI1; L=https://example.com/logo.svg': {
+                strict: ['fail', 'missing location value in dns record'],
+                lax: ['pass', ['record-tag-case']]
+            },
+            'v=BIMI1; l=https://example.com/a.svg; l=https://example.net/b.svg': {
+                strict: ['fail', 'invalid syntax in dns record'],
+                lax: ['pass', ['record-syntax']]
+            },
+            'v=BIMI1; l=https://example.com/logo.svg; bogus': {
+                strict: ['fail', 'invalid syntax in dns record'],
+                lax: ['pass', ['record-syntax']]
+            },
+            'v=BIMI1; l=https://example.com/logo.png': {
+                strict: ['fail', 'unsupported image format in location value'],
+                lax: ['pass', ['location-format']]
+            },
+            'v=BIMI1; l=https://example.com/a.svg,https://example.com/b.svg': {
+                strict: ['fail', 'invalid location value in dns record'],
+                lax: ['pass', ['uri-comma']]
+            },
+            'v=BIMI1; l=https://example.com/logo.svg; a=https://example.com/a,b.pem': {
+                strict: ['fail', 'invalid authority value in dns record'],
+                lax: ['pass', ['uri-comma']]
+            }
+        };
+
+        for (let [record, { strict, lax }] of Object.entries(cases)) {
+            it(`Should handle ${JSON.stringify(record)}`, async () => {
+                let result = await lookupRecord(record, { strict: true });
+                expect(result.status.result).to.equal(strict[0]);
+                expect(result.status.comment).to.equal(strict[1]);
+                expect(result.warnings).to.not.exist;
+
+                result = await lookupRecord(record);
+                expect(result.status.result).to.equal(lax[0]);
+                expect(result.warnings).to.deep.equal(lax[1]);
+            });
+        }
+
+        it('Should accept a valid record in strict mode without warnings', async () => {
+            for (let strict of [false, true]) {
+                const result = await lookupRecord('v=BIMI1; l=https://example.com/logo.svgz; a=https://example.com/vmc.pem; avp=brand;', { strict });
+                expect(result.status.result).to.equal('pass');
+                expect(result.location).to.equal('https://example.com/logo.svgz');
+                expect(result.warnings).to.not.exist;
+            }
+        });
+
+        it('Should use a v=BIMI1 record next to a v=bimi1 record in strict mode', async () => {
+            const result = await bimi({
+                dmarc,
+                strict: true,
+                headers: { parsed: [{ key: 'from', line: 'From: a@example.com' }] },
+                resolver: async name => {
+                    if (name === 'default._bimi.example.com') {
+                        return [['v=bimi1; l=https://example.com/a.svg'], ['v=BIMI1; l=https://example.com/b.svg']];
+                    }
+                    notFound();
+                }
+            });
+            expect(result.status.result).to.equal('pass');
+            expect(result.location).to.equal('https://example.com/b.svg');
+        });
+    });
 });

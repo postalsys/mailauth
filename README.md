@@ -96,7 +96,7 @@ await authenticate(message [, options])
     - **resolver** (`async function`): Custom DNS resolver function. Defaults to [`dns.promises.resolve`](https://nodejs.org/api/dns.html#dns_dnspromises_resolve_hostname_rrtype).
     - **maxResolveCount** (`number`): DNS lookup limit for SPF. Defaults to `10` as per [RFC7208](https://datatracker.ietf.org/doc/html/rfc7208#section-4.6.4).
     - **maxVoidCount** (`number`): DNS lookup limit for SPF producing empty results. Defaults to `2` as per [RFC7208](https://datatracker.ietf.org/doc/html/rfc7208#section-4.6.4).
-    - **strict** (`boolean`): If `true`, every check follows its RFC exactly instead of the lenient defaults. Passed on to DKIM, SPF, ARC, DMARC, BIMI and ARC sealing (BIMI only uses it for the format of its Authentication-Results entry). Defaults to `false`. See [Strict mode](#strict-mode).
+    - **strict** (`boolean`): If `true`, every check follows its RFC exactly instead of the lenient defaults. Passed on to DKIM, SPF, ARC, DMARC, BIMI and ARC sealing. Defaults to `false`. See [Strict mode](#strict-mode).
 
 #### Example
 
@@ -175,7 +175,7 @@ DKIM differences between the modes:
 | Header order                                                       | Received-SPF above Authentication-Results             | Authentication-Results on top (RFC 8601 section 5)                                                              |
 | Signing with rsa-sha1 or an RSA key under 1024 bits                | signed, warning `rsa-sha1`/`weak-key`                 | error                                                                                                           |
 
-See the [DKIM result reference](docs/dkim.md) for every DKIM warning, and the SPF, DMARC, ARC and MTA-STS documentation for theirs.
+See the [DKIM result reference](docs/dkim.md) for every DKIM warning, and the SPF, DMARC, ARC, BIMI and MTA-STS documentation for theirs.
 
 ### DKIM
 

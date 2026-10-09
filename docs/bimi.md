@@ -26,14 +26,27 @@ const { bimi } = await authenticate(message, {
 
 ## Result Object Fields
 
-| Field        | Type     | Presence             | Description                                                                            |
-| ------------ | -------- | -------------------- | -------------------------------------------------------------------------------------- |
-| `status`     | `object` | Always               | Resolution status object (see below)                                                   |
-| `location`   | `string` | Found                | HTTPS URL for the logo SVG file (from `l=` tag)                                        |
-| `authority`  | `string` | Found                | HTTPS URL for the VMC/CMC certificate (from `a=` tag)                                  |
-| `preference` | `string` | When `avp=` is valid | Avatar preference from the `avp=` tag, `personal` or `brand`. Other values are ignored |
-| `rr`         | `string` | Found                | Raw BIMI DNS TXT record                                                                |
-| `info`       | `string` | Always               | Formatted Authentication-Results header value                                          |
+| Field        | Type     | Presence             | Description                                                                                       |
+| ------------ | -------- | -------------------- | ------------------------------------------------------------------------------------------------- |
+| `status`     | `object` | Always               | Resolution status object (see below)                                                              |
+| `location`   | `string` | Found                | HTTPS URL for the logo SVG file (from `l=` tag)                                                   |
+| `authority`  | `string` | Found                | HTTPS URL for the VMC/CMC certificate (from `a=` tag)                                             |
+| `preference` | `string` | When `avp=` is valid | Avatar preference from the `avp=` tag, `personal` or `brand`. Other values are ignored            |
+| `rr`         | `string` | Found                | Raw BIMI DNS TXT record                                                                           |
+| `warnings`   | `array`  | When there are any   | Assertion Record deviations accepted because `strict` is not set, see [Strict Mode](#strict-mode) |
+| `info`       | `string` | Always               | Formatted Authentication-Results header value                                                     |
+
+## Strict Mode
+
+The Assertion Record uses the DKIM tag-list syntax, and the draft says that receivers must not fix syntax or capitalization errors (section 4.3). By default mailauth accepts the deviations below and lists them in `warnings`, with `strict: true` the record is handled exactly:
+
+| Input                                                          | Default                                               | `strict: true`                                                     |
+| -------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------ |
+| `v=` value in another case, such as `v=bimi1`                  | used, warning `record-version-case`                   | record ignored (`none` if it is the only one)                      |
+| Upper case tag names, such as `L=`                             | used as the lower case tag, warning `record-tag-case` | unknown tag, ignored                                               |
+| Duplicate tags or other tag-list syntax errors                 | last duplicate wins, warning `record-syntax`          | `fail` (`invalid syntax in dns record`)                            |
+| Unencoded comma in `l=` or `a=`                                | used, warning `uri-comma`                             | `fail` (`invalid location value...`, `invalid authority value...`) |
+| `l=` URI ending in another image format suffix, such as `.png` | used, warning `location-format`                       | `fail` (`unsupported image format in location value`)              |
 
 ## status Object
 
@@ -89,15 +102,17 @@ The `status.comment` field explains why BIMI was skipped:
 
 ## Fail Reasons
 
-| Comment                                     | Description                                                                                                                |
-| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `"multiple BIMI-Selector headers"`          | Message has more than one BIMI-Selector header                                                                             |
-| `"missing bimi version in selector header"` | BIMI-Selector header missing `v=BIMI1`                                                                                     |
-| `"missing bimi version in dns record"`      | DNS record missing `v=BIMI1`                                                                                               |
-| `"missing location value in dns record"`    | Record has no `l=` value (and is not a declination), even if it has `a=`                                                   |
-| `"invalid location value in dns record"`    | `l=` value is not a valid HTTPS URL with a domain name (IP addresses, `localhost` and single-label hosts are not accepted) |
-| `"invalid authority value in dns record"`   | `a=` value is not a valid HTTPS URL with a domain name                                                                     |
-| `"multiple BIMI records for {name}"`        | More than one `v=BIMI1` record at the name                                                                                 |
+| Comment                                        | Description                                                                                                                |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `"multiple BIMI-Selector headers"`             | Message has more than one BIMI-Selector header                                                                             |
+| `"missing bimi version in selector header"`    | BIMI-Selector header missing `v=BIMI1`                                                                                     |
+| `"missing bimi version in dns record"`         | DNS record missing `v=BIMI1`                                                                                               |
+| `"missing location value in dns record"`       | Record has no `l=` value (and is not a declination), even if it has `a=`                                                   |
+| `"invalid location value in dns record"`       | `l=` value is not a valid HTTPS URL with a domain name (IP addresses, `localhost` and single-label hosts are not accepted) |
+| `"invalid authority value in dns record"`      | `a=` value is not a valid HTTPS URL with a domain name                                                                     |
+| `"invalid syntax in dns record"`               | Tag-list syntax error, such as a duplicate tag (strict mode)                                                               |
+| `"unsupported image format in location value"` | `l=` ends with an image format suffix other than SVG or SVGZ (strict mode)                                                 |
+| `"multiple BIMI records for {name}"`           | More than one `v=BIMI1` record at the name                                                                                 |
 
 ## Temperror Reasons
 

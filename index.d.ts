@@ -757,6 +757,12 @@ export interface BIMIResult {
     preference?: 'personal' | 'brand';
 
     /**
+     * Assertion Record syntax deviations that were accepted because `strict` was not set:
+     * 'record-version-case', 'record-tag-case', 'record-syntax', 'uri-comma', 'location-format'
+     */
+    warnings?: string[];
+
+    /**
      * Authentication-Results formatted info
      */
     info: string;
@@ -1616,8 +1622,10 @@ export interface BIMIOptions {
     resolver?: DNSResolver;
 
     /**
-     * Format the Authentication-Results entry in the RFC 8601 section 2.2 form (default: false).
-     * BIMI has no other strict-only rules, the draft checks apply in both modes
+     * Parse the Assertion Record exactly (default: false): `v=BIMI1` and the tag names are
+     * case-sensitive, syntax errors such as duplicate tags fail the record, and so do an `l=` URI with
+     * another image format suffix and unencoded commas in URIs. Without it these are accepted and
+     * reported in `warnings`. Also formats the Authentication-Results entry in the RFC 8601 section 2.2 form
      */
     strict?: boolean;
 }
