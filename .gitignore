@@ -114,3 +114,6 @@ examples/devel-*
 
 # Internal review notes
 RFC*-REVIEW.md
+# Mutation testing (npm run mutation)
+.stryker-tmp
+reports/mutation

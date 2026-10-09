@@ -12,6 +12,7 @@ mailauth is a Node.js library and CLI tool for email authentication. It implemen
 - **Run a single test file:** `npx mocha test/dkim/body/relaxed-test.js --reporter spec`
 - **Run tests matching a pattern:** `npx mocha --recursive "./test/**/*.js" --reporter spec --grep "pattern"`
 - **Coverage (c8, report in `coverage/`):** `npm run coverage`, then `npm run coverage:check` to enforce the thresholds in `.c8rc.json`
+- **Mutation testing (StrykerJS, opt-in, about 15 minutes, report in `reports/mutation/`):** `npm run mutation`. Not part of `npm test` or CI; `stryker.config.json` lists the mutated modules
 - **Lint only:** `npx eslint "lib/**/*.js" "test/**/*.js"`
 - **Format code:** `npm run format` (uses Prettier)
 

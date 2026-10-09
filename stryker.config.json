@@ -1,0 +1,16 @@
+{
+    "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+    "_comment": "Opt-in mutation testing, run with `npm run mutation`. The mocha runner plugin does not support mocha 12, so every mutant runs the tests of the mutated modules through the command runner. The long mocha timeout keeps the slower instrumented code from failing tests by timeout, which would count as a killed mutant",
+    "testRunner": "command",
+    "commandRunner": {
+        "command": "npx mocha --bail --timeout 60000 --reporter dot \"test/dkim/**/*-test.js\" \"test/spf/**/*-test.js\" \"test/dmarc/**/*-test.js\" \"test/property/*-test.js\" test/mailauth-test.js"
+    },
+    "coverageAnalysis": "off",
+    "mutate": ["lib/dkim/body/*.js", "lib/spf/macro.js", "lib/dmarc/author-domain.js"],
+    "reporters": ["clear-text", "progress", "html", "json"],
+    "htmlReporter": { "fileName": "reports/mutation/mutation.html" },
+    "jsonReporter": { "fileName": "reports/mutation/mutation.json" },
+    "tempDirName": ".stryker-tmp",
+    "cleanTempDir": true,
+    "timeoutMS": 60000
+}
