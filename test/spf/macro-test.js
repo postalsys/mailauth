@@ -82,4 +82,23 @@ describe('SPF Macro Tests', () => {
         });
         expect(res.status.result).to.equal('pass');
     });
+
+    it('Should read every digit of the transformer', async () => {
+        expect(macro('%{d10}', { sender: 'a@a.b.c.example.com' })).to.equal('a.b.c.example.com');
+        expect(macro('%{d9r}', { sender: 'a@1.2.3.4.5.6.7.8.9.10.11' })).to.equal('9.8.7.6.5.4.3.2.1');
+    });
+
+    it('Should URL escape a byte below 0x10 with two hex digits', async () => {
+        expect(macro('%{S}', { sender: 'a\tb@example.com' })).to.equal('a%09b%40example.com');
+    });
+
+    it('Should take the domain of a sender with an empty local-part', async () => {
+        expect(macro('%{o}', { sender: '@example.com' })).to.equal('example.com');
+        expect(macro('%{l}', { sender: '@example.com' })).to.equal('');
+    });
+
+    it('Should expand %{t} to the current time in seconds', async () => {
+        let value = Number(macro('%{t}', {}));
+        expect(Math.abs(value - Date.now() / 1000)).to.be.below(5);
+    });
 });
