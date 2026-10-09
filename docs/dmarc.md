@@ -38,6 +38,7 @@ const result = await dmarc({
 With `strict: true`, which `authenticate(message, { strict: true })` passes on:
 
 - Records are parsed by the tag-list rules of RFC 6376 3.2 that DMARC uses (RFC 9989 4.7). Tag names are case sensitive, so `P=reject` is an unknown tag (only the version tag may be `V`, which the DMARC ABNF allows), and a record with a duplicated tag is invalid and ignored, as if it was not published. By default tag names are case-folded and the last of duplicated tags wins, and the result lists `"tag-case"` or `"duplicate-tag"` in `warnings`.
+- A record must start with the `v` tag (RFC 9989 4.10), so one with whitespace before it is discarded. The default mode uses it and lists `"record-whitespace"` in `warnings`.
 - A From header that only the lenient parsing accepts (see above) gives `invalid-author-domain` instead of the `"from-syntax"` warning.
 - `status.header.d` is not set and `header.d` is left out of the Authentication-Results entry, because it is not a registered property for `dmarc` (RFC 9989 9.1). `policyDomain` still has the domain.
 

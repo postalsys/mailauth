@@ -255,6 +255,36 @@ describe('getDmarcRecord Tests', () => {
             expect(result.adkim).to.equal('s');
         });
 
+        it('Should only accept whitespace before the version tag in the default mode', async () => {
+            // RFC 9989 4.10: records that do not start with a "v" tag are discarded
+            for (let rr of [' v=DMARC1; p=reject', '\tv=DMARC1; p=reject']) {
+                let resolver = zoneResolver({ '_dmarc.bank.example': { TXT: [[rr]] } });
+
+                let result = await dmarc({ headerFrom: 'ceo@bank.example', spfDomains: [], dkimDomains: [], resolver, strict: true });
+                expect(result.status.result, JSON.stringify(rr)).to.equal('none');
+                expect(result.policy, JSON.stringify(rr)).to.not.exist;
+                expect(result.warnings, JSON.stringify(rr)).to.not.exist;
+
+                result = await dmarc({ headerFrom: 'ceo@bank.example', spfDomains: [], dkimDomains: [], resolver });
+                expect(result.status.result, JSON.stringify(rr)).to.equal('fail');
+                expect(result.policy, JSON.stringify(rr)).to.equal('reject');
+                expect(result.warnings, JSON.stringify(rr)).to.deep.equal(['record-whitespace']);
+            }
+
+            let resolver0 = zoneResolver({ '_dmarc.bank.example': { TXT: [[' v=DMARC1; p=reject']] } });
+            expect((await getDmarcRecord('bank.example', resolver0)).p).to.equal('reject');
+            expect(await getDmarcRecord('bank.example', resolver0, { strict: true })).to.be.false;
+
+            // trailing whitespace is part of the last tag value, which is trimmed, so it needs no warning
+            let resolver = zoneResolver({ '_dmarc.bank.example': { TXT: [['v=DMARC1; p=reject ']] } });
+            for (let strict of [false, true]) {
+                let result = await dmarc({ headerFrom: 'ceo@bank.example', spfDomains: [], dkimDomains: [], resolver, strict });
+                expect(result.policy).to.equal('reject');
+                expect(result.rr).to.equal('v=DMARC1; p=reject');
+                expect(result.warnings).to.not.exist;
+            }
+        });
+
         it('Should discard a fragment without "=" instead of letting it override a tag', async () => {
             // RFC 9989 4.8: syntax errors in the record are discarded or ignored
             for (let strict of [false, true]) {
