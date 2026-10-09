@@ -220,7 +220,7 @@ export interface AuthStatus {
  *
  * - `rsa-sha1`: the signature uses rsa-sha1 (RFC 8301 section 3.1)
  * - `tag-syntax`: the signature is not valid tag-list syntax (duplicate tags, upper case tag
- *   names, a malformed t=, x= or l= value, an l= larger than the canonicalized body, or a d=
+ *   names, a malformed c=, t=, x= or l= value, an l= larger than the canonicalized body, or a d=
  *   or s= that is not a domain name)
  * - `missing-v`, `missing-h` (and the other `missing-*`): a required tag is missing
  * - `invalid-v`: v= is not "1"

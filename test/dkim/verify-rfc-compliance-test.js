@@ -537,6 +537,34 @@ const cases = [
         lax: { result: 'neutral', comment: 'no key' },
         strict: { result: 'neutral', comment: 'no key' }
     },
+    // RFC 6376 section 3.5 sig-c-tag, and section 3.2: an empty value is not an omitted tag
+    ...[
+        ['', 'simple/simple'],
+        ['relaxed/', 'relaxed/simple'],
+        ['relaxed/relaxed/x', 'relaxed/relaxed'],
+        ['/relaxed', 'simple/relaxed']
+    ].map(([c, used]) => ({
+        title: `a signature with c=${c}`,
+        msg: () =>
+            std('', {
+                c: used,
+                rawTags: `v=1; a=rsa-sha256; c=${c}; d=${D}; s=${SEL}; h=from:to:subject:date; bh=%BH%; b=`
+            }),
+        records: { [KEYNAME]: [rsaRec] },
+        lax: { result: 'pass', warnings: ['tag-syntax'] },
+        strict: { result: 'neutral', comment: 'signature syntax error', noDns: true }
+    })),
+    ...['relaxed', 'Relaxed/Simple', 'simple/relaxed', 'relaxed / relaxed'].map(c => ({
+        title: `a signature with c=${c}`,
+        msg: () =>
+            std('', {
+                c: c.replace(/ /g, '').toLowerCase(),
+                rawTags: `v=1; a=rsa-sha256; c=${c}; d=${D}; s=${SEL}; h=from:to:subject:date; bh=%BH%; b=`
+            }),
+        records: { [KEYNAME]: [rsaRec] },
+        lax: { result: 'pass', warnings: false },
+        strict: { result: 'pass', warnings: false }
+    })),
     {
         // RFC 6376 section 3.6.1 key t=y, surfaced as a flag in both modes
         title: 'a key in testing mode',
