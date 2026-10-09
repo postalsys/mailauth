@@ -133,6 +133,7 @@ In the default mode `warnings` lists what was accepted although strict mode woul
 | `headers`  | `string[]` | ARC headers to prepend: `[ARC-Seal, ARC-Message-Signature, ARC-Authentication-Results]`, or empty |
 | `errors`   | `array`    | `{ err, type, selector, signingDomain }` entries saying why no set was created                    |
 | `warnings` | `string[]` | What the default mode sealed that strict mode would have refused                                  |
+| `instance` | `number`   | The instance (`i=`) of the created set, not set when no set was created                           |
 
 Seal options:
 
