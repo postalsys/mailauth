@@ -188,7 +188,10 @@ describe('BIMI Assertion Record Tests', () => {
             'BIMI-Selector: v=BIMI1; s=',
             'BIMI-Selector: v=BIMI1; s=bad selector',
             'BIMI-Selector: v=BIMI1; s=-brand',
-            'BIMI-Selector: v=BIMI1; s=brand..x'
+            'BIMI-Selector: v=BIMI1; s=brand..x',
+            // a DNS label is at most 63 octets
+            `BIMI-Selector: v=BIMI1; s=${'a'.repeat(64)}`,
+            `BIMI-Selector: v=BIMI1; s=brand_${'a'.repeat(58)}`
         ]) {
             it(`Should ignore ${JSON.stringify(line)} and use the default selector`, async () => {
                 for (let strict of [false, true]) {
