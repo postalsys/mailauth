@@ -26,14 +26,14 @@ const { bimi } = await authenticate(message, {
 
 ## Result Object Fields
 
-| Field        | Type     | Presence          | Description                                           |
-| ------------ | -------- | ----------------- | ----------------------------------------------------- |
-| `status`     | `object` | Always            | Resolution status object (see below)                  |
-| `location`   | `string` | Found             | HTTPS URL for the logo SVG file (from `l=` tag)       |
-| `authority`  | `string` | Found             | HTTPS URL for the VMC/CMC certificate (from `a=` tag) |
-| `preference` | `string` | When `p=` present | Logo preference value from DNS record                 |
-| `rr`         | `string` | Found             | Raw BIMI DNS TXT record                               |
-| `info`       | `string` | Always            | Formatted Authentication-Results header value         |
+| Field        | Type     | Presence             | Description                                                                            |
+| ------------ | -------- | -------------------- | -------------------------------------------------------------------------------------- |
+| `status`     | `object` | Always               | Resolution status object (see below)                                                   |
+| `location`   | `string` | Found                | HTTPS URL for the logo SVG file (from `l=` tag)                                        |
+| `authority`  | `string` | Found                | HTTPS URL for the VMC/CMC certificate (from `a=` tag)                                  |
+| `preference` | `string` | When `avp=` is valid | Avatar preference from the `avp=` tag, `personal` or `brand`. Other values are ignored |
+| `rr`         | `string` | Found                | Raw BIMI DNS TXT record                                                                |
+| `info`       | `string` | Always               | Formatted Authentication-Results header value                                          |
 
 ## status Object
 
@@ -165,11 +165,11 @@ The logo downloaded from `l=` is always checked with the SVG validator (section 
 
 Present only when the logo passes SVG validation and, if the record has an `a=` tag, the evidence document validates and its logo hash matches. Contains ready-to-use email headers.
 
-| Field        | Type     | Presence         | Description                                        |
-| ------------ | -------- | ---------------- | -------------------------------------------------- |
-| `indicator`  | `string` | Always           | BIMI-Indicator header with base64-encoded SVG logo |
-| `location`   | `string` | Always           | BIMI-Location header with logo URL                 |
-| `preference` | `string` | `p=` tag present | BIMI-Logo-Preference header                        |
+| Field        | Type     | Presence                              | Description                                                                |
+| ------------ | -------- | ------------------------------------- | -------------------------------------------------------------------------- |
+| `indicator`  | `string` | Always                                | BIMI-Indicator header with base64-encoded SVG logo                         |
+| `location`   | `string` | Always                                | BIMI-Location header with logo URL                                         |
+| `preference` | `string` | `preference` is `personal` or `brand` | BIMI-Logo-Preference header, for example `BIMI-Logo-Preference: avp=brand` |
 
 These headers should be added to messages after successful BIMI validation. The MTA should:
 
@@ -237,8 +237,8 @@ These are rejected in every element and namespace:
     },
     "location": "https://example.com/bimi/logo.svg",
     "authority": "https://example.com/bimi/vmc.pem",
-    "preference": "self",
-    "rr": "v=BIMI1; l=https://example.com/bimi/logo.svg; a=https://example.com/bimi/vmc.pem; p=self",
+    "preference": "brand",
+    "rr": "v=BIMI1; l=https://example.com/bimi/logo.svg; a=https://example.com/bimi/vmc.pem; avp=brand",
     "info": "bimi=pass header.selector=default header.d=example.com policy.authority=none policy.authority-uri=https://example.com/bimi/vmc.pem"
 }
 ```
@@ -329,7 +329,7 @@ These are rejected in every element and namespace:
     "headers": {
         "indicator": "BIMI-Indicator: PHN2ZyB4bWxucz0i...",
         "location": "BIMI-Location: v=BIMI1; l=https://example.com/bimi/logo.svg",
-        "preference": "BIMI-Logo-Preference: self"
+        "preference": "BIMI-Logo-Preference: avp=brand"
     }
 }
 ```

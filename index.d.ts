@@ -752,6 +752,11 @@ export interface BIMIResult {
     authority?: string;
 
     /**
+     * Avatar preference from the avp= tag, set only for the valid values
+     */
+    preference?: 'personal' | 'brand';
+
+    /**
      * Authentication-Results formatted info
      */
     info: string;
