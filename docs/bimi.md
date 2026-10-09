@@ -175,6 +175,33 @@ These headers should be added to messages after successful BIMI validation. The 
 | `SVG_VALIDATION_FAILED` | SVG file failed validation, `details` has the validator's error code (`INVALID_SVGZ_FILE` for an SVGZ file that can not be uncompressed) |
 | `VMC_DOMAIN_MISMATCH`   | Domain not found in certificate SAN                                                                                                      |
 
+## Logo SVG Validation
+
+`validateBimiSvg(logo)` (also `validateSvg` in `mailauth/lib/bimi/validate-svg`) checks a logo against the SVG Tiny Portable/Secure profile of [draft-svg-tiny-ps-abrotman](https://datatracker.ietf.org/doc/html/draft-svg-tiny-ps-abrotman). It returns `true` or throws an error with one of the codes below. `validateVMC()` runs it on the logo from `l=` and on the logo embedded in the evidence document.
+
+Namespaces are resolved, and elements are checked against an allowlist: the element set of the validation schema in section 7 of the profile, plus static SVG 1.1 rendering elements found in published logos (`style`, `clipPath`, `mask`, `pattern`, `symbol`, `marker`, `tspan`, `textPath`, filter primitives other than `feImage`, and a few font elements). Script, interactivity, linking, multimedia, `image`, `switch`, `foreignObject` and animation elements are rejected, as are XHTML and MathML elements and SVG elements inside `metadata`. Elements in other namespaces, such as RDF metadata, are allowed.
+
+These are rejected in every element and namespace:
+
+- event handler attributes (any attribute whose local name starts with `on`)
+- `href` in any namespace (XLink, no namespace, or another prefix) unless it is a same-document `#fragment` reference
+- `url()` references that are not `#fragment`, `@import`, CSS image functions and CSS escapes, in `style` elements, `style` attributes and presentation attributes
+- a non-empty `xml:base`
+- processing instructions such as `xml-stylesheet`, DTDs with an internal subset, and entity references other than the predefined ones and character references
+- markup that an HTML parser would read differently: `<` inside CDATA sections, comments that contain `<`, `>` or `--`, and a `font` element with `color`, `face` or `size` attributes
+
+| Code                      | Description                                                              |
+| ------------------------- | ------------------------------------------------------------------------ |
+| `INVALID_XML_FILE`        | Not well-formed XML, or XML features that are not allowed (DTD, entity)  |
+| `INVALID_SVG_FILE`        | The root element is not `svg`                                            |
+| `INVALID_BASE_PROFILE`    | `baseProfile` is not `tiny-ps`                                           |
+| `LOGO_MISSING_TITLE`      | No `title` child of the root element, or it is empty                     |
+| `LOGO_INVALID_ROOT_ATTRS` | The root element has `x` or `y` attributes                               |
+| `LOGO_INVALID_ELEMENT`    | An element that is not allowed, `details.element` names it               |
+| `LOGO_INVALID_ATTRIBUTE`  | An event handler attribute or `xml:base`, `details.attribute` names it   |
+| `LOGO_INCLUDES_REFERENCE` | An external reference, `details.link` has the value                      |
+| `LOGO_INVALID_CONTENT`    | A processing instruction, unexpected markup in text or comments, nesting |
+
 ## Example Output
 
 ### BIMI Pass

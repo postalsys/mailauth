@@ -549,4 +549,118 @@ describe('BIMI SVG Validation Tests', () => {
             expect(result).to.be.true;
         });
     });
+
+    describe('SVG Tiny PS allowlist', () => {
+        const head = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.2" baseProfile="tiny-ps"';
+
+        const rejects = {
+            'prefixed script element': [
+                `${head} xmlns:s="http://www.w3.org/2000/svg"><title>t</title><s:script>alert(1)</s:script></svg>`,
+                'LOGO_INVALID_ELEMENT'
+            ],
+            'onload attribute on root': [`${head} onload="alert(1)"><title>t</title></svg>`, 'LOGO_INVALID_ATTRIBUTE'],
+            'onclick attribute on a child': [`${head}><title>t</title><rect width="1" height="1" onclick="alert(1)"/></svg>`, 'LOGO_INVALID_ATTRIBUTE'],
+            'upper case event attribute': [`${head}><title>t</title><rect width="1" height="1" ONCLICK="alert(1)"/></svg>`, 'LOGO_INVALID_ATTRIBUTE'],
+            'event attribute in another namespace': [
+                `${head} xmlns:ev="http://www.w3.org/2001/xml-events"><title>t</title><rect ev:onclick="x"/></svg>`,
+                'LOGO_INVALID_ATTRIBUTE'
+            ],
+            'handler element': [`${head}><title>t</title><handler type="application/ecmascript">alert(1)</handler></svg>`, 'LOGO_INVALID_ELEMENT'],
+            foreignObject: [
+                `${head}><title>t</title><foreignObject><div xmlns="http://www.w3.org/1999/xhtml"><iframe src="https://evil.test/"/></div></foreignObject></svg>`,
+                'LOGO_INVALID_ELEMENT'
+            ],
+            'XHTML element': [`${head}><title>t</title><h:div xmlns:h="http://www.w3.org/1999/xhtml">x</h:div></svg>`, 'LOGO_INVALID_ELEMENT'],
+            'image with SVG 2 href': [
+                `${head}><title>t</title><image href="https://evil.test/track.png" width="1" height="1"/></svg>`,
+                'LOGO_INCLUDES_REFERENCE'
+            ],
+            'image with a same-document href': [`${head}><title>t</title><image href="#a" width="1" height="1"/></svg>`, 'LOGO_INVALID_ELEMENT'],
+            'use with xlink bound to another prefix': [
+                '<svg xmlns="http://www.w3.org/2000/svg" xmlns:x="http://www.w3.org/1999/xlink" version="1.2" baseProfile="tiny-ps"><title>t</title><use x:href="https://evil.test/a.svg#x"/></svg>',
+                'LOGO_INCLUDES_REFERENCE'
+            ],
+            'a with javascript: href': [
+                `${head}><title>t</title><a href="javascript:alert(1)"><rect width="1" height="1"/></a></svg>`,
+                'LOGO_INCLUDES_REFERENCE'
+            ],
+            'a with a same-document href': [`${head}><title>t</title><a href="#x"><rect width="1" height="1"/></a></svg>`, 'LOGO_INVALID_ELEMENT'],
+            'external url() in style element': [
+                `${head}><title>t</title><style>rect{fill:url(https://evil.test/x)}</style><rect width="1" height="1"/></svg>`,
+                'LOGO_INCLUDES_REFERENCE'
+            ],
+            'external url() in CDATA style': [
+                `${head}><title>t</title><style><![CDATA[rect{fill:url( 'https://evil.test/x' )}]]></style></svg>`,
+                'LOGO_INCLUDES_REFERENCE'
+            ],
+            'CSS import': [`${head}><title>t</title><style>@import "https://evil.test/x.css";</style></svg>`, 'LOGO_INCLUDES_REFERENCE'],
+            'CSS escape': [`${head}><title>t</title><style>rect{fill:\\75 rl(https://evil.test/x)}</style></svg>`, 'LOGO_INCLUDES_REFERENCE'],
+            'CSS image-set': [`${head}><title>t</title><rect style="fill:image-set('https://evil.test/x' 1x)"/></svg>`, 'LOGO_INCLUDES_REFERENCE'],
+            'external url() in presentation attribute': [`${head}><title>t</title><rect fill="url(https://evil.test/x)"/></svg>`, 'LOGO_INCLUDES_REFERENCE'],
+            'character reference hiding url()': [`${head}><title>t</title><rect fill="&#x75;rl(https://evil.test/x)"/></svg>`, 'LOGO_INCLUDES_REFERENCE'],
+            'audio and switch': [`${head}><title>t</title><switch><audio xlink:href="#a"/></switch></svg>`, 'LOGO_INVALID_ELEMENT'],
+            'unknown SVG element': [`${head}><title>t</title><iframe/></svg>`, 'LOGO_INVALID_ELEMENT'],
+            'feImage filter primitive': [`${head}><title>t</title><filter id="f"><feImage xlink:href="#a"/></filter></svg>`, 'LOGO_INVALID_ELEMENT'],
+            'unprefixed script in a foreign namespace': [
+                `${head}><title>t</title><g xmlns="urn:x"><script>alert(1)</script></g></svg>`,
+                'LOGO_INVALID_ELEMENT'
+            ],
+            'SVG element in metadata': [`${head}><title>t</title><metadata><script>alert(1)</script></metadata></svg>`, 'LOGO_INVALID_ELEMENT'],
+            'font element with HTML attributes': [`${head}><title>t</title><font color="red"/></svg>`, 'LOGO_INVALID_ELEMENT'],
+            'xml:base': [`${head} xml:base="https://evil.test/"><title>t</title><use xlink:href="#a"/></svg>`, 'LOGO_INVALID_ATTRIBUTE'],
+            'xml-stylesheet processing instruction': [
+                `<?xml-stylesheet href="https://evil.test/x.css"?>${head}><title>t</title></svg>`,
+                'LOGO_INVALID_CONTENT'
+            ],
+            'processing instruction in content': [`${head}><title>t</title><?foo bar?></svg>`, 'LOGO_INVALID_CONTENT'],
+            'markup in CDATA': [`${head}><title><![CDATA[</title><img src=x onerror=alert(1)>]]></title></svg>`, 'LOGO_INVALID_CONTENT'],
+            'comment that HTML ends early': [`${head}><title>t</title><!--><img src=x onerror=alert(1)>--></svg>`, 'LOGO_INVALID_CONTENT'],
+            'DTD with entity declarations': [`<!DOCTYPE svg [<!ENTITY x "<script>alert(1)</script>">]>${head}><title>t</title>&x;</svg>`, 'INVALID_XML_FILE'],
+            'undefined entity': [`${head}><title>&x;</title></svg>`, 'INVALID_XML_FILE'],
+            'undeclared namespace prefix': [`${head}><title>t</title><x:rect/></svg>`, 'INVALID_XML_FILE'],
+            'repeated attribute': [`${head}><title>t</title><rect fill="red" fill="blue"/></svg>`, 'INVALID_XML_FILE'],
+            'mismatched tags': [`${head}><title>t</title><g></rect></svg>`, 'INVALID_XML_FILE'],
+            'invalid XML declaration': [`<?xml version="1.0" encoding="x><img src=x onerror=alert(1)>"?>${head}><title>t</title></svg>`, 'INVALID_XML_FILE']
+        };
+
+        for (let [name, [svg, code]] of Object.entries(rejects)) {
+            it(`Should reject ${name}`, () => {
+                let error;
+                try {
+                    validateSvg(Buffer.from(svg));
+                } catch (err) {
+                    error = err;
+                }
+                expect(error, 'validation error').to.exist;
+                expect(error.code).to.equal(code);
+            });
+        }
+
+        it('Should accept same-document references and static elements', () => {
+            const svg = `<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 24.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.2" baseProfile="tiny-ps" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 10 10" xml:space="preserve">
+<title>AT&amp;T &#x2122;</title>
+<style type="text/css"><![CDATA[ .st0{fill:url(#g1)} .st1{clip-path:url( "#c1" )} ]]></style>
+<defs>
+    <linearGradient id="g1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#000"/></linearGradient>
+    <linearGradient id="g2" xlink:href="#g1"/>
+    <clipPath id="c1"><rect width="5" height="5"/></clipPath>
+</defs>
+<g class="st0" style="fill:url('#g2')"><rect width="10" height="10"/></g>
+<use href=" #c1"/>
+</svg>`;
+            expect(validateSvg(Buffer.from(svg))).to.be.true;
+        });
+
+        it('Should accept metadata in other namespaces', () => {
+            const svg = `${head} xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/">
+<title>t</title>
+<metadata><rdf:RDF><cc:Work rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/></cc:Work></rdf:RDF></metadata>
+<rect width="1" height="1"/>
+</svg>`;
+            expect(validateSvg(Buffer.from(svg))).to.be.true;
+        });
+    });
 });
