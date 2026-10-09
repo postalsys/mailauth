@@ -89,7 +89,7 @@ await authenticate(message [, options])
     - **disableArc** (`boolean`): If `true`, skips ARC checks.
     - **disableDmarc** (`boolean`): If `true`, skips DMARC checks, also disabling dependent checks like BIMI.
     - **disableBimi** (`boolean`): If `true`, skips BIMI checks.
-    - **seal** (`object`): Options for ARC sealing if the message doesn't have a broken ARC chain.
+    - **seal** (`object`): Options for ARC sealing. A message without an ARC chain or with a valid one is sealed with `cv=none` or `cv=pass`, a message with a failed chain is sealed with `cv=fail`, unless its newest ARC-Seal already says `cv=fail` (RFC 8617 section 5.1).
         - **signingDomain** (`string`): ARC key domain name.
         - **selector** (`string`): ARC key selector.
         - **privateKey** (`string` or `Buffer`): Private key for signing (RSA or Ed25519).
@@ -445,7 +445,7 @@ process.stdout.write(headers); // Includes terminating line break
 process.stdout.write(message);
 ```
 
-The sealing algorithm follows the key type (`rsa-sha256` or `ed25519-sha256`). A message whose newest ARC-Seal already says `cv=fail`, or whose chain already has 50 sets, is not sealed (RFC 8617 sections 5.1 and 4.2.1), and `arc.sealErrors` says why a requested seal was not added.
+The sealing algorithm follows the key type (`rsa-sha256` or `ed25519-sha256`). A message with a failed ARC chain, including one that is malformed, is sealed with `cv=fail`. A message whose newest ARC-Seal already says `cv=fail` is not sealed again (RFC 8617 section 5.1 step 2). When a requested seal could not be added, for example because the chain already has 50 sets (RFC 8617 section 4.2.1), `arc.sealErrors` says why.
 
 ##### Sealing After Modifications
 

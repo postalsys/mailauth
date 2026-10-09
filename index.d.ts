@@ -544,6 +544,10 @@ export interface ARCResult {
      * Verification status
      */
     status: AuthStatus & {
+        /**
+         * Set for a failed chain: whether it is sealed with cv=fail, false when the newest
+         * ARC-Seal on the message already says cv=fail (RFC 8617 section 5.1 step 2)
+         */
         shouldSeal?: boolean;
     };
 

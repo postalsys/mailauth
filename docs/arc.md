@@ -31,13 +31,13 @@ With `strict: true` the validation and sealing follow RFC 8617 exactly, see [Str
 
 ## status Object
 
-| Field        | Type      | Presence     | Description                                                      |
-| ------------ | --------- | ------------ | ---------------------------------------------------------------- |
-| `result`     | `string`  | Always       | ARC result code (see below)                                      |
-| `comment`    | `string`  | On pass/fail | Description or error message                                     |
-| `shouldSeal` | `boolean` | On fail      | Whether to continue sealing despite failure                      |
-| `policy`     | `object`  | Policy issue | Policy violation details (e.g., `{"dkim-rules": "weak-key"}`)    |
-| `smtp`       | `object`  | Strict mode  | `{"remote-ip": "192.0.2.1"}`, the client IP (RFC 8617 section 6) |
+| Field        | Type      | Presence     | Description                                                                                              |
+| ------------ | --------- | ------------ | -------------------------------------------------------------------------------------------------------- |
+| `result`     | `string`  | Always       | ARC result code (see below)                                                                              |
+| `comment`    | `string`  | On pass/fail | Description or error message                                                                             |
+| `shouldSeal` | `boolean` | On fail      | Whether the failed chain is sealed with `cv=fail`, false when its newest ARC-Seal already says `cv=fail` |
+| `policy`     | `object`  | Policy issue | Policy violation details (e.g., `{"dkim-rules": "weak-key"}`)                                            |
+| `smtp`       | `object`  | Strict mode  | `{"remote-ip": "192.0.2.1"}`, the client IP (RFC 8617 section 6)                                         |
 
 ## authenticationResults Object
 

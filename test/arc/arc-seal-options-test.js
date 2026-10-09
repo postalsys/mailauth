@@ -137,6 +137,73 @@ describe('ARC seal options', () => {
                 });
             });
 
+            describe('Sealing a failed chain', () => {
+                // drops the header field (with its folded lines) that matches `re`
+                const dropField = (message, re) => {
+                    const out = message.replace(re, '');
+                    expect(out).to.not.equal(message);
+                    return out;
+                };
+                const field = name => new RegExp(`^${name}.*\\r\\n(?:[ \\t].*\\r\\n)*`, 'm');
+
+                // a valid two set chain, the newest seal says cv=pass
+                const validChain = async () => {
+                    const m0 = msg('example.com', 'body');
+                    const m1 = Buffer.concat([await sealMessage(m0, sealConfig({ authResults: 'mx1.sealer.example; arc=none' })), m0]);
+                    const r1 = await authenticate(m1, authOpts({ seal: sealConfig() }));
+                    expect(r1.headers).to.match(/^ARC-Seal: i=2;[^]*?cv=pass/m);
+                    const arcHeaders = r1.headers.replace(/^(?:Authentication-Results|Received-SPF):.*\r\n(?:[ \t].*\r\n)*/gm, '');
+                    expect(arcHeaders).to.match(/^ARC-Seal: i=2;/);
+                    expect(arcHeaders).to.match(/^ARC-Authentication-Results: i=2;[^]*\r\n$/m);
+                    return arcHeaders + m1.toString();
+                };
+
+                const sealFailed = async message => {
+                    const r = await authenticate(Buffer.from(message), authOpts({ seal: sealConfig(), strict: mode.strict }));
+                    expect(r.arc.status.result).to.equal('fail');
+                    return r;
+                };
+
+                const cases = [
+                    { title: 'a missing ARC-Authentication-Results header', change: m => dropField(m, field('ARC-Authentication-Results: i=1;')) },
+                    { title: 'a missing ARC-Seal header of the newest set', change: m => dropField(m, field('ARC-Seal: i=2;')) },
+                    {
+                        title: 'a duplicate ARC header',
+                        change: m => {
+                            const aar = m.match(field('ARC-Authentication-Results: i=1;'))[0];
+                            return aar + m;
+                        }
+                    },
+                    { title: 'a signature that does not validate', change: m => m.replace(/body\r\n$/, 'changed\r\n') }
+                ];
+
+                for (const testCase of cases) {
+                    it(`Should seal a chain with ${testCase.title} with cv=fail`, async () => {
+                        const message = testCase.change(await validChain());
+                        const r = await sealFailed(message);
+
+                        expect(r.arc.sealErrors).to.be.undefined;
+                        expect(r.headers).to.match(/^ARC-Seal: i=3;[^]*?cv=fail/m);
+                        expect(r.headers).to.match(/^ARC-Message-Signature: i=3;/m);
+                        expect(r.headers).to.match(/^ARC-Authentication-Results: i=3;/m);
+
+                        // the next hop sees the failed chain
+                        expect(await downstream(Buffer.concat([Buffer.from(r.headers), Buffer.from(message)]), mode.strict)).to.equal('fail');
+                    });
+                }
+
+                it('Should not seal a broken chain whose newest seal already says cv=fail', async () => {
+                    const message = dropField(
+                        (await validChain()).replace(/^(ARC-Seal: i=2;[^]*?)cv=pass/m, '$1cv=fail'),
+                        field('ARC-Authentication-Results: i=1;')
+                    );
+                    const r = await sealFailed(message);
+
+                    expect(r.arc.sealErrors).to.be.undefined;
+                    expect(r.headers).to.not.match(/^ARC-/m);
+                });
+            });
+
             describe('authResults validation', () => {
                 const message = msg('example.com', 'body');
 
