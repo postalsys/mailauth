@@ -6,7 +6,7 @@ const chai = require('chai');
 const expect = chai.expect;
 
 const { authenticate, sealMessage } = require('../../lib/mailauth');
-const { createSeal } = require('../../lib/arc');
+const { createSeal, arc } = require('../../lib/arc');
 const { zoneResolver } = require('../helpers/dns-zone');
 const { dkimTxtRecord, privateKey } = require('../helpers/keys');
 const { buildMessage } = require('../helpers/message');
@@ -152,6 +152,53 @@ describe('ARC Hardening Tests', () => {
             const sealed = Buffer.concat([sealHeaders, message]);
             const headerBlock = sealed.toString('binary').split('\r\n\r\n')[0];
             expect(headerBlock).to.include('From:');
+        });
+    });
+
+    describe('createSeal result', () => {
+        const seal = extra =>
+            Object.assign(
+                {
+                    signingDomain: 'evil.example',
+                    selector: 'test',
+                    privateKey: privateKey('private-rsa.pem'),
+                    authResults: 'mx.evil.example; dkim=pass'
+                },
+                extra || {}
+            );
+
+        it('Should return the instance of the created set', async () => {
+            const first = await createSeal(message, { seal: seal() });
+            expect(first.instance).to.equal(1);
+            expect(first.headers[2]).to.match(/^ARC-Authentication-Results: i=1;/);
+
+            const sealed = Buffer.concat([Buffer.from(first.headers.join('\r\n') + '\r\n'), message]);
+            const second = await createSeal(sealed, { seal: seal({ cv: 'pass' }) });
+            expect(second.errors).to.deep.equal([]);
+            expect(second.instance).to.equal(2);
+            expect(second.headers[2]).to.match(/^ARC-Authentication-Results: i=2;/);
+        });
+
+        it('Should not return an instance when no set was created', async () => {
+            const result = await createSeal(message, { seal: seal({ i: 51 }) });
+            expect(result.headers).to.deep.equal([]);
+            expect(result.instance).to.be.undefined;
+        });
+    });
+
+    describe('shouldSeal of a failed chain', () => {
+        const failed = extra => arc(Object.assign({ chain: false, error: Object.assign(new Error('broken'), { code: 'invalid_arc_instance' }) }, extra));
+
+        it('Should use the newest seal from the header fields when the data has it', async () => {
+            expect((await failed({ latestCv: false })).status.shouldSeal).to.be.true;
+            expect((await failed({ latestCv: 'pass' })).status.shouldSeal).to.be.true;
+            expect((await failed({ latestCv: 'fail' })).status.shouldSeal).to.be.false;
+        });
+
+        it('Should use the parsed chain for data without latestCv', async () => {
+            expect((await failed({})).status.shouldSeal).to.be.false;
+            const lastEntry = { i: 1, 'arc-seal': { parsed: { cv: { value: 'none' } } } };
+            expect((await failed({ lastEntry })).status.shouldSeal).to.be.true;
         });
     });
 });

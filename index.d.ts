@@ -1468,6 +1468,13 @@ export interface ARCData {
      * Error encountered during ARC chain parsing
      */
     error?: Error;
+
+    /**
+     * The lower case cv= of the newest ARC-Seal in the header fields, or false if there is
+     * none, set by the DKIM verifier. Read from the header fields even when the chain could not
+     * be parsed, to decide whether a failed chain is sealed with cv=fail
+     */
+    latestCv?: string | false;
 }
 
 /**
@@ -1588,11 +1595,14 @@ export function verifyASChain(data: ARCData, opts: ARCOptions & { warnings?: str
  *
  * @param input - RFC822 formatted message or false for pre-calculated data
  * @param data - Seal creation data
- * @returns Seal headers (empty when no set was created), the errors that say why, and what the
+ * @returns Seal headers (empty when no set was created), the errors that say why, what the
  *          default mode sealed that strict mode would have refused ('arc-instance-gap',
- *          'arc-cv-instance', and the DKIM signing warnings)
+ *          'arc-cv-instance', and the DKIM signing warnings), and the instance (i=) of a created set
  */
-export function createSeal(input: MessageInput | false, data: ARCCreateSealData): Promise<{ headers: string[]; errors: ARCSealError[]; warnings: string[] }>;
+export function createSeal(
+    input: MessageInput | false,
+    data: ARCCreateSealData
+): Promise<{ headers: string[]; errors: ARCSealError[]; warnings: string[]; instance?: number }>;
 
 // ============================================================================
 // BIMI

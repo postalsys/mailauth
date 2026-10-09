@@ -44,6 +44,10 @@ export function verifyASChain(data: ARCData, opts: ARCOptions & { warnings?: str
  *
  * @param input - RFC822 formatted message or false for pre-calculated data
  * @param data - Seal creation data
- * @returns Seal headers, empty if the ARC-Message-Signature could not be signed, and any errors
+ * @returns Seal headers, empty if the ARC-Message-Signature could not be signed, any errors, and
+ *          the instance (i=) of a created set
  */
-export function createSeal(input: MessageInput | false, data: ARCCreateSealData): Promise<{ headers: string[]; errors: ARCSealError[]; warnings: string[] }>;
+export function createSeal(
+    input: MessageInput | false,
+    data: ARCCreateSealData
+): Promise<{ headers: string[]; errors: ARCSealError[]; warnings: string[]; instance?: number }>;
