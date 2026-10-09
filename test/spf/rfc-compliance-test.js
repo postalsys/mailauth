@@ -432,6 +432,45 @@ describe('SPF RFC 7208 compliance', () => {
         });
     });
 
+    describe('Fully qualified identities (RFC 7208 4.3)', () => {
+        const zone = record('v=spf1 exists:%{o}.%{h}.allow.example.test -all');
+
+        it('Should evaluate a MAIL FROM domain with a trailing dot', async () => {
+            for (const strict of [false, true]) {
+                const log = [];
+                const res = await check({ strict, sender: 'user@example.test.', helo: 'mail.example.test.' }, zone, log);
+                expect(res.status.result).to.equal('fail');
+                expect(res.domain).to.equal('example.test');
+                expect(res.helo).to.equal('mail.example.test');
+                expect(res.status.comment).to.include('domain of user@example.test does');
+                expect(res.header).to.include('envelope-from="user@example.test"; helo=mail.example.test;');
+                // the trailing dots are not part of the macro values
+                expect(log).to.deep.equal(['TXT example.test', 'A example.test.mail.example.test.allow.example.test']);
+            }
+        });
+
+        it('Should evaluate a HELO name with a trailing dot for a null sender', async () => {
+            for (const strict of [false, true]) {
+                const log = [];
+                const res = await check({ strict, sender: '', helo: 'example.test.' }, zone, log);
+                expect(res.status.result).to.equal('fail');
+                expect(res.status.smtp.helo).to.equal('example.test');
+                expect(log).to.deep.equal(['TXT example.test', 'A example.test.example.test.allow.example.test']);
+            }
+        });
+
+        for (const sender of ['user@example.test..', 'user@example..test', 'user@.']) {
+            it(`Should return none for "${sender}"`, async () => {
+                for (const strict of [false, true]) {
+                    const log = [];
+                    const res = await check({ strict, sender }, zone, log);
+                    expect(res.status.result).to.equal('none');
+                    expect(log).to.deep.equal([]);
+                }
+            });
+        }
+    });
+
     describe('PTR DNS errors (RFC 7208 5.5)', () => {
         for (const code of ['ESERVFAIL', 'ETIMEOUT', 'EREFUSED']) {
             it(`Should not match the ptr mechanism on ${code} and continue`, async () => {

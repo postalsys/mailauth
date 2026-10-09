@@ -144,6 +144,7 @@ These rules apply in both modes:
 - `%{p}` expands to a validated PTR name or `unknown`.
 - Trailing dots in domain-specs are accepted, names longer than 253 characters are truncated from the left, and uppercase macros are URL escaped.
 - An internationalized MAIL FROM domain is converted to A-labels.
+- A single trailing dot is removed from the MAIL FROM domain and the HELO name (RFC 7208 section 4.3). A zero-length label anywhere else gives `none`.
 - Address lookups of MX hosts are not counted as void lookups.
 
 ## Example Output
