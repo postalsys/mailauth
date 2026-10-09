@@ -184,6 +184,18 @@ describe('ARC Hardening Tests', () => {
             expect(result.headers).to.deep.equal([]);
             expect(result.instance).to.be.undefined;
         });
+
+        it('Should check a large authResults value without running out of stack', async () => {
+            const large = 'mx.evil.example; dkim=pass ' + 'x'.repeat(10 * 1024 * 1024);
+            for (const value of [large + '\nX-Injected: yes', large + '\r\n \r\n x', '\r' + large]) {
+                const result = await createSeal(message, { seal: seal({ authResults: value }) });
+                expect(result.headers).to.deep.equal([]);
+                expect(result.errors[0].err.code).to.equal('EINVALIDAUTHRESULTS');
+            }
+            const result = await createSeal(message, { seal: seal({ authResults: large + '\r\n\tspf=none' }) });
+            expect(result.errors).to.deep.equal([]);
+            expect(result.headers).to.have.lengthOf(3);
+        });
     });
 
     describe('shouldSeal of a failed chain', () => {
