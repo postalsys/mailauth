@@ -158,7 +158,8 @@ export interface ARCSealOptions {
 
     /**
      * Authentication-Results payload for the ARC-Authentication-Results header (the part after
-     * "i=N;"). `authenticate()` always sets it from its own results and ignores this value
+     * "i=N;"). Required, and a line break is only allowed as folding (CRLF followed by a space or
+     * tab). `authenticate()` always sets it from its own results and ignores this value
      */
     authResults?: string;
 
@@ -1410,7 +1411,9 @@ export interface ARCSealError {
      * instance out of 1-50, a chain that already has 50 sets, one that already exists, or in
      * strict mode one that leaves a gap),
      * EARCCHAINFAILED (the newest ARC-Seal already has cv=fail, RFC 8617 section 5.1 step 2),
-     * EINVALIDALGO and EINVALIDTYPE (an algorithm that is not supported or does not match the key)
+     * EINVALIDALGO and EINVALIDTYPE (an algorithm that is not supported or does not match the key),
+     * EINVALIDAUTHRESULTS (a missing or empty authResults, or one with a line break that is not
+     * CRLF folding)
      */
     err: Error & { code?: string };
     type?: string;

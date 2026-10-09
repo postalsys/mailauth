@@ -136,6 +136,47 @@ describe('ARC seal options', () => {
                     expect(await downstream(Buffer.concat([Buffer.from(r.headers), message]), mode.strict)).to.equal('pass');
                 });
             });
+
+            describe('authResults validation', () => {
+                const message = msg('example.com', 'body');
+
+                const invalid = [
+                    { title: 'a CRLF that starts a new header field', value: 'mx.example; spf=pass\r\nX-Injected: yes' },
+                    { title: 'an empty line that ends the header block', value: 'mx.example; spf=pass\r\n\r\nInjected body' },
+                    { title: 'a bare LF', value: 'mx.example; spf=pass\nX-Injected: yes' },
+                    { title: 'a bare LF before whitespace', value: 'mx.example;\n spf=pass' },
+                    { title: 'a bare CR', value: 'mx.example; spf=pass\rX-Injected: yes' },
+                    { title: 'a trailing CRLF', value: 'mx.example; spf=pass\r\n' },
+                    { title: 'a folded line with only whitespace', value: 'mx.example;\r\n \r\n spf=pass' },
+                    { title: 'a missing value', value: undefined },
+                    { title: 'an empty value', value: '' },
+                    { title: 'a whitespace only value', value: ' \t ' }
+                ];
+
+                for (const testCase of invalid) {
+                    it(`Should refuse ${testCase.title}`, async () => {
+                        const seal = sealConfig({ authResults: testCase.value, strict: mode.strict });
+
+                        const { headers, errors } = await createSeal(message, { seal });
+                        expect(headers).to.deep.equal([]);
+                        expect(errors).to.have.lengthOf(1);
+                        expect(errors[0].err.code).to.equal('EINVALIDAUTHRESULTS');
+
+                        expect((await sealMessage(message, seal)).length).to.equal(0);
+                    });
+                }
+
+                it('Should accept a value folded with CRLF and whitespace', async () => {
+                    const seal = sealConfig({ authResults: 'mx.example;\r\n spf=pass smtp.mailfrom=example.com;\r\n\tdkim=none', strict: mode.strict });
+
+                    const { headers, errors } = await createSeal(message, { seal });
+                    expect(errors).to.deep.equal([]);
+                    expect(headers[2]).to.equal('ARC-Authentication-Results: i=1; mx.example;\r\n spf=pass smtp.mailfrom=example.com;\r\n\tdkim=none');
+
+                    const sealed = Buffer.concat([Buffer.from(headers.join('\r\n') + '\r\n'), message]);
+                    expect(await downstream(sealed, mode.strict)).to.equal('pass');
+                });
+            });
         });
     }
 });

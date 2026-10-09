@@ -134,30 +134,31 @@ In the default mode `warnings` lists what was accepted although strict mode woul
 
 Seal options:
 
-| Option          | Type               | Description                                                                                                |
-| --------------- | ------------------ | ---------------------------------------------------------------------------------------------------------- |
-| `signingDomain` | `string`           | `d=` value                                                                                                 |
-| `selector`      | `string`           | `s=` value                                                                                                 |
-| `privateKey`    | `string\|Buffer`   | RSA or Ed25519 private key                                                                                 |
-| `algorithm`     | `string`           | `rsa-sha256` or `ed25519-sha256`, follows the key type when not set                                        |
-| `authResults`   | `string`           | The Authentication-Results payload for the ARC-Authentication-Results header                               |
-| `cv`            | `string`           | `none`, `pass` or `fail`. Defaults to `none` for the first set, required for later ones                    |
-| `i`             | `number`           | Instance, defaults to one more than the highest instance on the message                                    |
-| `headerList`    | `string\|string[]` | Header fields for the ARC-Message-Signature. ARC header fields and Authentication-Results are never signed |
-| `signTime`      | `Date`             | Signing time                                                                                               |
-| `strict`        | `boolean`          | Follow the RFCs exactly                                                                                    |
+| Option          | Type               | Description                                                                                                               |
+| --------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| `signingDomain` | `string`           | `d=` value                                                                                                                |
+| `selector`      | `string`           | `s=` value                                                                                                                |
+| `privateKey`    | `string\|Buffer`   | RSA or Ed25519 private key                                                                                                |
+| `algorithm`     | `string`           | `rsa-sha256` or `ed25519-sha256`, follows the key type when not set                                                       |
+| `authResults`   | `string`           | The Authentication-Results payload for the ARC-Authentication-Results header (required). Line breaks only as CRLF folding |
+| `cv`            | `string`           | `none`, `pass` or `fail`. Defaults to `none` for the first set, required for later ones                                   |
+| `i`             | `number`           | Instance, defaults to one more than the highest instance on the message                                                   |
+| `headerList`    | `string\|string[]` | Header fields for the ARC-Message-Signature. ARC header fields and Authentication-Results are never signed                |
+| `signTime`      | `Date`             | Signing time                                                                                                              |
+| `strict`        | `boolean`          | Follow the RFCs exactly                                                                                                   |
 
 `authenticate()` always computes `authResults`, `cv` and `i` for the message it seals and ignores these values in its `seal` option. The seal options object is never modified, so one object can be shared by concurrent calls.
 
 No ARC set is created (in either mode) when:
 
-| Error code         | Reason                                                                                                                                    |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `EARCCHAINFAILED`  | The newest ARC-Seal on the message already has `cv=fail` (RFC 8617 section 5.1 step 2)                                                    |
-| `EINVALIDINSTANCE` | The instance is not 1 to 50, already exists on the message, or the chain already has 50 sets                                              |
-| `EINVALIDCV`       | `cv` is not `none`, `pass` or `fail`, is missing for an instance above 1, or is `pass` while the chain on the message could not be parsed |
-| `EINVALIDALGO`     | The algorithm is not `rsa-sha256` or `ed25519-sha256`                                                                                     |
-| `EINVALIDTYPE`     | The algorithm does not match the key type                                                                                                 |
+| Error code            | Reason                                                                                                                                    |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `EARCCHAINFAILED`     | The newest ARC-Seal on the message already has `cv=fail` (RFC 8617 section 5.1 step 2)                                                    |
+| `EINVALIDINSTANCE`    | The instance is not 1 to 50, already exists on the message, or the chain already has 50 sets                                              |
+| `EINVALIDCV`          | `cv` is not `none`, `pass` or `fail`, is missing for an instance above 1, or is `pass` while the chain on the message could not be parsed |
+| `EINVALIDALGO`        | The algorithm is not `rsa-sha256` or `ed25519-sha256`                                                                                     |
+| `EINVALIDAUTHRESULTS` | `authResults` is missing or empty, or has a line break that is not folding (CRLF followed by a space or tab and more text)                |
+| `EINVALIDTYPE`        | The algorithm does not match the key type                                                                                                 |
 
 What only strict mode refuses (the default mode seals and adds the warning):
 

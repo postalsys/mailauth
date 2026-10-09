@@ -70,6 +70,61 @@ describe('CLI seal command', function () {
             expect(stdout).to.include(`ARC-Authentication-Results: i=1; ${multiLineValue}`);
         });
 
+        it('should accept a folded value with LF line endings from a file', async () => {
+            let authResultsFile = path.join(tmpDir, 'auth-results-lf.txt');
+            await fs.promises.writeFile(authResultsFile, 'mx.shield.test;\n spf=pass smtp.mailfrom=example.com;\n dkim=pass header.i=@example.com\n');
+
+            let { stdout } = await runSeal(keyArgs.concat(['--auth-results-file', authResultsFile, '-o', path.join(FIXTURES_PATH, 'message1.eml')]));
+
+            expect(stdout).to.include(
+                'ARC-Authentication-Results: i=1; mx.shield.test;\r\n spf=pass smtp.mailfrom=example.com;\r\n dkim=pass header.i=@example.com\r\n'
+            );
+        });
+
+        for (let [title, value] of [
+            ['a line that would start a new header field', 'mx.shield.test; spf=pass\nX-Injected: yes\n'],
+            ['an empty line that would end the header block', 'mx.shield.test; spf=pass\n\nInjected body\n'],
+            ['a bare CR', 'mx.shield.test; spf=pass\rX-Injected: yes\n']
+        ]) {
+            it(`should refuse a file value with ${title}`, async () => {
+                let authResultsFile = path.join(tmpDir, 'auth-results-injected.txt');
+                await fs.promises.writeFile(authResultsFile, value);
+
+                let err = await runSeal(keyArgs.concat(['--auth-results-file', authResultsFile, '-o', path.join(FIXTURES_PATH, 'message1.eml')])).then(
+                    () => null,
+                    e => e
+                );
+                expect(err).to.be.an('error');
+                expect(err.stderr).to.include('line break that is not header folding');
+                expect(err.stdout).to.not.include('X-Injected');
+                expect(err.stdout).to.not.match(/^ARC-Seal:/m);
+            });
+        }
+
+        it('should refuse an --auth-results value with a line break that is not folding', async () => {
+            let err = await runSeal(
+                keyArgs.concat(['--auth-results', 'mx.shield.test; spf=pass\r\nX-Injected: yes', '-o', path.join(FIXTURES_PATH, 'message1.eml')])
+            ).then(
+                () => null,
+                e => e
+            );
+            expect(err).to.be.an('error');
+            expect(err.stderr).to.include('line break that is not header folding');
+            expect(err.stdout).to.not.include('X-Injected');
+        });
+
+        it('should refuse an empty --auth-results-file', async () => {
+            let authResultsFile = path.join(tmpDir, 'auth-results-empty.txt');
+            await fs.promises.writeFile(authResultsFile, '\n \n');
+
+            let err = await runSeal(keyArgs.concat(['--auth-results-file', authResultsFile, '-o', path.join(FIXTURES_PATH, 'message1.eml')])).then(
+                () => null,
+                e => e
+            );
+            expect(err).to.be.an('error');
+            expect(err.stdout).to.not.match(/^ARC-Seal:/m);
+        });
+
         it('should produce a seal that validates against the original message', async () => {
             let { stdout } = await runSeal(keyArgs.concat(['--auth-results', AUTH_RESULTS, path.join(FIXTURES_PATH, 'message1.eml')]));
 

@@ -185,7 +185,7 @@ mailauth seal [options] [email]
 
 By default, `seal` authenticates the message (SPF, DKIM, DMARC, ARC) and embeds the computed results in the `ARC-Authentication-Results` header. If the message was already authenticated elsewhere (for example at an edge MTA) and modified afterwards, you can instead provide the original `Authentication-Results` value yourself. When one of the following options is set, no authentication checks or DNS lookups are performed:
 
-- `--auth-results "authserv-id; spf=pass ..."`: `Authentication-Results` value to embed in the `ARC-Authentication-Results` header (the part after `i=N;`). Used as is.
+- `--auth-results "authserv-id; spf=pass ..."`: `Authentication-Results` value to embed in the `ARC-Authentication-Results` header (the part after `i=N;`). Used as is, except that line breaks are written as CRLF. A multi-line value must be folded: every line after the first starts with a space or a tab. A value with any other line break is refused, as it would start a new header field.
 - `--auth-results-file /path/to/value.txt`: Same as `--auth-results`, but the value is read from a file. Useful for long or multi-line values. Cannot be combined with `--auth-results`.
 - `--cv status`: Chain validation status for the `ARC-Seal` header (`cv=` tag): `none`, `pass`, or `fail`. Defaults to `none`.
 - `--instance number`: ARC instance number (`i=` tag). Defaults to the next instance number based on the existing ARC chain of the message, or `1`.
