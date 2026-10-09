@@ -144,20 +144,21 @@ export interface ARCSealOptions {
     /**
      * Chain validation status for the ARC-Seal cv= tag: 'none', 'pass' or 'fail' (compared
      * case-insensitively). Defaults to 'none' for the first set and is required for any later
-     * set. `authenticate()` sets it from the ARC validation result
+     * set. `authenticate()` always sets it from the ARC validation result and ignores this value
      */
     cv?: 'none' | 'pass' | 'fail' | string;
 
     /**
      * ARC instance (i= tag), 1 to 50. Defaults to one more than the highest instance on the
      * message. An instance that already exists is refused, and one that leaves a gap is
-     * refused in strict mode (the default mode seals it and adds an `arc-instance-gap` warning)
+     * refused in strict mode (the default mode seals it and adds an `arc-instance-gap` warning).
+     * `authenticate()` ignores it and always uses the next instance
      */
     i?: number;
 
     /**
      * Authentication-Results payload for the ARC-Authentication-Results header (the part after
-     * "i=N;"). `authenticate()` sets it from its own results
+     * "i=N;"). `authenticate()` always sets it from its own results and ignores this value
      */
     authResults?: string;
 

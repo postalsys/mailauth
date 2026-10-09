@@ -96,6 +96,46 @@ describe('ARC seal options', () => {
                     expect(seal.i).to.equal('1');
                 });
             });
+
+            describe('authenticate() uses its own chain status, AAR and instance', () => {
+                const head = 'From: a@example.com\r\nTo: b@example.net\r\nSubject: hi\r\n\r\n';
+
+                // a single ARC set whose AMS no longer validates, because the body changed
+                const brokenChain = async () => {
+                    const set1 = await sealMessage(Buffer.from(head + 'original\r\n'), sealConfig({ authResults: 'mx1.sealer.example; arc=none' }));
+                    return Buffer.concat([set1, Buffer.from(head + 'tampered\r\n')]);
+                };
+
+                it('Should seal a broken chain with cv=fail even if the seal options say cv=pass', async () => {
+                    const broken = await brokenChain();
+                    const seal = sealConfig({ cv: 'pass', authResults: 'mx.forged.example; arc=pass', i: 7 });
+
+                    const r = await authenticate(broken, authOpts({ seal, strict: mode.strict }));
+                    expect(r.arc.status.result).to.equal('fail');
+
+                    const sealHeader = r.headers.match(/^ARC-Seal: [^]*?(?=^\S)/m)[0];
+                    expect(sealHeader).to.match(/^ARC-Seal: i=2;/);
+                    expect(sealHeader).to.match(/cv=fail/);
+
+                    const aar = r.headers.match(/^ARC-Authentication-Results: [^]*?(?=^\S|$(?![^]))/m)[0];
+                    expect(aar).to.match(/^ARC-Authentication-Results: i=2; mx\.sealer\.example;/);
+                    expect(aar).to.not.include('forged');
+
+                    expect(await downstream(Buffer.concat([Buffer.from(r.headers), broken]), mode.strict)).to.equal('fail');
+                });
+
+                it('Should seal a new message with cv=none even if the seal options say cv=pass', async () => {
+                    const message = msg('example.com', 'body');
+                    const seal = sealConfig({ cv: 'pass', authResults: 'mx.forged.example; arc=pass' });
+
+                    const r = await authenticate(message, authOpts({ seal, strict: mode.strict }));
+                    expect(r.headers).to.match(/^ARC-Seal: i=1;[^]*?cv=none/m);
+                    expect(r.headers).to.match(/^ARC-Authentication-Results: i=1; mx\.sealer\.example;/m);
+                    expect(r.headers).to.not.include('forged');
+
+                    expect(await downstream(Buffer.concat([Buffer.from(r.headers), message]), mode.strict)).to.equal('pass');
+                });
+            });
         });
     }
 });

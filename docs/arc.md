@@ -147,6 +147,8 @@ Seal options:
 | `signTime`      | `Date`             | Signing time                                                                                               |
 | `strict`        | `boolean`          | Follow the RFCs exactly                                                                                    |
 
+`authenticate()` always computes `authResults`, `cv` and `i` for the message it seals and ignores these values in its `seal` option. The seal options object is never modified, so one object can be shared by concurrent calls.
+
 No ARC set is created (in either mode) when:
 
 | Error code         | Reason                                                                                                                                    |
