@@ -162,7 +162,7 @@ DKIM differences between the modes:
 | ------------------------------------------------------------------ | ----------------------------------------------------- | -------------------------------------------------------------------------- |
 | rsa-sha1 signature (RFC 8301)                                      | `pass`, warning `rsa-sha1`                            | `policy` (`policy.dkim-rules=weak-algorithm`)                              |
 | Missing `v=` or `h=`, `v=` other than 1                            | verified, warning `missing-v`/`missing-h`/`invalid-v` | `neutral` (`signature missing required tag`, `incompatible version`)       |
-| Duplicate tags, upper case tag names, malformed `t=`/`x=`/`l=`     | verified, warning `tag-syntax`                        | `neutral` (`signature syntax error`)                                       |
+| Duplicate/upper case tags, malformed `t=`/`x=`/`l=`, `l=` > body   | verified, warning `tag-syntax`                        | `neutral` (`signature syntax error`)                                       |
 | `i=` domain outside `d=`, or a subdomain with a key that has `t=s` | verified, warning `identity-domain`                   | `neutral` (`domain mismatch`)                                              |
 | `x=` equal to `t=`                                                 | verified, warning `invalid-expiration`                | `neutral` (`invalid expiration`)                                           |
 | Key record syntax errors, `v=` not first or not exactly `DKIM1`    | used, warning `key-syntax`/`key-v-syntax`             | key ignored                                                                |

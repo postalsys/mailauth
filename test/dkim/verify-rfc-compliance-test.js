@@ -8,7 +8,7 @@ const chai = require('chai');
 const expect = chai.expect;
 
 const { dkimVerify } = require('../../lib/dkim/verify');
-const { sign, resolverFrom, spkiB64, pkcs1B64, edRawB64 } = require('../helpers/dkim-reference');
+const { sign, resolverFrom, spkiB64, pkcs1B64, edRawB64, canonBodyRelaxed, canonBodySimple } = require('../helpers/dkim-reference');
 
 chai.config.includeStack = true;
 
@@ -642,6 +642,37 @@ describe('DKIM verification RFC compliance', () => {
                 expect(result.status.underSized).to.be.above(0);
                 expect(result.status.underSized).to.equal(result.canonBodyLengthTotal);
                 expect(result.info).to.match(/\(undersized signature: \d+ bytes unsigned\)/);
+            }
+        });
+
+        it('Should not accept an l= larger than the canonicalized body in strict mode', async () => {
+            // RFC 6376 section 3.5: l= "MUST NOT be larger than the actual number of octets in
+            // the canonicalized message body"
+            let total = Buffer.byteLength(canonBodyRelaxed(BODY));
+            let msg = std(' l=1000;', { l: 1000 });
+
+            let { result, log } = await verify(msg, { [KEYNAME]: [rsaRec] }, { strict: true });
+            expect(result.status.result).to.equal('neutral');
+            expect(result.status.comment).to.equal('signature syntax error');
+            expect(result.canonBodyLengthLimit).to.equal(1000);
+            expect(result.canonBodyLengthTotal).to.equal(total);
+            expect(log).to.deep.equal([]);
+
+            ({ result } = await verify(msg, { [KEYNAME]: [rsaRec] }));
+            expect(result.status.result).to.equal('pass');
+            expect(result.status.warnings).to.deep.equal(['tag-syntax']);
+        });
+
+        it('Should accept an l= equal to the canonicalized body length in both modes', async () => {
+            for (let c of ['relaxed/relaxed', 'simple/simple']) {
+                let total = Buffer.byteLength(c === 'simple/simple' ? canonBodySimple(BODY) : canonBodyRelaxed(BODY));
+                let msg = std(` l=${total};`, { l: total, c });
+                for (let strict of [false, true]) {
+                    let { result } = await verify(msg, { [KEYNAME]: [rsaRec] }, { strict });
+                    expect(result.status.result, c).to.equal('pass');
+                    expect(result.status.warnings, c).to.be.undefined;
+                    expect(result.canonBodyLengthTotal, c).to.equal(total);
+                }
             }
         });
 
