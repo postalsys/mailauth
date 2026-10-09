@@ -314,7 +314,8 @@ export interface DKIMResult {
         /**
          * Signing domain if it aligns with the From domain, false otherwise. For a passing
          * signature this follows the DMARC verdict once DMARC found a record, before that it
-         * only guesses relaxed alignment from the Public Suffix List.
+         * only guesses relaxed alignment from the Public Suffix List. Always false when the From
+         * header field does not yield a single Author Domain, as DMARC requires.
          */
         aligned?: string | false;
 

@@ -67,7 +67,7 @@ Each entry in the `results` array has the following structure:
 | ------------ | --------------- | --------------- | ----------------------------------------------------------------------------------------------------- |
 | `result`     | `string`        | Always          | Verification result code (see below)                                                                  |
 | `comment`    | `string`        | On error/info   | Human-readable explanation                                                                            |
-| `aligned`    | `string\|false` | DKIM signatures | DMARC-aligned domain, or false                                                                        |
+| `aligned`    | `string\|false` | DKIM signatures | DMARC-aligned domain, or false (also when From does not yield a single Author Domain)                 |
 | `header`     | `object`        | Always          | Signature header info                                                                                 |
 | `policy`     | `object`        | Policy result   | Policy violation details                                                                              |
 | `underSized` | `number`        | Body limited    | Number of unsigned bytes                                                                              |

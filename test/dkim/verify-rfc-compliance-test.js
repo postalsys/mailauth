@@ -626,6 +626,36 @@ describe('DKIM verification RFC compliance', () => {
         }
     });
 
+    describe('Alignment with the From header field', () => {
+        // status.aligned follows the Author Domain rules of the DMARC check (RFC 9989 5.3.1):
+        // a From header field that does not yield a single Author Domain aligns with nothing
+        const fromCases = [
+            { title: 'a valid From', from: ['From: Joe <joe@example.com>'], lax: D, strict: D },
+            { title: 'several mailboxes of one domain', from: ['From: joe@example.com, Ann <ann@example.com>'], lax: D, strict: D },
+            { title: 'mailboxes of different domains', from: ['From: joe@example.com, eve@attacker.test'], lax: false, strict: false },
+            { title: 'the other domain first', from: ['From: eve@attacker.test, joe@example.com'], lax: false, strict: false },
+            { title: 'an invalid From', from: ['From: Joe <joe@example.com> eve@attacker.test'], lax: false, strict: false },
+            { title: 'an invalid From with one domain', from: ['From: Joe <joe@example.com> trailing text'], lax: false, strict: false },
+            { title: 'a From only the lenient parsing accepts', from: ['From: Doe, Joe <joe@example.com>'], lax: D, strict: false },
+            {
+                title: 'two From header fields',
+                from: ['From: joe@example.com', 'From: ann@example.com'],
+                h: 'from:from:to:subject:date',
+                lax: false,
+                strict: false
+            }
+        ];
+        for (let fromCase of fromCases) {
+            for (let strict of [false, true]) {
+                it(`Should report aligned=${fromCase[strict ? 'strict' : 'lax']} for ${fromCase.title} (${strict ? 'strict' : 'default'} mode)`, async () => {
+                    let headers = [...fromCase.from, ...HDRS.slice(1)];
+                    let outcome = await verify(std('', { headers, h: fromCase.h }), { [KEYNAME]: [rsaRec] }, { strict });
+                    expect(outcome.result.status.aligned).to.equal(fromCase[strict ? 'strict' : 'lax']);
+                });
+            }
+        }
+    });
+
     describe('EAI (RFC 8616)', () => {
         const u = x => Buffer.from(x, 'utf8').toString('binary');
         const eaiMessage = () =>
