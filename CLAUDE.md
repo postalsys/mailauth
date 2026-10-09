@@ -52,7 +52,7 @@ Each protocol lives in its own directory under `lib/`:
 
 ### Tests
 
-Tests mirror the `lib/` structure under `test/`. Test fixtures in `test/fixtures/` include sample emails, DNS response caches, keys, and RFC test suite YAML files. Many tests use mock DNS resolvers that return fixture data instead of making real DNS queries.
+Tests mirror the `lib/` structure under `test/`. Property-based tests (fast-check) live in `test/property/` and run with a fixed seed as part of `npm test`; set `FC_NUM_RUNS=5000` (more cases) and `FC_SEED=random` (new inputs) to search harder locally. Independent reference implementations used as test oracles are in `test/helpers/` (`dkim-reference.js`, `arc-reference.js`, `rfc5322-reference.js`, `auth-results-reference.js`). Test fixtures in `test/fixtures/` include sample emails, DNS response caches, keys, and RFC test suite YAML files. Many tests use mock DNS resolvers that return fixture data instead of making real DNS queries.
 
 ### Type Definitions
 
