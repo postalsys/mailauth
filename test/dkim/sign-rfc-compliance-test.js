@@ -354,6 +354,87 @@ describe('DKIM signing RFC compliance', () => {
             expect(tagsOf(second).h).to.equal('Subject: From');
         });
 
+        describe('Over-signing', () => {
+            const verifyWith = (out, strict) =>
+                dkimVerify(Buffer.from(out), {
+                    strict,
+                    resolver: resolverFrom({ 's._domainkey.example.com': [`v=DKIM1; k=rsa; p=${spkiB64(RSA_PUBLIC)}`] })
+                });
+
+            const expectResult = async (out, result) => {
+                for (let strict of [false, true]) {
+                    expect((await verifyWith(out, strict)).results[0].status.result).to.equal(result);
+                }
+            };
+
+            it('Should list a repeated name more times than the message has the field', async () => {
+                for (let canonicalization of ['relaxed/relaxed', 'simple/simple']) {
+                    for (let headerList of ['From:From:Subject:Subject', ['From', 'From', 'Subject', 'Subject']]) {
+                        const result = await signMessage({ canonicalization, headerList, signatureData: [base()] }, CUSTOM);
+                        expect(result.errors).to.deep.equal([]);
+                        // the fields of the message bottom-up, then the names without a field
+                        expect(tagsOf(result.signatures).h).to.equal('Subject: From: From: Subject');
+                        expect(referenceVerify(result.out, RSA_PUBLIC).ok).to.be.true;
+                        await expectResult(result.out, 'pass');
+
+                        // a field of an over-signed name added in transit breaks the signature
+                        await expectResult(result.signatures + 'From: other@example.net\r\n' + CUSTOM, 'fail');
+                        await expectResult(result.out.replace('\r\n\r\n', '\r\nSubject: other\r\n\r\n'), 'fail');
+                        // a field that is not over-signed does not
+                        await expectResult(result.signatures + 'X-Custom: two\r\n' + CUSTOM, 'pass');
+                    }
+                }
+            });
+
+            it('Should over-sign a repeated name the message does not have', async () => {
+                const result = await signMessage({ headerList: 'From:Reply-To:Reply-To:reply-to', signatureData: [base()] }, CUSTOM);
+                expect(tagsOf(result.signatures).h).to.equal('From: Reply-To: Reply-To: Reply-To');
+                await expectResult(result.out, 'pass');
+                await expectResult(result.signatures + 'Reply-To: other@example.net\r\n' + CUSTOM, 'fail');
+            });
+
+            it('Should not add names when the message has as many fields as listed', async () => {
+                const msg = 'Received: a\r\nReceived: b\r\n' + CUSTOM;
+                let result = await signMessage({ headerList: 'From:Received:Received', signatureData: [base()] }, msg);
+                expect(tagsOf(result.signatures).h).to.equal('From: Received: Received');
+                await expectResult(result.out, 'pass');
+
+                result = await signMessage({ headerList: 'From:Received:Received:Received', signatureData: [base()] }, msg);
+                expect(tagsOf(result.signatures).h).to.equal('From: Received: Received: Received');
+                await expectResult(result.out, 'pass');
+                await expectResult(result.signatures + 'Received: c\r\n' + msg, 'fail');
+            });
+
+            it('Should keep the header list behavior for names listed once', async () => {
+                let result = await signMessage({ headerList: 'From:X-Absent:Subject:Reply-To', signatureData: [base()] }, CUSTOM);
+                expect(tagsOf(result.signatures).h).to.equal('Subject: From');
+
+                // a field listed once is signed in all of its instances, as before
+                const msg = 'Received: a\r\nReceived: b\r\n' + CUSTOM;
+                result = await signMessage({ headerList: 'From:Received', signatureData: [base()] }, msg);
+                expect(tagsOf(result.signatures).h).to.equal('From: Received: Received');
+
+                // the default list is not over-signed
+                result = await signMessage({ signatureData: [base()] }, CUSTOM);
+                expect(tagsOf(result.signatures).h).to.equal('Subject: From');
+            });
+
+            it('Should not over-sign a name that is not a valid field name', async () => {
+                const result = await signMessage({ headerList: ['From', 'X;b=x', 'X;b=x', 'X Y', 'X Y'], signatureData: [base()] }, CUSTOM);
+                expect(tagsOf(result.signatures).h).to.equal('From');
+                await expectResult(result.out, 'pass');
+            });
+
+            it('Should over-sign in an ARC-Message-Signature', async () => {
+                const result = await signMessage({
+                    signatureData: [base()],
+                    arc: { signingDomain: 'example.com', selector: 's', privateKey: RSA, instance: 1 },
+                    headerList: 'From:From'
+                });
+                expect(tagsOf(result.arc.messageSignature).h).to.equal('From: From');
+            });
+        });
+
         it('Should refuse a header list without From', async () => {
             const result = await signMessage({ headerList: ['Subject', 'X-Custom'], signatureData: [base()] }, CUSTOM);
             expect(errorCodes(result)).to.deep.equal(['ENOFROM']);

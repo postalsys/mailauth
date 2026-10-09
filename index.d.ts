@@ -953,7 +953,9 @@ export interface DKIMSignOptions {
 
     /**
      * Header fields to sign, as an array or a colon separated string. Default includes
-     * From, Subject, Date, To, etc. Set per signature in `signatureData` or for all of them
+     * From, Subject, Date, To, etc. Set per signature in `signatureData` or for all of them.
+     * A name listed more than once is over-signed: it appears in h= as many times as it is
+     * listed or as the message has that field, whichever is more (`'From:From'`)
      */
     headerList?: string[] | string;
 

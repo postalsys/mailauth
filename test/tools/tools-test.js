@@ -154,6 +154,31 @@ describe('Tools Tests', () => {
 
             expect(result.headers).to.have.length(2);
         });
+
+        it('Should over-sign a repeated name when signing only', () => {
+            const parsedHeaders = [
+                { key: 'from', casedKey: 'From', line: Buffer.from('From: user@example.com') },
+                { key: 'subject', casedKey: 'Subject', line: Buffer.from('Subject: Test') }
+            ];
+
+            let result = getSigningHeaderLines(parsedHeaders, 'From: FROM :x-a:Reply-To:reply-to');
+            // an added name is written as the list first spells it
+            expect(result.keys).to.equal('From: From: Reply-To: Reply-To');
+            expect(result.headers.map(header => header.key)).to.deep.equal(['from']);
+
+            // verifying reads h= as it is, every name stands for at most one field
+            result = getSigningHeaderLines(parsedHeaders, 'From:From:Reply-To:Reply-To', true);
+            expect(result.keys).to.equal('From');
+        });
+
+        it('Should not fall back to the default list for an empty h= value', () => {
+            const parsedHeaders = [{ key: 'from', casedKey: 'From', line: Buffer.from('From: user@example.com') }];
+            for (let verify of [false, true]) {
+                const result = getSigningHeaderLines(parsedHeaders, '', verify);
+                expect(result.keys).to.equal('');
+                expect(result.headers).to.deep.equal([]);
+            }
+        });
     });
 
     describe('formatSignatureHeaderLine', () => {

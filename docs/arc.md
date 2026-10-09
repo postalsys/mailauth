@@ -149,6 +149,8 @@ Seal options:
 
 `authenticate()` always computes `authResults`, `cv` and `i` for the message it seals and ignores these values in its `seal` option. The seal options object is never modified, so one object can be shared by concurrent calls.
 
+A name repeated in `headerList` is over-signed in the ARC-Message-Signature, as with `dkimSign`.
+
 No ARC set is created (in either mode) when:
 
 | Error code            | Reason                                                                                                                                    |
