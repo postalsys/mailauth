@@ -4,8 +4,8 @@
     "exclude": ["test/**", "bin/**"],
     "reporter": ["text", "text-summary", "lcov"],
     "reports-dir": "coverage",
-    "statements": 93,
-    "branches": 90,
-    "functions": 95,
-    "lines": 93
+    "statements": 93.5,
+    "branches": 91.2,
+    "functions": 95.5,
+    "lines": 93.5
 }
