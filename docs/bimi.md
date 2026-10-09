@@ -89,15 +89,15 @@ The `status.comment` field explains why BIMI was skipped:
 
 ## Fail Reasons
 
-| Comment                                     | Description                                                              |
-| ------------------------------------------- | ------------------------------------------------------------------------ |
-| `"multiple BIMI-Selector headers"`          | Message has more than one BIMI-Selector header                           |
-| `"missing bimi version in selector header"` | BIMI-Selector header missing `v=BIMI1`                                   |
-| `"missing bimi version in dns record"`      | DNS record missing `v=BIMI1`                                             |
-| `"missing location value in dns record"`    | Record has no `l=` value (and is not a declination), even if it has `a=` |
-| `"invalid location value in dns record"`    | `l=` value is not a valid HTTPS URL                                      |
-| `"invalid authority value in dns record"`   | `a=` value is not a valid HTTPS URL                                      |
-| `"multiple BIMI records for {name}"`        | More than one `v=BIMI1` record at the name                               |
+| Comment                                     | Description                                                                                                                |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `"multiple BIMI-Selector headers"`          | Message has more than one BIMI-Selector header                                                                             |
+| `"missing bimi version in selector header"` | BIMI-Selector header missing `v=BIMI1`                                                                                     |
+| `"missing bimi version in dns record"`      | DNS record missing `v=BIMI1`                                                                                               |
+| `"missing location value in dns record"`    | Record has no `l=` value (and is not a declination), even if it has `a=`                                                   |
+| `"invalid location value in dns record"`    | `l=` value is not a valid HTTPS URL with a domain name (IP addresses, `localhost` and single-label hosts are not accepted) |
+| `"invalid authority value in dns record"`   | `a=` value is not a valid HTTPS URL with a domain name                                                                     |
+| `"multiple BIMI records for {name}"`        | More than one `v=BIMI1` record at the name                                                                                 |
 
 ## Temperror Reasons
 
@@ -116,6 +116,18 @@ const { bimi, validateVMC } = require('mailauth/lib/bimi');
 const bimiResult = await bimi(data);
 const vmcResult = await validateVMC(bimiResult, options);
 ```
+
+### Options
+
+| Option            | Type         | Default  | Description                                                                             |
+| ----------------- | ------------ | -------- | --------------------------------------------------------------------------------------- |
+| `now`             | `Date`       | now      | Time used for the certificate validity checks (passed to `@postalsys/vmc`)              |
+| `maxLogoSize`     | `number`     | `65536`  | Maximum size of the logo file in bytes, also the limit for an uncompressed SVGZ file    |
+| `maxEvidenceSize` | `number`     | `262144` | Maximum size of the evidence document in bytes                                          |
+| `timeout`         | `number`     | `30000`  | Time limit in milliseconds for each download, including redirects and the response body |
+| `dispatcher`      | `Dispatcher` |          | undici dispatcher for the downloads, for example to use a proxy                         |
+
+Downloads only use HTTPS URLs whose host is a domain name. Redirects are followed up to 3 times when the target is such a URL as well, and the body is read up to the size limit only (section 7.6 of the draft allows a retrieval limit). The limits also apply to `locationPath` and `authorityPath` buffers.
 
 ### VMC Result Object
 
@@ -166,14 +178,18 @@ These headers should be added to messages after successful BIMI validation. The 
 
 ### VMC Error Codes
 
-| Code                    | Description                                                                                                                              |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `HTTP_REQUEST_FAILED`   | HTTP request failed                                                                                                                      |
-| `MISSING_VMC_LOGO`      | VMC does not contain a logo file                                                                                                         |
-| `INVALID_MEDIATYPE`     | Logo media type is not `image/svg+xml`                                                                                                   |
-| `INVALID_LOGO_HASH`     | Logo hash does not match certificate                                                                                                     |
-| `SVG_VALIDATION_FAILED` | SVG file failed validation, `details` has the validator's error code (`INVALID_SVGZ_FILE` for an SVGZ file that can not be uncompressed) |
-| `VMC_DOMAIN_MISMATCH`   | Domain not found in certificate SAN                                                                                                      |
+| Code                        | Description                                                                                                                              |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `HTTP_REQUEST_FAILED`       | HTTP request failed                                                                                                                      |
+| `HTTP_REQUEST_TIMEOUT`      | The download took longer than `timeout`                                                                                                  |
+| `HTTP_REDIRECT_NOT_ALLOWED` | A redirect to a URL that is not HTTPS with a domain name, or more than 3 redirects. `redirect` has the target                            |
+| `INVALID_URL`               | The URL is not HTTPS, or its host is an IP address, `localhost` or a single label                                                        |
+| `FILE_TOO_LARGE`            | The file, or the uncompressed SVGZ logo, is larger than the size limit                                                                   |
+| `MISSING_VMC_LOGO`          | VMC does not contain a logo file                                                                                                         |
+| `INVALID_MEDIATYPE`         | Logo media type is not `image/svg+xml`                                                                                                   |
+| `INVALID_LOGO_HASH`         | Logo hash does not match certificate                                                                                                     |
+| `SVG_VALIDATION_FAILED`     | SVG file failed validation, `details` has the validator's error code (`INVALID_SVGZ_FILE` for an SVGZ file that can not be uncompressed) |
+| `VMC_DOMAIN_MISMATCH`       | Domain not found in certificate SAN                                                                                                      |
 
 ## Logo SVG Validation
 

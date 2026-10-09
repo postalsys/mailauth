@@ -1766,6 +1766,26 @@ export interface BIMIData extends BIMIResult {
  */
 export interface VMCValidationOptions {
     /**
+     * Maximum size of the logo file in bytes, also applied to an uncompressed SVGZ file (default: 65536)
+     */
+    maxLogoSize?: number;
+
+    /**
+     * Maximum size of the evidence document in bytes (default: 262144)
+     */
+    maxEvidenceSize?: number;
+
+    /**
+     * Time limit for each download in milliseconds, including redirects and the body (default: 30000)
+     */
+    timeout?: number;
+
+    /**
+     * undici Dispatcher used for the downloads
+     */
+    dispatcher?: any;
+
+    /**
      * Custom VMC validation options passed to @postalsys/vmc
      */
     [key: string]: any;
