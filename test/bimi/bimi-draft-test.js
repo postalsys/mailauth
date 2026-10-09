@@ -138,6 +138,15 @@ describe('BIMI draft-14 requirements', () => {
             expect(result.status.result).to.equal('pass');
         });
 
+        it('Should count the From addresses like the DMARC check does', async () => {
+            const resolver = zoneResolver(zone);
+            const dmarc = await verifyDmarc({ headerFrom: 'a@bank.example', spfDomains: ['bank.example'], resolver });
+            // an addr-spec in place of the display name is an address a reader may see as the author
+            const result = await bimi({ dmarc, headers: { parsed: [{ key: 'from', line: 'From: b@bank.example <a@bank.example>' }] }, resolver });
+            expect(result.status.result).to.equal('skipped');
+            expect(result.status.comment).to.equal('multiple From addresses');
+        });
+
         it('Should skip through authenticate()', async () => {
             const res = await authenticate(Buffer.from('From: a@bank.example, b@bank.example\r\nSubject: t\r\n\r\nbody\r\n'), {
                 ip: '192.0.2.1',
