@@ -48,15 +48,17 @@ const { policy, status, warnings } = await getPolicy('example.com', knownPolicy,
 
 ### Policy Object Fields
 
-| Field     | Type            | Presence         | Description                                                               |
-| --------- | --------------- | ---------------- | ------------------------------------------------------------------------- |
-| `id`      | `string\|false` | Always           | Policy ID from DNS TXT record, or `false` if not found                    |
-| `version` | `string`        | Policy found     | Always `"STSv1"` for valid policies                                       |
-| `mode`    | `string`        | Always           | Policy mode (see below)                                                   |
-| `mx`      | `string[]`      | Listed in policy | Array of allowed MX hostnames (may include wildcards)                     |
-| `maxAge`  | `number`        | Policy found     | Policy validity period in seconds                                         |
-| `expires` | `string`        | Policy found     | ISO 8601 expiration timestamp                                             |
-| `error`   | `Error`         | Status errored   | Error object explaining why no live policy could be discovered or fetched |
+| Field        | Type            | Presence         | Description                                                               |
+| ------------ | --------------- | ---------------- | ------------------------------------------------------------------------- |
+| `id`         | `string\|false` | Always           | Policy ID from DNS TXT record, or `false` if not found                    |
+| `version`    | `string`        | Policy found     | Always `"STSv1"` for valid policies                                       |
+| `mode`       | `string`        | Always           | Policy mode (see below)                                                   |
+| `mx`         | `string[]`      | Listed in policy | Array of allowed MX hostnames (may include wildcards)                     |
+| `maxAge`     | `number`        | Policy found     | Policy validity period in seconds                                         |
+| `expires`    | `string`        | Policy found     | ISO 8601 expiration timestamp                                             |
+| `error`      | `Error`         | Status errored   | Error object explaining why no live policy could be discovered or fetched |
+| `retryId`    | `string`        | Fetch failed     | New policy ID that could not be fetched while the cached policy is kept   |
+| `retryAfter` | `string`        | Fetch failed     | ISO 8601 timestamp before which `retryId` is not fetched again            |
 
 ### Mode Values
 
@@ -79,6 +81,7 @@ await cache.set(domain, policy); // keep the entry at least until policy.expires
 - **Valid cached policy, same ID in DNS:** the cached policy is returned as `renewed` without an HTTPS request. Its `expires` value is not extended, so the policy file is fetched again once it expires.
 - **Valid cached policy, no live policy:** if the TXT lookup fails, the TXT record is missing, unusable or duplicated, the policy host has no address, or the new policy can not be fetched or is invalid, the cached policy is returned with `status: "errored"` and the reason in `policy.error`. A valid cached policy is never replaced by `mode: "none"` because of a discovery failure. An exception is a cached policy that already has mode `none`, which may be replaced by the retry placeholder described below.
 - **Expired cached policy:** the policy file is fetched again. If the fetch fails, the default lax mode keeps returning the expired `enforce` or `testing` policy (with the `expired-cache` warning), while strict mode treats the domain as having no policy.
+- **Cached policy kept after a failed fetch:** when the policy for a new ID can not be fetched and the cached policy is returned instead, it gets `retryId` (the new ID) and `retryAfter` (one hour ahead). Storing it makes the next calls return it as `errored` without HTTPS requests while the DNS record has the same ID, so the policy host is not retried for an hour (RFC 8461 3.3). A different policy ID is fetched right away, and the fields are dropped once a policy is fetched.
 - **No usable cached policy and the fetch fails:** the result is a placeholder with the new policy ID, mode `none`, and `expires` set one hour ahead. Storing it makes the next calls return it as `renewed` without HTTPS requests, so the policy host is not retried for an hour. A changed policy ID is fetched right away.
 
 ## Strict Mode

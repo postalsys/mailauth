@@ -134,6 +134,13 @@ describe('MTA-STS getPolicy caching (RFC 8461 3.3, 5.1)', function () {
                         expect(policy.error?.code).to.equal(code);
                         let copy = Object.assign({}, policy);
                         delete copy.error;
+                        if (name.startsWith('new id')) {
+                            // the failed fetch of the new ID is not retried for a while (RFC 8461 3.3)
+                            expect(copy.retryId).to.equal('v2');
+                            expect(new Date(copy.retryAfter).getTime()).to.be.above(Date.now());
+                            delete copy.retryId;
+                            delete copy.retryAfter;
+                        }
                         expect(copy).to.deep.equal(known);
                         expect(validateMx('evil.example.test', policy).valid).to.be.false;
                     });
@@ -175,6 +182,38 @@ describe('MTA-STS getPolicy caching (RFC 8461 3.3, 5.1)', function () {
                 let fourth = await run(first.policy, { ...TXT('v2'), ...A });
                 expect(fourth.status).to.equal('errored');
                 expect(fourth.policy).to.deep.include({ id: 'v2', mode: 'none' });
+                expect(server.requests.length).to.equal(3);
+            });
+
+            it('limits fetch attempts for a new id while a valid cached policy is used (RFC 8461 3.3)', async () => {
+                server.handler = fail500;
+                let known = cachedPolicy(future());
+                let before = Date.now();
+
+                // store whatever getPolicy returns
+                let policy = known;
+                for (let i = 0; i < 5; i++) {
+                    let result = await run(policy, { ...TXT('v2'), ...A });
+                    expect(result.status).to.equal('errored');
+                    expect(result.warnings).to.be.undefined;
+                    policy = result.policy;
+                }
+                expect(server.requests.length).to.equal(1);
+                expect(policy).to.deep.include({ id: 'v1', mode: 'enforce', expires: known.expires, retryId: 'v2' });
+                expect(policy.error.code).to.equal('http_status_500');
+                // the retry delay is one hour, at least five minutes per RFC 8461 3.3
+                expect(new Date(policy.retryAfter).getTime()).to.be.within(before + HOUR, Date.now() + HOUR);
+
+                // another new id is fetched right away
+                await run(policy, { ...TXT('v3'), ...A });
+                expect(server.requests.length).to.equal(2);
+
+                // after the retry delay the new id is fetched again
+                server.handler = null;
+                let result = await run(Object.assign({}, policy, { retryAfter: past() }), { ...TXT('v2'), ...A });
+                expect(result.status).to.equal('found');
+                expect(result.policy).to.deep.include({ id: 'v2', mode: 'enforce' });
+                expect(result.policy).to.not.have.any.keys('retryId', 'retryAfter', 'error');
                 expect(server.requests.length).to.equal(3);
             });
 
@@ -234,7 +273,17 @@ describe('MTA-STS getPolicy caching (RFC 8461 3.3, 5.1)', function () {
             expect(policy.error.code).to.equal('http_status_500');
             let copy = Object.assign({}, policy);
             delete copy.error;
+            expect(copy.retryId).to.equal('v2');
+            delete copy.retryId;
+            delete copy.retryAfter;
             expect(copy).to.deep.equal(known);
+
+            // the stored result is not fetched again within the retry delay
+            let second = await getPolicy('example.test', policy, { resolver: mockResolver({ ...TXT('v2'), ...A }) });
+            expect(second.status).to.equal('errored');
+            expect(second.warnings).to.deep.equal(['expired-cache']);
+            expect(second.policy).to.deep.equal(policy);
+            expect(server.requests.length).to.equal(1);
         });
 
         it('strict mode treats the expired policy as no policy', async () => {

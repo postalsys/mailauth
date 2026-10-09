@@ -1811,6 +1811,16 @@ export interface MTASTSPolicy {
      * Error encountered during policy fetch
      */
     error?: Error;
+
+    /**
+     * Policy ID from DNS that could not be fetched, set on a cached policy that is kept in use instead
+     */
+    retryId?: string;
+
+    /**
+     * ISO 8601 timestamp before which the policy for `retryId` is not fetched again (RFC 8461 3.3)
+     */
+    retryAfter?: string;
 }
 
 /**
