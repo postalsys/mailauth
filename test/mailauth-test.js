@@ -326,6 +326,51 @@ describe('authenticate Tests', () => {
                 expect(result.dmarc.status.result).to.equal('fail');
             });
         }
+
+        describe('HELO name', () => {
+            const heloResolver = zoneResolver({ 'mail.sender.test': { TXT: [['v=spf1 ip4:192.0.2.1 -all']] } });
+            const run = (header, opts) =>
+                authenticate(Buffer.from(`${header}\r\nFrom: a@sender.test\r\nTo: rcpt@receiver.test\r\nSubject: t\r\n\r\nhello\r\n`), {
+                    trustReceived: true,
+                    mta: 'mx.receiver.test',
+                    resolver: heloResolver,
+                    disableArc: true,
+                    disableBimi: true,
+                    ...opts
+                });
+            const postfix =
+                'Received: from mail.sender.test (rdns.sender.test [192.0.2.1])\r\n\tby mx.receiver.test (Postfix) with ESMTPS id 1234\r\n\tfor <rcpt@receiver.test>; Thu, 08 Oct 2026 10:00:00 +0000';
+
+            it('Should take the HELO name together with the address', async () => {
+                const result = await run(postfix);
+                expect(result.spf['client-ip']).to.equal('192.0.2.1');
+                expect(result.spf.helo).to.equal('mail.sender.test');
+                // null reverse-path, the HELO identity is checked (RFC 7208 section 2.4)
+                expect(result.spf.domain).to.equal('mail.sender.test');
+                expect(result.spf.status.result).to.equal('pass');
+            });
+
+            it('Should take the HELO name of Exim from the helo= value', async () => {
+                const result = await run(
+                    'Received: from rdns.sender.test ([192.0.2.1] helo=mail.sender.test)\r\n\tby mx.receiver.test with esmtp (Exim 4.96)\r\n\tid 1abcDE-000001-AB; Thu, 08 Oct 2026 10:00:00 +0000'
+                );
+                expect(result.spf['client-ip']).to.equal('192.0.2.1');
+                expect(result.spf.helo).to.equal('mail.sender.test');
+                expect(result.spf.status.result).to.equal('pass');
+            });
+
+            it('Should keep the HELO name the caller provided', async () => {
+                const result = await run(postfix, { helo: 'other.sender.test' });
+                expect(result.spf['client-ip']).to.equal('192.0.2.1');
+                expect(result.spf.helo).to.equal('other.sender.test');
+            });
+
+            it('Should not combine the HELO name of the header with the address the caller provided', async () => {
+                const result = await run(postfix, { ip: '198.51.100.1' });
+                expect(result.spf['client-ip']).to.equal('198.51.100.1');
+                expect(result.spf.helo).to.equal('[198.51.100.1]');
+            });
+        });
     });
 
     describe('ARC sealing', () => {

@@ -4,7 +4,7 @@
 const chai = require('chai');
 const expect = chai.expect;
 
-let { parseReceived, getClientAddress } = require('../lib/parse-received');
+let { parseReceived, getClientAddress, getClientHelo } = require('../lib/parse-received');
 const mtaFormats = require('./fixtures/received/mta-formats.json');
 
 chai.config.includeStack = true;
@@ -67,10 +67,11 @@ describe('parseRecived Tests', () => {
 
     describe('Client address of real MTA formats (RFC 5321 section 4.4 TCP-info)', () => {
         for (const entry of mtaFormats) {
-            it(`Should find ${entry.ip || 'no address'} in ${entry.mta}`, async () => {
+            it(`Should find ${entry.ip || 'no address'} and HELO ${entry.helo || 'none'} in ${entry.mta}`, async () => {
                 const res = parseReceived(entry.header);
                 expect(res.from.value).to.equal(entry.from);
                 expect(getClientAddress(res)).to.equal(entry.ip);
+                expect(getClientHelo(res)).to.equal(entry.helo);
             });
         }
 
