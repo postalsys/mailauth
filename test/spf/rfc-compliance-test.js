@@ -976,5 +976,26 @@ describe('SPF RFC 7208 compliance', () => {
                 expect(res.lookups.void).to.equal(0);
             });
         }
+
+        for (const [label, opts] of [
+            ['a non-ASCII local-part', { sender: 'jõgi@example.test' }],
+            ['line breaks in the local-part', { sender: 'a\r\n550 x@example.test' }],
+            ['a non-ASCII HELO name', { helo: 'jõgi.example.test' }]
+        ]) {
+            it(`Should ignore an explanation that is not US-ASCII after expanding ${label}`, async () => {
+                const zone = record('v=spf1 -all exp=explain.example.test', { 'explain.example.test': { TXT: ['%{s} via %{h} is not allowed'] } });
+                const { lax, strict } = await both(opts, zone);
+                for (const res of [lax, strict]) {
+                    expect(res.status.result).to.equal('fail');
+                    expect(res.explanation).to.not.exist;
+                }
+            });
+        }
+
+        it('Should keep an explanation that is US-ASCII after expansion', async () => {
+            const zone = record('v=spf1 -all exp=explain.example.test', { 'explain.example.test': { TXT: ['%{s} via %{h} is not allowed'] } });
+            const res = await check({}, zone);
+            expect(res.explanation).to.equal('user@example.test via mail.example.test is not allowed');
+        });
     });
 });

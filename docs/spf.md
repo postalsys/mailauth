@@ -68,7 +68,7 @@ In strict mode `status.smtp` holds only the identity that was checked (RFC 8601 
 
 ## explanation
 
-When the result is `fail` because of a mechanism match and the record has an `exp` modifier, the explanation string is fetched and expanded as described in RFC 7208 section 6.2. Any problem with it (DNS error, no or several TXT records, syntax error, non-ASCII text) means that there is no explanation. The explanation lookup does not count toward the DNS lookup limits. The explanation of an included record is never used, and after a redirect only the explanation of the redirect target is used.
+When the result is `fail` because of a mechanism match and the record has an `exp` modifier, the explanation string is fetched and expanded as described in RFC 7208 section 6.2. Any problem with it (DNS error, no or several TXT records, syntax error, text that is not printable US-ASCII before or after macro expansion) means that there is no explanation. The explanation lookup does not count toward the DNS lookup limits. The explanation of an included record is never used, and after a redirect only the explanation of the redirect target is used.
 
 The explanation is text from the domain owner. It is not added to the generated headers. If you show it to an SMTP client, make clear that it comes from a third party, for example by prepending `"<domain> explains: "`.
 
