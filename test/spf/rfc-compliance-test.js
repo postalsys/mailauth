@@ -384,6 +384,19 @@ describe('SPF RFC 7208 compliance', () => {
         });
     });
 
+    describe('Macro syntax errors (RFC 7208 7.1)', () => {
+        for (const [spec, reason] of [
+            ['exists:%{z}.example.test', 'Unknown macro letter "z"'],
+            ['exists:50%.example.test', 'Unexpected % in macro']
+        ]) {
+            it(`Should give the reason in the permerror comment for "${spec}"`, async () => {
+                const res = await check({}, record(`v=spf1 ${spec} -all`));
+                expect(res.status.result).to.equal('permerror');
+                expect(res.status.comment).to.equal(`mx.receiver.test: permanent error in processing during lookup of user@example.test: ${reason}`);
+            });
+        }
+    });
+
     describe('Modifiers (RFC 7208 6)', () => {
         it('Should accept an unknown modifier with an empty value', async () => {
             const { lax, strict } = await both({}, record('v=spf1 foo= -all'));
