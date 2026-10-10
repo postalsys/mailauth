@@ -17,6 +17,7 @@ const {
     continuesCustody
 } = require('../../lib/dkim2/fields');
 const { parseRecipe } = require('../../lib/dkim2/recipe');
+const { rsaKeyProblem } = require('../../lib/dkim2/key');
 const { rsaKey, ed25519Key, keyRecord, resolver, message, originatorOptions, signMessage, craftSignature, b64 } = require('../helpers/dkim2');
 const reference = require('../helpers/dkim2-reference');
 
@@ -303,9 +304,9 @@ describe('DKIM2 validation', () => {
             });
         }
 
-        it('fails a signature with only unknown signature algorithms (section 11.6)', async () => {
+        it('reports a signature with only unknown signature algorithms as a PERMERROR (sections 3.4 and 11.1)', async () => {
             let result = await verify(prepend(input, instance, header({ s: `rsa:rsa-sha3:${H},x:future-sig:${H}` })));
-            expect(result.status.result).to.equal('fail');
+            expect(result.status.result).to.equal('permerror');
             expect(result.status.comment).to.equal('DKIM2-Signature i=1 has no supported signature algorithm');
             expect(result.signatures[0].values.map(entry => entry.result)).to.deep.equal(['none', 'none']);
         });
@@ -335,6 +336,18 @@ describe('DKIM2 validation', () => {
     });
 
     describe('timestamps (section 11.3)', () => {
+        it('rejects a timestamp too far in the future only with maxFutureTime', async () => {
+            let signed = await signMessage(message(), originatorOptions({ signTime: new Date('2026-09-01T00:10:00Z') }));
+            let curTime = new Date('2026-09-01T00:00:00Z');
+
+            expect((await verify(signed, { curTime })).status.result).to.equal('pass');
+            expect((await verify(signed, { curTime, maxFutureTime: 600 })).status.result).to.equal('pass');
+
+            let future = await verify(signed, { curTime, maxFutureTime: 599 });
+            expect(future.status.result).to.equal('permerror');
+            expect(future.status.comment).to.equal('DKIM2-Signature i=1 signature timestamp is in the future');
+        });
+
         it('expires signatures after 14 days', async () => {
             let signed = await signMessage(message(), originatorOptions({ signTime: new Date('2026-09-01T00:00:00Z') }));
 
@@ -481,6 +494,15 @@ describe('DKIM2 validation', () => {
                 let verified = await dkim2Verify(crafted, { resolver: resolver({ 'rsa._domainkey.example.com': { TXT: [[keyRecord(key)]] } }) });
                 expect(verified.status.comment).to.equal(`DKIM2-Signature i=1 public key rsa ${comment}`);
             }
+        });
+
+        it('accepts RSA keys from 1024 to 8192 bits only', () => {
+            const key = (modulusLength, publicExponent) => ({ asymmetricKeyDetails: { modulusLength, publicExponent: BigInt(publicExponent) } });
+            expect(rsaKeyProblem(key(1024, 65537))).to.equal(null);
+            expect(rsaKeyProblem(key(8192, 65537))).to.equal(null);
+            expect(rsaKeyProblem(key(1023, 65537))).to.equal('is too short');
+            expect(rsaKeyProblem(key(8193, 65537))).to.equal('is too long');
+            expect(rsaKeyProblem(key(2048, 3))).to.equal('has an unsupported exponent');
         });
 
         it('looks up every key record once', async () => {

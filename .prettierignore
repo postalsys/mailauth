@@ -10,3 +10,4 @@ node_modules/
 test/fixtures/**/*.yml
 test/fixtures/dkim2tests/vectors.json
 test/fixtures/dkim2-stalwart/messages.json
+test/fixtures/dkim2-croessner/public-golden.json

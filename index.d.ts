@@ -126,7 +126,7 @@ export interface AuthenticateOptions {
     /**
      * Extra DKIM2 verifier options
      */
-    dkim2Options?: Pick<DKIM2VerifyOptions, 'curTime' | 'maxSignatureAge' | 'maxInstances' | 'checkReplay'>;
+    dkim2Options?: Pick<DKIM2VerifyOptions, 'curTime' | 'maxSignatureAge' | 'maxFutureTime' | 'maxInstances' | 'checkReplay'>;
 }
 
 /**
@@ -1520,6 +1520,12 @@ export interface DKIM2VerifyOptions {
      * Seconds after t= when a signature expires (default: 1209600, 14 days), false to not check
      */
     maxSignatureAge?: number | false;
+
+    /**
+     * Seconds a t= may be ahead of the current time. Not checked by default, section 8.4 only allows
+     * ignoring signatures from the future
+     */
+    maxFutureTime?: number;
 
     /**
      * Time to verify against (default: now)
