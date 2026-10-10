@@ -143,6 +143,9 @@ describe('DKIM2 validation', () => {
             let line = Buffer.from(`DKIM2-Signature :  i=1; m=1;\r\n\tS = a : rsa-sha256 : AB\r\n CD== , b:ed25519-sha256:EF==; x=s=1`);
             expect(canonicalSignatureField(line, true).toString()).to.equal('dkim2-signature:i=1;m=1;S=a:rsa-sha256:,b:ed25519-sha256:;x=s=1\r\n');
             expect(canonicalSignatureField(line).toString()).to.equal('dkim2-signature:i=1;m=1;S=a:rsa-sha256:ABCD==,b:ed25519-sha256:EF==;x=s=1\r\n');
+            // an s= that is not selector:sig-name:value is left as it is, it is a syntax error anyway
+            expect(canonicalSignatureField('DKIM2-Signature: i=1; s=', true).toString()).to.equal('dkim2-signature:i=1;s=\r\n');
+            expect(canonicalSignatureField('DKIM2-Signature: i=1; s=a:b', true).toString()).to.equal('dkim2-signature:i=1;s=a:b\r\n');
         });
 
         it('folds long values so that the canonical form does not change', () => {
@@ -291,11 +294,6 @@ describe('DKIM2 validation', () => {
                 'an instance with only unknown hashes',
                 () => craftSignature(prepend(input, instance.replace(/sha256/, 'sha3')), header(), { rsa: rsaKey }),
                 'Message-Instance m=1 has no supported hash algorithm'
-            ],
-            [
-                'only unknown signature algorithms',
-                () => prepend(input, instance, header({ s: `rsa:rsa-sha3:${H}` })),
-                'DKIM2-Signature i=1 has no supported signature algorithm'
             ]
         ]) {
             it(`reports ${label}`, async () => {
@@ -304,6 +302,13 @@ describe('DKIM2 validation', () => {
                 expect(result.status.comment).to.equal(comment);
             });
         }
+
+        it('fails a signature with only unknown signature algorithms (section 11.6)', async () => {
+            let result = await verify(prepend(input, instance, header({ s: `rsa:rsa-sha3:${H},x:future-sig:${H}` })));
+            expect(result.status.result).to.equal('fail');
+            expect(result.status.comment).to.equal('DKIM2-Signature i=1 has no supported signature algorithm');
+            expect(result.signatures[0].values.map(entry => entry.result)).to.deep.equal(['none', 'none']);
+        });
 
         it('ignores unknown hash and signature algorithms next to known ones (section 3.4)', async () => {
             let mixed = instance.replace(/;$/, `,sha3:${H}:${H};`);
