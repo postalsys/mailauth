@@ -109,6 +109,24 @@ export interface AuthenticateOptions {
      * `warnings` array of the affected result. It is never written into the headers
      */
     strict?: boolean;
+
+    /**
+     * Verify DKIM2 header fields as well (default: false). Experimental, built against
+     * draft-ietf-dkim-dkim2-spec-06. The result is added to Authentication-Results with the
+     * `dkim2` method of draft-gondwana-dkim2-authres-00 and does not take part in DMARC
+     */
+    dkim2?: boolean;
+
+    /**
+     * RCPT TO addresses of the delivery, checked against the rt= tag of the highest
+     * DKIM2-Signature. `sender` is checked against its mf= tag
+     */
+    rcptTo?: string | string[];
+
+    /**
+     * Extra DKIM2 verifier options
+     */
+    dkim2Options?: Pick<DKIM2VerifyOptions, 'curTime' | 'maxSignatureAge' | 'maxInstances' | 'checkReplay'>;
 }
 
 /**
@@ -853,6 +871,11 @@ export interface AuthenticateResult {
     dkim: DKIMVerifyResult;
 
     /**
+     * DKIM2 verification result, false unless the `dkim2` option is set
+     */
+    dkim2: DKIM2VerifyResult | false;
+
+    /**
      * SPF verification result
      */
     spf: SPFResult | false;
@@ -1317,6 +1340,296 @@ export interface DKIMVerifyOptions {
  * @returns DKIM verification results
  */
 export function dkimVerify(input: MessageInput, options?: DKIMVerifyOptions): Promise<DKIMVerifyResult>;
+
+// ============================================================================
+// DKIM2 (experimental, draft-ietf-dkim-dkim2-spec-06, draft-ietf-dkim-dkim2-dns-00)
+// ============================================================================
+
+/**
+ * A DKIM2 Recipe (draft-ietf-dkim-dkim2-spec-06 section 5). Each step either copies a range of
+ * header fields (numbered from the bottom) or body lines (numbered from the top), or emits data
+ */
+export type DKIM2RecipeStep = { c: [number, number] } | { d: string[] };
+
+export interface DKIM2Recipe {
+    /**
+     * Steps per lower case header field name. An empty array removes every field of that name
+     */
+    h?: Record<string, DKIM2RecipeStep[]>;
+
+    /**
+     * Steps for the body, or null when the previous body can not be recreated
+     */
+    b?: DKIM2RecipeStep[] | null;
+}
+
+export interface DKIM2SignatureKey {
+    /**
+     * Key selector
+     */
+    selector: string;
+
+    /**
+     * Private key, PEM or a raw 32 byte Ed25519 key
+     */
+    privateKey: string | Buffer;
+
+    /**
+     * "rsa-sha256" or "ed25519-sha256", follows the key type when not set
+     */
+    algorithm?: 'rsa-sha256' | 'ed25519-sha256';
+}
+
+/**
+ * DKIM2 signing options
+ */
+export interface DKIM2SignOptions {
+    /**
+     * Signing domain (d= tag)
+     */
+    signingDomain: string;
+
+    /**
+     * Signing keys. At most two keys per algorithm, each with its own selector
+     */
+    signatureData?: DKIM2SignatureKey[];
+
+    /**
+     * Selector of a single key, used with `privateKey` when `signatureData` is not set
+     */
+    selector?: string;
+
+    /**
+     * A single private key, used with `selector` when `signatureData` is not set
+     */
+    privateKey?: string | Buffer;
+
+    /**
+     * Algorithm of the single key
+     */
+    algorithm?: 'rsa-sha256' | 'ed25519-sha256';
+
+    /**
+     * SMTP MAIL FROM the message is sent with (mf= tag), "" or "<>" for the null sender.
+     * Required unless `nextDomain` is set
+     */
+    mailFrom?: string;
+
+    /**
+     * SMTP RCPT TO addresses the message is sent to (rt= tag). Required unless `nextDomain` is set
+     */
+    rcptTo?: string | string[];
+
+    /**
+     * Domain of the next DKIM2-Signature for an imaginary hop (nd= tag), instead of mailFrom and rcptTo
+     */
+    nextDomain?: string;
+
+    /**
+     * Nonce (n= tag), at most 64 printable ASCII characters without ";"
+     */
+    nonce?: string;
+
+    /**
+     * Flags (f= tag), such as "donotmodify", "donotexplode", "exploded", "feedback" or "feedhere"
+     */
+    flags?: string[];
+
+    /**
+     * Hash algorithms of a new Message-Instance (default: ["sha256"])
+     */
+    hashAlgorithms?: ('sha256' | 'sha512')[];
+
+    /**
+     * Recipe that recreates the previous instance of a message that was changed since its
+     * highest Message-Instance. It is checked against that instance before signing
+     */
+    recipe?: DKIM2Recipe;
+
+    /**
+     * Signing time (t= tag), defaults to now
+     */
+    signTime?: Date | string | number;
+}
+
+/**
+ * DKIM2 signing result
+ */
+export interface DKIM2SignResult {
+    /**
+     * Header fields to prepend to the message, each ending with CRLF
+     */
+    signatures: string;
+
+    /**
+     * The new DKIM2-Signature header field
+     */
+    signature: string;
+
+    /**
+     * The new Message-Instance header field, null when the message did not change
+     */
+    messageInstance: string | null;
+
+    /**
+     * i= of the new signature
+     */
+    i: number;
+
+    /**
+     * m= of the new signature
+     */
+    m: number;
+}
+
+/**
+ * Signs a message with DKIM2. Rejects for invalid options, an invalid DKIM2 chain on the
+ * message, or a recipe that does not recreate the previous instance
+ */
+export function dkim2Sign(input: MessageInput, options: DKIM2SignOptions): Promise<DKIM2SignResult>;
+
+/**
+ * Transform stream that prepends the DKIM2 header fields to the message
+ */
+export class Dkim2SignStream extends Transform {
+    constructor(options: DKIM2SignOptions);
+}
+
+/**
+ * DKIM2 verification options
+ */
+export interface DKIM2VerifyOptions {
+    /**
+     * Custom DNS resolver function
+     */
+    resolver?: DNSResolver;
+
+    /**
+     * SMTP MAIL FROM of the delivery, "" for the null sender. Compared with mf= of the highest
+     * DKIM2-Signature when set
+     */
+    mailFrom?: string;
+
+    /**
+     * SMTP RCPT TO addresses of the delivery, each of which has to be listed in rt= of the highest
+     * DKIM2-Signature
+     */
+    rcptTo?: string | string[];
+
+    /**
+     * Seconds after t= when a signature expires (default: 1209600, 14 days), false to not check
+     */
+    maxSignatureAge?: number | false;
+
+    /**
+     * Time to verify against (default: now)
+     */
+    curTime?: Date | string | number;
+
+    /**
+     * Most Message-Instance, and most DKIM2-Signature, header fields processed (default: 20)
+     */
+    maxInstances?: number;
+
+    /**
+     * Called with the replay key (the m=1 hashes) of the message. Return true when a message with
+     * the same key was seen before; without an exploded flag the result is then FAIL
+     */
+    checkReplay?: (replay: { key: string; exploded: boolean }) => Promise<boolean> | boolean;
+}
+
+export type DKIM2Result = 'pass' | 'fail' | 'permerror' | 'temperror';
+
+export interface DKIM2Error {
+    result: DKIM2Result;
+
+    /**
+     * Human-readable string of draft-ietf-dkim-dkim2-spec-06 section 11
+     */
+    message: string;
+
+    /**
+     * i= of the DKIM2-Signature the error is reported against
+     */
+    i?: number;
+
+    /**
+     * m= of the Message-Instance the error is about
+     */
+    m?: number;
+}
+
+export interface DKIM2InstanceResult {
+    m: number;
+    hashes: { algorithm: string; header: 'pass' | 'fail'; body: 'pass' | 'fail' | 'unknown' }[];
+    recipe?: { headers: string[]; body: 'unchanged' | 'recipe' | 'unrecoverable' };
+}
+
+export interface DKIM2SignatureValueResult {
+    selector: string;
+    algorithm: string;
+
+    /**
+     * "none" for an algorithm that is not supported and ignored
+     */
+    result?: DKIM2Result | 'none';
+    comment?: string;
+    rr?: string;
+    modulusLength?: number;
+
+    /**
+     * The key record has the t=y testing flag
+     */
+    testing?: boolean;
+}
+
+export interface DKIM2SignatureResult {
+    i: number;
+    m: number;
+    signingDomain: string;
+    timestamp: number;
+    signTime: string;
+    flags: string[];
+    mailFrom?: string;
+    rcptTo?: string[];
+    nextDomain?: string;
+    nonce?: string;
+    status: { result: DKIM2Result | 'skipped'; comment?: string };
+    values: DKIM2SignatureValueResult[];
+}
+
+/**
+ * DKIM2 verification result
+ */
+export interface DKIM2VerifyResult {
+    status: {
+        result: DKIM2Result | 'none';
+
+        /**
+         * The human-readable string of the reported failure
+         */
+        comment?: string;
+        header?: { d?: string; i?: number };
+    };
+
+    /**
+     * Authentication-Results resinfo
+     */
+    info: string;
+    errors: DKIM2Error[];
+    instances: DKIM2InstanceResult[];
+    signatures: DKIM2SignatureResult[];
+
+    /**
+     * The key for replay detection and whether a signature allows copies
+     */
+    replay?: { key: string; exploded: boolean };
+}
+
+/**
+ * Verifies the DKIM2 header fields of a message
+ */
+export function dkim2Verify(input: MessageInput, options?: DKIM2VerifyOptions): Promise<DKIM2VerifyResult>;
 
 // ============================================================================
 // SPF
