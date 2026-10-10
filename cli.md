@@ -247,7 +247,7 @@ mailauth dkim2-verify [options] [email]
 - `--dns-cache /path/to/dns.json`, `-n /path/to/dns.json`: Path to a DNS cache file. When provided, DNS queries use cached responses.
 - `--time timestamp`, `-t timestamp`: Time to verify against as a Unix timestamp. Defaults to the current time.
 - `--max-age seconds`: Seconds after which a signature expires, `0` to not check. Defaults to 14 days.
-- `--max-future seconds`: Seconds a signature timestamp may be ahead of the current time. Not checked by default.
+- `--max-future seconds`: Seconds a signature timestamp may be ahead of the current time, `0` to not check. Defaults to `300`.
 - `--max-instances number`: The most `Message-Instance`, and the most `DKIM2-Signature`, header fields to process. Defaults to `20`.
 - `--headers-only`, `-o`: Outputs only the Authentication-Results entry (`dkim2=...`) instead of the JSON report.
 - `--verbose`, `-v`: Shows the DNS queries, and the parts of the envelope that were not checked.

@@ -417,7 +417,7 @@ console.log(result.info); // dkim2=pass (i=1 example.com pass, i=2 list.example.
 - **resolver** (`async function`): Custom DNS resolver function.
 - **mailFrom** / **rcptTo**: The SMTP envelope. The chain of custody check against the envelope, which is what stops DKIM2 replay, is only done for what is set here, as a library can not know the envelope otherwise. A missing part is reported in `status.warnings` as `mail-from-not-checked` or `rcpt-to-not-checked`, without changing the result. In `authenticate()` these come from the `sender` and `rcptTo` options.
 - **maxSignatureAge** (`number|false`): Seconds after which a signature expires (section 11.3). Defaults to 14 days, `false` disables the check.
-- **maxFutureTime** (`number`): Seconds a signature timestamp may be ahead of the current time, a later one is a PERMERROR. Not checked by default, section 8.4 only allows ignoring such signatures. `300` allows for some clock skew.
+- **maxFutureTime** (`number|false`): Seconds a signature timestamp may be ahead of the current time, a later one is a PERMERROR (section 8.4). Defaults to `300` (5 minutes, for clock skew), `false` disables the check.
 - **curTime** (`Date`): The time to check against. Defaults to now.
 - **maxInstances** (`number`): The most `Message-Instance`, and the most `DKIM2-Signature`, header fields processed for one message. Defaults to `20`, more is a PERMERROR (BCP section 7.5).
 - **checkReplay** (`async function`): Called with `{ key, exploded }`, where `key` identifies the message by its `m=1` hashes. Return `true` when a message with the same key was seen before, and the result is FAIL unless a signature has the `exploded` flag (section 11.9). Storing the keys is up to you.

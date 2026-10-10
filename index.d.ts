@@ -1522,10 +1522,10 @@ export interface DKIM2VerifyOptions {
     maxSignatureAge?: number | false;
 
     /**
-     * Seconds a t= may be ahead of the current time. Not checked by default, section 8.4 only allows
-     * ignoring signatures from the future
+     * Seconds a t= may be ahead of the current time (default: 300), false to not check. Section 8.4
+     * allows ignoring signatures from the future
      */
-    maxFutureTime?: number;
+    maxFutureTime?: number | false;
 
     /**
      * Time to verify against (default: now)
