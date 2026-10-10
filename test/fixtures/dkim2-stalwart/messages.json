@@ -1,0 +1,142 @@
+{
+ "messages": [
+  {
+   "name": "chain-nd",
+   "mailFrom": "<fwd@test3.dkim2.com>",
+   "rcptTo": [
+    "<member@test4.dkim2.com>"
+   ],
+   "message": "DKIM2-Signature: i=3; m=1; t=1791655186; d=test3.dkim2.com; mf=PGZ3ZEB0ZXN0My5ka2ltMi5jb20+; rt=PG1lbWJlckB0ZXN0NC5ka2ltMi5jb20+; s=ed25519:ed25519-sha256:TI1IFpw8ESg01fyj6QzFP+0NFoqFly62QRSFQWHnYTWst+oXo9gNqBwxP3kH/ijhU368rQrOwfqwvUZmCM2lAw==;\r\nDKIM2-Signature: i=2; m=1; t=1791655186; d=test2.dkim2.com; nd=test3.dkim2.com; s=ed25519:ed25519-sha256:xXTe21kuIUwMoeC2UJXpQQYV8GcrWWlhgpgUhn6Sja3Ugr4beWYcuWdyMvRklSWt9F0R84HETQPCu/90H1tnBw==;\r\nDKIM2-Signature: i=1; m=1; t=1791655186; d=test1.dkim2.com; mf=PHNlbmRlckB0ZXN0MS5ka2ltMi5jb20+; rt=PGxpc3RAdGVzdDIuZGtpbTIuY29tPg==; s=ed25519:ed25519-sha256:2jH3vaHuy5EH68ZoX6hj9agMMoO6MuWdqRpPmZkI97DcL3W/j3k78bRa5T/zbBrXR9KEhpt5GlbfTQSPF8SsDA==;\r\nMessage-Instance: m=1; h=sha256:SLtzk6LO68CCaX4edrJ6yfpWbp3hwgvI8IdMBRLDk+Y=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=;\r\nFrom: sender@test1.dkim2.com\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n"
+  },
+  {
+   "name": "chain-revised",
+   "mailFrom": "<bounce@test2.dkim2.com>",
+   "rcptTo": [
+    "<member@test3.dkim2.com>"
+   ],
+   "message": "DKIM2-Signature: i=2; m=2; t=1791655186; d=test2.dkim2.com; mf=PGJvdW5jZUB0ZXN0Mi5ka2ltMi5jb20+; rt=PG1lbWJlckB0ZXN0My5ka2ltMi5jb20+; s=ed25519:ed25519-sha256:6GqKQmyI2aQ2Wfni4CMKdgENk51nE4qeSuTJ+bTzFhaXQX45GuUOum0AqMax6QAObvZFSjChQr19IkAd6txABw==;\r\nMessage-Instance: m=2; h=sha256:FPkTluKijWg06XmOlQyYDAakz+cGCFnOep1QW+ulgL8=:o0du8QNJkukpOLuwVzTrcNoOPQGP7aD/JdDzh/D7XMc=; r=eyJoIjp7Imxpc3QtaWQiOltdLCJzdWJqZWN0IjpbeyJkIjpbIlNpbXBsZSB0ZXN0IG1lc3NhZ2UiXX1dfSwiYiI6W3siYyI6WzEsMV19XX0=;\r\nDKIM2-Signature: i=1; m=1; t=1791655186; d=test1.dkim2.com; mf=PHNlbmRlckB0ZXN0MS5ka2ltMi5jb20+; rt=PGxpc3RAdGVzdDIuZGtpbTIuY29tPg==; s=ed25519:ed25519-sha256:2jH3vaHuy5EH68ZoX6hj9agMMoO6MuWdqRpPmZkI97DcL3W/j3k78bRa5T/zbBrXR9KEhpt5GlbfTQSPF8SsDA==;\r\nMessage-Instance: m=1; h=sha256:SLtzk6LO68CCaX4edrJ6yfpWbp3hwgvI8IdMBRLDk+Y=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=;\r\nFrom: sender@test1.dkim2.com\r\nTo: recipient@example.com\r\nSubject: [list] Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\nList-Id: <list.test2.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n--\r\nlist footer\r\n"
+  },
+  {
+   "name": "chain-unchanged",
+   "mailFrom": "<bounce@test2.dkim2.com>",
+   "rcptTo": [
+    "<member@test3.dkim2.com>"
+   ],
+   "message": "DKIM2-Signature: i=2; m=1; t=1791655186; d=test2.dkim2.com; mf=PGJvdW5jZUB0ZXN0Mi5ka2ltMi5jb20+; rt=PG1lbWJlckB0ZXN0My5ka2ltMi5jb20+; s=ed25519:ed25519-sha256:zTNG7MeLKlalgw71j6OY1kq5tIPuvtZPXuqUN/CMYMwq7LYvJosSr6DL3HR//uIjFl1yWiePVYPTbHa15VOQDQ==;\r\nDKIM2-Signature: i=1; m=1; t=1791655186; d=test1.dkim2.com; mf=PHNlbmRlckB0ZXN0MS5ka2ltMi5jb20+; rt=PGxpc3RAdGVzdDIuZGtpbTIuY29tPg==; s=ed25519:ed25519-sha256:2jH3vaHuy5EH68ZoX6hj9agMMoO6MuWdqRpPmZkI97DcL3W/j3k78bRa5T/zbBrXR9KEhpt5GlbfTQSPF8SsDA==;\r\nMessage-Instance: m=1; h=sha256:SLtzk6LO68CCaX4edrJ6yfpWbp3hwgvI8IdMBRLDk+Y=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=;\r\nFrom: sender@test1.dkim2.com\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n"
+  },
+  {
+   "name": "dupheaders-dual",
+   "mailFrom": "<bounces@mail.test1.dkim2.com>",
+   "rcptTo": [
+    "<b@test3.dkim2.com>"
+   ],
+   "message": "DKIM2-Signature: i=1; m=1; t=1791655186; d=test1.dkim2.com; mf=PGJvdW5jZXNAbWFpbC50ZXN0MS5ka2ltMi5jb20+; rt=PGFAdGVzdDIuZGtpbTIuY29tPg==,PGJAdGVzdDMuZGtpbTIuY29tPg==; s=sel1:rsa-sha256:hU89NqB5NSHxok+1XPFgYu7/Mr0TTD0xzXZZ5pwVn7rRNO2Tw+trt/w4ckeXegI8XQeJm2a5ZF6JuPRrvvOfUf8+FrTeR4OxSxP/m/KnYmTLu2etwuvy009vBSrFdTNWtv/CnbpcKbflkTD82Y75NnhCSyBZni3Tma+M3T8S1oRWocaeiSvgyC9CTUyXZAYkIdbplrbzicz4ykISskQ4BHCW1G6RFqWc/ck744WGbZ0XbdDkGhLYrgi00JBPC932LZH5BQ+NlXigXdmEm2c66l3q9jVxxNwVID1Qmwn+r7osfeejS4meWu3ZR19Kq53MZ1VxSAiW/L/zp/buv8zp7A==,ed25519:ed25519-sha256:l2CM5SiblkbP3l+fUSdY3KAonYH/iuDeqZ+zXfTKgkjFN+XOCVZIaCSkjGjf0hmiBli4LUSxhHLRD90Cq98SAg==; n=abc123; f=feedback,donotexplode;\r\nMessage-Instance: m=1; h=sha256:AfpBX5VmAIJLyRjG5w0mENbh6QDhUw88/norVLXQLY8=:1qpsCHgYA5m9tWU1x8yom2ztdiaAQirhqJujNRLDbAs=;\r\nFrom: sender@test1.dkim2.com\r\nTo: recipient@example.com\r\nSubject: Duplicate header ordering test\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-dupheaders@test1.dkim2.com>\r\nReceived: from first.example.com by second.example.com; Sat, 01 Mar 2026 12:00:00 +0000\r\nReceived: from origin.example.com by first.example.com; Sat, 01 Mar 2026 11:59:00 +0000\r\nAuthentication-Results: mx1.example.com; spf=pass\r\nAuthentication-Results: mx2.example.com; dkim=pass\r\nAuthentication-Results: mx3.example.com; dmarc=pass\r\n\r\nTest message with duplicate headers that must be sorted bottom-up.\r\n"
+  },
+  {
+   "name": "dupheaders-ed",
+   "mailFrom": "<sender@test1.dkim2.com>",
+   "rcptTo": [
+    "<rcpt@test2.dkim2.com>"
+   ],
+   "message": "DKIM2-Signature: i=1; m=1; t=1791655186; d=test1.dkim2.com; mf=PHNlbmRlckB0ZXN0MS5ka2ltMi5jb20+; rt=PHJjcHRAdGVzdDIuZGtpbTIuY29tPg==; s=ed25519:ed25519-sha256:XN7tJWdQ0ZlyjBNDeUXw6+lMk5jfHQEdtj1ZB1vbCArLnWuuJJ6l/NbDnSMs6sFKP1OB2D170JT/tDhrsCXLBw==;\r\nMessage-Instance: m=1; h=sha256:AfpBX5VmAIJLyRjG5w0mENbh6QDhUw88/norVLXQLY8=:1qpsCHgYA5m9tWU1x8yom2ztdiaAQirhqJujNRLDbAs=;\r\nFrom: sender@test1.dkim2.com\r\nTo: recipient@example.com\r\nSubject: Duplicate header ordering test\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-dupheaders@test1.dkim2.com>\r\nReceived: from first.example.com by second.example.com; Sat, 01 Mar 2026 12:00:00 +0000\r\nReceived: from origin.example.com by first.example.com; Sat, 01 Mar 2026 11:59:00 +0000\r\nAuthentication-Results: mx1.example.com; spf=pass\r\nAuthentication-Results: mx2.example.com; dkim=pass\r\nAuthentication-Results: mx3.example.com; dmarc=pass\r\n\r\nTest message with duplicate headers that must be sorted bottom-up.\r\n"
+  },
+  {
+   "name": "emptybody-dual",
+   "mailFrom": "<bounces@mail.test1.dkim2.com>",
+   "rcptTo": [
+    "<b@test3.dkim2.com>"
+   ],
+   "message": "DKIM2-Signature: i=1; m=1; t=1791655186; d=test1.dkim2.com; mf=PGJvdW5jZXNAbWFpbC50ZXN0MS5ka2ltMi5jb20+; rt=PGFAdGVzdDIuZGtpbTIuY29tPg==,PGJAdGVzdDMuZGtpbTIuY29tPg==; s=sel1:rsa-sha256:GApq8zlgLQVHj4uRwNEX+MgAIvCeHJVbqP/4uwNmwtmAcE+rFahY1Z/Vv/sBx7q5tSO8tP6UUUPceGoo7v07rvprgLbpHcyYZeO8ztdvzUGxUrW+6YLG9xCCAwBp9Geo9Cc7Rl6kw4A/B5eu+HJYiE/H2Lp9Qr3jWU1wWu/Z1uTtx5u2tNO6BfETuFIokjoOXOZYmj6/+LLqtO1hggbubIChbKYSaViiKXXaKo3JwHmgA6k8rzGCyYyazRE61c36RCoOwqOzOrW66hXFIqNnaIXKVBsoYbGG7PTuCt6GiqXfFit5yo3Y1m10viBo7BYFI0g+hJGZjEXlSR0qV3Bbrw==,ed25519:ed25519-sha256:Cb+768tKmAbvGnBVhRvxXNY3gL9VMpCCUwMnv2YOgq0XB+8ZWuzRQM88/sfoBRP/z03wUfD09AODGQcesUN+CQ==; n=abc123; f=feedback,donotexplode;\r\nMessage-Instance: m=1; h=sha256:WT8nqIyG8W1R78H1QT4oZdo1SKdQrY9JHQ4fMC+IXHU=:frcCV1k9oG9oKj3dpUqdJg1PxRT2RSN/XKdLCPjaYaY=;\r\nFrom: sender@test4.dkim2.com\r\nTo: recipient@example.com\r\nSubject: Message with empty body\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-empty@test4.dkim2.com>\r\n\r\n"
+  },
+  {
+   "name": "emptybody-ed",
+   "mailFrom": "<sender@test1.dkim2.com>",
+   "rcptTo": [
+    "<rcpt@test2.dkim2.com>"
+   ],
+   "message": "DKIM2-Signature: i=1; m=1; t=1791655186; d=test1.dkim2.com; mf=PHNlbmRlckB0ZXN0MS5ka2ltMi5jb20+; rt=PHJjcHRAdGVzdDIuZGtpbTIuY29tPg==; s=ed25519:ed25519-sha256:FAgeuZ2sGXo5swltv2M50Azg/WB2ew0ZVlkCb1UmoDqJjP3R193cTTKSo8ROSkwKB0r21GW84CpIA7/2TquzCw==;\r\nMessage-Instance: m=1; h=sha256:WT8nqIyG8W1R78H1QT4oZdo1SKdQrY9JHQ4fMC+IXHU=:frcCV1k9oG9oKj3dpUqdJg1PxRT2RSN/XKdLCPjaYaY=;\r\nFrom: sender@test4.dkim2.com\r\nTo: recipient@example.com\r\nSubject: Message with empty body\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-empty@test4.dkim2.com>\r\n\r\n"
+  },
+  {
+   "name": "multiheader-dual",
+   "mailFrom": "<bounces@mail.test1.dkim2.com>",
+   "rcptTo": [
+    "<b@test3.dkim2.com>"
+   ],
+   "message": "DKIM2-Signature: i=1; m=1; t=1791655186; d=test1.dkim2.com; mf=PGJvdW5jZXNAbWFpbC50ZXN0MS5ka2ltMi5jb20+; rt=PGFAdGVzdDIuZGtpbTIuY29tPg==,PGJAdGVzdDMuZGtpbTIuY29tPg==; s=sel1:rsa-sha256:WPmvPs4EGgynEq6TkuA8rQEyrs/C2NIo1LXLudFZydHjhGsWUpT9+V+bCoOaqlh75HeZ6QbAUllKsS1HxD5vFW05y5Y4c2VgOkYrT/b/S2jX14DREOf+LVhjpx2BVJxDWgV5NZWVuAYuOx8khXIw9ZDCLAll9sVlH9phoO/BaFssR7gZ6uo7GsSh2VnfeP0FzrYPuwDEW6Z2Nfw6Bg6G8qdnCS22TCMs8tpgDDNo8sSLMTLdQxuB3YOrsc0I0p+/QjOozk+YaFGQMce7C9UjDOMUG7Vs77+/hfLlmYUMN8uRyJc+2mgEphmFb4b0E1xlgENLX2uUxy5SL28U9Ob3pA==,ed25519:ed25519-sha256:FLGll3E37tXgWpLABSCJEb/ytHUNoJqO+IiWLo8LpcHImSChHP6spSA8+w8H4QktEXhU3QEDSxs/W99Ps2YZCw==; n=abc123; f=feedback,donotexplode;\r\nMessage-Instance: m=1; h=sha256:ShmtblPBr8lV9zKrv7MAP81zN+N32REP2QOZnUk9Fc8=:CyfSEkygi5JDksVb4/R53JKT7GKBuBgsR1ZYpkHnQOs=;\r\nFrom: sender@test2.dkim2.com\r\nTo: recipient@example.com\r\nCc: other@example.com\r\nSubject: A longer subject line that wraps\r\n across multiple continuation lines\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-multi@test2.dkim2.com>\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=utf-8\r\nX-Custom-Header: this should be excluded from header hash\r\n\r\nHello, this is a test with multiple headers.\r\n\r\nIt has multiple paragraphs too.\r\n"
+  },
+  {
+   "name": "multiheader-ed",
+   "mailFrom": "<sender@test1.dkim2.com>",
+   "rcptTo": [
+    "<rcpt@test2.dkim2.com>"
+   ],
+   "message": "DKIM2-Signature: i=1; m=1; t=1791655186; d=test1.dkim2.com; mf=PHNlbmRlckB0ZXN0MS5ka2ltMi5jb20+; rt=PHJjcHRAdGVzdDIuZGtpbTIuY29tPg==; s=ed25519:ed25519-sha256:xZUthi2LRldy7auWGquvTVJY5DordG65aCMaRPjeT6NdZucweiF71wypRa4Qza0YG+RNHlx5QiZCw51kXyEwBQ==;\r\nMessage-Instance: m=1; h=sha256:ShmtblPBr8lV9zKrv7MAP81zN+N32REP2QOZnUk9Fc8=:CyfSEkygi5JDksVb4/R53JKT7GKBuBgsR1ZYpkHnQOs=;\r\nFrom: sender@test2.dkim2.com\r\nTo: recipient@example.com\r\nCc: other@example.com\r\nSubject: A longer subject line that wraps\r\n across multiple continuation lines\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-multi@test2.dkim2.com>\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=utf-8\r\nX-Custom-Header: this should be excluded from header hash\r\n\r\nHello, this is a test with multiple headers.\r\n\r\nIt has multiple paragraphs too.\r\n"
+  },
+  {
+   "name": "multirecipient-dual",
+   "mailFrom": "<bounces@mail.test1.dkim2.com>",
+   "rcptTo": [
+    "<b@test3.dkim2.com>"
+   ],
+   "message": "DKIM2-Signature: i=1; m=1; t=1791655186; d=test1.dkim2.com; mf=PGJvdW5jZXNAbWFpbC50ZXN0MS5ka2ltMi5jb20+; rt=PGFAdGVzdDIuZGtpbTIuY29tPg==,PGJAdGVzdDMuZGtpbTIuY29tPg==; s=sel1:rsa-sha256:Boq9/vFj5JyDw8mKvsDcnXY6+rlYWSxfAZGt1T3Q9L8NpS8R5mYzzVki1i9Xb8C4C+GIB+NDtfKT+nlb8FM5+R9QK4XbBmdh0p8wuQMKSH1QoSrdu1cKBY4boKCOUdtuF2DsqOu3MyZD+zGXD+ljUNZB/A9RqxSy/DdSbQu7VzkHoRY+Povp/pfQU4I91LCxv9Afqs2BqdgDKmN3wPhgl9UyXKReZFMEZ50fASpWIrNcK4CUN5CaEGndI4gK8P/pMU89zFiRTubv7Z/LSDiMBNIkAX3iGDh+UslPVbsFSfW5cf+3V+rXzSRmK9Er08TRTlnH6Kg7fZAkrbyOdyPf3A==,ed25519:ed25519-sha256:GtcmuUnLy+mYVHa0kG3ntIK5/MFUKmDIaPJarV4nJBM3cL6CaU/05Wdl9b9JSCb1z/ZxOWAaAUF+2Ahuof+dBA==; n=abc123; f=feedback,donotexplode;\r\nMessage-Instance: m=1; h=sha256:H+VUb6aLBKEh3HADN5AHzR0BQT/Mst1Gs8OylrwE9jY=:hp66YMSkgILq+EkTq9fWZj609/jmBH9ey8ppXqAtZZ0=;\r\nFrom: sender@test5.dkim2.com\r\nTo: alice@example.com, bob@example.com\r\nCc: charlie@example.com\r\nSubject: Multi-recipient message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-multirecip@test5.dkim2.com>\r\n\r\nThis message goes to multiple recipients.\r\n"
+  },
+  {
+   "name": "multirecipient-ed",
+   "mailFrom": "<sender@test1.dkim2.com>",
+   "rcptTo": [
+    "<rcpt@test2.dkim2.com>"
+   ],
+   "message": "DKIM2-Signature: i=1; m=1; t=1791655186; d=test1.dkim2.com; mf=PHNlbmRlckB0ZXN0MS5ka2ltMi5jb20+; rt=PHJjcHRAdGVzdDIuZGtpbTIuY29tPg==; s=ed25519:ed25519-sha256:FyWvFybTMR08FZEiLEftIUYOGicQzsgcHIjX3wOiYnGng8Fx9/HdhWoRa4IdMLM0UnDHYZTCekXEmaYAdgC1CA==;\r\nMessage-Instance: m=1; h=sha256:H+VUb6aLBKEh3HADN5AHzR0BQT/Mst1Gs8OylrwE9jY=:hp66YMSkgILq+EkTq9fWZj609/jmBH9ey8ppXqAtZZ0=;\r\nFrom: sender@test5.dkim2.com\r\nTo: alice@example.com, bob@example.com\r\nCc: charlie@example.com\r\nSubject: Multi-recipient message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-multirecip@test5.dkim2.com>\r\n\r\nThis message goes to multiple recipients.\r\n"
+  },
+  {
+   "name": "null-sender",
+   "mailFrom": "<>",
+   "rcptTo": [
+    "<rcpt@test2.dkim2.com>"
+   ],
+   "message": "DKIM2-Signature: i=1; m=1; t=1791655186; d=test1.dkim2.com; mf=PD4=; rt=PHJjcHRAdGVzdDIuZGtpbTIuY29tPg==; s=ed25519:ed25519-sha256:Thmd63F4oOO0a4ww3pu+mIFIVgAqcoys9G+0N6i3yIyRZgPpM/2FUCplhG4S/BFtAn9VQ5OETeBYMRMMDU2jDQ==;\r\nMessage-Instance: m=1; h=sha256:SLtzk6LO68CCaX4edrJ6yfpWbp3hwgvI8IdMBRLDk+Y=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=;\r\nFrom: sender@test1.dkim2.com\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n"
+  },
+  {
+   "name": "simple-dual",
+   "mailFrom": "<bounces@mail.test1.dkim2.com>",
+   "rcptTo": [
+    "<b@test3.dkim2.com>"
+   ],
+   "message": "DKIM2-Signature: i=1; m=1; t=1791655186; d=test1.dkim2.com; mf=PGJvdW5jZXNAbWFpbC50ZXN0MS5ka2ltMi5jb20+; rt=PGFAdGVzdDIuZGtpbTIuY29tPg==,PGJAdGVzdDMuZGtpbTIuY29tPg==; s=sel1:rsa-sha256:a3KbL+oMhQk8UxgdILe/fG6Q5tLVpyoc+I/HOPC9jL/Z7icMo7LIZeueSoSb0HYiZmOUU3c85GwggFNnPvWwnT0tUkeaONZVXGO0sRzQ51j0uLkdzgEkhKQzyVSMQ9EALBqAi6X6n0EXAEhJu6kXC8HmYd5gD8xm9Lapmgekl89yfUooijeM+mgqlCro1do24yL77uHZ8fNBEB8DqvQ4lhrtGY7Dh/qYv4OIQeEhT5m/4OxhpZx04Y1HWEgBewT2FG/XAqWxecW/WE1ZVyjBzg27H98t+GgUQSiMkMQiap/4qVQQq4sD3JK4gW2N7xdPc9+kcMZb6cQHKlwPsUX0gg==,ed25519:ed25519-sha256:aEHbffQRXHNdCkviVAXGTGlA06AkVpWbl22xsHeqzydNiWQjrgA2erNUhfa9v8Ovu3Vl72LviDJ59VThIoWqBA==; n=abc123; f=feedback,donotexplode;\r\nMessage-Instance: m=1; h=sha256:SLtzk6LO68CCaX4edrJ6yfpWbp3hwgvI8IdMBRLDk+Y=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=;\r\nFrom: sender@test1.dkim2.com\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n"
+  },
+  {
+   "name": "simple-ed",
+   "mailFrom": "<sender@test1.dkim2.com>",
+   "rcptTo": [
+    "<rcpt@test2.dkim2.com>"
+   ],
+   "message": "DKIM2-Signature: i=1; m=1; t=1791655186; d=test1.dkim2.com; mf=PHNlbmRlckB0ZXN0MS5ka2ltMi5jb20+; rt=PHJjcHRAdGVzdDIuZGtpbTIuY29tPg==; s=ed25519:ed25519-sha256:EMquFfY2RUgP0KzSVzCOG20tvEN2fQdkNX5sObTtJQMszVPhGfavYAiLWFq5fNaPMBvtJtwPEWYzI55ZSKQEDw==;\r\nMessage-Instance: m=1; h=sha256:SLtzk6LO68CCaX4edrJ6yfpWbp3hwgvI8IdMBRLDk+Y=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=;\r\nFrom: sender@test1.dkim2.com\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n"
+  },
+  {
+   "name": "trailingblank-dual",
+   "mailFrom": "<bounces@mail.test1.dkim2.com>",
+   "rcptTo": [
+    "<b@test3.dkim2.com>"
+   ],
+   "message": "DKIM2-Signature: i=1; m=1; t=1791655186; d=test1.dkim2.com; mf=PGJvdW5jZXNAbWFpbC50ZXN0MS5ka2ltMi5jb20+; rt=PGFAdGVzdDIuZGtpbTIuY29tPg==,PGJAdGVzdDMuZGtpbTIuY29tPg==; s=sel1:rsa-sha256:AS+o51dPdianfCDBRLp57JX/br/boPuwGSCECmNVT6qxFiVCUo4GaPy7caD4EztFggvW/2z+tDbUZ5IEah677E4eTd0OnB1EWkWRM5FtmXsdEwFqagELQvueF0MU2TGeoDg5Dtm+UY0SzOoTpWMzBp1koI14Qe6rKGg2SN6tPNQExMOtkzkSBU5wInQ7smzzsx6T9+KIpvpiGFWVIstq6it4abpxcK/pnf22N9GuoI4wAUOLjD5NKVDlKJ84Phyn0m/coHC+0ZFcRxT1nWY0oDVUA8BCAcZ5BG2VQbs6w24gmDQfnbKNgZmsIW2VyoVQ9VPq42QGBmG8Ry2Oaf7hLQ==,ed25519:ed25519-sha256:MVMwmJEBqUw1HqXOZjSUXcZkYt/sTNzZjsePaD7ddGds+BGpRcXjGNU1VJdvSMsoTuI6Uoc80f6O8xz1B7TQCg==; n=abc123; f=feedback,donotexplode;\r\nMessage-Instance: m=1; h=sha256:YtDwzM7AADKC0ryh1KVt1aZ0lmSI7tSh0ZSprpfk4tQ=:769Te581VmTppQtDpBb9xdyD4tmnTJCPgtfQRQvDo2s=;\r\nFrom: sender@test3.dkim2.com\r\nTo: recipient@example.com\r\nSubject: Message with trailing blank lines\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-trailing@test3.dkim2.com>\r\n\r\nBody text here.\r\n\r\n\r\n\r\n"
+  },
+  {
+   "name": "trailingblank-ed",
+   "mailFrom": "<sender@test1.dkim2.com>",
+   "rcptTo": [
+    "<rcpt@test2.dkim2.com>"
+   ],
+   "message": "DKIM2-Signature: i=1; m=1; t=1791655186; d=test1.dkim2.com; mf=PHNlbmRlckB0ZXN0MS5ka2ltMi5jb20+; rt=PHJjcHRAdGVzdDIuZGtpbTIuY29tPg==; s=ed25519:ed25519-sha256:P8vRKAgKc7USm8o5bew5bS5ulWFvtCKwC72eZUvr75bxqJ4JTCHnDA5RCjxNeuJbURXYv4d4tF4j3sUEIm5lAQ==;\r\nMessage-Instance: m=1; h=sha256:YtDwzM7AADKC0ryh1KVt1aZ0lmSI7tSh0ZSprpfk4tQ=:769Te581VmTppQtDpBb9xdyD4tmnTJCPgtfQRQvDo2s=;\r\nFrom: sender@test3.dkim2.com\r\nTo: recipient@example.com\r\nSubject: Message with trailing blank lines\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-trailing@test3.dkim2.com>\r\n\r\nBody text here.\r\n\r\n\r\n\r\n"
+  }
+ ],
+ "dns": {
+  "ed25519._domainkey.test1.dkim2.com": "v=DKIM1; k=ed25519; p=hwjviTXyzUXSCWayBqE17s/4NSynQKxw58jayHudRAI=",
+  "sel1._domainkey.test1.dkim2.com": "v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqRtvI17L4pHwF58KhyjiN7d74ZHDZia1IOzuXA6hygEuxt0+0Ey9PJvrDpKp/JsJIiJ0Ji8hrQfeMbAX5wHpz8GAkRlWOdorPuZiMZegTU9oD9nWRO/GcAu7Ub4V1pF6AwwfykCmzKbomX7jWa1y0oNgMHMUeZAi1XveQ6cfebJOwtgqWMOTSenY8+p8hU97YFxwKXO0FsAQYvNMMSZAXPM00V/ZaxiZ1UZUCMM/uesVkU7pIOzItGEjoWUrPkIos1GGf+2nBncqNgmivPkJPFeaJXOIL1iHqKJrSzZuTxCWPTQ+JVPyeAgDk0xyGK3RbiyItPjVZhBs7sZekNGVCwIDAQAB",
+  "ed25519._domainkey.test2.dkim2.com": "v=DKIM1; k=ed25519; p=U62P/YVixJeLoAzIy1dTXRufMnA5SjRvgQrcuFNf/mY=",
+  "sel1._domainkey.test2.dkim2.com": "v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAolQDA1kFcPW13OQNJv7zEGhf18S+PU8oGUOSScVYRJELDUxZzv0i1OsyNW5T2hZlmTDFRszoxstj1o8JBn9nYm6zfdvr4w8JS5SrAEx8MzI4N/SghA334hbXtXQZ3br179XVgTMGJL0OMWw2Qp0c9HQAtQNF3ckeMiPncWp8e58in5YCjvHhezl8/VGrBx+CsDKxT8JFs/0QluC6AFQuM9ZIsm3RPwf4BsPE0/ADpuA5GUUdYUzhNt2Uq9Wr82BJLt8cy1a9FVEGKxdMhgJ7Gx4hx8GpM/oaiQYMO9VmNZVz8n87BkNOnjlpYFCtfb9FH8/mYPwqaSa0DmcahfeHVQIDAQAB",
+  "ed25519._domainkey.test3.dkim2.com": "v=DKIM1; k=ed25519; p=reUWo3pXLWHk5dILIK4NoCR3F2iACFdQ/FlhvVvMtxc=",
+  "sel1._domainkey.test3.dkim2.com": "v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAju2t0p4xwgCT4UCRgfNZ27U6nhQ5sHSV23hR2TBngda8yAChPInsdVyjJv+cSeZf7tG7yKrzKTM9KaKK8BzBguYrJ9DRJqg7MPPsXlZJ53Ydku3GKLcuiBmDrwUxyBGAMFxndVs+uNJkF2qi+RK0Dgd45wMZiJJF1K3bPjkkQub4Ex4MXvbIqqThthlYiKUGHFBPKg7DALkdoIlegrAP4xZ43Cszd5u9AvNdjvAr31ajjaGrGuQH+gW5kXdwZpDiQgvi0Obnr7AZeVSyr4I5CTNLoj4ed4I0AOJ3TsoZM1fFzHr/rqhL+oEKW3tA7UYGaRoXFDei0qLXhRGTJjzscQIDAQAB",
+  "ed25519._domainkey.test4.dkim2.com": "v=DKIM1; k=ed25519; p=fJAwKEPblCYdjrEIPeyOFy6AeXZUBALBdGQRjSPe97c=",
+  "sel1._domainkey.test4.dkim2.com": "v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqxfEjz2MPZ7ZiE/uQkgPOC7mn0CweB5MZgHMqgGPQodj2DpbILnxBivC64VV5/JItBaNCtEL3UFY1YzlJOKzqjJacF66u9en4m6L6uC31vrHmVME6+rx7B5nMBlkwPheamx8Dyf+wNo3/9UCKxSdFdtiJLpLGC7Tg2ry7tpxST4Joaf9fIggc3Zmaraidk0S0uJKQq6ZKoZtjJkt0Bd+LGEnGC6C9/lrjHarnImc1bcELpJrzmneOmJO1/b4C8TXawu7luKn6dTWhujAOam+sO4vXxwpCDEa2saSrB6ru2Ef4ittBVn8fYDCwCjqbniU3B/g7BcBYnnMLUvQecZEqwIDAQAB"
+ }
+}

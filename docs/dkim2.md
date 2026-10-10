@@ -131,6 +131,15 @@ Section 11 lists the human-readable strings to use. These cases have no string t
 
 The strings of section 11 are used as written, including their inconsistencies (`Message Instance` without the hyphen in section 11.7, `MAIL nd= does not match` in section 11.4).
 
+## Interoperability
+
+mailauth has been checked against two independent DKIM2 implementations. Both follow earlier revisions of the specification, so where they disagree with draft-ietf-dkim-dkim2-spec-06, mailauth follows spec-06.
+
+- **[turscar/dkim2](https://forge.turscar.ie/Turscar/dkim2)** (draft-ietf-dkim-dkim2-spec-02). All 42 vectors of [turscar/dkim2tests](https://forge.turscar.ie/turscar/dkim2tests) give the expected result, the same section 9.6 canonical form, and the same Message-Instance hashes when mailauth signs the original messages. The vectors are part of the test suite (`test/fixtures/dkim2tests`). One vector, `flags_whitespace`, expects flags that its signed message does not have.
+- **[stalwartlabs/mail-auth](https://github.com/stalwartlabs/mail-auth)** (draft-ietf-dkim-dkim2-spec-04). Messages signed by each implementation verify with the other: originators with Ed25519, and with RSA and Ed25519 together, flags, nonce and several recipients, the null reverse-path, forwarders with and without a Recipe, and hops with `nd=`. The messages signed by mail-auth are part of the test suite (`test/fixtures/dkim2-stalwart`). The differences:
+    - mail-auth fails a message whose body was declared unrecoverable with a null body Recipe (`{"b": null}`). mailauth passes it and reports the earlier body as `unknown`, since section 5.2 makes accepting such a declaration local policy, section 9.1 allows the null Recipe, and draft-ietf-dkim-dkim2-bcp-01 sections 5.7 and 7.6 recommend it.
+    - The interop vectors in the mail-auth corpus that were made by an implementation for an earlier draft encode `mf=` and `rt=` without angle brackets, which sections 8.5 and 8.6 of spec-06 require (mail-auth rejects them too, outside its tests), and sign `Received-SPF`, which section 4 of spec-06 leaves unsigned. With those two rules relaxed, mailauth verifies all of them, including a chain of six hops with header and body Recipes.
+
 ## Signing
 
 `dkim2Sign()` follows section 9:
