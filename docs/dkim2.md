@@ -25,13 +25,13 @@ const result = await dkim2Verify(message, {
 
 The whole message gets one result (section 11.1):
 
-| Result      | Meaning                                                                                                    |
-| ----------- | ---------------------------------------------------------------------------------------------------------- |
-| `pass`      | Every instance, signature and chain of custody check passed                                                |
-| `fail`      | A hash or signature was not correct, or a `donotmodify`, `donotexplode` or replay check failed             |
-| `permerror` | The message could not be verified: malformed or missing header fields, missing keys, an envelope mismatch… |
-| `temperror` | A public key could not be fetched because of a temporary DNS failure                                       |
-| `none`      | The message has no DKIM2 header fields                                                                     |
+| Result      | Meaning                                                                                                                                |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `pass`      | Every instance, signature and chain of custody check passed                                                                            |
+| `fail`      | A hash or signature was not correct, a signature had no supported algorithm, or a `donotmodify`, `donotexplode` or replay check failed |
+| `permerror` | The message could not be verified: malformed or missing header fields, missing keys, an envelope mismatch…                             |
+| `temperror` | A public key could not be fetched because of a temporary DNS failure                                                                   |
+| `none`      | The message has no DKIM2 header fields                                                                                                 |
 
 When there are several problems, `fail` wins over `permerror`, and `permerror` over `temperror`, so that a cryptographic failure is never reported as temporary (section 10.4: such failures "MUST NOT provoke 4xx SMTP replies").
 
@@ -110,6 +110,7 @@ The drafts leave some questions open. mailauth answers them like this:
 
 - **Unknown keys in a Recipe step.** Section 2 says unrecognised JSON fields "MUST be ignored", while the JSON schema of section 5 sets `additionalProperties: false` for steps. Unknown keys are ignored, but a step still needs exactly one of `c` and `d`.
 - **Recipe validity.** A Recipe that does not follow the schema (no `h` and no `b`, an empty `h`, an upper case header field name, a `c` range that is out of order or past the last line or header field, a `d` string with CR or LF) is reported as `Message-Instance m=<x> contains invalid JSON: <reason>`. Recipes for header fields that are not signed (section 4) are ignored.
+- **Only unknown signature algorithms.** A `DKIM2-Signature` whose `s=` has no signature value with a supported algorithm is a FAIL, `DKIM2-Signature i=<x> has no supported signature algorithm`. Section 11.6 says "If all signatures that can be checked fail then FAIL MUST be reported", and that holds when none can be checked. draft-ietf-dkim-dkim2-spec-02 said PERMFAIL there, and the [turscar dkim2 test vectors](https://forge.turscar.ie/turscar/dkim2tests) expect FAIL.
 - **Signature values that can not be checked.** Section 11.6 requires every signature value that can be checked to pass. A value whose key is missing or broken can not be checked: when at least one other value passes and none fails, the signature passes and the key problem is reported in its `values` entry. When no value could be checked, the key problem is the result.
 - **Chain of custody between hops.** Section 9.4 matches the MAIL FROM of a hop with a RCPT TO of the hop before it. A signature with `nd=` has no MAIL FROM, and the null MAIL FROM `<>` has no domain, so for those the `d=` is matched instead (section 9.3 says the signer of such a hop holds a key "associated with a domain in the RCPT TO entry"). Section 8.8 waives only the `d=` and `mf=` match for the null MAIL FROM, not the chain of custody, so a hop with `mf=<>` can not be added by a domain the message was never sent to.
 - **`d=` and `mf=`.** Section 8.8 requires every signature's `d=` to match its `mf=` domain, so this is checked for every signature, not only the highest as section 11.4 describes.

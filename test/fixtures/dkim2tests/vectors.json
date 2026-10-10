@@ -1,0 +1,967 @@
+[
+ {
+  "Name": "algorithm_misnamed",
+  "Comments": "signed with ed25519, labeled rsa",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=ed25519:rsa-sha256:EeTYqfvTyTEofKNZhTpZNbJvZ7atQ81yMpHjkw3aduaUj6h1ZRH3VLb76eRSszRMg79ozcxzIBsi6cmdwykCBw==\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "permerror",
+  "ExpectedError": "PERMERROR: DKIM2-Signature i=1 public key ed25519._domainkey.test.dkim2.eu. algorithm mismatch",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=ed25519:rsa-sha256:\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "ed25519": "-----BEGIN PRIVATE KEY-----\nMC4CAQAwBQYDK2VwBCIEIM6FWyVRYd3E5RZd/OzN7uiBCpcHwnrTUu7qymtM9kln\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "ed25519._domainkey.test.dkim2.eu": "v=DKIM1; k=ed25519; p=nJjZf8LyVfo7pxT28dT3gWhRkcM12+6qhYiOwx8oPco="
+  }
+ },
+ {
+  "Name": "algorithm_no_signature",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "permerror",
+  "ExpectedError": "PERMERROR DKIM2-Signature i=1 syntax error",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "ed25519": "-----BEGIN PRIVATE KEY-----\nMC4CAQAwBQYDK2VwBCIEIM6FWyVRYd3E5RZd/OzN7uiBCpcHwnrTUu7qymtM9kln\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "ed25519._domainkey.test.dkim2.eu": "v=DKIM1; k=ed25519; p=nJjZf8LyVfo7pxT28dT3gWhRkcM12+6qhYiOwx8oPco="
+  }
+ },
+ {
+  "Name": "algorithm_only_future",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=banana:banana:YmFuYW5h\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "fail",
+  "ExpectedError": "FAIL: DKIM2-Signature i=1 validation failed [No valid signature algorithms]",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=banana:banana:\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "ed25519": "-----BEGIN PRIVATE KEY-----\nMC4CAQAwBQYDK2VwBCIEIM6FWyVRYd3E5RZd/OzN7uiBCpcHwnrTUu7qymtM9kln\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "ed25519._domainkey.test.dkim2.eu": "v=DKIM1; k=ed25519; p=nJjZf8LyVfo7pxT28dT3gWhRkcM12+6qhYiOwx8oPco="
+  }
+ },
+ {
+  "Name": "algorithm_with_future",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=banana:banana:YmFuYW5h,ed25519:ed25519-sha256:8SDPQg32wUTKD8F09jG6BfWgZx3H2HXmI6VKtOrLAdvucz5HXbBTMgRkLMKieDpLOEALU+V2Wvvo9wcDgLtxAA==\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "pass",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=banana:banana:,ed25519:ed25519-sha256:\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "ed25519": "-----BEGIN PRIVATE KEY-----\nMC4CAQAwBQYDK2VwBCIEIM6FWyVRYd3E5RZd/OzN7uiBCpcHwnrTUu7qymtM9kln\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "ed25519._domainkey.test.dkim2.eu": "v=DKIM1; k=ed25519; p=nJjZf8LyVfo7pxT28dT3gWhRkcM12+6qhYiOwx8oPco="
+  }
+ },
+ {
+  "Name": "d2_duplicate_d_tag",
+  "Comments": "MUST be only one of each kind (§7)",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "Section": [
+   "7"
+  ],
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;d=test.dkim2.eu;D=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;n=banana;s=rsa2048:rsa-sha256:UHZloBMOgpyuHommuHlDzEMdqti6h1POBlkTWaz8TBk8zFoLgdLeGhW3+3CpEX1l3sqMKugT7mbuLXhQ2evfuGeWxWFPg82XkseUNGWcAUmNwIDmZKhYjnyZmra5tzrPK7qXMWH3eL9DldHukkgmeTxy7JqJD/D0G+QysHzSp5mI+dsFlI4W+8jix4DQaH9AdsLjYp6p+LYLAYvWVkLTjhjOvr0i0MEuqIpU4pKIe5LZwGGmI2MLVSbtm/Sw9ef0rVRKFeMA1btb+vPDB4i2oXUan6BxJs2hm+QQBC8mFOca9+8BNVL0GqnwMB075F8fCaDbioQ/uQnFZ/RbKvK2FQ==;f=feedback\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "permerror",
+  "ExpectedError": "Malformed Dkim2-Signature header \"i=1;m=1;t=1782394336;d=test.dkim2.eu;D=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;n=banana;s=rsa2048:rsa-sha256:UHZloBMOgpyuHommuHlDzEMdqti6h1POBlkTWaz8TBk8zFoLgdLeGhW3+3CpEX1l3sqMKugT7mbuLXhQ2evfuGeWxWFPg82XkseUNGWcAUmNwIDmZKhYjnyZmra5tzrPK7qXMWH3eL9DldHukkgmeTxy7JqJD/D0G+QysHzSp5mI+dsFlI4W+8jix4DQaH9AdsLjYp6p+LYLAYvWVkLTjhjOvr0i0MEuqIpU4pKIe5LZwGGmI2MLVSbtm/Sw9ef0rVRKFeMA1btb+vPDB4i2oXUan6BxJs2hm+QQBC8mFOca9+8BNVL0GqnwMB075F8fCaDbioQ/uQnFZ/RbKvK2FQ==;f=feedback\": duplicate tag d",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=test.dkim2.eu;D=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;n=banana;s=rsa2048:rsa-sha256:;f=feedback\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "rsa2048": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDdbLbeYb/jidOk\nt1ZQGUYCtbkQm54AwCGFrkqIFNgFLQVPqd6/Hcqo2KNpNtZakC5Jk4lRMmV6ra1J\n5Ll6rP3sn1jcV726CmxzAz6bhlkpxp91VNcjLNxV97XTLGPHpi5EmrraLKDVWC1c\nkf6naasaU3jPrusLcOkZcLUqsOBPMEgnuw2YHLc97GG0NINZLHQuU4fMDj0SXdu5\nh2wgEkJoYdh9yA3BQYhKq5i6C4588zABpFHWbvLwMMQwt71y/Qz3f1XZxUIvjO1i\n6g6C5d08V3XkN4EIAbaZg8/kV1Tn2Q1n+usOUae9ViJhEWV5MJbo0iKcue0UWwXj\npvO0ex/7AgMBAAECggEABqg9GM5hjdv/WiL55gzqA2frvkIpWDBHOR7Y55Pfn2jU\nkYKqBneT1WjSUsTMdTJIYfuc4pmImYh6w6z62gD58b1fL+FdmcWgw7OLMcvZ33+X\nV5OBWPue1whgFfGB8nrK0D841Y99eS8Pk54S2KSfNI5Ehw5HpDNDsoz1K5pp7yFb\nKJb+Ik6WYZpo5/3TkSRpx3leeCIKQzY/QLp0CUrAvVLx3AyMUjZA/DBXsXLB2/vd\nvZnm+6s30MxU+GQfgQbgCMZG+mtmN5GQUnFQNAqZa643GGmRiOVNjiLBy2UaCuYu\nERuZjbJgII5VX/Z1wCIzh62hvEhtzjCljD6sb4HwcQKBgQDk1NVgjMR/ShMBTwMN\n/13cKntkUrbRfi9eCu87sU6VlD2VPKL+opp+AR0hCU7Px59me04wEQuTT11pwRKF\nOCYr3QJ3+4bCq3h+LhRbw2aizOfSevQyQiEq6HwyYVjOczBb/ol2SnLahhsVXUXl\nenYl45ywcKGotI0tCJrztkvFAwKBgQD3tsJNdhu27GFzWh1MMGJEeoaGFLlmwkdB\nilqbGnDwgk+GBCMzuDATA8E7rsemCVLiMIXtjrGvR4nqmP/AD44xpt1xNhLXR1gJ\n/CAZxYTlFsPwJQbPXgTiwOPOKdcID0T50nHrfKvYKIJoc+aU1e2vaNHCt1TzNhmJ\nbSHrLnpbqQKBgQDSEFd49ICF4Xgk4WWKefyt2gnABPZyxgWxrRQEljXvtk/6Kdnv\nK1HrjhYxd5vzveskZtlV4q/foSG9rVHVHcBcz9wuTKZfGo3YN3DU9EHJ/ZRqchit\n8msEOruYfCjMDI4+RSHnh1x8IlPGfwNlL9A55AK5LgwZFPXse1PTmmtgBQKBgQDG\ndMP8PSh9B6oXOVYJiSXhSOxnlUjoG7PsvURTyP48oZnGe6AcOm9BfJueDivjSMr/\nbfKOXOjbzYufyM30+EFqZA47OiAkGwNclIK/QvByfSejSHbJQcDWTcT0ka61xU30\ne/ZKvIoMVoAL4PcVvMJ86pRK1IgZhfk1kZpACe97aQKBgByyfzphzVwmde2D06+L\nCbDn9IkXKFPSIrZrzppRTt3I8qeHbcyK+U0mRU6kK9O92a+BPR9N2cWL7VnOlUwU\nYTbUwolasJKYEkH37hCo0inqmYeDAp/rlsJYs6G4B/gFdu6mVl3W5KILMnSQCLOk\nmn5tt9iSb+dPbCLcD8adkmlB\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "rsa2048._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MIIBCgKCAQEA3Wy23mG/44nTpLdWUBlGArW5EJueAMAhha5KiBTYBS0FT6nevx3KqNijaTbWWpAuSZOJUTJleq2tSeS5eqz97J9Y3Fe9ugpscwM+m4ZZKcafdVTXIyzcVfe10yxjx6YuRJq62iyg1VgtXJH+p2mrGlN4z67rC3DpGXC1KrDgTzBIJ7sNmBy3PexhtDSDWSx0LlOHzA49El3buYdsIBJCaGHYfcgNwUGISquYuguOfPMwAaRR1m7y8DDEMLe9cv0M939V2cVCL4ztYuoOguXdPFd15DeBCAG2mYPP5FdU59kNZ/rrDlGnvVYiYRFleTCW6NIinLntFFsF46bztHsf+wIDAQAB"
+  }
+ },
+ {
+  "Name": "d2_duplicate_f_tag",
+  "Comments": "MUST be only one of each kind (§7)",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "Section": [
+   "7"
+  ],
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;n=banana;s=rsa2048:rsa-sha256:X2YI7ZCzrST0prvj/UtxEK9Thvig1pVoP3kbDXUbUC2Kz3nFX4OEXnL5a9plv0/9qBUfvN5E9SMjjX5b2dkx2OxX9w6DOcx/ie1naK5ZbHs23MzHhcwDWKoiqbBJrb/vYXJEJoehaC59MRMooggOh+7iIPg7jx++PTCAerJVez00bv7nu5EP3mJTInU2zC2iIZPQkd03XOG1Hhfvf2O0YWgXerKoVdmhlDsNUZaSG1gZ676JW4Pbw6n3Uf8pO0iZ9ND16o9XbXW5zAaJiwcwVZlE224rE4bNzw06bBsiLqh4XOUqNVGkNTDuH4za2joxAg03v3622R+h0Tz79a8uqw==;f=feedback;F=feedback\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "permerror",
+  "ExpectedError": "Malformed Dkim2-Signature header \"i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;n=banana;s=rsa2048:rsa-sha256:X2YI7ZCzrST0prvj/UtxEK9Thvig1pVoP3kbDXUbUC2Kz3nFX4OEXnL5a9plv0/9qBUfvN5E9SMjjX5b2dkx2OxX9w6DOcx/ie1naK5ZbHs23MzHhcwDWKoiqbBJrb/vYXJEJoehaC59MRMooggOh+7iIPg7jx++PTCAerJVez00bv7nu5EP3mJTInU2zC2iIZPQkd03XOG1Hhfvf2O0YWgXerKoVdmhlDsNUZaSG1gZ676JW4Pbw6n3Uf8pO0iZ9ND16o9XbXW5zAaJiwcwVZlE224rE4bNzw06bBsiLqh4XOUqNVGkNTDuH4za2joxAg03v3622R+h0Tz79a8uqw==;f=feedback;F=feedback\": duplicate tag f",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;n=banana;s=rsa2048:rsa-sha256:;f=feedback;F=feedback\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "rsa2048": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDdbLbeYb/jidOk\nt1ZQGUYCtbkQm54AwCGFrkqIFNgFLQVPqd6/Hcqo2KNpNtZakC5Jk4lRMmV6ra1J\n5Ll6rP3sn1jcV726CmxzAz6bhlkpxp91VNcjLNxV97XTLGPHpi5EmrraLKDVWC1c\nkf6naasaU3jPrusLcOkZcLUqsOBPMEgnuw2YHLc97GG0NINZLHQuU4fMDj0SXdu5\nh2wgEkJoYdh9yA3BQYhKq5i6C4588zABpFHWbvLwMMQwt71y/Qz3f1XZxUIvjO1i\n6g6C5d08V3XkN4EIAbaZg8/kV1Tn2Q1n+usOUae9ViJhEWV5MJbo0iKcue0UWwXj\npvO0ex/7AgMBAAECggEABqg9GM5hjdv/WiL55gzqA2frvkIpWDBHOR7Y55Pfn2jU\nkYKqBneT1WjSUsTMdTJIYfuc4pmImYh6w6z62gD58b1fL+FdmcWgw7OLMcvZ33+X\nV5OBWPue1whgFfGB8nrK0D841Y99eS8Pk54S2KSfNI5Ehw5HpDNDsoz1K5pp7yFb\nKJb+Ik6WYZpo5/3TkSRpx3leeCIKQzY/QLp0CUrAvVLx3AyMUjZA/DBXsXLB2/vd\nvZnm+6s30MxU+GQfgQbgCMZG+mtmN5GQUnFQNAqZa643GGmRiOVNjiLBy2UaCuYu\nERuZjbJgII5VX/Z1wCIzh62hvEhtzjCljD6sb4HwcQKBgQDk1NVgjMR/ShMBTwMN\n/13cKntkUrbRfi9eCu87sU6VlD2VPKL+opp+AR0hCU7Px59me04wEQuTT11pwRKF\nOCYr3QJ3+4bCq3h+LhRbw2aizOfSevQyQiEq6HwyYVjOczBb/ol2SnLahhsVXUXl\nenYl45ywcKGotI0tCJrztkvFAwKBgQD3tsJNdhu27GFzWh1MMGJEeoaGFLlmwkdB\nilqbGnDwgk+GBCMzuDATA8E7rsemCVLiMIXtjrGvR4nqmP/AD44xpt1xNhLXR1gJ\n/CAZxYTlFsPwJQbPXgTiwOPOKdcID0T50nHrfKvYKIJoc+aU1e2vaNHCt1TzNhmJ\nbSHrLnpbqQKBgQDSEFd49ICF4Xgk4WWKefyt2gnABPZyxgWxrRQEljXvtk/6Kdnv\nK1HrjhYxd5vzveskZtlV4q/foSG9rVHVHcBcz9wuTKZfGo3YN3DU9EHJ/ZRqchit\n8msEOruYfCjMDI4+RSHnh1x8IlPGfwNlL9A55AK5LgwZFPXse1PTmmtgBQKBgQDG\ndMP8PSh9B6oXOVYJiSXhSOxnlUjoG7PsvURTyP48oZnGe6AcOm9BfJueDivjSMr/\nbfKOXOjbzYufyM30+EFqZA47OiAkGwNclIK/QvByfSejSHbJQcDWTcT0ka61xU30\ne/ZKvIoMVoAL4PcVvMJ86pRK1IgZhfk1kZpACe97aQKBgByyfzphzVwmde2D06+L\nCbDn9IkXKFPSIrZrzppRTt3I8qeHbcyK+U0mRU6kK9O92a+BPR9N2cWL7VnOlUwU\nYTbUwolasJKYEkH37hCo0inqmYeDAp/rlsJYs6G4B/gFdu6mVl3W5KILMnSQCLOk\nmn5tt9iSb+dPbCLcD8adkmlB\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "rsa2048._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MIIBCgKCAQEA3Wy23mG/44nTpLdWUBlGArW5EJueAMAhha5KiBTYBS0FT6nevx3KqNijaTbWWpAuSZOJUTJleq2tSeS5eqz97J9Y3Fe9ugpscwM+m4ZZKcafdVTXIyzcVfe10yxjx6YuRJq62iyg1VgtXJH+p2mrGlN4z67rC3DpGXC1KrDgTzBIJ7sNmBy3PexhtDSDWSx0LlOHzA49El3buYdsIBJCaGHYfcgNwUGISquYuguOfPMwAaRR1m7y8DDEMLe9cv0M939V2cVCL4ztYuoOguXdPFd15DeBCAG2mYPP5FdU59kNZ/rrDlGnvVYiYRFleTCW6NIinLntFFsF46bztHsf+wIDAQAB"
+  }
+ },
+ {
+  "Name": "d2_duplicate_i_tag",
+  "Comments": "MUST be only one of each kind (§7)",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "Section": [
+   "7"
+  ],
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;I=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;n=banana;s=rsa2048:rsa-sha256:FwhW0D0gsaf7m6SyaGe8StHEIgxsTuCyPxonOl4wBkXwBuiQKGAm0jnjfEKI+F92pASZczWyDa06SK6Pa3gA8VSiAhe8UqkQDx9IQ61OwHY9Ty7wZM9UdE63CGooT2aviMLw4Dg+m28ujxtpnh5M1+IyfPzhdqerpTt+WQ7kyRVyYLmOqEiQMzZePNGBueG5K6J0RCpORgy8ECom/cCEA9/ARk8suE+AefhHwvQ7e/SPPvjp68qlMVjL2K5QV1gMMW0j6OnWWuCIKT6RrqfLVYSkqChdHu3wry4WMm1UH+uUUapS6ouIpqWWtS1s3SpZGck35A3Fz0wX8HwNCe/c+A==;f=feedback\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "permerror",
+  "ExpectedError": "Malformed Dkim2-Signature header \"i=1;I=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;n=banana;s=rsa2048:rsa-sha256:FwhW0D0gsaf7m6SyaGe8StHEIgxsTuCyPxonOl4wBkXwBuiQKGAm0jnjfEKI+F92pASZczWyDa06SK6Pa3gA8VSiAhe8UqkQDx9IQ61OwHY9Ty7wZM9UdE63CGooT2aviMLw4Dg+m28ujxtpnh5M1+IyfPzhdqerpTt+WQ7kyRVyYLmOqEiQMzZePNGBueG5K6J0RCpORgy8ECom/cCEA9/ARk8suE+AefhHwvQ7e/SPPvjp68qlMVjL2K5QV1gMMW0j6OnWWuCIKT6RrqfLVYSkqChdHu3wry4WMm1UH+uUUapS6ouIpqWWtS1s3SpZGck35A3Fz0wX8HwNCe/c+A==;f=feedback\": duplicate tag i",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;I=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;n=banana;s=rsa2048:rsa-sha256:;f=feedback\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "rsa2048": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDdbLbeYb/jidOk\nt1ZQGUYCtbkQm54AwCGFrkqIFNgFLQVPqd6/Hcqo2KNpNtZakC5Jk4lRMmV6ra1J\n5Ll6rP3sn1jcV726CmxzAz6bhlkpxp91VNcjLNxV97XTLGPHpi5EmrraLKDVWC1c\nkf6naasaU3jPrusLcOkZcLUqsOBPMEgnuw2YHLc97GG0NINZLHQuU4fMDj0SXdu5\nh2wgEkJoYdh9yA3BQYhKq5i6C4588zABpFHWbvLwMMQwt71y/Qz3f1XZxUIvjO1i\n6g6C5d08V3XkN4EIAbaZg8/kV1Tn2Q1n+usOUae9ViJhEWV5MJbo0iKcue0UWwXj\npvO0ex/7AgMBAAECggEABqg9GM5hjdv/WiL55gzqA2frvkIpWDBHOR7Y55Pfn2jU\nkYKqBneT1WjSUsTMdTJIYfuc4pmImYh6w6z62gD58b1fL+FdmcWgw7OLMcvZ33+X\nV5OBWPue1whgFfGB8nrK0D841Y99eS8Pk54S2KSfNI5Ehw5HpDNDsoz1K5pp7yFb\nKJb+Ik6WYZpo5/3TkSRpx3leeCIKQzY/QLp0CUrAvVLx3AyMUjZA/DBXsXLB2/vd\nvZnm+6s30MxU+GQfgQbgCMZG+mtmN5GQUnFQNAqZa643GGmRiOVNjiLBy2UaCuYu\nERuZjbJgII5VX/Z1wCIzh62hvEhtzjCljD6sb4HwcQKBgQDk1NVgjMR/ShMBTwMN\n/13cKntkUrbRfi9eCu87sU6VlD2VPKL+opp+AR0hCU7Px59me04wEQuTT11pwRKF\nOCYr3QJ3+4bCq3h+LhRbw2aizOfSevQyQiEq6HwyYVjOczBb/ol2SnLahhsVXUXl\nenYl45ywcKGotI0tCJrztkvFAwKBgQD3tsJNdhu27GFzWh1MMGJEeoaGFLlmwkdB\nilqbGnDwgk+GBCMzuDATA8E7rsemCVLiMIXtjrGvR4nqmP/AD44xpt1xNhLXR1gJ\n/CAZxYTlFsPwJQbPXgTiwOPOKdcID0T50nHrfKvYKIJoc+aU1e2vaNHCt1TzNhmJ\nbSHrLnpbqQKBgQDSEFd49ICF4Xgk4WWKefyt2gnABPZyxgWxrRQEljXvtk/6Kdnv\nK1HrjhYxd5vzveskZtlV4q/foSG9rVHVHcBcz9wuTKZfGo3YN3DU9EHJ/ZRqchit\n8msEOruYfCjMDI4+RSHnh1x8IlPGfwNlL9A55AK5LgwZFPXse1PTmmtgBQKBgQDG\ndMP8PSh9B6oXOVYJiSXhSOxnlUjoG7PsvURTyP48oZnGe6AcOm9BfJueDivjSMr/\nbfKOXOjbzYufyM30+EFqZA47OiAkGwNclIK/QvByfSejSHbJQcDWTcT0ka61xU30\ne/ZKvIoMVoAL4PcVvMJ86pRK1IgZhfk1kZpACe97aQKBgByyfzphzVwmde2D06+L\nCbDn9IkXKFPSIrZrzppRTt3I8qeHbcyK+U0mRU6kK9O92a+BPR9N2cWL7VnOlUwU\nYTbUwolasJKYEkH37hCo0inqmYeDAp/rlsJYs6G4B/gFdu6mVl3W5KILMnSQCLOk\nmn5tt9iSb+dPbCLcD8adkmlB\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "rsa2048._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MIIBCgKCAQEA3Wy23mG/44nTpLdWUBlGArW5EJueAMAhha5KiBTYBS0FT6nevx3KqNijaTbWWpAuSZOJUTJleq2tSeS5eqz97J9Y3Fe9ugpscwM+m4ZZKcafdVTXIyzcVfe10yxjx6YuRJq62iyg1VgtXJH+p2mrGlN4z67rC3DpGXC1KrDgTzBIJ7sNmBy3PexhtDSDWSx0LlOHzA49El3buYdsIBJCaGHYfcgNwUGISquYuguOfPMwAaRR1m7y8DDEMLe9cv0M939V2cVCL4ztYuoOguXdPFd15DeBCAG2mYPP5FdU59kNZ/rrDlGnvVYiYRFleTCW6NIinLntFFsF46bztHsf+wIDAQAB"
+  }
+ },
+ {
+  "Name": "d2_duplicate_m_tag",
+  "Comments": "MUST be only one of each kind (§7)",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "Section": [
+   "7"
+  ],
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;M=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;n=banana;s=rsa2048:rsa-sha256:VsXq7RvsHzMHfk1cVMNIHkQd/ld9IoBUbOiNMmtec9Z9fyPQ7f1EsPm7nSjNApPeEKgpB1J5/T9cBprRTUj9qhCC1WRtqdeCEnYQklUy9vW9solqFQPiJhfQZwk2U7/h7WbKtbRgYZrTqJmV8ZSIpEafD7HzT04anxJA0mmcHE371VQag+yjRlmhsCNj03SPR5VWuSyzqZCJbmfuQhimqtLq0eYU986IRLaaiipXPzHeR8RPpdr7ikKYeoADD3rvvXQJVRMB76mipyte+tIWCz3zurK3kzOr7buEx+B5Vzy44BxZYoZ7u8xGb1pdnUCHxwuq+N4HfsIoB07PDBitJQ==;f=feedback\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "permerror",
+  "ExpectedError": "Malformed Dkim2-Signature header \"i=1;m=1;M=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;n=banana;s=rsa2048:rsa-sha256:VsXq7RvsHzMHfk1cVMNIHkQd/ld9IoBUbOiNMmtec9Z9fyPQ7f1EsPm7nSjNApPeEKgpB1J5/T9cBprRTUj9qhCC1WRtqdeCEnYQklUy9vW9solqFQPiJhfQZwk2U7/h7WbKtbRgYZrTqJmV8ZSIpEafD7HzT04anxJA0mmcHE371VQag+yjRlmhsCNj03SPR5VWuSyzqZCJbmfuQhimqtLq0eYU986IRLaaiipXPzHeR8RPpdr7ikKYeoADD3rvvXQJVRMB76mipyte+tIWCz3zurK3kzOr7buEx+B5Vzy44BxZYoZ7u8xGb1pdnUCHxwuq+N4HfsIoB07PDBitJQ==;f=feedback\": duplicate tag m",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;M=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;n=banana;s=rsa2048:rsa-sha256:;f=feedback\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "rsa2048": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDdbLbeYb/jidOk\nt1ZQGUYCtbkQm54AwCGFrkqIFNgFLQVPqd6/Hcqo2KNpNtZakC5Jk4lRMmV6ra1J\n5Ll6rP3sn1jcV726CmxzAz6bhlkpxp91VNcjLNxV97XTLGPHpi5EmrraLKDVWC1c\nkf6naasaU3jPrusLcOkZcLUqsOBPMEgnuw2YHLc97GG0NINZLHQuU4fMDj0SXdu5\nh2wgEkJoYdh9yA3BQYhKq5i6C4588zABpFHWbvLwMMQwt71y/Qz3f1XZxUIvjO1i\n6g6C5d08V3XkN4EIAbaZg8/kV1Tn2Q1n+usOUae9ViJhEWV5MJbo0iKcue0UWwXj\npvO0ex/7AgMBAAECggEABqg9GM5hjdv/WiL55gzqA2frvkIpWDBHOR7Y55Pfn2jU\nkYKqBneT1WjSUsTMdTJIYfuc4pmImYh6w6z62gD58b1fL+FdmcWgw7OLMcvZ33+X\nV5OBWPue1whgFfGB8nrK0D841Y99eS8Pk54S2KSfNI5Ehw5HpDNDsoz1K5pp7yFb\nKJb+Ik6WYZpo5/3TkSRpx3leeCIKQzY/QLp0CUrAvVLx3AyMUjZA/DBXsXLB2/vd\nvZnm+6s30MxU+GQfgQbgCMZG+mtmN5GQUnFQNAqZa643GGmRiOVNjiLBy2UaCuYu\nERuZjbJgII5VX/Z1wCIzh62hvEhtzjCljD6sb4HwcQKBgQDk1NVgjMR/ShMBTwMN\n/13cKntkUrbRfi9eCu87sU6VlD2VPKL+opp+AR0hCU7Px59me04wEQuTT11pwRKF\nOCYr3QJ3+4bCq3h+LhRbw2aizOfSevQyQiEq6HwyYVjOczBb/ol2SnLahhsVXUXl\nenYl45ywcKGotI0tCJrztkvFAwKBgQD3tsJNdhu27GFzWh1MMGJEeoaGFLlmwkdB\nilqbGnDwgk+GBCMzuDATA8E7rsemCVLiMIXtjrGvR4nqmP/AD44xpt1xNhLXR1gJ\n/CAZxYTlFsPwJQbPXgTiwOPOKdcID0T50nHrfKvYKIJoc+aU1e2vaNHCt1TzNhmJ\nbSHrLnpbqQKBgQDSEFd49ICF4Xgk4WWKefyt2gnABPZyxgWxrRQEljXvtk/6Kdnv\nK1HrjhYxd5vzveskZtlV4q/foSG9rVHVHcBcz9wuTKZfGo3YN3DU9EHJ/ZRqchit\n8msEOruYfCjMDI4+RSHnh1x8IlPGfwNlL9A55AK5LgwZFPXse1PTmmtgBQKBgQDG\ndMP8PSh9B6oXOVYJiSXhSOxnlUjoG7PsvURTyP48oZnGe6AcOm9BfJueDivjSMr/\nbfKOXOjbzYufyM30+EFqZA47OiAkGwNclIK/QvByfSejSHbJQcDWTcT0ka61xU30\ne/ZKvIoMVoAL4PcVvMJ86pRK1IgZhfk1kZpACe97aQKBgByyfzphzVwmde2D06+L\nCbDn9IkXKFPSIrZrzppRTt3I8qeHbcyK+U0mRU6kK9O92a+BPR9N2cWL7VnOlUwU\nYTbUwolasJKYEkH37hCo0inqmYeDAp/rlsJYs6G4B/gFdu6mVl3W5KILMnSQCLOk\nmn5tt9iSb+dPbCLcD8adkmlB\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "rsa2048._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MIIBCgKCAQEA3Wy23mG/44nTpLdWUBlGArW5EJueAMAhha5KiBTYBS0FT6nevx3KqNijaTbWWpAuSZOJUTJleq2tSeS5eqz97J9Y3Fe9ugpscwM+m4ZZKcafdVTXIyzcVfe10yxjx6YuRJq62iyg1VgtXJH+p2mrGlN4z67rC3DpGXC1KrDgTzBIJ7sNmBy3PexhtDSDWSx0LlOHzA49El3buYdsIBJCaGHYfcgNwUGISquYuguOfPMwAaRR1m7y8DDEMLe9cv0M939V2cVCL4ztYuoOguXdPFd15DeBCAG2mYPP5FdU59kNZ/rrDlGnvVYiYRFleTCW6NIinLntFFsF46bztHsf+wIDAQAB"
+  }
+ },
+ {
+  "Name": "d2_duplicate_mf_tag",
+  "Comments": "MUST be only one of each kind (§7)",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "Section": [
+   "7"
+  ],
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;MF=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;n=banana;s=rsa2048:rsa-sha256:fmBeUBRSM4DewIlkSdDGddaKRtjG8leyP8x0a4YSpcZvqRlDJ85DxtUGsbiVxJTfsb64AGLV1JfHvEpqAF1r0QtJU1+RjwlpZ22Qc8EJUZkTTu2QNFyFE7elXb495kyLtIV1yi6epWwcYXWmXONnLG5eOxBP9y52B+vB1OyEjM3G4f0LGbzWlh//oIPsW+gG82JjMWmky/HBeGJKIreS1qBwjEmp8awZjYmYJTlPVGBW31Ux1S7BaXmO7EYngTpdnv1gDtN8tReviUfyGOnHxUTydGuKXsrVPeOKv/bNSxG3wL53kHevjr/ZbWaVlADyxMya3csIMdLzeEieUydNeQ==;f=feedback\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "permerror",
+  "ExpectedError": "Malformed Dkim2-Signature header \"i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;MF=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;n=banana;s=rsa2048:rsa-sha256:fmBeUBRSM4DewIlkSdDGddaKRtjG8leyP8x0a4YSpcZvqRlDJ85DxtUGsbiVxJTfsb64AGLV1JfHvEpqAF1r0QtJU1+RjwlpZ22Qc8EJUZkTTu2QNFyFE7elXb495kyLtIV1yi6epWwcYXWmXONnLG5eOxBP9y52B+vB1OyEjM3G4f0LGbzWlh//oIPsW+gG82JjMWmky/HBeGJKIreS1qBwjEmp8awZjYmYJTlPVGBW31Ux1S7BaXmO7EYngTpdnv1gDtN8tReviUfyGOnHxUTydGuKXsrVPeOKv/bNSxG3wL53kHevjr/ZbWaVlADyxMya3csIMdLzeEieUydNeQ==;f=feedback\": duplicate tag mf",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;MF=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;n=banana;s=rsa2048:rsa-sha256:;f=feedback\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "rsa2048": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDdbLbeYb/jidOk\nt1ZQGUYCtbkQm54AwCGFrkqIFNgFLQVPqd6/Hcqo2KNpNtZakC5Jk4lRMmV6ra1J\n5Ll6rP3sn1jcV726CmxzAz6bhlkpxp91VNcjLNxV97XTLGPHpi5EmrraLKDVWC1c\nkf6naasaU3jPrusLcOkZcLUqsOBPMEgnuw2YHLc97GG0NINZLHQuU4fMDj0SXdu5\nh2wgEkJoYdh9yA3BQYhKq5i6C4588zABpFHWbvLwMMQwt71y/Qz3f1XZxUIvjO1i\n6g6C5d08V3XkN4EIAbaZg8/kV1Tn2Q1n+usOUae9ViJhEWV5MJbo0iKcue0UWwXj\npvO0ex/7AgMBAAECggEABqg9GM5hjdv/WiL55gzqA2frvkIpWDBHOR7Y55Pfn2jU\nkYKqBneT1WjSUsTMdTJIYfuc4pmImYh6w6z62gD58b1fL+FdmcWgw7OLMcvZ33+X\nV5OBWPue1whgFfGB8nrK0D841Y99eS8Pk54S2KSfNI5Ehw5HpDNDsoz1K5pp7yFb\nKJb+Ik6WYZpo5/3TkSRpx3leeCIKQzY/QLp0CUrAvVLx3AyMUjZA/DBXsXLB2/vd\nvZnm+6s30MxU+GQfgQbgCMZG+mtmN5GQUnFQNAqZa643GGmRiOVNjiLBy2UaCuYu\nERuZjbJgII5VX/Z1wCIzh62hvEhtzjCljD6sb4HwcQKBgQDk1NVgjMR/ShMBTwMN\n/13cKntkUrbRfi9eCu87sU6VlD2VPKL+opp+AR0hCU7Px59me04wEQuTT11pwRKF\nOCYr3QJ3+4bCq3h+LhRbw2aizOfSevQyQiEq6HwyYVjOczBb/ol2SnLahhsVXUXl\nenYl45ywcKGotI0tCJrztkvFAwKBgQD3tsJNdhu27GFzWh1MMGJEeoaGFLlmwkdB\nilqbGnDwgk+GBCMzuDATA8E7rsemCVLiMIXtjrGvR4nqmP/AD44xpt1xNhLXR1gJ\n/CAZxYTlFsPwJQbPXgTiwOPOKdcID0T50nHrfKvYKIJoc+aU1e2vaNHCt1TzNhmJ\nbSHrLnpbqQKBgQDSEFd49ICF4Xgk4WWKefyt2gnABPZyxgWxrRQEljXvtk/6Kdnv\nK1HrjhYxd5vzveskZtlV4q/foSG9rVHVHcBcz9wuTKZfGo3YN3DU9EHJ/ZRqchit\n8msEOruYfCjMDI4+RSHnh1x8IlPGfwNlL9A55AK5LgwZFPXse1PTmmtgBQKBgQDG\ndMP8PSh9B6oXOVYJiSXhSOxnlUjoG7PsvURTyP48oZnGe6AcOm9BfJueDivjSMr/\nbfKOXOjbzYufyM30+EFqZA47OiAkGwNclIK/QvByfSejSHbJQcDWTcT0ka61xU30\ne/ZKvIoMVoAL4PcVvMJ86pRK1IgZhfk1kZpACe97aQKBgByyfzphzVwmde2D06+L\nCbDn9IkXKFPSIrZrzppRTt3I8qeHbcyK+U0mRU6kK9O92a+BPR9N2cWL7VnOlUwU\nYTbUwolasJKYEkH37hCo0inqmYeDAp/rlsJYs6G4B/gFdu6mVl3W5KILMnSQCLOk\nmn5tt9iSb+dPbCLcD8adkmlB\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "rsa2048._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MIIBCgKCAQEA3Wy23mG/44nTpLdWUBlGArW5EJueAMAhha5KiBTYBS0FT6nevx3KqNijaTbWWpAuSZOJUTJleq2tSeS5eqz97J9Y3Fe9ugpscwM+m4ZZKcafdVTXIyzcVfe10yxjx6YuRJq62iyg1VgtXJH+p2mrGlN4z67rC3DpGXC1KrDgTzBIJ7sNmBy3PexhtDSDWSx0LlOHzA49El3buYdsIBJCaGHYfcgNwUGISquYuguOfPMwAaRR1m7y8DDEMLe9cv0M939V2cVCL4ztYuoOguXdPFd15DeBCAG2mYPP5FdU59kNZ/rrDlGnvVYiYRFleTCW6NIinLntFFsF46bztHsf+wIDAQAB"
+  }
+ },
+ {
+  "Name": "d2_duplicate_n_tag",
+  "Comments": "MUST be only one of each kind (§7)",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "Section": [
+   "7"
+  ],
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;n=banana;N=banana;s=rsa2048:rsa-sha256:Tblx7IZEjdipSoc8tUlxVvDvoLhCZU2SNostL10O1wGgRrV8cDOFmFH4wDoOl7mupQioUfLuc3H9bAENLgfMPGBQILLqI8xS0CyIq70fI49vTMbZT0lKZ2DgKLs2No7Mfs1LiH2wWdd/8ZU7/oLLE+pi8rTwn8mTWoTFy3LzF1uDSMpdd3ApZSRpMMZuc2tau0GVC9VF7cLjQ6Xje0IBba9JWjsIcY0dReMy5Q/Q2F9RgVpfBoQaOrbrroWZ/zMQZ2DEpVo1XlqDRRScKOzNjZhL6LIieSfxs3ziEBr58FRpP+7LCEdSPtUzimY9kfWR4M38kM5S3AzUsOnlUFt+7g==;f=feedback\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "permerror",
+  "ExpectedError": "Malformed Dkim2-Signature header \"i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;n=banana;N=banana;s=rsa2048:rsa-sha256:Tblx7IZEjdipSoc8tUlxVvDvoLhCZU2SNostL10O1wGgRrV8cDOFmFH4wDoOl7mupQioUfLuc3H9bAENLgfMPGBQILLqI8xS0CyIq70fI49vTMbZT0lKZ2DgKLs2No7Mfs1LiH2wWdd/8ZU7/oLLE+pi8rTwn8mTWoTFy3LzF1uDSMpdd3ApZSRpMMZuc2tau0GVC9VF7cLjQ6Xje0IBba9JWjsIcY0dReMy5Q/Q2F9RgVpfBoQaOrbrroWZ/zMQZ2DEpVo1XlqDRRScKOzNjZhL6LIieSfxs3ziEBr58FRpP+7LCEdSPtUzimY9kfWR4M38kM5S3AzUsOnlUFt+7g==;f=feedback\": duplicate tag n",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;n=banana;N=banana;s=rsa2048:rsa-sha256:;f=feedback\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "rsa2048": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDdbLbeYb/jidOk\nt1ZQGUYCtbkQm54AwCGFrkqIFNgFLQVPqd6/Hcqo2KNpNtZakC5Jk4lRMmV6ra1J\n5Ll6rP3sn1jcV726CmxzAz6bhlkpxp91VNcjLNxV97XTLGPHpi5EmrraLKDVWC1c\nkf6naasaU3jPrusLcOkZcLUqsOBPMEgnuw2YHLc97GG0NINZLHQuU4fMDj0SXdu5\nh2wgEkJoYdh9yA3BQYhKq5i6C4588zABpFHWbvLwMMQwt71y/Qz3f1XZxUIvjO1i\n6g6C5d08V3XkN4EIAbaZg8/kV1Tn2Q1n+usOUae9ViJhEWV5MJbo0iKcue0UWwXj\npvO0ex/7AgMBAAECggEABqg9GM5hjdv/WiL55gzqA2frvkIpWDBHOR7Y55Pfn2jU\nkYKqBneT1WjSUsTMdTJIYfuc4pmImYh6w6z62gD58b1fL+FdmcWgw7OLMcvZ33+X\nV5OBWPue1whgFfGB8nrK0D841Y99eS8Pk54S2KSfNI5Ehw5HpDNDsoz1K5pp7yFb\nKJb+Ik6WYZpo5/3TkSRpx3leeCIKQzY/QLp0CUrAvVLx3AyMUjZA/DBXsXLB2/vd\nvZnm+6s30MxU+GQfgQbgCMZG+mtmN5GQUnFQNAqZa643GGmRiOVNjiLBy2UaCuYu\nERuZjbJgII5VX/Z1wCIzh62hvEhtzjCljD6sb4HwcQKBgQDk1NVgjMR/ShMBTwMN\n/13cKntkUrbRfi9eCu87sU6VlD2VPKL+opp+AR0hCU7Px59me04wEQuTT11pwRKF\nOCYr3QJ3+4bCq3h+LhRbw2aizOfSevQyQiEq6HwyYVjOczBb/ol2SnLahhsVXUXl\nenYl45ywcKGotI0tCJrztkvFAwKBgQD3tsJNdhu27GFzWh1MMGJEeoaGFLlmwkdB\nilqbGnDwgk+GBCMzuDATA8E7rsemCVLiMIXtjrGvR4nqmP/AD44xpt1xNhLXR1gJ\n/CAZxYTlFsPwJQbPXgTiwOPOKdcID0T50nHrfKvYKIJoc+aU1e2vaNHCt1TzNhmJ\nbSHrLnpbqQKBgQDSEFd49ICF4Xgk4WWKefyt2gnABPZyxgWxrRQEljXvtk/6Kdnv\nK1HrjhYxd5vzveskZtlV4q/foSG9rVHVHcBcz9wuTKZfGo3YN3DU9EHJ/ZRqchit\n8msEOruYfCjMDI4+RSHnh1x8IlPGfwNlL9A55AK5LgwZFPXse1PTmmtgBQKBgQDG\ndMP8PSh9B6oXOVYJiSXhSOxnlUjoG7PsvURTyP48oZnGe6AcOm9BfJueDivjSMr/\nbfKOXOjbzYufyM30+EFqZA47OiAkGwNclIK/QvByfSejSHbJQcDWTcT0ka61xU30\ne/ZKvIoMVoAL4PcVvMJ86pRK1IgZhfk1kZpACe97aQKBgByyfzphzVwmde2D06+L\nCbDn9IkXKFPSIrZrzppRTt3I8qeHbcyK+U0mRU6kK9O92a+BPR9N2cWL7VnOlUwU\nYTbUwolasJKYEkH37hCo0inqmYeDAp/rlsJYs6G4B/gFdu6mVl3W5KILMnSQCLOk\nmn5tt9iSb+dPbCLcD8adkmlB\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "rsa2048._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MIIBCgKCAQEA3Wy23mG/44nTpLdWUBlGArW5EJueAMAhha5KiBTYBS0FT6nevx3KqNijaTbWWpAuSZOJUTJleq2tSeS5eqz97J9Y3Fe9ugpscwM+m4ZZKcafdVTXIyzcVfe10yxjx6YuRJq62iyg1VgtXJH+p2mrGlN4z67rC3DpGXC1KrDgTzBIJ7sNmBy3PexhtDSDWSx0LlOHzA49El3buYdsIBJCaGHYfcgNwUGISquYuguOfPMwAaRR1m7y8DDEMLe9cv0M939V2cVCL4ztYuoOguXdPFd15DeBCAG2mYPP5FdU59kNZ/rrDlGnvVYiYRFleTCW6NIinLntFFsF46bztHsf+wIDAQAB"
+  }
+ },
+ {
+  "Name": "d2_duplicate_rt_tag",
+  "Comments": "MUST be only one of each kind (§7)",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "Section": [
+   "7"
+  ],
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;RT=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;n=banana;s=rsa2048:rsa-sha256:kE2JYn7jfm+wGkIZhmI7Av/L20Kiw90V0WIx3nrQhn/NRzw3sv6ULNtHNA+xkvRVsyhrUQz5N1+cPCDOKwk0+jABUrVdl/G7/X1V1j4GgKRFXcgJXFa+gd7ZYu7iOLtxaOx5nzzeit4OrtmO4d61muLN01fRC5vfx66c/n6scBinPJyo3sAFcmsWCyKudoptBCL8kvxVEHuiILqlQp4V3/jLTs9IycnI1PyAKh7z5tuVCod8nANGbBi+U47XucNqPEi5FKVk1LETwJbKl64QqV+/Eu/WUPNttNMrGmDf2eCKapUwGRzacROlw3u9RRgw3jUUaA7hRFqrqIDcPUvNrg==;f=feedback\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "permerror",
+  "ExpectedError": "Malformed Dkim2-Signature header \"i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;RT=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;n=banana;s=rsa2048:rsa-sha256:kE2JYn7jfm+wGkIZhmI7Av/L20Kiw90V0WIx3nrQhn/NRzw3sv6ULNtHNA+xkvRVsyhrUQz5N1+cPCDOKwk0+jABUrVdl/G7/X1V1j4GgKRFXcgJXFa+gd7ZYu7iOLtxaOx5nzzeit4OrtmO4d61muLN01fRC5vfx66c/n6scBinPJyo3sAFcmsWCyKudoptBCL8kvxVEHuiILqlQp4V3/jLTs9IycnI1PyAKh7z5tuVCod8nANGbBi+U47XucNqPEi5FKVk1LETwJbKl64QqV+/Eu/WUPNttNMrGmDf2eCKapUwGRzacROlw3u9RRgw3jUUaA7hRFqrqIDcPUvNrg==;f=feedback\": duplicate tag rt",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;RT=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;n=banana;s=rsa2048:rsa-sha256:;f=feedback\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "rsa2048": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDdbLbeYb/jidOk\nt1ZQGUYCtbkQm54AwCGFrkqIFNgFLQVPqd6/Hcqo2KNpNtZakC5Jk4lRMmV6ra1J\n5Ll6rP3sn1jcV726CmxzAz6bhlkpxp91VNcjLNxV97XTLGPHpi5EmrraLKDVWC1c\nkf6naasaU3jPrusLcOkZcLUqsOBPMEgnuw2YHLc97GG0NINZLHQuU4fMDj0SXdu5\nh2wgEkJoYdh9yA3BQYhKq5i6C4588zABpFHWbvLwMMQwt71y/Qz3f1XZxUIvjO1i\n6g6C5d08V3XkN4EIAbaZg8/kV1Tn2Q1n+usOUae9ViJhEWV5MJbo0iKcue0UWwXj\npvO0ex/7AgMBAAECggEABqg9GM5hjdv/WiL55gzqA2frvkIpWDBHOR7Y55Pfn2jU\nkYKqBneT1WjSUsTMdTJIYfuc4pmImYh6w6z62gD58b1fL+FdmcWgw7OLMcvZ33+X\nV5OBWPue1whgFfGB8nrK0D841Y99eS8Pk54S2KSfNI5Ehw5HpDNDsoz1K5pp7yFb\nKJb+Ik6WYZpo5/3TkSRpx3leeCIKQzY/QLp0CUrAvVLx3AyMUjZA/DBXsXLB2/vd\nvZnm+6s30MxU+GQfgQbgCMZG+mtmN5GQUnFQNAqZa643GGmRiOVNjiLBy2UaCuYu\nERuZjbJgII5VX/Z1wCIzh62hvEhtzjCljD6sb4HwcQKBgQDk1NVgjMR/ShMBTwMN\n/13cKntkUrbRfi9eCu87sU6VlD2VPKL+opp+AR0hCU7Px59me04wEQuTT11pwRKF\nOCYr3QJ3+4bCq3h+LhRbw2aizOfSevQyQiEq6HwyYVjOczBb/ol2SnLahhsVXUXl\nenYl45ywcKGotI0tCJrztkvFAwKBgQD3tsJNdhu27GFzWh1MMGJEeoaGFLlmwkdB\nilqbGnDwgk+GBCMzuDATA8E7rsemCVLiMIXtjrGvR4nqmP/AD44xpt1xNhLXR1gJ\n/CAZxYTlFsPwJQbPXgTiwOPOKdcID0T50nHrfKvYKIJoc+aU1e2vaNHCt1TzNhmJ\nbSHrLnpbqQKBgQDSEFd49ICF4Xgk4WWKefyt2gnABPZyxgWxrRQEljXvtk/6Kdnv\nK1HrjhYxd5vzveskZtlV4q/foSG9rVHVHcBcz9wuTKZfGo3YN3DU9EHJ/ZRqchit\n8msEOruYfCjMDI4+RSHnh1x8IlPGfwNlL9A55AK5LgwZFPXse1PTmmtgBQKBgQDG\ndMP8PSh9B6oXOVYJiSXhSOxnlUjoG7PsvURTyP48oZnGe6AcOm9BfJueDivjSMr/\nbfKOXOjbzYufyM30+EFqZA47OiAkGwNclIK/QvByfSejSHbJQcDWTcT0ka61xU30\ne/ZKvIoMVoAL4PcVvMJ86pRK1IgZhfk1kZpACe97aQKBgByyfzphzVwmde2D06+L\nCbDn9IkXKFPSIrZrzppRTt3I8qeHbcyK+U0mRU6kK9O92a+BPR9N2cWL7VnOlUwU\nYTbUwolasJKYEkH37hCo0inqmYeDAp/rlsJYs6G4B/gFdu6mVl3W5KILMnSQCLOk\nmn5tt9iSb+dPbCLcD8adkmlB\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "rsa2048._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MIIBCgKCAQEA3Wy23mG/44nTpLdWUBlGArW5EJueAMAhha5KiBTYBS0FT6nevx3KqNijaTbWWpAuSZOJUTJleq2tSeS5eqz97J9Y3Fe9ugpscwM+m4ZZKcafdVTXIyzcVfe10yxjx6YuRJq62iyg1VgtXJH+p2mrGlN4z67rC3DpGXC1KrDgTzBIJ7sNmBy3PexhtDSDWSx0LlOHzA49El3buYdsIBJCaGHYfcgNwUGISquYuguOfPMwAaRR1m7y8DDEMLe9cv0M939V2cVCL4ztYuoOguXdPFd15DeBCAG2mYPP5FdU59kNZ/rrDlGnvVYiYRFleTCW6NIinLntFFsF46bztHsf+wIDAQAB"
+  }
+ },
+ {
+  "Name": "d2_duplicate_s_tag",
+  "Comments": "MUST be only one of each kind (§7)",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "Section": [
+   "7"
+  ],
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;n=banana;s=rsa2048:rsa-sha256:s/LZFbebLBLsD7jKgm85pLuYAKowkmX2f9kMhBHuu0qdmN0ab2OvwKEWhuj8BBuZDi5rRQyTBGSPATFboV1qWHb3/V8N47q7SIBYpoAN4XBNI2s+6zqtqRm3O7X1/cjZM8C1wJvf30eI34yOSbdOrVcY++sqhJyLj7YspsQtb6RDSXxFUJmlCwgztvgfQSialzRSWFVa+5qr+0CGF4d50juSRCIDd+m/ssjGQZoPy5M4HlrkE3XUH6bz2YgLcL4cbc3GkhfKJCmpePRrFIdRyElHUTJeJ7uEw5UXgrPaGxKmNXefw7JWk/mGcCcxDoPNKjvMKt9Zj+eXBRY7M1ZXPg==;S=rsa2048:rsa-sha256:s/LZFbebLBLsD7jKgm85pLuYAKowkmX2f9kMhBHuu0qdmN0ab2OvwKEWhuj8BBuZDi5rRQyTBGSPATFboV1qWHb3/V8N47q7SIBYpoAN4XBNI2s+6zqtqRm3O7X1/cjZM8C1wJvf30eI34yOSbdOrVcY++sqhJyLj7YspsQtb6RDSXxFUJmlCwgztvgfQSialzRSWFVa+5qr+0CGF4d50juSRCIDd+m/ssjGQZoPy5M4HlrkE3XUH6bz2YgLcL4cbc3GkhfKJCmpePRrFIdRyElHUTJeJ7uEw5UXgrPaGxKmNXefw7JWk/mGcCcxDoPNKjvMKt9Zj+eXBRY7M1ZXPg==;f=feedback\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "permerror",
+  "ExpectedError": "Malformed Dkim2-Signature header \"i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;n=banana;s=rsa2048:rsa-sha256:s/LZFbebLBLsD7jKgm85pLuYAKowkmX2f9kMhBHuu0qdmN0ab2OvwKEWhuj8BBuZDi5rRQyTBGSPATFboV1qWHb3/V8N47q7SIBYpoAN4XBNI2s+6zqtqRm3O7X1/cjZM8C1wJvf30eI34yOSbdOrVcY++sqhJyLj7YspsQtb6RDSXxFUJmlCwgztvgfQSialzRSWFVa+5qr+0CGF4d50juSRCIDd+m/ssjGQZoPy5M4HlrkE3XUH6bz2YgLcL4cbc3GkhfKJCmpePRrFIdRyElHUTJeJ7uEw5UXgrPaGxKmNXefw7JWk/mGcCcxDoPNKjvMKt9Zj+eXBRY7M1ZXPg==;S=rsa2048:rsa-sha256:s/LZFbebLBLsD7jKgm85pLuYAKowkmX2f9kMhBHuu0qdmN0ab2OvwKEWhuj8BBuZDi5rRQyTBGSPATFboV1qWHb3/V8N47q7SIBYpoAN4XBNI2s+6zqtqRm3O7X1/cjZM8C1wJvf30eI34yOSbdOrVcY++sqhJyLj7YspsQtb6RDSXxFUJmlCwgztvgfQSialzRSWFVa+5qr+0CGF4d50juSRCIDd+m/ssjGQZoPy5M4HlrkE3XUH6bz2YgLcL4cbc3GkhfKJCmpePRrFIdRyElHUTJeJ7uEw5UXgrPaGxKmNXefw7JWk/mGcCcxDoPNKjvMKt9Zj+eXBRY7M1ZXPg==;f=feedback\": duplicate tag s",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;n=banana;s=rsa2048:rsa-sha256:;S=rsa2048:rsa-sha256:;f=feedback\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "rsa2048": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDdbLbeYb/jidOk\nt1ZQGUYCtbkQm54AwCGFrkqIFNgFLQVPqd6/Hcqo2KNpNtZakC5Jk4lRMmV6ra1J\n5Ll6rP3sn1jcV726CmxzAz6bhlkpxp91VNcjLNxV97XTLGPHpi5EmrraLKDVWC1c\nkf6naasaU3jPrusLcOkZcLUqsOBPMEgnuw2YHLc97GG0NINZLHQuU4fMDj0SXdu5\nh2wgEkJoYdh9yA3BQYhKq5i6C4588zABpFHWbvLwMMQwt71y/Qz3f1XZxUIvjO1i\n6g6C5d08V3XkN4EIAbaZg8/kV1Tn2Q1n+usOUae9ViJhEWV5MJbo0iKcue0UWwXj\npvO0ex/7AgMBAAECggEABqg9GM5hjdv/WiL55gzqA2frvkIpWDBHOR7Y55Pfn2jU\nkYKqBneT1WjSUsTMdTJIYfuc4pmImYh6w6z62gD58b1fL+FdmcWgw7OLMcvZ33+X\nV5OBWPue1whgFfGB8nrK0D841Y99eS8Pk54S2KSfNI5Ehw5HpDNDsoz1K5pp7yFb\nKJb+Ik6WYZpo5/3TkSRpx3leeCIKQzY/QLp0CUrAvVLx3AyMUjZA/DBXsXLB2/vd\nvZnm+6s30MxU+GQfgQbgCMZG+mtmN5GQUnFQNAqZa643GGmRiOVNjiLBy2UaCuYu\nERuZjbJgII5VX/Z1wCIzh62hvEhtzjCljD6sb4HwcQKBgQDk1NVgjMR/ShMBTwMN\n/13cKntkUrbRfi9eCu87sU6VlD2VPKL+opp+AR0hCU7Px59me04wEQuTT11pwRKF\nOCYr3QJ3+4bCq3h+LhRbw2aizOfSevQyQiEq6HwyYVjOczBb/ol2SnLahhsVXUXl\nenYl45ywcKGotI0tCJrztkvFAwKBgQD3tsJNdhu27GFzWh1MMGJEeoaGFLlmwkdB\nilqbGnDwgk+GBCMzuDATA8E7rsemCVLiMIXtjrGvR4nqmP/AD44xpt1xNhLXR1gJ\n/CAZxYTlFsPwJQbPXgTiwOPOKdcID0T50nHrfKvYKIJoc+aU1e2vaNHCt1TzNhmJ\nbSHrLnpbqQKBgQDSEFd49ICF4Xgk4WWKefyt2gnABPZyxgWxrRQEljXvtk/6Kdnv\nK1HrjhYxd5vzveskZtlV4q/foSG9rVHVHcBcz9wuTKZfGo3YN3DU9EHJ/ZRqchit\n8msEOruYfCjMDI4+RSHnh1x8IlPGfwNlL9A55AK5LgwZFPXse1PTmmtgBQKBgQDG\ndMP8PSh9B6oXOVYJiSXhSOxnlUjoG7PsvURTyP48oZnGe6AcOm9BfJueDivjSMr/\nbfKOXOjbzYufyM30+EFqZA47OiAkGwNclIK/QvByfSejSHbJQcDWTcT0ka61xU30\ne/ZKvIoMVoAL4PcVvMJ86pRK1IgZhfk1kZpACe97aQKBgByyfzphzVwmde2D06+L\nCbDn9IkXKFPSIrZrzppRTt3I8qeHbcyK+U0mRU6kK9O92a+BPR9N2cWL7VnOlUwU\nYTbUwolasJKYEkH37hCo0inqmYeDAp/rlsJYs6G4B/gFdu6mVl3W5KILMnSQCLOk\nmn5tt9iSb+dPbCLcD8adkmlB\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "rsa2048._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MIIBCgKCAQEA3Wy23mG/44nTpLdWUBlGArW5EJueAMAhha5KiBTYBS0FT6nevx3KqNijaTbWWpAuSZOJUTJleq2tSeS5eqz97J9Y3Fe9ugpscwM+m4ZZKcafdVTXIyzcVfe10yxjx6YuRJq62iyg1VgtXJH+p2mrGlN4z67rC3DpGXC1KrDgTzBIJ7sNmBy3PexhtDSDWSx0LlOHzA49El3buYdsIBJCaGHYfcgNwUGISquYuguOfPMwAaRR1m7y8DDEMLe9cv0M939V2cVCL4ztYuoOguXdPFd15DeBCAG2mYPP5FdU59kNZ/rrDlGnvVYiYRFleTCW6NIinLntFFsF46bztHsf+wIDAQAB"
+  }
+ },
+ {
+  "Name": "d2_duplicate_t_tag",
+  "Comments": "MUST be only one of each kind (§7)",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "Section": [
+   "7"
+  ],
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;T=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;n=banana;s=rsa2048:rsa-sha256:F8lnFYL4zB4V/TzCgbGdyu/4m7vkSiTyP7+A3yg83K/2jp1uXitt6KCujAE2GGeGcGTId+9juK6g8vcnSbgZuhWQ9gZnomri007mfcluGSKNmwki1UC6Lz8dnwwtm6ZQoUsVelSD0/NjRrmw3N1RFdqgx6RDxPvx/Hrv+z3ptGYzYEL82TRdre71Qg4kPBatore/JSPqJuUjiwzeb8JMkTvtQEl3vMqPfJ4DWbXw3PDKIla206uFYi9Hzn+wusVcUoZU3wYgE5rqnx4Q4L/n7tGjCJgcEoCXoE8x0PvgnWA/qSvkRaOX8TrXf9t3Kx8EaqP0gLMfqL9jCgEaq+ySFA==;f=feedback\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "permerror",
+  "ExpectedError": "Malformed Dkim2-Signature header \"i=1;m=1;t=1782394336;T=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;n=banana;s=rsa2048:rsa-sha256:F8lnFYL4zB4V/TzCgbGdyu/4m7vkSiTyP7+A3yg83K/2jp1uXitt6KCujAE2GGeGcGTId+9juK6g8vcnSbgZuhWQ9gZnomri007mfcluGSKNmwki1UC6Lz8dnwwtm6ZQoUsVelSD0/NjRrmw3N1RFdqgx6RDxPvx/Hrv+z3ptGYzYEL82TRdre71Qg4kPBatore/JSPqJuUjiwzeb8JMkTvtQEl3vMqPfJ4DWbXw3PDKIla206uFYi9Hzn+wusVcUoZU3wYgE5rqnx4Q4L/n7tGjCJgcEoCXoE8x0PvgnWA/qSvkRaOX8TrXf9t3Kx8EaqP0gLMfqL9jCgEaq+ySFA==;f=feedback\": duplicate tag t",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;T=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;n=banana;s=rsa2048:rsa-sha256:;f=feedback\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "rsa2048": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDdbLbeYb/jidOk\nt1ZQGUYCtbkQm54AwCGFrkqIFNgFLQVPqd6/Hcqo2KNpNtZakC5Jk4lRMmV6ra1J\n5Ll6rP3sn1jcV726CmxzAz6bhlkpxp91VNcjLNxV97XTLGPHpi5EmrraLKDVWC1c\nkf6naasaU3jPrusLcOkZcLUqsOBPMEgnuw2YHLc97GG0NINZLHQuU4fMDj0SXdu5\nh2wgEkJoYdh9yA3BQYhKq5i6C4588zABpFHWbvLwMMQwt71y/Qz3f1XZxUIvjO1i\n6g6C5d08V3XkN4EIAbaZg8/kV1Tn2Q1n+usOUae9ViJhEWV5MJbo0iKcue0UWwXj\npvO0ex/7AgMBAAECggEABqg9GM5hjdv/WiL55gzqA2frvkIpWDBHOR7Y55Pfn2jU\nkYKqBneT1WjSUsTMdTJIYfuc4pmImYh6w6z62gD58b1fL+FdmcWgw7OLMcvZ33+X\nV5OBWPue1whgFfGB8nrK0D841Y99eS8Pk54S2KSfNI5Ehw5HpDNDsoz1K5pp7yFb\nKJb+Ik6WYZpo5/3TkSRpx3leeCIKQzY/QLp0CUrAvVLx3AyMUjZA/DBXsXLB2/vd\nvZnm+6s30MxU+GQfgQbgCMZG+mtmN5GQUnFQNAqZa643GGmRiOVNjiLBy2UaCuYu\nERuZjbJgII5VX/Z1wCIzh62hvEhtzjCljD6sb4HwcQKBgQDk1NVgjMR/ShMBTwMN\n/13cKntkUrbRfi9eCu87sU6VlD2VPKL+opp+AR0hCU7Px59me04wEQuTT11pwRKF\nOCYr3QJ3+4bCq3h+LhRbw2aizOfSevQyQiEq6HwyYVjOczBb/ol2SnLahhsVXUXl\nenYl45ywcKGotI0tCJrztkvFAwKBgQD3tsJNdhu27GFzWh1MMGJEeoaGFLlmwkdB\nilqbGnDwgk+GBCMzuDATA8E7rsemCVLiMIXtjrGvR4nqmP/AD44xpt1xNhLXR1gJ\n/CAZxYTlFsPwJQbPXgTiwOPOKdcID0T50nHrfKvYKIJoc+aU1e2vaNHCt1TzNhmJ\nbSHrLnpbqQKBgQDSEFd49ICF4Xgk4WWKefyt2gnABPZyxgWxrRQEljXvtk/6Kdnv\nK1HrjhYxd5vzveskZtlV4q/foSG9rVHVHcBcz9wuTKZfGo3YN3DU9EHJ/ZRqchit\n8msEOruYfCjMDI4+RSHnh1x8IlPGfwNlL9A55AK5LgwZFPXse1PTmmtgBQKBgQDG\ndMP8PSh9B6oXOVYJiSXhSOxnlUjoG7PsvURTyP48oZnGe6AcOm9BfJueDivjSMr/\nbfKOXOjbzYufyM30+EFqZA47OiAkGwNclIK/QvByfSejSHbJQcDWTcT0ka61xU30\ne/ZKvIoMVoAL4PcVvMJ86pRK1IgZhfk1kZpACe97aQKBgByyfzphzVwmde2D06+L\nCbDn9IkXKFPSIrZrzppRTt3I8qeHbcyK+U0mRU6kK9O92a+BPR9N2cWL7VnOlUwU\nYTbUwolasJKYEkH37hCo0inqmYeDAp/rlsJYs6G4B/gFdu6mVl3W5KILMnSQCLOk\nmn5tt9iSb+dPbCLcD8adkmlB\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "rsa2048._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MIIBCgKCAQEA3Wy23mG/44nTpLdWUBlGArW5EJueAMAhha5KiBTYBS0FT6nevx3KqNijaTbWWpAuSZOJUTJleq2tSeS5eqz97J9Y3Fe9ugpscwM+m4ZZKcafdVTXIyzcVfe10yxjx6YuRJq62iyg1VgtXJH+p2mrGlN4z67rC3DpGXC1KrDgTzBIJ7sNmBy3PexhtDSDWSx0LlOHzA49El3buYdsIBJCaGHYfcgNwUGISquYuguOfPMwAaRR1m7y8DDEMLe9cv0M939V2cVCL4ztYuoOguXdPFd15DeBCAG2mYPP5FdU59kNZ/rrDlGnvVYiYRFleTCW6NIinLntFFsF46bztHsf+wIDAQAB"
+  }
+ },
+ {
+  "Name": "domain_above_mailfrom",
+  "Comments": "mf= must match or be a subdomain of d= (§7.7)",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "Section": [
+   "7.7"
+  ],
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckBmb28udGVzdC5ka2ltMi5ldT4=;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=rsa2048:rsa-sha256:coxjaB42+eG5nzRgaJ1TnU/JTWhsXSFm2pDFK9b6oYSGYqt/GBm8w5mItKsxUMpA88wJyagLlTee2ncLhvU8GqQ6/GtHELZ67VrcVM2zXGGf3FpvMj2eDMQ8B8DU8D/Gr51NxFJcs8ZeXjpVyv2XAOVp1xm7UyxEwE0m1gJC3f6Rbe8KGzvOE/P9oIY2c7pZpYC5k0z3xupaDhPY0bAzdgAXaVVY6FbfklRDNsUINecUqJtr5xSsfiCN14FkgmlMwdaHHepMagZ5wHlCEjVa3dJLoe/wvcKmUMlehHVJerxVHbya02TlymAvnbZq7F6d7bIVSV0hOnGpdBvlClCxUw==\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@foo.test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "pass",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckBmb28udGVzdC5ka2ltMi5ldT4=;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=rsa2048:rsa-sha256:\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "rsa2048": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDdbLbeYb/jidOk\nt1ZQGUYCtbkQm54AwCGFrkqIFNgFLQVPqd6/Hcqo2KNpNtZakC5Jk4lRMmV6ra1J\n5Ll6rP3sn1jcV726CmxzAz6bhlkpxp91VNcjLNxV97XTLGPHpi5EmrraLKDVWC1c\nkf6naasaU3jPrusLcOkZcLUqsOBPMEgnuw2YHLc97GG0NINZLHQuU4fMDj0SXdu5\nh2wgEkJoYdh9yA3BQYhKq5i6C4588zABpFHWbvLwMMQwt71y/Qz3f1XZxUIvjO1i\n6g6C5d08V3XkN4EIAbaZg8/kV1Tn2Q1n+usOUae9ViJhEWV5MJbo0iKcue0UWwXj\npvO0ex/7AgMBAAECggEABqg9GM5hjdv/WiL55gzqA2frvkIpWDBHOR7Y55Pfn2jU\nkYKqBneT1WjSUsTMdTJIYfuc4pmImYh6w6z62gD58b1fL+FdmcWgw7OLMcvZ33+X\nV5OBWPue1whgFfGB8nrK0D841Y99eS8Pk54S2KSfNI5Ehw5HpDNDsoz1K5pp7yFb\nKJb+Ik6WYZpo5/3TkSRpx3leeCIKQzY/QLp0CUrAvVLx3AyMUjZA/DBXsXLB2/vd\nvZnm+6s30MxU+GQfgQbgCMZG+mtmN5GQUnFQNAqZa643GGmRiOVNjiLBy2UaCuYu\nERuZjbJgII5VX/Z1wCIzh62hvEhtzjCljD6sb4HwcQKBgQDk1NVgjMR/ShMBTwMN\n/13cKntkUrbRfi9eCu87sU6VlD2VPKL+opp+AR0hCU7Px59me04wEQuTT11pwRKF\nOCYr3QJ3+4bCq3h+LhRbw2aizOfSevQyQiEq6HwyYVjOczBb/ol2SnLahhsVXUXl\nenYl45ywcKGotI0tCJrztkvFAwKBgQD3tsJNdhu27GFzWh1MMGJEeoaGFLlmwkdB\nilqbGnDwgk+GBCMzuDATA8E7rsemCVLiMIXtjrGvR4nqmP/AD44xpt1xNhLXR1gJ\n/CAZxYTlFsPwJQbPXgTiwOPOKdcID0T50nHrfKvYKIJoc+aU1e2vaNHCt1TzNhmJ\nbSHrLnpbqQKBgQDSEFd49ICF4Xgk4WWKefyt2gnABPZyxgWxrRQEljXvtk/6Kdnv\nK1HrjhYxd5vzveskZtlV4q/foSG9rVHVHcBcz9wuTKZfGo3YN3DU9EHJ/ZRqchit\n8msEOruYfCjMDI4+RSHnh1x8IlPGfwNlL9A55AK5LgwZFPXse1PTmmtgBQKBgQDG\ndMP8PSh9B6oXOVYJiSXhSOxnlUjoG7PsvURTyP48oZnGe6AcOm9BfJueDivjSMr/\nbfKOXOjbzYufyM30+EFqZA47OiAkGwNclIK/QvByfSejSHbJQcDWTcT0ka61xU30\ne/ZKvIoMVoAL4PcVvMJ86pRK1IgZhfk1kZpACe97aQKBgByyfzphzVwmde2D06+L\nCbDn9IkXKFPSIrZrzppRTt3I8qeHbcyK+U0mRU6kK9O92a+BPR9N2cWL7VnOlUwU\nYTbUwolasJKYEkH37hCo0inqmYeDAp/rlsJYs6G4B/gFdu6mVl3W5KILMnSQCLOk\nmn5tt9iSb+dPbCLcD8adkmlB\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "rsa2048._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MIIBCgKCAQEA3Wy23mG/44nTpLdWUBlGArW5EJueAMAhha5KiBTYBS0FT6nevx3KqNijaTbWWpAuSZOJUTJleq2tSeS5eqz97J9Y3Fe9ugpscwM+m4ZZKcafdVTXIyzcVfe10yxjx6YuRJq62iyg1VgtXJH+p2mrGlN4z67rC3DpGXC1KrDgTzBIJ7sNmBy3PexhtDSDWSx0LlOHzA49El3buYdsIBJCaGHYfcgNwUGISquYuguOfPMwAaRR1m7y8DDEMLe9cv0M939V2cVCL4ztYuoOguXdPFd15DeBCAG2mYPP5FdU59kNZ/rrDlGnvVYiYRFleTCW6NIinLntFFsF46bztHsf+wIDAQAB"
+  }
+ },
+ {
+  "Name": "domain_below_mailfrom",
+  "Comments": "mf= must match or be a subdomain of d= (§7.7)",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "Section": [
+   "7.7"
+  ],
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;d=foo.test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=rsa2048:rsa-sha256:T8bag4wRGVGVpue1Sb67/rs6iexnXwX4oR8anhJOhyFFWugTfmSULy/xXkF9mqIr2trBn5E64CEXglOo3eUDJ3OriUmQxRObnyh+NNufopnxvU/Xy9iWrnCeYz3v3gQWG4F2OvVGfvbH278xmOXQQi5xPIo+wsYoJR3tjZ1oN1xfFxPJBOj/sWF5V7OneM7HKFOMO3CX6xFnQVbTZDMe6Hn1nRhDIOXMLuTP+oVDe80W79kfBGbTlYiN9ydHzNnhT1q7gweJHhGj8zDUPbHKuWzvRjCxk3ATkkZSM3fUlZwvZLVXAVxqO/PV1tYeiECVkpGQ/iecxWIk1ErewYi4Wg==\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "permerror",
+  "ExpectedError": "PERMERROR: DKIM2-Signature i=0 MAIL FROM and d= do not match",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=foo.test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=rsa2048:rsa-sha256:\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "rsa2048": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDdbLbeYb/jidOk\nt1ZQGUYCtbkQm54AwCGFrkqIFNgFLQVPqd6/Hcqo2KNpNtZakC5Jk4lRMmV6ra1J\n5Ll6rP3sn1jcV726CmxzAz6bhlkpxp91VNcjLNxV97XTLGPHpi5EmrraLKDVWC1c\nkf6naasaU3jPrusLcOkZcLUqsOBPMEgnuw2YHLc97GG0NINZLHQuU4fMDj0SXdu5\nh2wgEkJoYdh9yA3BQYhKq5i6C4588zABpFHWbvLwMMQwt71y/Qz3f1XZxUIvjO1i\n6g6C5d08V3XkN4EIAbaZg8/kV1Tn2Q1n+usOUae9ViJhEWV5MJbo0iKcue0UWwXj\npvO0ex/7AgMBAAECggEABqg9GM5hjdv/WiL55gzqA2frvkIpWDBHOR7Y55Pfn2jU\nkYKqBneT1WjSUsTMdTJIYfuc4pmImYh6w6z62gD58b1fL+FdmcWgw7OLMcvZ33+X\nV5OBWPue1whgFfGB8nrK0D841Y99eS8Pk54S2KSfNI5Ehw5HpDNDsoz1K5pp7yFb\nKJb+Ik6WYZpo5/3TkSRpx3leeCIKQzY/QLp0CUrAvVLx3AyMUjZA/DBXsXLB2/vd\nvZnm+6s30MxU+GQfgQbgCMZG+mtmN5GQUnFQNAqZa643GGmRiOVNjiLBy2UaCuYu\nERuZjbJgII5VX/Z1wCIzh62hvEhtzjCljD6sb4HwcQKBgQDk1NVgjMR/ShMBTwMN\n/13cKntkUrbRfi9eCu87sU6VlD2VPKL+opp+AR0hCU7Px59me04wEQuTT11pwRKF\nOCYr3QJ3+4bCq3h+LhRbw2aizOfSevQyQiEq6HwyYVjOczBb/ol2SnLahhsVXUXl\nenYl45ywcKGotI0tCJrztkvFAwKBgQD3tsJNdhu27GFzWh1MMGJEeoaGFLlmwkdB\nilqbGnDwgk+GBCMzuDATA8E7rsemCVLiMIXtjrGvR4nqmP/AD44xpt1xNhLXR1gJ\n/CAZxYTlFsPwJQbPXgTiwOPOKdcID0T50nHrfKvYKIJoc+aU1e2vaNHCt1TzNhmJ\nbSHrLnpbqQKBgQDSEFd49ICF4Xgk4WWKefyt2gnABPZyxgWxrRQEljXvtk/6Kdnv\nK1HrjhYxd5vzveskZtlV4q/foSG9rVHVHcBcz9wuTKZfGo3YN3DU9EHJ/ZRqchit\n8msEOruYfCjMDI4+RSHnh1x8IlPGfwNlL9A55AK5LgwZFPXse1PTmmtgBQKBgQDG\ndMP8PSh9B6oXOVYJiSXhSOxnlUjoG7PsvURTyP48oZnGe6AcOm9BfJueDivjSMr/\nbfKOXOjbzYufyM30+EFqZA47OiAkGwNclIK/QvByfSejSHbJQcDWTcT0ka61xU30\ne/ZKvIoMVoAL4PcVvMJ86pRK1IgZhfk1kZpACe97aQKBgByyfzphzVwmde2D06+L\nCbDn9IkXKFPSIrZrzppRTt3I8qeHbcyK+U0mRU6kK9O92a+BPR9N2cWL7VnOlUwU\nYTbUwolasJKYEkH37hCo0inqmYeDAp/rlsJYs6G4B/gFdu6mVl3W5KILMnSQCLOk\nmn5tt9iSb+dPbCLcD8adkmlB\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "rsa2048._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MIIBCgKCAQEA3Wy23mG/44nTpLdWUBlGArW5EJueAMAhha5KiBTYBS0FT6nevx3KqNijaTbWWpAuSZOJUTJleq2tSeS5eqz97J9Y3Fe9ugpscwM+m4ZZKcafdVTXIyzcVfe10yxjx6YuRJq62iyg1VgtXJH+p2mrGlN4z67rC3DpGXC1KrDgTzBIJ7sNmBy3PexhtDSDWSx0LlOHzA49El3buYdsIBJCaGHYfcgNwUGISquYuguOfPMwAaRR1m7y8DDEMLe9cv0M939V2cVCL4ztYuoOguXdPFd15DeBCAG2mYPP5FdU59kNZ/rrDlGnvVYiYRFleTCW6NIinLntFFsF46bztHsf+wIDAQAB"
+  }
+ },
+ {
+  "Name": "flags_whitespace",
+  "Comments": "flags can be surrounded by whitespace (§7.9)",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "Section": [
+   "7.9"
+  ],
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=rsa2048:rsa-sha256:Cl1VoqV4DBuTrWHBcE3SMXi5Cen+1Z2crXciBzIBmG1AT3YeeCbzgrAqfwzM8h3VEbvXrS/1C4evlblcD6jYWhSjjtErwS+1fD6X9mLzVHmv8dWAD9dDyXL8moXN1JUE+7XNuFu2VgEKYSX2ImPHnnUF7eAKZ9JhB4kfHBdug89rba5OVNSZLZDj8kJStjyRdQ+A4XJc8Gl0Z6JVrnPuflLtjVqMw9BgDJG1xKZatWiF70Mugt2GluXitQ02LNRHgwcQ2nC5a9Wc8kTia7d2Lb9MFhbuGKona0B7FiroCujyL/q5jtyEWAfuGKwbYvFhfZGXy167X+LeTasMVteHgg==\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "pass",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=rsa2048:rsa-sha256:\r\n",
+  "ExpectedFlags": [
+   "feedback",
+   "donotmodify"
+  ],
+  "PrivateKeys": {
+   "rsa2048": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDdbLbeYb/jidOk\nt1ZQGUYCtbkQm54AwCGFrkqIFNgFLQVPqd6/Hcqo2KNpNtZakC5Jk4lRMmV6ra1J\n5Ll6rP3sn1jcV726CmxzAz6bhlkpxp91VNcjLNxV97XTLGPHpi5EmrraLKDVWC1c\nkf6naasaU3jPrusLcOkZcLUqsOBPMEgnuw2YHLc97GG0NINZLHQuU4fMDj0SXdu5\nh2wgEkJoYdh9yA3BQYhKq5i6C4588zABpFHWbvLwMMQwt71y/Qz3f1XZxUIvjO1i\n6g6C5d08V3XkN4EIAbaZg8/kV1Tn2Q1n+usOUae9ViJhEWV5MJbo0iKcue0UWwXj\npvO0ex/7AgMBAAECggEABqg9GM5hjdv/WiL55gzqA2frvkIpWDBHOR7Y55Pfn2jU\nkYKqBneT1WjSUsTMdTJIYfuc4pmImYh6w6z62gD58b1fL+FdmcWgw7OLMcvZ33+X\nV5OBWPue1whgFfGB8nrK0D841Y99eS8Pk54S2KSfNI5Ehw5HpDNDsoz1K5pp7yFb\nKJb+Ik6WYZpo5/3TkSRpx3leeCIKQzY/QLp0CUrAvVLx3AyMUjZA/DBXsXLB2/vd\nvZnm+6s30MxU+GQfgQbgCMZG+mtmN5GQUnFQNAqZa643GGmRiOVNjiLBy2UaCuYu\nERuZjbJgII5VX/Z1wCIzh62hvEhtzjCljD6sb4HwcQKBgQDk1NVgjMR/ShMBTwMN\n/13cKntkUrbRfi9eCu87sU6VlD2VPKL+opp+AR0hCU7Px59me04wEQuTT11pwRKF\nOCYr3QJ3+4bCq3h+LhRbw2aizOfSevQyQiEq6HwyYVjOczBb/ol2SnLahhsVXUXl\nenYl45ywcKGotI0tCJrztkvFAwKBgQD3tsJNdhu27GFzWh1MMGJEeoaGFLlmwkdB\nilqbGnDwgk+GBCMzuDATA8E7rsemCVLiMIXtjrGvR4nqmP/AD44xpt1xNhLXR1gJ\n/CAZxYTlFsPwJQbPXgTiwOPOKdcID0T50nHrfKvYKIJoc+aU1e2vaNHCt1TzNhmJ\nbSHrLnpbqQKBgQDSEFd49ICF4Xgk4WWKefyt2gnABPZyxgWxrRQEljXvtk/6Kdnv\nK1HrjhYxd5vzveskZtlV4q/foSG9rVHVHcBcz9wuTKZfGo3YN3DU9EHJ/ZRqchit\n8msEOruYfCjMDI4+RSHnh1x8IlPGfwNlL9A55AK5LgwZFPXse1PTmmtgBQKBgQDG\ndMP8PSh9B6oXOVYJiSXhSOxnlUjoG7PsvURTyP48oZnGe6AcOm9BfJueDivjSMr/\nbfKOXOjbzYufyM30+EFqZA47OiAkGwNclIK/QvByfSejSHbJQcDWTcT0ka61xU30\ne/ZKvIoMVoAL4PcVvMJ86pRK1IgZhfk1kZpACe97aQKBgByyfzphzVwmde2D06+L\nCbDn9IkXKFPSIrZrzppRTt3I8qeHbcyK+U0mRU6kK9O92a+BPR9N2cWL7VnOlUwU\nYTbUwolasJKYEkH37hCo0inqmYeDAp/rlsJYs6G4B/gFdu6mVl3W5KILMnSQCLOk\nmn5tt9iSb+dPbCLcD8adkmlB\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "rsa2048._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MIIBCgKCAQEA3Wy23mG/44nTpLdWUBlGArW5EJueAMAhha5KiBTYBS0FT6nevx3KqNijaTbWWpAuSZOJUTJleq2tSeS5eqz97J9Y3Fe9ugpscwM+m4ZZKcafdVTXIyzcVfe10yxjx6YuRJq62iyg1VgtXJH+p2mrGlN4z67rC3DpGXC1KrDgTzBIJ7sNmBy3PexhtDSDWSx0LlOHzA49El3buYdsIBJCaGHYfcgNwUGISquYuguOfPMwAaRR1m7y8DDEMLe9cv0M939V2cVCL4ztYuoOguXdPFd15DeBCAG2mYPP5FdU59kNZ/rrDlGnvVYiYRFleTCW6NIinLntFFsF46bztHsf+wIDAQAB"
+  }
+ },
+ {
+  "Name": "mailfrom_case",
+  "Comments": "match domains case-insensitively (§7.7)",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "Section": [
+   "7.7"
+  ],
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckBUZXN0LkRraW0yLkV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=rsa2048:rsa-sha256:fDEh0G7tutYBa6+ftb6pX3g2UhYe1p30/hJ/VhFnp3dna3kjAHr08hwIf5KTrNvBo/tpJrfVQPWZdi/t+NQFWrmv3YHTejWQKfHaBqM2V9RRCYmvLLAqRMnX3djB+ZDtWEkevNhIPCK2pW3O9MlQYvrb4ex9sKsKZRhPQn9BBQpaVtCw7TBrL7KDvySu5YEpYmWkTNFZuWOHpq/IcPRmTZgfRxjUe86tdAPzhOKsb32p7ewLvbdwBq+lcCLDiabZfdcbD2M761bnl3oeag8LLlAorYbPRJ0hTiRZal8HHbLbmHIexgTWYo0rXWqjxgyWSqlnP5aVpyPKBaj6ZT4HIQ==\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "pass",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckBUZXN0LkRraW0yLkV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=rsa2048:rsa-sha256:\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "rsa2048": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDdbLbeYb/jidOk\nt1ZQGUYCtbkQm54AwCGFrkqIFNgFLQVPqd6/Hcqo2KNpNtZakC5Jk4lRMmV6ra1J\n5Ll6rP3sn1jcV726CmxzAz6bhlkpxp91VNcjLNxV97XTLGPHpi5EmrraLKDVWC1c\nkf6naasaU3jPrusLcOkZcLUqsOBPMEgnuw2YHLc97GG0NINZLHQuU4fMDj0SXdu5\nh2wgEkJoYdh9yA3BQYhKq5i6C4588zABpFHWbvLwMMQwt71y/Qz3f1XZxUIvjO1i\n6g6C5d08V3XkN4EIAbaZg8/kV1Tn2Q1n+usOUae9ViJhEWV5MJbo0iKcue0UWwXj\npvO0ex/7AgMBAAECggEABqg9GM5hjdv/WiL55gzqA2frvkIpWDBHOR7Y55Pfn2jU\nkYKqBneT1WjSUsTMdTJIYfuc4pmImYh6w6z62gD58b1fL+FdmcWgw7OLMcvZ33+X\nV5OBWPue1whgFfGB8nrK0D841Y99eS8Pk54S2KSfNI5Ehw5HpDNDsoz1K5pp7yFb\nKJb+Ik6WYZpo5/3TkSRpx3leeCIKQzY/QLp0CUrAvVLx3AyMUjZA/DBXsXLB2/vd\nvZnm+6s30MxU+GQfgQbgCMZG+mtmN5GQUnFQNAqZa643GGmRiOVNjiLBy2UaCuYu\nERuZjbJgII5VX/Z1wCIzh62hvEhtzjCljD6sb4HwcQKBgQDk1NVgjMR/ShMBTwMN\n/13cKntkUrbRfi9eCu87sU6VlD2VPKL+opp+AR0hCU7Px59me04wEQuTT11pwRKF\nOCYr3QJ3+4bCq3h+LhRbw2aizOfSevQyQiEq6HwyYVjOczBb/ol2SnLahhsVXUXl\nenYl45ywcKGotI0tCJrztkvFAwKBgQD3tsJNdhu27GFzWh1MMGJEeoaGFLlmwkdB\nilqbGnDwgk+GBCMzuDATA8E7rsemCVLiMIXtjrGvR4nqmP/AD44xpt1xNhLXR1gJ\n/CAZxYTlFsPwJQbPXgTiwOPOKdcID0T50nHrfKvYKIJoc+aU1e2vaNHCt1TzNhmJ\nbSHrLnpbqQKBgQDSEFd49ICF4Xgk4WWKefyt2gnABPZyxgWxrRQEljXvtk/6Kdnv\nK1HrjhYxd5vzveskZtlV4q/foSG9rVHVHcBcz9wuTKZfGo3YN3DU9EHJ/ZRqchit\n8msEOruYfCjMDI4+RSHnh1x8IlPGfwNlL9A55AK5LgwZFPXse1PTmmtgBQKBgQDG\ndMP8PSh9B6oXOVYJiSXhSOxnlUjoG7PsvURTyP48oZnGe6AcOm9BfJueDivjSMr/\nbfKOXOjbzYufyM30+EFqZA47OiAkGwNclIK/QvByfSejSHbJQcDWTcT0ka61xU30\ne/ZKvIoMVoAL4PcVvMJ86pRK1IgZhfk1kZpACe97aQKBgByyfzphzVwmde2D06+L\nCbDn9IkXKFPSIrZrzppRTt3I8qeHbcyK+U0mRU6kK9O92a+BPR9N2cWL7VnOlUwU\nYTbUwolasJKYEkH37hCo0inqmYeDAp/rlsJYs6G4B/gFdu6mVl3W5KILMnSQCLOk\nmn5tt9iSb+dPbCLcD8adkmlB\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "rsa2048._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MIIBCgKCAQEA3Wy23mG/44nTpLdWUBlGArW5EJueAMAhha5KiBTYBS0FT6nevx3KqNijaTbWWpAuSZOJUTJleq2tSeS5eqz97J9Y3Fe9ugpscwM+m4ZZKcafdVTXIyzcVfe10yxjx6YuRJq62iyg1VgtXJH+p2mrGlN4z67rC3DpGXC1KrDgTzBIJ7sNmBy3PexhtDSDWSx0LlOHzA49El3buYdsIBJCaGHYfcgNwUGISquYuguOfPMwAaRR1m7y8DDEMLe9cv0M939V2cVCL4ztYuoOguXdPFd15DeBCAG2mYPP5FdU59kNZ/rrDlGnvVYiYRFleTCW6NIinLntFFsF46bztHsf+wIDAQAB"
+  }
+ },
+ {
+  "Name": "mailfrom_empty",
+  "Comments": "<> is a valid return path (§7.7)",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "Section": [
+   "7.7"
+  ],
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PD4=;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=rsa2048:rsa-sha256:YqwBXP3WIyUify2VTYOgRs4wIs/4aoj2b065bVo9PJfG9ugc029Q5KxVJmJ8Mgt8yASgfEfamm6rhFtA5i/k+5tpavJXsUnfuMpwsHU66qOQNuhkX5Bnv60HXUyylad+WlYeW/sU6/MIxMBHlOW3TasdckB7t+uG1zjBVMm0b6b45XH+QtegbW8kVlwcOmIPK+TX9kwNZHtTwbhYO2pbG9+6tlkyHl3/96p1FyFNYyLMjRAQtynvfIzqVxPQXzXbixsHMmJum+1YiTXIMeNzSNshrmDbGINOjYiHfBS8kHj2cijgVmntQ6SZH9dscjiUvR+6NLDxPcMaN4uWkJCCGg==\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "pass",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PD4=;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=rsa2048:rsa-sha256:\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "rsa2048": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDdbLbeYb/jidOk\nt1ZQGUYCtbkQm54AwCGFrkqIFNgFLQVPqd6/Hcqo2KNpNtZakC5Jk4lRMmV6ra1J\n5Ll6rP3sn1jcV726CmxzAz6bhlkpxp91VNcjLNxV97XTLGPHpi5EmrraLKDVWC1c\nkf6naasaU3jPrusLcOkZcLUqsOBPMEgnuw2YHLc97GG0NINZLHQuU4fMDj0SXdu5\nh2wgEkJoYdh9yA3BQYhKq5i6C4588zABpFHWbvLwMMQwt71y/Qz3f1XZxUIvjO1i\n6g6C5d08V3XkN4EIAbaZg8/kV1Tn2Q1n+usOUae9ViJhEWV5MJbo0iKcue0UWwXj\npvO0ex/7AgMBAAECggEABqg9GM5hjdv/WiL55gzqA2frvkIpWDBHOR7Y55Pfn2jU\nkYKqBneT1WjSUsTMdTJIYfuc4pmImYh6w6z62gD58b1fL+FdmcWgw7OLMcvZ33+X\nV5OBWPue1whgFfGB8nrK0D841Y99eS8Pk54S2KSfNI5Ehw5HpDNDsoz1K5pp7yFb\nKJb+Ik6WYZpo5/3TkSRpx3leeCIKQzY/QLp0CUrAvVLx3AyMUjZA/DBXsXLB2/vd\nvZnm+6s30MxU+GQfgQbgCMZG+mtmN5GQUnFQNAqZa643GGmRiOVNjiLBy2UaCuYu\nERuZjbJgII5VX/Z1wCIzh62hvEhtzjCljD6sb4HwcQKBgQDk1NVgjMR/ShMBTwMN\n/13cKntkUrbRfi9eCu87sU6VlD2VPKL+opp+AR0hCU7Px59me04wEQuTT11pwRKF\nOCYr3QJ3+4bCq3h+LhRbw2aizOfSevQyQiEq6HwyYVjOczBb/ol2SnLahhsVXUXl\nenYl45ywcKGotI0tCJrztkvFAwKBgQD3tsJNdhu27GFzWh1MMGJEeoaGFLlmwkdB\nilqbGnDwgk+GBCMzuDATA8E7rsemCVLiMIXtjrGvR4nqmP/AD44xpt1xNhLXR1gJ\n/CAZxYTlFsPwJQbPXgTiwOPOKdcID0T50nHrfKvYKIJoc+aU1e2vaNHCt1TzNhmJ\nbSHrLnpbqQKBgQDSEFd49ICF4Xgk4WWKefyt2gnABPZyxgWxrRQEljXvtk/6Kdnv\nK1HrjhYxd5vzveskZtlV4q/foSG9rVHVHcBcz9wuTKZfGo3YN3DU9EHJ/ZRqchit\n8msEOruYfCjMDI4+RSHnh1x8IlPGfwNlL9A55AK5LgwZFPXse1PTmmtgBQKBgQDG\ndMP8PSh9B6oXOVYJiSXhSOxnlUjoG7PsvURTyP48oZnGe6AcOm9BfJueDivjSMr/\nbfKOXOjbzYufyM30+EFqZA47OiAkGwNclIK/QvByfSejSHbJQcDWTcT0ka61xU30\ne/ZKvIoMVoAL4PcVvMJ86pRK1IgZhfk1kZpACe97aQKBgByyfzphzVwmde2D06+L\nCbDn9IkXKFPSIrZrzppRTt3I8qeHbcyK+U0mRU6kK9O92a+BPR9N2cWL7VnOlUwU\nYTbUwolasJKYEkH37hCo0inqmYeDAp/rlsJYs6G4B/gFdu6mVl3W5KILMnSQCLOk\nmn5tt9iSb+dPbCLcD8adkmlB\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "rsa2048._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MIIBCgKCAQEA3Wy23mG/44nTpLdWUBlGArW5EJueAMAhha5KiBTYBS0FT6nevx3KqNijaTbWWpAuSZOJUTJleq2tSeS5eqz97J9Y3Fe9ugpscwM+m4ZZKcafdVTXIyzcVfe10yxjx6YuRJq62iyg1VgtXJH+p2mrGlN4z67rC3DpGXC1KrDgTzBIJ7sNmBy3PexhtDSDWSx0LlOHzA49El3buYdsIBJCaGHYfcgNwUGISquYuguOfPMwAaRR1m7y8DDEMLe9cv0M939V2cVCL4ztYuoOguXdPFd15DeBCAG2mYPP5FdU59kNZ/rrDlGnvVYiYRFleTCW6NIinLntFFsF46bztHsf+wIDAQAB"
+  }
+ },
+ {
+  "Name": "mailfrom_needs_brackets",
+  "Comments": "The angle brackets MUST be included (§7.5)",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "Section": [
+   "7.5"
+  ],
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=c2VuZGVyQHRlc3QuZGtpbTIuZXU=;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=rsa2048:rsa-sha256:Q8x6Az0Kx93nhNIcteduv/psAXURv/wj3Ll8X/g+nctESeyHeawAle37nxQNXXFH2ZIqB0i9t6og5Iadpfqbj1f4Ux1D42edPitAVEjvfDMCg0A+NZKsEKA21Jy7O32BB93TaOfJeljfZEBfRL6vq9VklmTU5GIiEE5AzfcqoFEz5vU8qX9oIFAJZn60THLmFLfh4atGHZWrtODE3BkZ7CJ4pNk0ygsq5Vq4LOrh/cu0ANYcl705prs8qFHnik2t81d4KlsC8qhYSxL5P/fwq88cdruelq+4AtTu7+Q6ZM1Uw5Qt17mt+5Wt+cnTs/ZGsACGQ5O2vonwbIx9eLiIqg==\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "sender@test.dkim2.eu",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "permerror",
+  "ExpectedError": "PERMERROR DKIM2-Signature i=1 syntax error",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=c2VuZGVyQHRlc3QuZGtpbTIuZXU=;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=rsa2048:rsa-sha256:\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "rsa2048": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDdbLbeYb/jidOk\nt1ZQGUYCtbkQm54AwCGFrkqIFNgFLQVPqd6/Hcqo2KNpNtZakC5Jk4lRMmV6ra1J\n5Ll6rP3sn1jcV726CmxzAz6bhlkpxp91VNcjLNxV97XTLGPHpi5EmrraLKDVWC1c\nkf6naasaU3jPrusLcOkZcLUqsOBPMEgnuw2YHLc97GG0NINZLHQuU4fMDj0SXdu5\nh2wgEkJoYdh9yA3BQYhKq5i6C4588zABpFHWbvLwMMQwt71y/Qz3f1XZxUIvjO1i\n6g6C5d08V3XkN4EIAbaZg8/kV1Tn2Q1n+usOUae9ViJhEWV5MJbo0iKcue0UWwXj\npvO0ex/7AgMBAAECggEABqg9GM5hjdv/WiL55gzqA2frvkIpWDBHOR7Y55Pfn2jU\nkYKqBneT1WjSUsTMdTJIYfuc4pmImYh6w6z62gD58b1fL+FdmcWgw7OLMcvZ33+X\nV5OBWPue1whgFfGB8nrK0D841Y99eS8Pk54S2KSfNI5Ehw5HpDNDsoz1K5pp7yFb\nKJb+Ik6WYZpo5/3TkSRpx3leeCIKQzY/QLp0CUrAvVLx3AyMUjZA/DBXsXLB2/vd\nvZnm+6s30MxU+GQfgQbgCMZG+mtmN5GQUnFQNAqZa643GGmRiOVNjiLBy2UaCuYu\nERuZjbJgII5VX/Z1wCIzh62hvEhtzjCljD6sb4HwcQKBgQDk1NVgjMR/ShMBTwMN\n/13cKntkUrbRfi9eCu87sU6VlD2VPKL+opp+AR0hCU7Px59me04wEQuTT11pwRKF\nOCYr3QJ3+4bCq3h+LhRbw2aizOfSevQyQiEq6HwyYVjOczBb/ol2SnLahhsVXUXl\nenYl45ywcKGotI0tCJrztkvFAwKBgQD3tsJNdhu27GFzWh1MMGJEeoaGFLlmwkdB\nilqbGnDwgk+GBCMzuDATA8E7rsemCVLiMIXtjrGvR4nqmP/AD44xpt1xNhLXR1gJ\n/CAZxYTlFsPwJQbPXgTiwOPOKdcID0T50nHrfKvYKIJoc+aU1e2vaNHCt1TzNhmJ\nbSHrLnpbqQKBgQDSEFd49ICF4Xgk4WWKefyt2gnABPZyxgWxrRQEljXvtk/6Kdnv\nK1HrjhYxd5vzveskZtlV4q/foSG9rVHVHcBcz9wuTKZfGo3YN3DU9EHJ/ZRqchit\n8msEOruYfCjMDI4+RSHnh1x8IlPGfwNlL9A55AK5LgwZFPXse1PTmmtgBQKBgQDG\ndMP8PSh9B6oXOVYJiSXhSOxnlUjoG7PsvURTyP48oZnGe6AcOm9BfJueDivjSMr/\nbfKOXOjbzYufyM30+EFqZA47OiAkGwNclIK/QvByfSejSHbJQcDWTcT0ka61xU30\ne/ZKvIoMVoAL4PcVvMJ86pRK1IgZhfk1kZpACe97aQKBgByyfzphzVwmde2D06+L\nCbDn9IkXKFPSIrZrzppRTt3I8qeHbcyK+U0mRU6kK9O92a+BPR9N2cWL7VnOlUwU\nYTbUwolasJKYEkH37hCo0inqmYeDAp/rlsJYs6G4B/gFdu6mVl3W5KILMnSQCLOk\nmn5tt9iSb+dPbCLcD8adkmlB\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "rsa2048._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MIIBCgKCAQEA3Wy23mG/44nTpLdWUBlGArW5EJueAMAhha5KiBTYBS0FT6nevx3KqNijaTbWWpAuSZOJUTJleq2tSeS5eqz97J9Y3Fe9ugpscwM+m4ZZKcafdVTXIyzcVfe10yxjx6YuRJq62iyg1VgtXJH+p2mrGlN4z67rC3DpGXC1KrDgTzBIJ7sNmBy3PexhtDSDWSx0LlOHzA49El3buYdsIBJCaGHYfcgNwUGISquYuguOfPMwAaRR1m7y8DDEMLe9cv0M939V2cVCL4ztYuoOguXdPFd15DeBCAG2mYPP5FdU59kNZ/rrDlGnvVYiYRFleTCW6NIinLntFFsF46bztHsf+wIDAQAB"
+  }
+ },
+ {
+  "Name": "nonce_empty",
+  "Comments": "a nonce may be empty (§7.3)",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "Section": [
+   "7.3"
+  ],
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;n=;s=rsa2048:rsa-sha256:SFc1BtjFaMoodkFU79wiAJUt+sy+FLbEYkxguEjYzUP49jmmPTOBZ+FAbxiilpJsE6kRN/Mxdm50rQSqT8Sm6HXVjfypuDDvTywdYWoPr92vT7rsBJGulhBSY54eTnugpdWS/n5aX6triwxd+WzPPJVZgVzE7U3EmUT2Ni/geUuIGA3hHlvsF5RA1vneZgUuxFN61mqVdA0z5yF3h2LzAoJfUHTJsfbC2W9ofg5hbI1f2HkY8LdH3ARbMTshbV03dZfVaHjFHhWluAKqP/6xNBjDBncHTU2PJRFN2c3a6pQgEr7nWWfrr4VuaOzUtqMUKOOBuFojzsXelpHKw3NgiQ==\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "pass",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;n=;s=rsa2048:rsa-sha256:\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "rsa2048": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDdbLbeYb/jidOk\nt1ZQGUYCtbkQm54AwCGFrkqIFNgFLQVPqd6/Hcqo2KNpNtZakC5Jk4lRMmV6ra1J\n5Ll6rP3sn1jcV726CmxzAz6bhlkpxp91VNcjLNxV97XTLGPHpi5EmrraLKDVWC1c\nkf6naasaU3jPrusLcOkZcLUqsOBPMEgnuw2YHLc97GG0NINZLHQuU4fMDj0SXdu5\nh2wgEkJoYdh9yA3BQYhKq5i6C4588zABpFHWbvLwMMQwt71y/Qz3f1XZxUIvjO1i\n6g6C5d08V3XkN4EIAbaZg8/kV1Tn2Q1n+usOUae9ViJhEWV5MJbo0iKcue0UWwXj\npvO0ex/7AgMBAAECggEABqg9GM5hjdv/WiL55gzqA2frvkIpWDBHOR7Y55Pfn2jU\nkYKqBneT1WjSUsTMdTJIYfuc4pmImYh6w6z62gD58b1fL+FdmcWgw7OLMcvZ33+X\nV5OBWPue1whgFfGB8nrK0D841Y99eS8Pk54S2KSfNI5Ehw5HpDNDsoz1K5pp7yFb\nKJb+Ik6WYZpo5/3TkSRpx3leeCIKQzY/QLp0CUrAvVLx3AyMUjZA/DBXsXLB2/vd\nvZnm+6s30MxU+GQfgQbgCMZG+mtmN5GQUnFQNAqZa643GGmRiOVNjiLBy2UaCuYu\nERuZjbJgII5VX/Z1wCIzh62hvEhtzjCljD6sb4HwcQKBgQDk1NVgjMR/ShMBTwMN\n/13cKntkUrbRfi9eCu87sU6VlD2VPKL+opp+AR0hCU7Px59me04wEQuTT11pwRKF\nOCYr3QJ3+4bCq3h+LhRbw2aizOfSevQyQiEq6HwyYVjOczBb/ol2SnLahhsVXUXl\nenYl45ywcKGotI0tCJrztkvFAwKBgQD3tsJNdhu27GFzWh1MMGJEeoaGFLlmwkdB\nilqbGnDwgk+GBCMzuDATA8E7rsemCVLiMIXtjrGvR4nqmP/AD44xpt1xNhLXR1gJ\n/CAZxYTlFsPwJQbPXgTiwOPOKdcID0T50nHrfKvYKIJoc+aU1e2vaNHCt1TzNhmJ\nbSHrLnpbqQKBgQDSEFd49ICF4Xgk4WWKefyt2gnABPZyxgWxrRQEljXvtk/6Kdnv\nK1HrjhYxd5vzveskZtlV4q/foSG9rVHVHcBcz9wuTKZfGo3YN3DU9EHJ/ZRqchit\n8msEOruYfCjMDI4+RSHnh1x8IlPGfwNlL9A55AK5LgwZFPXse1PTmmtgBQKBgQDG\ndMP8PSh9B6oXOVYJiSXhSOxnlUjoG7PsvURTyP48oZnGe6AcOm9BfJueDivjSMr/\nbfKOXOjbzYufyM30+EFqZA47OiAkGwNclIK/QvByfSejSHbJQcDWTcT0ka61xU30\ne/ZKvIoMVoAL4PcVvMJ86pRK1IgZhfk1kZpACe97aQKBgByyfzphzVwmde2D06+L\nCbDn9IkXKFPSIrZrzppRTt3I8qeHbcyK+U0mRU6kK9O92a+BPR9N2cWL7VnOlUwU\nYTbUwolasJKYEkH37hCo0inqmYeDAp/rlsJYs6G4B/gFdu6mVl3W5KILMnSQCLOk\nmn5tt9iSb+dPbCLcD8adkmlB\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "rsa2048._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MIIBCgKCAQEA3Wy23mG/44nTpLdWUBlGArW5EJueAMAhha5KiBTYBS0FT6nevx3KqNijaTbWWpAuSZOJUTJleq2tSeS5eqz97J9Y3Fe9ugpscwM+m4ZZKcafdVTXIyzcVfe10yxjx6YuRJq62iyg1VgtXJH+p2mrGlN4z67rC3DpGXC1KrDgTzBIJ7sNmBy3PexhtDSDWSx0LlOHzA49El3buYdsIBJCaGHYfcgNwUGISquYuguOfPMwAaRR1m7y8DDEMLe9cv0M939V2cVCL4ztYuoOguXdPFd15DeBCAG2mYPP5FdU59kNZ/rrDlGnvVYiYRFleTCW6NIinLntFFsF46bztHsf+wIDAQAB"
+  }
+ },
+ {
+  "Name": "nonce_sneaky",
+  "Comments": "printable ASCII except semicolon (§7.3)",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "Section": [
+   "7.3"
+  ],
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;n=s=rsa2048:rsa-sha256:YmFuYW5h;s=rsa2048:rsa-sha256:RHrnbwaaKxWoFtCZeJstISOVed6iymv83Zt0l1WrYU3l+SlOEYVb3Yr79SgytjLdrdz+FcSS0hcDDVvm/8sfDdV5P3z7nn4Y4qQ7fbyd9MkAFooxC+DIR0SLCovD53kNA8CAKWohHIORVjZkWdRmCK9R7DGz+q4HcWqIs1Sd/TBAHFixVMpVntDPkRStVztzVl8ObXWrJOQMRcHX5T1iFgk1cTyhNQmdvQKIHhLi9oJp8DfARuQswzd7wYcV/gUUQiP4fgoJFbwe71jQjdnkYOWaKP1rAbqh3QaSxpnj/6kQBeQ6tyBATfgCqetXK32dhcyGJS2g/ImXJx3UCObzFA==\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "pass",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;n=s=rsa2048:rsa-sha256:YmFuYW5h;s=rsa2048:rsa-sha256:\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "rsa2048": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDdbLbeYb/jidOk\nt1ZQGUYCtbkQm54AwCGFrkqIFNgFLQVPqd6/Hcqo2KNpNtZakC5Jk4lRMmV6ra1J\n5Ll6rP3sn1jcV726CmxzAz6bhlkpxp91VNcjLNxV97XTLGPHpi5EmrraLKDVWC1c\nkf6naasaU3jPrusLcOkZcLUqsOBPMEgnuw2YHLc97GG0NINZLHQuU4fMDj0SXdu5\nh2wgEkJoYdh9yA3BQYhKq5i6C4588zABpFHWbvLwMMQwt71y/Qz3f1XZxUIvjO1i\n6g6C5d08V3XkN4EIAbaZg8/kV1Tn2Q1n+usOUae9ViJhEWV5MJbo0iKcue0UWwXj\npvO0ex/7AgMBAAECggEABqg9GM5hjdv/WiL55gzqA2frvkIpWDBHOR7Y55Pfn2jU\nkYKqBneT1WjSUsTMdTJIYfuc4pmImYh6w6z62gD58b1fL+FdmcWgw7OLMcvZ33+X\nV5OBWPue1whgFfGB8nrK0D841Y99eS8Pk54S2KSfNI5Ehw5HpDNDsoz1K5pp7yFb\nKJb+Ik6WYZpo5/3TkSRpx3leeCIKQzY/QLp0CUrAvVLx3AyMUjZA/DBXsXLB2/vd\nvZnm+6s30MxU+GQfgQbgCMZG+mtmN5GQUnFQNAqZa643GGmRiOVNjiLBy2UaCuYu\nERuZjbJgII5VX/Z1wCIzh62hvEhtzjCljD6sb4HwcQKBgQDk1NVgjMR/ShMBTwMN\n/13cKntkUrbRfi9eCu87sU6VlD2VPKL+opp+AR0hCU7Px59me04wEQuTT11pwRKF\nOCYr3QJ3+4bCq3h+LhRbw2aizOfSevQyQiEq6HwyYVjOczBb/ol2SnLahhsVXUXl\nenYl45ywcKGotI0tCJrztkvFAwKBgQD3tsJNdhu27GFzWh1MMGJEeoaGFLlmwkdB\nilqbGnDwgk+GBCMzuDATA8E7rsemCVLiMIXtjrGvR4nqmP/AD44xpt1xNhLXR1gJ\n/CAZxYTlFsPwJQbPXgTiwOPOKdcID0T50nHrfKvYKIJoc+aU1e2vaNHCt1TzNhmJ\nbSHrLnpbqQKBgQDSEFd49ICF4Xgk4WWKefyt2gnABPZyxgWxrRQEljXvtk/6Kdnv\nK1HrjhYxd5vzveskZtlV4q/foSG9rVHVHcBcz9wuTKZfGo3YN3DU9EHJ/ZRqchit\n8msEOruYfCjMDI4+RSHnh1x8IlPGfwNlL9A55AK5LgwZFPXse1PTmmtgBQKBgQDG\ndMP8PSh9B6oXOVYJiSXhSOxnlUjoG7PsvURTyP48oZnGe6AcOm9BfJueDivjSMr/\nbfKOXOjbzYufyM30+EFqZA47OiAkGwNclIK/QvByfSejSHbJQcDWTcT0ka61xU30\ne/ZKvIoMVoAL4PcVvMJ86pRK1IgZhfk1kZpACe97aQKBgByyfzphzVwmde2D06+L\nCbDn9IkXKFPSIrZrzppRTt3I8qeHbcyK+U0mRU6kK9O92a+BPR9N2cWL7VnOlUwU\nYTbUwolasJKYEkH37hCo0inqmYeDAp/rlsJYs6G4B/gFdu6mVl3W5KILMnSQCLOk\nmn5tt9iSb+dPbCLcD8adkmlB\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "rsa2048._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MIIBCgKCAQEA3Wy23mG/44nTpLdWUBlGArW5EJueAMAhha5KiBTYBS0FT6nevx3KqNijaTbWWpAuSZOJUTJleq2tSeS5eqz97J9Y3Fe9ugpscwM+m4ZZKcafdVTXIyzcVfe10yxjx6YuRJq62iyg1VgtXJH+p2mrGlN4z67rC3DpGXC1KrDgTzBIJ7sNmBy3PexhtDSDWSx0LlOHzA49El3buYdsIBJCaGHYfcgNwUGISquYuguOfPMwAaRR1m7y8DDEMLe9cv0M939V2cVCL4ztYuoOguXdPFd15DeBCAG2mYPP5FdU59kNZ/rrDlGnvVYiYRFleTCW6NIinLntFFsF46bztHsf+wIDAQAB"
+  }
+ },
+ {
+  "Name": "nonce_too_long",
+  "Comments": "the length of the string MUST NOT exceed 64 characters and implementations SHOULD reject messages where this limit has been ignored. (§7.3)",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "Section": [
+   "7.3"
+  ],
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;n=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;s=rsa2048:rsa-sha256:U+BgBpg9nlFJ2bhmxWA3mBy+2i4/dxbDyUrtZfVoGlvsYBB6X2TewsqE1vLG9TnC74H3t56kIFc3sQ62P18MzHDv4USVoY7K6VkUHDTgLwPs1Ydxt7tDPnbAcyGX1FZmRYLZZm4kz0eerSBVVitvWzfnQfFSNnaHStTVgDt1pMbCqzzB7uhk+QL1+fT7r3fPCnjpGZxxhk4pnhVoB9ziH6S6uArRSphR/3VsSL3JWmZYPRwDxyH99vVlJN+iQ/+CDRoa/wW1JKmrXOmn3Tt6hPOAUPEVI5lKZXUcA6Mi98414LV4z0Jjm/LfoRy9kTgnwFnAwhdnz0mw3XdqOh2LCA==\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "permerror",
+  "ExpectedError": "PERMERROR DKIM2-Signature i=1 syntax error",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;n=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;s=rsa2048:rsa-sha256:\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "rsa2048": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDdbLbeYb/jidOk\nt1ZQGUYCtbkQm54AwCGFrkqIFNgFLQVPqd6/Hcqo2KNpNtZakC5Jk4lRMmV6ra1J\n5Ll6rP3sn1jcV726CmxzAz6bhlkpxp91VNcjLNxV97XTLGPHpi5EmrraLKDVWC1c\nkf6naasaU3jPrusLcOkZcLUqsOBPMEgnuw2YHLc97GG0NINZLHQuU4fMDj0SXdu5\nh2wgEkJoYdh9yA3BQYhKq5i6C4588zABpFHWbvLwMMQwt71y/Qz3f1XZxUIvjO1i\n6g6C5d08V3XkN4EIAbaZg8/kV1Tn2Q1n+usOUae9ViJhEWV5MJbo0iKcue0UWwXj\npvO0ex/7AgMBAAECggEABqg9GM5hjdv/WiL55gzqA2frvkIpWDBHOR7Y55Pfn2jU\nkYKqBneT1WjSUsTMdTJIYfuc4pmImYh6w6z62gD58b1fL+FdmcWgw7OLMcvZ33+X\nV5OBWPue1whgFfGB8nrK0D841Y99eS8Pk54S2KSfNI5Ehw5HpDNDsoz1K5pp7yFb\nKJb+Ik6WYZpo5/3TkSRpx3leeCIKQzY/QLp0CUrAvVLx3AyMUjZA/DBXsXLB2/vd\nvZnm+6s30MxU+GQfgQbgCMZG+mtmN5GQUnFQNAqZa643GGmRiOVNjiLBy2UaCuYu\nERuZjbJgII5VX/Z1wCIzh62hvEhtzjCljD6sb4HwcQKBgQDk1NVgjMR/ShMBTwMN\n/13cKntkUrbRfi9eCu87sU6VlD2VPKL+opp+AR0hCU7Px59me04wEQuTT11pwRKF\nOCYr3QJ3+4bCq3h+LhRbw2aizOfSevQyQiEq6HwyYVjOczBb/ol2SnLahhsVXUXl\nenYl45ywcKGotI0tCJrztkvFAwKBgQD3tsJNdhu27GFzWh1MMGJEeoaGFLlmwkdB\nilqbGnDwgk+GBCMzuDATA8E7rsemCVLiMIXtjrGvR4nqmP/AD44xpt1xNhLXR1gJ\n/CAZxYTlFsPwJQbPXgTiwOPOKdcID0T50nHrfKvYKIJoc+aU1e2vaNHCt1TzNhmJ\nbSHrLnpbqQKBgQDSEFd49ICF4Xgk4WWKefyt2gnABPZyxgWxrRQEljXvtk/6Kdnv\nK1HrjhYxd5vzveskZtlV4q/foSG9rVHVHcBcz9wuTKZfGo3YN3DU9EHJ/ZRqchit\n8msEOruYfCjMDI4+RSHnh1x8IlPGfwNlL9A55AK5LgwZFPXse1PTmmtgBQKBgQDG\ndMP8PSh9B6oXOVYJiSXhSOxnlUjoG7PsvURTyP48oZnGe6AcOm9BfJueDivjSMr/\nbfKOXOjbzYufyM30+EFqZA47OiAkGwNclIK/QvByfSejSHbJQcDWTcT0ka61xU30\ne/ZKvIoMVoAL4PcVvMJ86pRK1IgZhfk1kZpACe97aQKBgByyfzphzVwmde2D06+L\nCbDn9IkXKFPSIrZrzppRTt3I8qeHbcyK+U0mRU6kK9O92a+BPR9N2cWL7VnOlUwU\nYTbUwolasJKYEkH37hCo0inqmYeDAp/rlsJYs6G4B/gFdu6mVl3W5KILMnSQCLOk\nmn5tt9iSb+dPbCLcD8adkmlB\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "rsa2048._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MIIBCgKCAQEA3Wy23mG/44nTpLdWUBlGArW5EJueAMAhha5KiBTYBS0FT6nevx3KqNijaTbWWpAuSZOJUTJleq2tSeS5eqz97J9Y3Fe9ugpscwM+m4ZZKcafdVTXIyzcVfe10yxjx6YuRJq62iyg1VgtXJH+p2mrGlN4z67rC3DpGXC1KrDgTzBIJ7sNmBy3PexhtDSDWSx0LlOHzA49El3buYdsIBJCaGHYfcgNwUGISquYuguOfPMwAaRR1m7y8DDEMLe9cv0M939V2cVCL4ztYuoOguXdPFd15DeBCAG2mYPP5FdU59kNZ/rrDlGnvVYiYRFleTCW6NIinLntFFsF46bztHsf+wIDAQAB"
+  }
+ },
+ {
+  "Name": "nonce_valid",
+  "Comments": "a nonce may be up to 64 characters (§7.3)",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "Section": [
+   "7.3"
+  ],
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;n=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;s=rsa2048:rsa-sha256:S76TGrq29IJ7SAX0u34pzI0klR44RWdpJis/R9WWIJD7MHXK4BON3XQ7cc5EuRbmaC/0MZgVDY4gORuqigQrr9pwgaxGcRFksBrvLplQh3nkpJQvtXch0R8I0jN/nuOH4m8xSQneV8xjnPvfHO4J1b57+NqAhQPZvqnw5Dfktp8haGKFwq86DfxkOc/T3s8HAb6+YD48FC32ocyTPmgCoX0coYIVjuoQ6OVAc59ZPEAJPEuZnWY3EcabHqen6f0/IPLJ5kW1lxRJannjMm/oiRVKD/rU3PW3djR5OvjKdwPklgkwlhtFq35tt1YsP9Fvv/gZ215hBcPcHMhrNfJv+g==\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "pass",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;n=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;s=rsa2048:rsa-sha256:\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "rsa2048": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDdbLbeYb/jidOk\nt1ZQGUYCtbkQm54AwCGFrkqIFNgFLQVPqd6/Hcqo2KNpNtZakC5Jk4lRMmV6ra1J\n5Ll6rP3sn1jcV726CmxzAz6bhlkpxp91VNcjLNxV97XTLGPHpi5EmrraLKDVWC1c\nkf6naasaU3jPrusLcOkZcLUqsOBPMEgnuw2YHLc97GG0NINZLHQuU4fMDj0SXdu5\nh2wgEkJoYdh9yA3BQYhKq5i6C4588zABpFHWbvLwMMQwt71y/Qz3f1XZxUIvjO1i\n6g6C5d08V3XkN4EIAbaZg8/kV1Tn2Q1n+usOUae9ViJhEWV5MJbo0iKcue0UWwXj\npvO0ex/7AgMBAAECggEABqg9GM5hjdv/WiL55gzqA2frvkIpWDBHOR7Y55Pfn2jU\nkYKqBneT1WjSUsTMdTJIYfuc4pmImYh6w6z62gD58b1fL+FdmcWgw7OLMcvZ33+X\nV5OBWPue1whgFfGB8nrK0D841Y99eS8Pk54S2KSfNI5Ehw5HpDNDsoz1K5pp7yFb\nKJb+Ik6WYZpo5/3TkSRpx3leeCIKQzY/QLp0CUrAvVLx3AyMUjZA/DBXsXLB2/vd\nvZnm+6s30MxU+GQfgQbgCMZG+mtmN5GQUnFQNAqZa643GGmRiOVNjiLBy2UaCuYu\nERuZjbJgII5VX/Z1wCIzh62hvEhtzjCljD6sb4HwcQKBgQDk1NVgjMR/ShMBTwMN\n/13cKntkUrbRfi9eCu87sU6VlD2VPKL+opp+AR0hCU7Px59me04wEQuTT11pwRKF\nOCYr3QJ3+4bCq3h+LhRbw2aizOfSevQyQiEq6HwyYVjOczBb/ol2SnLahhsVXUXl\nenYl45ywcKGotI0tCJrztkvFAwKBgQD3tsJNdhu27GFzWh1MMGJEeoaGFLlmwkdB\nilqbGnDwgk+GBCMzuDATA8E7rsemCVLiMIXtjrGvR4nqmP/AD44xpt1xNhLXR1gJ\n/CAZxYTlFsPwJQbPXgTiwOPOKdcID0T50nHrfKvYKIJoc+aU1e2vaNHCt1TzNhmJ\nbSHrLnpbqQKBgQDSEFd49ICF4Xgk4WWKefyt2gnABPZyxgWxrRQEljXvtk/6Kdnv\nK1HrjhYxd5vzveskZtlV4q/foSG9rVHVHcBcz9wuTKZfGo3YN3DU9EHJ/ZRqchit\n8msEOruYfCjMDI4+RSHnh1x8IlPGfwNlL9A55AK5LgwZFPXse1PTmmtgBQKBgQDG\ndMP8PSh9B6oXOVYJiSXhSOxnlUjoG7PsvURTyP48oZnGe6AcOm9BfJueDivjSMr/\nbfKOXOjbzYufyM30+EFqZA47OiAkGwNclIK/QvByfSejSHbJQcDWTcT0ka61xU30\ne/ZKvIoMVoAL4PcVvMJ86pRK1IgZhfk1kZpACe97aQKBgByyfzphzVwmde2D06+L\nCbDn9IkXKFPSIrZrzppRTt3I8qeHbcyK+U0mRU6kK9O92a+BPR9N2cWL7VnOlUwU\nYTbUwolasJKYEkH37hCo0inqmYeDAp/rlsJYs6G4B/gFdu6mVl3W5KILMnSQCLOk\nmn5tt9iSb+dPbCLcD8adkmlB\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "rsa2048._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MIIBCgKCAQEA3Wy23mG/44nTpLdWUBlGArW5EJueAMAhha5KiBTYBS0FT6nevx3KqNijaTbWWpAuSZOJUTJleq2tSeS5eqz97J9Y3Fe9ugpscwM+m4ZZKcafdVTXIyzcVfe10yxjx6YuRJq62iyg1VgtXJH+p2mrGlN4z67rC3DpGXC1KrDgTzBIJ7sNmBy3PexhtDSDWSx0LlOHzA49El3buYdsIBJCaGHYfcgNwUGISquYuguOfPMwAaRR1m7y8DDEMLe9cv0M939V2cVCL4ztYuoOguXdPFd15DeBCAG2mYPP5FdU59kNZ/rrDlGnvVYiYRFleTCW6NIinLntFFsF46bztHsf+wIDAQAB"
+  }
+ },
+ {
+  "Name": "pkix_rsa1024",
+  "Comments": "Verifiers MUST be able to validate signatures with keys ranging from 1024 bits to 2048 bits, and they MAY be able to validate signatures with larger keys. (§3.2)",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "Section": [
+   "3.2"
+  ],
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=pkix-rsa1024:rsa-sha256:DQ49Gewu3uJWaddHW+W7x/l8FzS8WZZghCvJofE5h7ydp9I9stZQmPXZR0TfGIKvkgWNPktFM2ijDzu4aiYb2FsENv7/+NDuiwDtM0C7riIpZ6jytbYYn9+5e4KkqTI2+Tt7GG6R0w0V9Yp9zLcDxI2fyT46xQtUm3/Kh85j82I=\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "pass",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=pkix-rsa1024:rsa-sha256:\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "rsa1024": "-----BEGIN PRIVATE KEY-----\nMIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBANROG8vxZQA/lS7M\nSwDz2DjGxUH7BJ3IfJbSs88jvjs7wEhu/JFB/o1JJ1dTrYjoTnRF1RDxNLXpEu4l\nNwxQ8tBMawor5brsULs1J58A7cB65HfYScsTxDgYKdGBnX1aKQxsp8DgwwZNEr7T\nvsCNqxITlbgDIRFy0qnc6RmoCc9VAgMBAAECgYBMGtfiCt2e8iwDQ56bb84RxEdP\n+LDV8tmeo1drqK93wlqSXJ7TX2nlsdSVfFyX2FbPXX0cfqrbjvqHPfX2x0nS89MX\n3pNEuT84WWwLLj1xXNpOEReviEA/Az+GwSFRZw1/aaGoX944GPe0NRERGH8l8hh0\n3P5P/7kn6T014lp5XQJBAP7egkCIwj+JrLmrhWMYp8kj/57REcIIDyE3/EORAO9d\nFWVfz0QKZVdrAVNwScUt1xuUsJwmeZfNnZ1oREN/dOsCQQDVP0DzpK4tp8atChcs\nK9ySuJ/wcYk7a68OWGIhtIriWOkqjaw55B5WPH3M9oN+YIBbeiMY4Q/Z9gZp9420\n/7y/AkEA3Mla4pbWV35nj8xjV84zA47Y0PbiQEkE+kzqjomd2r2zXEdcYN/0nH8I\n/gQnE9Y7IxxyxkKaUQQBRyvc/u/6EwJAdm7w9eAqVHTv5L7L695YXKxpN7L20qeV\ny9POfIW29MsIhHe2hVhqeN6Tx7fJg/C4mRWWVIT6tsTq/wNcEoBOJQJAOrmrlsvq\nE7kQt2f+BFyAmF/g+QNgDQDxyzBR7K0R/itRndfsCfhT+r3lOKEqR90AqCWLl9ry\nXubJ0L+y8xnB/w==\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "pkix-rsa1024._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDUThvL8WUAP5UuzEsA89g4xsVB+wSdyHyW0rPPI747O8BIbvyRQf6NSSdXU62I6E50RdUQ8TS16RLuJTcMUPLQTGsKK+W67FC7NSefAO3AeuR32EnLE8Q4GCnRgZ19WikMbKfA4MMGTRK+077AjasSE5W4AyERctKp3OkZqAnPVQIDAQAB"
+  }
+ },
+ {
+  "Name": "pkix_rsa2048",
+  "Comments": "Verifiers MUST be able to validate signatures with keys ranging from 1024 bits to 2048 bits, and they MAY be able to validate signatures with larger keys. (§3.2)",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "Section": [
+   "3.2"
+  ],
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=pkix-rsa2048:rsa-sha256:JFLiHoMIJj6QQs8DKHSL6TKxQ1mgUYGg5e6i3U6hq1GezKLk8HD4SPcm0WwWq5r4lS9woZyVxjuj0WeN016xK87csm514Ze0uEbS7CUIxpZrytWRsqM71PDalONa2aR/x0QzLQDShHaYQPWxeZNDcRjjVZ+Cidu/N8HpaxNHiAQD9vRwPGV7wsf0tJ4+v8RX7fFlQzzmNddEf12JQalCk7Ee2EADQnRYXFFhErSK6nCcCyC4KsWj5bnmD4uOX1E8JJI/qi0rbq7vBVwIc4dNolxM/wLZElQt8s9GpBvF5vPjtu/f0JDEZbd/wfEAbvN9Q8SLK2kgglRFnnV+RkjElw==\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "pass",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=pkix-rsa2048:rsa-sha256:\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "rsa2048": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDdbLbeYb/jidOk\nt1ZQGUYCtbkQm54AwCGFrkqIFNgFLQVPqd6/Hcqo2KNpNtZakC5Jk4lRMmV6ra1J\n5Ll6rP3sn1jcV726CmxzAz6bhlkpxp91VNcjLNxV97XTLGPHpi5EmrraLKDVWC1c\nkf6naasaU3jPrusLcOkZcLUqsOBPMEgnuw2YHLc97GG0NINZLHQuU4fMDj0SXdu5\nh2wgEkJoYdh9yA3BQYhKq5i6C4588zABpFHWbvLwMMQwt71y/Qz3f1XZxUIvjO1i\n6g6C5d08V3XkN4EIAbaZg8/kV1Tn2Q1n+usOUae9ViJhEWV5MJbo0iKcue0UWwXj\npvO0ex/7AgMBAAECggEABqg9GM5hjdv/WiL55gzqA2frvkIpWDBHOR7Y55Pfn2jU\nkYKqBneT1WjSUsTMdTJIYfuc4pmImYh6w6z62gD58b1fL+FdmcWgw7OLMcvZ33+X\nV5OBWPue1whgFfGB8nrK0D841Y99eS8Pk54S2KSfNI5Ehw5HpDNDsoz1K5pp7yFb\nKJb+Ik6WYZpo5/3TkSRpx3leeCIKQzY/QLp0CUrAvVLx3AyMUjZA/DBXsXLB2/vd\nvZnm+6s30MxU+GQfgQbgCMZG+mtmN5GQUnFQNAqZa643GGmRiOVNjiLBy2UaCuYu\nERuZjbJgII5VX/Z1wCIzh62hvEhtzjCljD6sb4HwcQKBgQDk1NVgjMR/ShMBTwMN\n/13cKntkUrbRfi9eCu87sU6VlD2VPKL+opp+AR0hCU7Px59me04wEQuTT11pwRKF\nOCYr3QJ3+4bCq3h+LhRbw2aizOfSevQyQiEq6HwyYVjOczBb/ol2SnLahhsVXUXl\nenYl45ywcKGotI0tCJrztkvFAwKBgQD3tsJNdhu27GFzWh1MMGJEeoaGFLlmwkdB\nilqbGnDwgk+GBCMzuDATA8E7rsemCVLiMIXtjrGvR4nqmP/AD44xpt1xNhLXR1gJ\n/CAZxYTlFsPwJQbPXgTiwOPOKdcID0T50nHrfKvYKIJoc+aU1e2vaNHCt1TzNhmJ\nbSHrLnpbqQKBgQDSEFd49ICF4Xgk4WWKefyt2gnABPZyxgWxrRQEljXvtk/6Kdnv\nK1HrjhYxd5vzveskZtlV4q/foSG9rVHVHcBcz9wuTKZfGo3YN3DU9EHJ/ZRqchit\n8msEOruYfCjMDI4+RSHnh1x8IlPGfwNlL9A55AK5LgwZFPXse1PTmmtgBQKBgQDG\ndMP8PSh9B6oXOVYJiSXhSOxnlUjoG7PsvURTyP48oZnGe6AcOm9BfJueDivjSMr/\nbfKOXOjbzYufyM30+EFqZA47OiAkGwNclIK/QvByfSejSHbJQcDWTcT0ka61xU30\ne/ZKvIoMVoAL4PcVvMJ86pRK1IgZhfk1kZpACe97aQKBgByyfzphzVwmde2D06+L\nCbDn9IkXKFPSIrZrzppRTt3I8qeHbcyK+U0mRU6kK9O92a+BPR9N2cWL7VnOlUwU\nYTbUwolasJKYEkH37hCo0inqmYeDAp/rlsJYs6G4B/gFdu6mVl3W5KILMnSQCLOk\nmn5tt9iSb+dPbCLcD8adkmlB\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "pkix-rsa2048._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA3Wy23mG/44nTpLdWUBlGArW5EJueAMAhha5KiBTYBS0FT6nevx3KqNijaTbWWpAuSZOJUTJleq2tSeS5eqz97J9Y3Fe9ugpscwM+m4ZZKcafdVTXIyzcVfe10yxjx6YuRJq62iyg1VgtXJH+p2mrGlN4z67rC3DpGXC1KrDgTzBIJ7sNmBy3PexhtDSDWSx0LlOHzA49El3buYdsIBJCaGHYfcgNwUGISquYuguOfPMwAaRR1m7y8DDEMLe9cv0M939V2cVCL4ztYuoOguXdPFd15DeBCAG2mYPP5FdU59kNZ/rrDlGnvVYiYRFleTCW6NIinLntFFsF46bztHsf+wIDAQAB"
+  }
+ },
+ {
+  "Name": "pkix_rsa4096",
+  "Comments": "Verifiers MUST be able to validate signatures with keys ranging from 1024 bits to 2048 bits, and they MAY be able to validate signatures with larger keys. (§3.2)",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "Section": [
+   "3.2"
+  ],
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=pkix-rsa4096:rsa-sha256:AOI39pcjr4DIguDHkrMqUAbaJHDkSI36+f0nA24DGy+w1moVJJjC6+eBOEnwMcNUHL5VvnWHB+ZQ++zDCNioKzBntrl+JSMkmEqNB4795lh3b8WoC8a1ER9olODPUL4Cy0105ffNJQIimxUngn70ecC7Yz05t3XrE6noQw3af9UZSExDO2qRoap7b73dWlt6Y+/W4N1W8TI2MEHL2pegBuHUKkieeCaydylmt+FsD3CC5np4wvoIXIce2I6FeTKTPF8HAoBuqKVUoz+aEY7YUyyLYv3G02XPH8tfJd9ohBMnrmmhWF4B21BC5tXWCVIQ0n/GvOcjJ3h6QT93ClXPHvCFmNFfvC36mpsUdLZsnVPGzQkGkLh637avNmdOQndTfQIP84D1NIKIiMeyhqdjBCFAoP0ImebaialVX7b+y/ZUYbLlbOTLUjG++ZjjGEv66JPm5S+jFbgHGKEDRscw7F3CKVEGAsY+ANy75DfEkn38zuz7oCGWssdjG1JePOsUok9a6he4yWuaO7DBHjIwwsTEEEIMBxMkeGa5FP1KazC5q6SnuLNUKjVaY/8d+wq6fwsKVxj6S16uX+0v+XuzPObwouyUYC2rSUA6nuo1xKUdeoGF+0P32S+zbsfkLXWSadHp3TAtZ6F4KdA/H2wKKJYzvgxor+uc646AUaxPTo8=\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "pass",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=pkix-rsa4096:rsa-sha256:\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "rsa4096": "-----BEGIN PRIVATE KEY-----\nMIIJQwIBADANBgkqhkiG9w0BAQEFAASCCS0wggkpAgEAAoICAQDEpXYKy5C3CHNQ\nv/UPfRJwLMcQlsTOXfJBqWs1b9Rt0Mh33T+UTm5Rzoj+mUoyTEkBFvEpRww+iP3t\nSBzOEEDxZf9eSRovi0hra5pCX8W2Jw0t5vcAJySkFDm9Ed5WzCyHV05ri0IpBioe\nG5MojydOIDNYmp266Rf72VmZZmFe9g+DKQL9h3ny/88BZvTRRZwwfuwg+CpXeE8T\nqzbi88jK53f84i/kDPR5nYRAUhjYGK/LHjOsrJjvfOQtJ1xkhqGW5ZtUhmrt5jFx\n5QqLSz8B1JFrPWxXIn1xHnEnCJxCafb6QLUADu0jDsgLRmFVp8o4yLSEtBhxiyDo\ndAcwnAiQ72FbyHJBm4AGAEG32n23nQ8tmnGfm5CLNe/92XfP68xQGS4K7H6b37GF\nrHJxEwFG5NKi//1xz2+Cp3mGauOnC9Fd+asESckFyT4uDp5ojTtgEsOggK9ZxTd4\nRmVVjbFrfMZrZEPPaLFQ8VR5V4FWnHrCYLpRhNyws+L9wy9RQWiQOovp/GIoYWbB\nrt945Okeodwc1W8iSHtigBD6hmqfDTfghu/0Bm36aslVWY5ilqK5VzJKTV8Ky4H8\nH0arUeQcfUu1dCDcbECdrZbQ2lNogVuUqXmxquxPak09vHRTBYCDtVLFX5pWYEbJ\nAgyIlgdhjrXfKqsfzbNxznKgjdernwIDAQABAoICAEQYghh55qqjR/96AZwz9PsY\nXnTNqOhHmxkG2IPALoE6r/jmClrKkCRPD5yOq6VgSlWQwsFHA6PyH3CYLLVk5oBR\nkE1vphw5sMHWGKyMarRJsKQpG3aXl3YkNNxWwDYxbOgPIS5Xonj/U/1qEhsU+4jv\n2KgBnsY3aqFBYmgfDm/qaHPEc28lB2NRFzeGlheT8eLPSOif11XD6SpH+3E691jg\nL+pHz0q6+7vTgpUdeNH4NoPxePZ+LFWeW4uRWkrLXlCZQSFTjNrGAHBO3sherbpu\nCE9pDUfdPzA5WPip4CaVeDuvxZ34DUE7IKXa4ODfAkWIpw5fKSnEgohMiaLZHZOr\nknzaADPs/9i8i2U8B6xwzDiTxBChWz1p42/uG5liIf9BnTBksziJwfQEL/nsUBil\ngMVHwQH0cwMoe5Y5dRsR8gJwYEWS+5ta+1dlo1PbbE2KSfcvGxLT0U0OwGf9wNVj\n2CygH3Nf8on3c9Funx2Be8PLikUO2iP454xFL0kaZ3eartCbhlzzAbV0Ck9qzkYq\nVEn/hOZ5FfMM/Ncr2j2NT0m7IVvhDrkYrFf5SMMvDLVy9O7KtWcahNZ9SSPBsCH1\nzZn/n1BxIk2QGZ1j3dPfb6ZTZDDN77w5Zu5lK6SqDFg+pyRmDI3Drh0uwbfZW4o4\ndxs1iOB95o8KlIu/EAxBAoIBAQDivSLBjZjw6pbCfSEkWDEeJqjiijT6crn1LOLl\nXpy664M5gRaghfjZVfPhU2PzgidaOINwq6Hl9OehcVqMzxMaFrTk9jMk/3zlKyNv\nxfoBn/l1YW62tdsHREt6FrYgjtdnCfb6lndZhjSwiwT8V9Gp6II1YHAZPFXqR7bP\n+x0mSPE+W2hRcDXITNZ/Zw+0ovxJE9xlPwUUAyzNT7KQKnUs6kDHUDp0FeKo2std\nwy59ErTbzAFdJggVvnDnxX9WMYhPHa7mDMZxjfUYu39MNSlZUY5O9KCt2VdFT0/V\nl57GWWChpQvVpuGEE1b4CUxbrGHimFv2KPB7HyOQe8RaYebBAoIBAQDeBiXJ3zpt\neyj+oXs7zrfqNzMfam08adIev4gPtlKpBo0LCCwM/JC3msfxWaanzSv88gWE4dBN\nOw6VlPJdqA5Ip2rqqCCSIWYHO5WJhfB1FBsR3oJLoIdD9UCBDR2SXKc+D/fxZ/QV\nWdhxHTBxphvCCO7OlkvqgSwday/5og8NxFL4qlGfC3VQs+UQJdE4MjmOBo34PBgE\nJVIhgYGeave2V6m6ErF5LqzyJPKcu3fImBJWhSI2LNGYvBfV0OZ3AN+cvKqz8Vpq\n0LlOOSul5P2zHnNPKQ6BZwct9q8b6x3SeouvN8Q1NWLXyq/rIN4JcJl7/W9jxZnf\nclu7T0P734pfAoIBAQDVEAXo+7YMLWUdvZe3H2iIfKuWtWizL7uuuE8+WnnM7CKT\nlso8bag6Eprp0gLKgDOahCB/b8ji3hALlQkR6ER673ts7C2DRtGGR9M05UTY4gr4\nUmZHKvx3B6YlQ9JBJfkjyilbsKjWZ1Z7zycQOTW8A9DXd5ffHuNdE6amKcJqh4Cq\nqBqO7HKdlha6AY6wn7eStCcWvPF4rMMc6xdQgZU6b6YPpURIcYhcQ712jkLRJRLu\nt/VQIrzWMe7G3L+br0/3iF0hsD+J1WvLoeUtJ4eDdy/S4e1bcDCh4LWUcLWyjapQ\nO1eznO2tvr6qtZIbUxFobON9nVrdV5WD38nTZMwBAoIBAEMqdPAXGePY6FPvogo7\nxSOTw2Fznswx7yDiLFUkgOklVDHMLRdYqKcCqg33YxVMWkxRIx5J+ewDO6xAvPlc\nR8Xu78dBSWkrtWPmwJwz6sRgargDKkOaspD6dqMTxqhqYyXBSu661fpHjdTaUbdv\n2uHeNfBFQ34Tyba0oHTSc99kTv1u+PY2Ty003sz9w8dOWl7+2KAJ/fHzIF+GgCHe\nlkWRS4VA9nOEjUlLqCGGDPygFJwb9neRI28jJ8rFQZMqrnsKEFITZ5j8v7JMVUoA\ndkdjpNqDvyGie2eKQvsdK45rCCrfofm+xsIlTQbCkKkmaSg7SSFTu/L+84U8u4JM\n490CggEBAIg1lMWvl+SHY21xsb3pFzENIz/NHVw2rPrF6cO1S2RYvlsItcCuO/UW\nhFzYVOT2l1IVhSm5MLJRV6CVJ7BUL+E6cRYYWnJU+KbQkeUEIKEQH493ZYrHjzzv\n+RiUyCrLBYvh6OcND+Q3KaYCIQRzqcOxgQ/xG5zA8OL94W90VD1euf15URjsA2FN\nwjxYLTLQrP0LlsbCUzmEWUAk1jPRJYLHYdZCOa6yzLmrNdPvn0lPhARaG5erUAt7\n6SU3U1jBZ52+moP3WNSUZd47v9CCxuDBrAyB9NWZcSul6OUS0F2A7sUvMMWXNe37\n2UnNeI7mL8QZu/aswJC8bu7O1PDZcBs=\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "pkix-rsa4096._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAxKV2CsuQtwhzUL/1D30ScCzHEJbEzl3yQalrNW/UbdDId90/lE5uUc6I/plKMkxJARbxKUcMPoj97UgczhBA8WX/XkkaL4tIa2uaQl/FticNLeb3ACckpBQ5vRHeVswsh1dOa4tCKQYqHhuTKI8nTiAzWJqduukX+9lZmWZhXvYPgykC/Yd58v/PAWb00UWcMH7sIPgqV3hPE6s24vPIyud3/OIv5Az0eZ2EQFIY2Bivyx4zrKyY73zkLSdcZIahluWbVIZq7eYxceUKi0s/AdSRaz1sVyJ9cR5xJwicQmn2+kC1AA7tIw7IC0ZhVafKOMi0hLQYcYsg6HQHMJwIkO9hW8hyQZuABgBBt9p9t50PLZpxn5uQizXv/dl3z+vMUBkuCux+m9+xhaxycRMBRuTSov/9cc9vgqd5hmrjpwvRXfmrBEnJBck+Lg6eaI07YBLDoICvWcU3eEZlVY2xa3zGa2RDz2ixUPFUeVeBVpx6wmC6UYTcsLPi/cMvUUFokDqL6fxiKGFmwa7feOTpHqHcHNVvIkh7YoAQ+oZqnw034Ibv9AZt+mrJVVmOYpaiuVcySk1fCsuB/B9Gq1HkHH1LtXQg3GxAna2W0NpTaIFblKl5sarsT2pNPbx0UwWAg7VSxV+aVmBGyQIMiJYHYY613yqrH82zcc5yoI3Xq58CAwEAAQ=="
+  }
+ },
+ {
+  "Name": "pkix_rsa5120",
+  "Comments": "Verifiers MUST be able to validate signatures with keys ranging from 1024 bits to 2048 bits, and they MAY be able to validate signatures with larger keys. (§3.2)",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "Section": [
+   "3.2"
+  ],
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=pkix-rsa5120:rsa-sha256:KioP6VxX+sF1pKSdny3iFAuL+r4AgQ+WG2+sFdnE/0UfQd0uOfXyxds2GFmBlonAqtpoJl9iLYsuDQvsNQ3xS0blOBLKp7T3+xblAVVNL79cRCRRTJmvbsRVLvT0DLUIVrjWejrzm0NvrLS/UH7msTT+9jAGmeL8zCbBMwpILr5tRuGrw4OLxnMxE1uGTmX48bbYFOC0Aikk3AQHK/oaXDbj+5kU+y2At+G0SiHrdjKLT1umHqQ8WptiOvUhmwWh5QcYjE2eWgus+MGGIsdZ8yVOOmEz7DwUo2cIm/nn/istkPmCk9NjhHajn5CBMRGx8NPnGuO736+3KpjLTyFvS5AaXzPNcKEBWC3f1WZcJKbqySw3cPDKk5jDBsFtsqaotqXaABFhIAFXeGJTS0R/rbvWtBmbwkjASd9MmUatSJeCl55n5O/ViUI5dGpp8IdAOH5ekjscfB4q64GFnqnAC4iud5N2hIIwC5zcwv1n6TO6WhDrBZoe3o9KVttZO4lWjBdWpTcNVg486efSxH8WS6Cih8Yvt4K46YY1hnKu1eh1Vcteg63YS61l0aXRGWuIObHPerhFKR0aExM0x1aCUIC9012g5okYdxWniRx5GnlZpE219JSWj2vwQLmPANu3+B1viNQIfopp1qHQ9MpMiLUGVGbKgYt1G4QnFGpQVloXdFnY/uDgM0WCMQHJkrob/yUmQhVX85iN7/VPJa92fi/zvPEbASCxsxd5wnh/InEUSRxWD9zwiLDthP47OLRP4ZxfCfRzdyNPwf5j7uEW5J/SDXhaGIB9Z2Zq9xqmoReqdgyj5Pk9up4cv/5mC1sXPsOaqPACNSSFSmQVgG6w2Q==\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "pass",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=pkix-rsa5120:rsa-sha256:\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "rsa5120": "-----BEGIN PRIVATE KEY-----\n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\nE4UWVAT2bWiu6ww7iuxCXISoA7V8MwU=\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "pkix-rsa5120._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MIICojANBgkqhkiG9w0BAQEFAAOCAo8AMIICigKCAoEA78H2ZmJE2lT0XaQlFPPm0rTMKhUJQra8FhfmsBrwMV8Jr+S4AltP4Hr5Pop5KkMTNDAr9W+9ahAO1yJBCWYwlaJj7Oinek430rJIltaDfY/4oToWRYPiSWth9tvcs4pL/aEcQUxn4OKERlE45qu1YfEBejF59zKfV+Hm2Q+Zqqe30jH025HkRjLlixyG1qBWMtJFfq1hUZ00My5vYL1fomyP1UyVUeZA+KkqEYeiT/O3y5M7IsjANkGfX6ChqZFePum29hSzQkrkLEX+vj2Wk2FHsf0auFq3JPijG59rwT5Gjtlmc2UnUnMigoGOtclC/x6SMSM6VocFUXUXJ0GPTN2fuObxm7bhI/Ee9KsgeC8o5sO+YmFAhyHn/4TxZYyU6HhCTohg/ug5TeEyJNxD520msW29HgzrGIapyMWhbaAfwzJrSGbSdwe6zy560R0p658I5kakll25OfDi9oVjh6l/Pt/fXoWD6fevqV2J4FHbwpntqQw2yN9gRu1qC9tN9nMb2DjD6VtbDo8NvJPJTp2JOxytWRvOxRdARqYuMqPEuLdYm9di/XaH2Qh3BRBOLF/logwroI1sBUHJwmy/TU17yBROql5VpKFzbcxntoC6/Nbsc2AMNFIbb6JSCxGIhC3ASJMqDH7Z59NVHpP0rdWDTUBzFLwEqNgCZXOJGss/klfzo0ld1dT/UjLgbQmeL8p4RS2ORx/8yTH/547HO6EIh6s+tkYO5Iht7twBlXKEXKz4r8a38vsi4/HGJOVoV2209bP1TmynhWO3f6jVEr4ef1+kOduLF5h2bU7rRHsCW0LLQ7ovkowj/G8h0TTnvrNVc6A/48ceVDmooafa3QIDAQAB"
+  }
+ },
+ {
+  "Name": "pkix_rsa6144",
+  "Comments": "Verifiers MUST be able to validate signatures with keys ranging from 1024 bits to 2048 bits, and they MAY be able to validate signatures with larger keys. (§3.2)",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "Section": [
+   "3.2"
+  ],
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=pkix-rsa6144:rsa-sha256:Zb2KEpvMBVjOiHvC/Za2tO1l5RkPQ3tvJak9tuxRyPS/Uls7H1pVtRpXjNja258cvrez9jW1St01PHvUU8111+P9xisi+YmxjyjfhLtzAFqZvv0G4qkcTWPDvneyJZEnAalp3LAol2US3rRpLv88MxHO87EhI4B7c+ZTL8yCKi1QSZYp0bBHm91ZfRMuIFXXBARZtgYprLWGyYnHlIYxKMtES9+5LOSKxPa7NVcn/CCO0yfAfQ+40NEaJK8rN1GrSV3kd3Akfk8FKzRlleQ06b/NDQaebNoC7W06DpUUmNW6JdjvfAanV/B64NbTo6cu+t1UrFfSWmakiNQGuzM+eBtu5YhehFBlhO6EnsHP3jndzz8jtjr7fvULrfqP9anTXE3hDKnPnZjZqsGxCweAiOns+rnE/px7lTr1oFRWaCKa87quimgu+2JaHd45wgA+NGIBPmc8cxHqPe9l3mthCewRAskRmSBWHwLx5zOH5nD9qRZf4q+bilsYlbQV9Np7t6QzPSr3VuQ8Blu1FhfcAX+K0vyZ9B/dzh8rNYl4znPRuZH+xjxfhMWqrn8Pn+I2AvB+UO7Jfvu1jJY9BZZxXLawAzL7GCb0jXtAvcp6eyo7LbfUCUfmSt4F3+l5VpZkIc7eA8xkA4Vdr6Z8/ol+//Ytu6oIDuH/HLG52qORpUu2nKZYaZr66CqLfUp74tiDaZ5luOmWSNIo795p0TvV0PLLEO4Qd4UBrY6aLs+BotOfchXmV/sw0duwlkyQ/R3FgQu+t2L7w6lyTAOzBXT+xIi97FAmZ10slbDNC2O6GMCtb2w7nIeHZoQbGcuRfDcz7WJSbKWRUFCIgbpjSKURFG5mo4yIsn+FYEqHAY3dO9FkRaveDHL7XYZ2egeMi4vzaI5ky9X127VijTEx4YpI8+WFCOWQcHEML69v7mr49YadxTGyUeT3ijxZZWqbIGPGAmDqc9dz8eM3jBR5vMJVfaJ2Ghtll55cZ1yg0wbWj4/OcCy7/VHBInrBgjUkYeJe\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "pass",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=pkix-rsa6144:rsa-sha256:\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "rsa6144": "-----BEGIN PRIVATE KEY-----\n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\nmDLoD3YEZe8W4PI8EkHnEGzJeKbY5Kw=\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "pkix-rsa6144._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MIIDIjANBgkqhkiG9w0BAQEFAAOCAw8AMIIDCgKCAwEA1MdArC6qKqEn1I9DXB9eM8Ox+BE3wi+piIka8CwmYEkMKbthGigTBcP5qa9qNo8CFm4OTwMudxgE8ZArVcmbz5OWDrG/PHEs0QElIvwKAIS3Pm7aqi8HMEkNV4VAeEeq5fx57X1Kg5wY3OgR7hFpegio7WlTd2/9QnazZiqMwjJAVgywz3RHIj0Y1WVbu71kLv3MZ6NkZzMRy+RVHpkrliUejHb9BSo8imqg8HgrkkCXs+BtHw/vT8v9vr1ZYIl8rJkSfZR9uT3eP+8RHJeGvWgWVvokQ33n9FVtt8BCI1pwvPdFFDwi+2DVgLTNCv5lrJKDDznPP4D/DfVlZ7lD0zU5uwuXGvGOdcFfaI2E2HdqB0tIrpXNx8C8PbOL6wad26RO4epHwHeglbLCVSdPxu6KAwyj7eayXwXyZA81CrFidEDAW9IQgO/gmsQUcLR0jdi3IyUNGOnuDWaVuFCepJhOMpJJQ2uy30nXjMv+6mNIWkdkM0C50lOeZ6ABlxT68mmWVzc0Jjp0YR/tlSfu40/6tDXecjrPEhZWJMh/U5oUPw4glJzCF8H73djP14tkMcyMVV7j4sl4ZCYezVPTzfdrofzVeytPll778BiGnIRoe5slmkPRfQfRVUq3KMYwN9JNVhqMqWd2MyBpkF2afQ7BWQE7UhQZxU/Q+fC4zPYtHrLsR+8wii1V/j80s79JIGa/k8lqTq6FkRV80MMhiMniVi0Yg95qdJp3TRZbWXiAIwclRTlIlYqwCypzsRivQhNvLw89iKPtjz9AiJBclztca7/CpHexzKHcm4XBn/yD//nP+vb3v9KDJpOBtTEvp2lQkExIxDy/oH1t82NNFL85WoPPgw425dhd/DPd68NH97uvb6mI6uFdFj0qbvbKP/g3ObOkyFRzSqc7wUOBJgSpa187Rn1EShrQ6eaK99b8LDOU0HbJS+ngIhQiD0+FNE7NGp9OwNGkEn4vRTMjIZ+DbZmOavkEZcctPUav99JpnfCgMG5soS1yrnDofvJpAgMBAAE="
+  }
+ },
+ {
+  "Name": "pkix_rsa8192",
+  "Comments": "Verifiers MUST be able to validate signatures with keys ranging from 1024 bits to 2048 bits, and they MAY be able to validate signatures with larger keys. (§3.2)",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "Section": [
+   "3.2"
+  ],
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=pkix-rsa8192:rsa-sha256:QfrNPTgeiD3sIDCRbkKm257P4lTOF1EAUA2rU1x+i/UIUxKxLQQlf1EjK6aDrk4V/lU9EE09h0ejw8bCGJyAhNBZf+/RDrBLLd2JiUSdF9Rkak2nacS1BYQn+CTdhIT7daVTlr9n9ArJkBemNCgzNVYJnBcXxMdUiCqVrna7FFQ35ShojjuE0KIY7bKl42/q8uvBncWLYkHnjTmq+LzXx+w6hk1TZFISXyienT/LJnpHnOd+i5aT2x+7N2cyl4hI3iEj3uqkiNXFhQujyHHFVD6JSuyCffYvR5/CXlGkmviUMUSbEnCcix9dYEtHN+6gk6BC2r3O+5QDQDI3U5GQuL/HB169rGloipfyWOPE007wupHpakvHFGs6RbrCVrUVH4yGCQxbj8UV7QocEJPKdZ6qi5Mt8N7TzXaj6BjmOi5AG3OaIR5H8CdkLxVzRb09Bg0jljunaDijKZsERWmgi4p26wl8dSWMMZkz4HZVudn9A4LfRrN4sZQl3wzTgXMNX4mbwpMoyhrTkjhdOMWx/Vt3knt6k9NrN4F4RovgzCZHACU9LvEWI52KbzaADSX8Z+IS2+kvm59vFJrROrC/XqmdLSjnhl0q7bdG77fLY1FzhYS8TVWcb18/KTvMeyx/7iTxHLZ5DqA4GOZ058jtnugcJ7OhWOMgTVYf+6FHZvgKGjgZwGIQfkeu1br/2CDpU4+68TTFTHwZy+ZYTHGK7qHOdCjs1gupaI41V9+5clwBrY2wW4Dy6k3Ss/8B685QTzQ86MwAiJK6g0qgQ7/2f56HgqY1bEUqbwRd4CCQmrEusmByhDfUvh+eYOHSIoA5es5zai01nAMINb9w4buVA/8eKPXCXppQ77gZkU9svOF8ZSQwnpz3sz773wCEZJiy67xoAQDLvry6UY45iYj3y2lyyjxG856L/XOuMStRCEcTFvCD/LXcVHeKb/bQxfHoLdKXeHtMPqOyVGHo2wwlaaLyolg4Dds1I1NdIriNsvMvQ5hxa7xUn4NiIlAvZkKUYZqzHNGplCEyOpbFxx/ZW7Roz1Yye5CM3FYU6wbFI74HUPoQueBVnoI2CK4GVB4d9j+Zd6FFg5MN+56eMLP0ZD8vvTkc/1MIQR+FfXsCU3pTeHwhDXmcLV0sD6ZMSgm13+Csz28Yx7xDRDCQhN4j6hlNsbNMy+n2VIUghnwjtsL2+0UADvexVwfHvAuhACDo5VFXgrK0PlXOqyGZbNVufqrngh5aFX13f7wCEG0ZuIr56XDSuVsysZyAMUXwd3n6euJDCeUemmy4ibwaD2WKZXHOnH/72tYa0RYctnn3orNNboYa+Id3wMwa/7cubK5X8EZVFRN8An5DKMFFSDIsTg==\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "pass",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=pkix-rsa8192:rsa-sha256:\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "rsa8192": "-----BEGIN PRIVATE KEY-----\n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\ngmnKiplb5eRwQAp4tSVOku3hSCuzNw==\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "pkix-rsa8192._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MIIEIjANBgkqhkiG9w0BAQEFAAOCBA8AMIIECgKCBAEAqs6sEPm1uWzXAI/uUdZ8cOLSmRLdEzTN+EsisdvzyElmf7s7QD4NEgU5d9lm+sNoU8jCjbkla/zbnluIuOjuxtbXex1bTjWqu9utoy3qEmEkigJH3NkJthXKXcYSn+6J3gRJZtubGExvt5OQOQu/JQYNl5z8k3CpxcMxF0KBX20Wq+Y2FymN7fg8KNRBc1ralX//oTzxvU2l0qiPiSVlu8Z2PHDUuFkT7TVIYfVzlm6ueDGG++c9GYwD7jPBapZrSzKhjP2K7+vioKVINjNFOLEY836xqs2KZ71ai9vd7/Im7+ywonn0mNC6Ts5bi/JX+oSHN2dXP7HxRPwm/GtGqWrDX6pit6LgPuK4TCFiYEIvq9rySNr7vghpjXrFzF4DFuwqdBu9WzMiAGAboEuWkkVK/rIWThqjhkzns8BbrCviPsjJZRs55oOU3yejlfUj5wZCx7CJJnW138Qf4itN2uWV0rtbtDETIcTKfOxFrbOMxk64udMm+iM9OLd0AShwxzVvc0vKowBPYxVMokV1MF4vj/IcXDJILZG0OZRG/aa5h5q1h2E0HrJrnludI/30WiFRL7PLUDvyWQnYqixMX8+T8IR83M+gSYI1xOje8eeYEG8lR6Kd0sgqNQfnv59RnAjWeoBMayaHr/y3KRBTLlVD95Ii78goYRQ5AW1OzO9PvenfE1gr2w4B1tkG6qLTsWW1xug7ewhIkzhq85mW3gE4aV0gejJDoq3J/IJ5tR/mJTF7IDfgg/GLnuVsEUdZgoHgsV7ZOuXdyafAdM/LkCzwNc0rQVEzgQzLGh6nuuUhIcEcNxYIyZitGMlBG2TiQEfNc4bEIx6dHqRGxLR9dFL/8q5jdqadAKk2w+z6ohpLOYC18xzD/Y+gIaiWNtiJ+2oWjUrsDO+klkiCet0koPVL6MoNv2zcSPRBFZw8J1MUH6Dou/nUz1N4cc/hirJBMon7vkwnIynIA8bs0PJDrm7C/dWVtYRLGJmnw4gFmo4cwVaZuC0kmVTjxIZ0+NATFQriIGHXLjEOhh0zQBd2fwDdPtCT3ovX8QBQ/21o53bWzZDQqRBYhEAs8PpONeRJeY1U2h5A2zDgXsdBIzq9+siFdeaUaUCa0JJhOa+NnNhPX7O0gRzylVe/Eg61tdno6KfDtNvzxKYZMtTlyz6uqIP42mD0Ku0KFLpSL6eqBCZi76d+OkSIobSn91guqt1i31JQnE5VZvIBROekbdURV2pa8+Mcp9LpImOx5kp/wpTT7758xHwXywbTOQcmihvMXXhoXIJTME3dBbNgzhJVRGQxtXtIt7j7wBPHweNs2drBvicgICZgN42tSqDJWq3Lo8usUFmR/UPdijowJ4h/FwIDAQAB"
+  }
+ },
+ {
+  "Name": "rcptto_case",
+  "Comments": "match domains case-insensitively (§7.7)",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "Section": [
+   "7.7"
+  ],
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBFeGFtcGxlLkNvbT4=;s=rsa2048:rsa-sha256:NjAQBvosLH8UbIrPxDlqG/GMATYZcUtrsO1OgglG5P+tl+QvP4A33XWuDjbbe5py/xJVQSbPEVy/m9mzGzgbg1D3lo57NLBCAqV4XhJmfkkLLGY8FR9/5xoSwBYUFqSgP8VeXoxCJfTYjzXYo+Db1aCbuQZnBBgCAzytPwm9IO/eYge1x8Errnm7tt8ndCvom92HmbvJpO1QSqCeN0vMlFIFHLYBoLzU36wKVANy9VMKyG20ijCHwSzP/zYAZf5OKKHpQwTXo2HiT2Xzfw1SuNkLR5tUij1hnW4Y7fsax9hTbww7qV8tv5wzeIGhYUKfYwpg+QXVbORLR41m6u+uWA==\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "pass",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBFeGFtcGxlLkNvbT4=;s=rsa2048:rsa-sha256:\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "rsa2048": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDdbLbeYb/jidOk\nt1ZQGUYCtbkQm54AwCGFrkqIFNgFLQVPqd6/Hcqo2KNpNtZakC5Jk4lRMmV6ra1J\n5Ll6rP3sn1jcV726CmxzAz6bhlkpxp91VNcjLNxV97XTLGPHpi5EmrraLKDVWC1c\nkf6naasaU3jPrusLcOkZcLUqsOBPMEgnuw2YHLc97GG0NINZLHQuU4fMDj0SXdu5\nh2wgEkJoYdh9yA3BQYhKq5i6C4588zABpFHWbvLwMMQwt71y/Qz3f1XZxUIvjO1i\n6g6C5d08V3XkN4EIAbaZg8/kV1Tn2Q1n+usOUae9ViJhEWV5MJbo0iKcue0UWwXj\npvO0ex/7AgMBAAECggEABqg9GM5hjdv/WiL55gzqA2frvkIpWDBHOR7Y55Pfn2jU\nkYKqBneT1WjSUsTMdTJIYfuc4pmImYh6w6z62gD58b1fL+FdmcWgw7OLMcvZ33+X\nV5OBWPue1whgFfGB8nrK0D841Y99eS8Pk54S2KSfNI5Ehw5HpDNDsoz1K5pp7yFb\nKJb+Ik6WYZpo5/3TkSRpx3leeCIKQzY/QLp0CUrAvVLx3AyMUjZA/DBXsXLB2/vd\nvZnm+6s30MxU+GQfgQbgCMZG+mtmN5GQUnFQNAqZa643GGmRiOVNjiLBy2UaCuYu\nERuZjbJgII5VX/Z1wCIzh62hvEhtzjCljD6sb4HwcQKBgQDk1NVgjMR/ShMBTwMN\n/13cKntkUrbRfi9eCu87sU6VlD2VPKL+opp+AR0hCU7Px59me04wEQuTT11pwRKF\nOCYr3QJ3+4bCq3h+LhRbw2aizOfSevQyQiEq6HwyYVjOczBb/ol2SnLahhsVXUXl\nenYl45ywcKGotI0tCJrztkvFAwKBgQD3tsJNdhu27GFzWh1MMGJEeoaGFLlmwkdB\nilqbGnDwgk+GBCMzuDATA8E7rsemCVLiMIXtjrGvR4nqmP/AD44xpt1xNhLXR1gJ\n/CAZxYTlFsPwJQbPXgTiwOPOKdcID0T50nHrfKvYKIJoc+aU1e2vaNHCt1TzNhmJ\nbSHrLnpbqQKBgQDSEFd49ICF4Xgk4WWKefyt2gnABPZyxgWxrRQEljXvtk/6Kdnv\nK1HrjhYxd5vzveskZtlV4q/foSG9rVHVHcBcz9wuTKZfGo3YN3DU9EHJ/ZRqchit\n8msEOruYfCjMDI4+RSHnh1x8IlPGfwNlL9A55AK5LgwZFPXse1PTmmtgBQKBgQDG\ndMP8PSh9B6oXOVYJiSXhSOxnlUjoG7PsvURTyP48oZnGe6AcOm9BfJueDivjSMr/\nbfKOXOjbzYufyM30+EFqZA47OiAkGwNclIK/QvByfSejSHbJQcDWTcT0ka61xU30\ne/ZKvIoMVoAL4PcVvMJ86pRK1IgZhfk1kZpACe97aQKBgByyfzphzVwmde2D06+L\nCbDn9IkXKFPSIrZrzppRTt3I8qeHbcyK+U0mRU6kK9O92a+BPR9N2cWL7VnOlUwU\nYTbUwolasJKYEkH37hCo0inqmYeDAp/rlsJYs6G4B/gFdu6mVl3W5KILMnSQCLOk\nmn5tt9iSb+dPbCLcD8adkmlB\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "rsa2048._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MIIBCgKCAQEA3Wy23mG/44nTpLdWUBlGArW5EJueAMAhha5KiBTYBS0FT6nevx3KqNijaTbWWpAuSZOJUTJleq2tSeS5eqz97J9Y3Fe9ugpscwM+m4ZZKcafdVTXIyzcVfe10yxjx6YuRJq62iyg1VgtXJH+p2mrGlN4z67rC3DpGXC1KrDgTzBIJ7sNmBy3PexhtDSDWSx0LlOHzA49El3buYdsIBJCaGHYfcgNwUGISquYuguOfPMwAaRR1m7y8DDEMLe9cv0M939V2cVCL4ztYuoOguXdPFd15DeBCAG2mYPP5FdU59kNZ/rrDlGnvVYiYRFleTCW6NIinLntFFsF46bztHsf+wIDAQAB"
+  }
+ },
+ {
+  "Name": "simple_ed25519",
+  "Comments": "Ed25519 signature (§3.3)",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "Section": [
+   "3.3"
+  ],
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=ed25519:ed25519-sha256:rDU9vKCgNwbQz8SZhi6KEkKibzF8q9ozZi5A/nTAOzeUwv7KgNwIEimhauUMC7NmIJ8ffZHEpHyiat0OzeXFCg==\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "pass",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=ed25519:ed25519-sha256:\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "ed25519": "-----BEGIN PRIVATE KEY-----\nMC4CAQAwBQYDK2VwBCIEIM6FWyVRYd3E5RZd/OzN7uiBCpcHwnrTUu7qymtM9kln\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "ed25519._domainkey.test.dkim2.eu": "v=DKIM1; k=ed25519; p=nJjZf8LyVfo7pxT28dT3gWhRkcM12+6qhYiOwx8oPco="
+  }
+ },
+ {
+  "Name": "simple_rsa1024",
+  "Comments": "Verifiers MUST be able to validate signatures with keys ranging from 1024 bits to 2048 bits, and they MAY be able to validate signatures with larger keys. (§3.2)",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "Section": [
+   "3.2"
+  ],
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=rsa1024:rsa-sha256:tg6Jl7olr+tKJpxrmQOltZOElZb2SZ+N9IsmLo02mQqNvLgB6CV9LYs3mkzKdmfe3AX50h8TBePOaFsyF6Emy6w7X1tiZJH2J/BaHOeG3QOknQrUgJRN0nFBQ2r3JdNr83WHh1aG9G4uON+XxsXRlEzst0Cy7ip0FRcQvKcvTek=\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "pass",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=rsa1024:rsa-sha256:\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "rsa1024": "-----BEGIN PRIVATE KEY-----\nMIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBANROG8vxZQA/lS7M\nSwDz2DjGxUH7BJ3IfJbSs88jvjs7wEhu/JFB/o1JJ1dTrYjoTnRF1RDxNLXpEu4l\nNwxQ8tBMawor5brsULs1J58A7cB65HfYScsTxDgYKdGBnX1aKQxsp8DgwwZNEr7T\nvsCNqxITlbgDIRFy0qnc6RmoCc9VAgMBAAECgYBMGtfiCt2e8iwDQ56bb84RxEdP\n+LDV8tmeo1drqK93wlqSXJ7TX2nlsdSVfFyX2FbPXX0cfqrbjvqHPfX2x0nS89MX\n3pNEuT84WWwLLj1xXNpOEReviEA/Az+GwSFRZw1/aaGoX944GPe0NRERGH8l8hh0\n3P5P/7kn6T014lp5XQJBAP7egkCIwj+JrLmrhWMYp8kj/57REcIIDyE3/EORAO9d\nFWVfz0QKZVdrAVNwScUt1xuUsJwmeZfNnZ1oREN/dOsCQQDVP0DzpK4tp8atChcs\nK9ySuJ/wcYk7a68OWGIhtIriWOkqjaw55B5WPH3M9oN+YIBbeiMY4Q/Z9gZp9420\n/7y/AkEA3Mla4pbWV35nj8xjV84zA47Y0PbiQEkE+kzqjomd2r2zXEdcYN/0nH8I\n/gQnE9Y7IxxyxkKaUQQBRyvc/u/6EwJAdm7w9eAqVHTv5L7L695YXKxpN7L20qeV\ny9POfIW29MsIhHe2hVhqeN6Tx7fJg/C4mRWWVIT6tsTq/wNcEoBOJQJAOrmrlsvq\nE7kQt2f+BFyAmF/g+QNgDQDxyzBR7K0R/itRndfsCfhT+r3lOKEqR90AqCWLl9ry\nXubJ0L+y8xnB/w==\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "rsa1024._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MIGJAoGBANROG8vxZQA/lS7MSwDz2DjGxUH7BJ3IfJbSs88jvjs7wEhu/JFB/o1JJ1dTrYjoTnRF1RDxNLXpEu4lNwxQ8tBMawor5brsULs1J58A7cB65HfYScsTxDgYKdGBnX1aKQxsp8DgwwZNEr7TvsCNqxITlbgDIRFy0qnc6RmoCc9VAgMBAAE="
+  }
+ },
+ {
+  "Name": "simple_rsa2048",
+  "Comments": "Verifiers MUST be able to validate signatures with keys ranging from 1024 bits to 2048 bits, and they MAY be able to validate signatures with larger keys. (§3.2)",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "Section": [
+   "3.2"
+  ],
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=rsa2048:rsa-sha256:Cl1VoqV4DBuTrWHBcE3SMXi5Cen+1Z2crXciBzIBmG1AT3YeeCbzgrAqfwzM8h3VEbvXrS/1C4evlblcD6jYWhSjjtErwS+1fD6X9mLzVHmv8dWAD9dDyXL8moXN1JUE+7XNuFu2VgEKYSX2ImPHnnUF7eAKZ9JhB4kfHBdug89rba5OVNSZLZDj8kJStjyRdQ+A4XJc8Gl0Z6JVrnPuflLtjVqMw9BgDJG1xKZatWiF70Mugt2GluXitQ02LNRHgwcQ2nC5a9Wc8kTia7d2Lb9MFhbuGKona0B7FiroCujyL/q5jtyEWAfuGKwbYvFhfZGXy167X+LeTasMVteHgg==\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "pass",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=rsa2048:rsa-sha256:\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "rsa2048": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDdbLbeYb/jidOk\nt1ZQGUYCtbkQm54AwCGFrkqIFNgFLQVPqd6/Hcqo2KNpNtZakC5Jk4lRMmV6ra1J\n5Ll6rP3sn1jcV726CmxzAz6bhlkpxp91VNcjLNxV97XTLGPHpi5EmrraLKDVWC1c\nkf6naasaU3jPrusLcOkZcLUqsOBPMEgnuw2YHLc97GG0NINZLHQuU4fMDj0SXdu5\nh2wgEkJoYdh9yA3BQYhKq5i6C4588zABpFHWbvLwMMQwt71y/Qz3f1XZxUIvjO1i\n6g6C5d08V3XkN4EIAbaZg8/kV1Tn2Q1n+usOUae9ViJhEWV5MJbo0iKcue0UWwXj\npvO0ex/7AgMBAAECggEABqg9GM5hjdv/WiL55gzqA2frvkIpWDBHOR7Y55Pfn2jU\nkYKqBneT1WjSUsTMdTJIYfuc4pmImYh6w6z62gD58b1fL+FdmcWgw7OLMcvZ33+X\nV5OBWPue1whgFfGB8nrK0D841Y99eS8Pk54S2KSfNI5Ehw5HpDNDsoz1K5pp7yFb\nKJb+Ik6WYZpo5/3TkSRpx3leeCIKQzY/QLp0CUrAvVLx3AyMUjZA/DBXsXLB2/vd\nvZnm+6s30MxU+GQfgQbgCMZG+mtmN5GQUnFQNAqZa643GGmRiOVNjiLBy2UaCuYu\nERuZjbJgII5VX/Z1wCIzh62hvEhtzjCljD6sb4HwcQKBgQDk1NVgjMR/ShMBTwMN\n/13cKntkUrbRfi9eCu87sU6VlD2VPKL+opp+AR0hCU7Px59me04wEQuTT11pwRKF\nOCYr3QJ3+4bCq3h+LhRbw2aizOfSevQyQiEq6HwyYVjOczBb/ol2SnLahhsVXUXl\nenYl45ywcKGotI0tCJrztkvFAwKBgQD3tsJNdhu27GFzWh1MMGJEeoaGFLlmwkdB\nilqbGnDwgk+GBCMzuDATA8E7rsemCVLiMIXtjrGvR4nqmP/AD44xpt1xNhLXR1gJ\n/CAZxYTlFsPwJQbPXgTiwOPOKdcID0T50nHrfKvYKIJoc+aU1e2vaNHCt1TzNhmJ\nbSHrLnpbqQKBgQDSEFd49ICF4Xgk4WWKefyt2gnABPZyxgWxrRQEljXvtk/6Kdnv\nK1HrjhYxd5vzveskZtlV4q/foSG9rVHVHcBcz9wuTKZfGo3YN3DU9EHJ/ZRqchit\n8msEOruYfCjMDI4+RSHnh1x8IlPGfwNlL9A55AK5LgwZFPXse1PTmmtgBQKBgQDG\ndMP8PSh9B6oXOVYJiSXhSOxnlUjoG7PsvURTyP48oZnGe6AcOm9BfJueDivjSMr/\nbfKOXOjbzYufyM30+EFqZA47OiAkGwNclIK/QvByfSejSHbJQcDWTcT0ka61xU30\ne/ZKvIoMVoAL4PcVvMJ86pRK1IgZhfk1kZpACe97aQKBgByyfzphzVwmde2D06+L\nCbDn9IkXKFPSIrZrzppRTt3I8qeHbcyK+U0mRU6kK9O92a+BPR9N2cWL7VnOlUwU\nYTbUwolasJKYEkH37hCo0inqmYeDAp/rlsJYs6G4B/gFdu6mVl3W5KILMnSQCLOk\nmn5tt9iSb+dPbCLcD8adkmlB\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "rsa2048._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MIIBCgKCAQEA3Wy23mG/44nTpLdWUBlGArW5EJueAMAhha5KiBTYBS0FT6nevx3KqNijaTbWWpAuSZOJUTJleq2tSeS5eqz97J9Y3Fe9ugpscwM+m4ZZKcafdVTXIyzcVfe10yxjx6YuRJq62iyg1VgtXJH+p2mrGlN4z67rC3DpGXC1KrDgTzBIJ7sNmBy3PexhtDSDWSx0LlOHzA49El3buYdsIBJCaGHYfcgNwUGISquYuguOfPMwAaRR1m7y8DDEMLe9cv0M939V2cVCL4ztYuoOguXdPFd15DeBCAG2mYPP5FdU59kNZ/rrDlGnvVYiYRFleTCW6NIinLntFFsF46bztHsf+wIDAQAB"
+  }
+ },
+ {
+  "Name": "simple_rsa4096",
+  "Comments": "Verifiers MUST be able to validate signatures with keys ranging from 1024 bits to 2048 bits, and they MAY be able to validate signatures with larger keys. (§3.2)",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "Section": [
+   "3.2"
+  ],
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=rsa4096:rsa-sha256:doUJZ7LAHmxbvNfkau2d1OEqPGWeZHNhfrsq6j9JoPh/InhLVqr/hLIOM+otshUhUYQSw8Ej0N54jIA7mAHO91OGjKtVV+PrnnJZ55XnQQlkQZFzS1iVYOF4pfVKgQFi2CRgz3xl91DJF0Fso5MLsvU8lcYXsLK5CJAuyKzT2+ZUtSxkpXKOeqwjIuMfPdZW6olHgx+fMXwxfbm363XP/E6J6hhO+cog41okRtsf289rBv3Hia74O9fVOlK7w4qpICius88zlXbQ8zFIQojczyh0x6DieCR+LTF/t0Im1i/NyoE0Qc5kSuRKh4BOBhBvq4vpmMhyfIP3BsyILrUyHGtKq4b0vulBDwa3lzJAadM6HZMtcKHV1te2jRZCvoGGPmHoD4QUcKqxZPPE6ULhvKRqbmymvyyvmSnoNDaVG7Hbr8oblrWOn+ijTtKLJEusSR/m9lTDzdb9HOcG+BFUc9XSmB5JN0Qq+Ybys21prNButNISMEvrX1RQryyJ5IpzMnwUsAAAcbqI2N27A7nVMlJM+HWd0YU3usoW3BAk96h9sJ12uul38yiZZF6QZhMyiykv3Qq6PdySVAMmUzsURVZC3QgdiezHWsCyXbzYGHB1wrD69NDeLVZ1PpgP7bsRaxWt4w2Oav7LheO8xEyOli2M+yW1sEkFNvf83cLTrtQ=\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "pass",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=rsa4096:rsa-sha256:\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "rsa4096": "-----BEGIN PRIVATE KEY-----\nMIIJQwIBADANBgkqhkiG9w0BAQEFAASCCS0wggkpAgEAAoICAQDEpXYKy5C3CHNQ\nv/UPfRJwLMcQlsTOXfJBqWs1b9Rt0Mh33T+UTm5Rzoj+mUoyTEkBFvEpRww+iP3t\nSBzOEEDxZf9eSRovi0hra5pCX8W2Jw0t5vcAJySkFDm9Ed5WzCyHV05ri0IpBioe\nG5MojydOIDNYmp266Rf72VmZZmFe9g+DKQL9h3ny/88BZvTRRZwwfuwg+CpXeE8T\nqzbi88jK53f84i/kDPR5nYRAUhjYGK/LHjOsrJjvfOQtJ1xkhqGW5ZtUhmrt5jFx\n5QqLSz8B1JFrPWxXIn1xHnEnCJxCafb6QLUADu0jDsgLRmFVp8o4yLSEtBhxiyDo\ndAcwnAiQ72FbyHJBm4AGAEG32n23nQ8tmnGfm5CLNe/92XfP68xQGS4K7H6b37GF\nrHJxEwFG5NKi//1xz2+Cp3mGauOnC9Fd+asESckFyT4uDp5ojTtgEsOggK9ZxTd4\nRmVVjbFrfMZrZEPPaLFQ8VR5V4FWnHrCYLpRhNyws+L9wy9RQWiQOovp/GIoYWbB\nrt945Okeodwc1W8iSHtigBD6hmqfDTfghu/0Bm36aslVWY5ilqK5VzJKTV8Ky4H8\nH0arUeQcfUu1dCDcbECdrZbQ2lNogVuUqXmxquxPak09vHRTBYCDtVLFX5pWYEbJ\nAgyIlgdhjrXfKqsfzbNxznKgjdernwIDAQABAoICAEQYghh55qqjR/96AZwz9PsY\nXnTNqOhHmxkG2IPALoE6r/jmClrKkCRPD5yOq6VgSlWQwsFHA6PyH3CYLLVk5oBR\nkE1vphw5sMHWGKyMarRJsKQpG3aXl3YkNNxWwDYxbOgPIS5Xonj/U/1qEhsU+4jv\n2KgBnsY3aqFBYmgfDm/qaHPEc28lB2NRFzeGlheT8eLPSOif11XD6SpH+3E691jg\nL+pHz0q6+7vTgpUdeNH4NoPxePZ+LFWeW4uRWkrLXlCZQSFTjNrGAHBO3sherbpu\nCE9pDUfdPzA5WPip4CaVeDuvxZ34DUE7IKXa4ODfAkWIpw5fKSnEgohMiaLZHZOr\nknzaADPs/9i8i2U8B6xwzDiTxBChWz1p42/uG5liIf9BnTBksziJwfQEL/nsUBil\ngMVHwQH0cwMoe5Y5dRsR8gJwYEWS+5ta+1dlo1PbbE2KSfcvGxLT0U0OwGf9wNVj\n2CygH3Nf8on3c9Funx2Be8PLikUO2iP454xFL0kaZ3eartCbhlzzAbV0Ck9qzkYq\nVEn/hOZ5FfMM/Ncr2j2NT0m7IVvhDrkYrFf5SMMvDLVy9O7KtWcahNZ9SSPBsCH1\nzZn/n1BxIk2QGZ1j3dPfb6ZTZDDN77w5Zu5lK6SqDFg+pyRmDI3Drh0uwbfZW4o4\ndxs1iOB95o8KlIu/EAxBAoIBAQDivSLBjZjw6pbCfSEkWDEeJqjiijT6crn1LOLl\nXpy664M5gRaghfjZVfPhU2PzgidaOINwq6Hl9OehcVqMzxMaFrTk9jMk/3zlKyNv\nxfoBn/l1YW62tdsHREt6FrYgjtdnCfb6lndZhjSwiwT8V9Gp6II1YHAZPFXqR7bP\n+x0mSPE+W2hRcDXITNZ/Zw+0ovxJE9xlPwUUAyzNT7KQKnUs6kDHUDp0FeKo2std\nwy59ErTbzAFdJggVvnDnxX9WMYhPHa7mDMZxjfUYu39MNSlZUY5O9KCt2VdFT0/V\nl57GWWChpQvVpuGEE1b4CUxbrGHimFv2KPB7HyOQe8RaYebBAoIBAQDeBiXJ3zpt\neyj+oXs7zrfqNzMfam08adIev4gPtlKpBo0LCCwM/JC3msfxWaanzSv88gWE4dBN\nOw6VlPJdqA5Ip2rqqCCSIWYHO5WJhfB1FBsR3oJLoIdD9UCBDR2SXKc+D/fxZ/QV\nWdhxHTBxphvCCO7OlkvqgSwday/5og8NxFL4qlGfC3VQs+UQJdE4MjmOBo34PBgE\nJVIhgYGeave2V6m6ErF5LqzyJPKcu3fImBJWhSI2LNGYvBfV0OZ3AN+cvKqz8Vpq\n0LlOOSul5P2zHnNPKQ6BZwct9q8b6x3SeouvN8Q1NWLXyq/rIN4JcJl7/W9jxZnf\nclu7T0P734pfAoIBAQDVEAXo+7YMLWUdvZe3H2iIfKuWtWizL7uuuE8+WnnM7CKT\nlso8bag6Eprp0gLKgDOahCB/b8ji3hALlQkR6ER673ts7C2DRtGGR9M05UTY4gr4\nUmZHKvx3B6YlQ9JBJfkjyilbsKjWZ1Z7zycQOTW8A9DXd5ffHuNdE6amKcJqh4Cq\nqBqO7HKdlha6AY6wn7eStCcWvPF4rMMc6xdQgZU6b6YPpURIcYhcQ712jkLRJRLu\nt/VQIrzWMe7G3L+br0/3iF0hsD+J1WvLoeUtJ4eDdy/S4e1bcDCh4LWUcLWyjapQ\nO1eznO2tvr6qtZIbUxFobON9nVrdV5WD38nTZMwBAoIBAEMqdPAXGePY6FPvogo7\nxSOTw2Fznswx7yDiLFUkgOklVDHMLRdYqKcCqg33YxVMWkxRIx5J+ewDO6xAvPlc\nR8Xu78dBSWkrtWPmwJwz6sRgargDKkOaspD6dqMTxqhqYyXBSu661fpHjdTaUbdv\n2uHeNfBFQ34Tyba0oHTSc99kTv1u+PY2Ty003sz9w8dOWl7+2KAJ/fHzIF+GgCHe\nlkWRS4VA9nOEjUlLqCGGDPygFJwb9neRI28jJ8rFQZMqrnsKEFITZ5j8v7JMVUoA\ndkdjpNqDvyGie2eKQvsdK45rCCrfofm+xsIlTQbCkKkmaSg7SSFTu/L+84U8u4JM\n490CggEBAIg1lMWvl+SHY21xsb3pFzENIz/NHVw2rPrF6cO1S2RYvlsItcCuO/UW\nhFzYVOT2l1IVhSm5MLJRV6CVJ7BUL+E6cRYYWnJU+KbQkeUEIKEQH493ZYrHjzzv\n+RiUyCrLBYvh6OcND+Q3KaYCIQRzqcOxgQ/xG5zA8OL94W90VD1euf15URjsA2FN\nwjxYLTLQrP0LlsbCUzmEWUAk1jPRJYLHYdZCOa6yzLmrNdPvn0lPhARaG5erUAt7\n6SU3U1jBZ52+moP3WNSUZd47v9CCxuDBrAyB9NWZcSul6OUS0F2A7sUvMMWXNe37\n2UnNeI7mL8QZu/aswJC8bu7O1PDZcBs=\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "rsa4096._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MIICCgKCAgEAxKV2CsuQtwhzUL/1D30ScCzHEJbEzl3yQalrNW/UbdDId90/lE5uUc6I/plKMkxJARbxKUcMPoj97UgczhBA8WX/XkkaL4tIa2uaQl/FticNLeb3ACckpBQ5vRHeVswsh1dOa4tCKQYqHhuTKI8nTiAzWJqduukX+9lZmWZhXvYPgykC/Yd58v/PAWb00UWcMH7sIPgqV3hPE6s24vPIyud3/OIv5Az0eZ2EQFIY2Bivyx4zrKyY73zkLSdcZIahluWbVIZq7eYxceUKi0s/AdSRaz1sVyJ9cR5xJwicQmn2+kC1AA7tIw7IC0ZhVafKOMi0hLQYcYsg6HQHMJwIkO9hW8hyQZuABgBBt9p9t50PLZpxn5uQizXv/dl3z+vMUBkuCux+m9+xhaxycRMBRuTSov/9cc9vgqd5hmrjpwvRXfmrBEnJBck+Lg6eaI07YBLDoICvWcU3eEZlVY2xa3zGa2RDz2ixUPFUeVeBVpx6wmC6UYTcsLPi/cMvUUFokDqL6fxiKGFmwa7feOTpHqHcHNVvIkh7YoAQ+oZqnw034Ibv9AZt+mrJVVmOYpaiuVcySk1fCsuB/B9Gq1HkHH1LtXQg3GxAna2W0NpTaIFblKl5sarsT2pNPbx0UwWAg7VSxV+aVmBGyQIMiJYHYY613yqrH82zcc5yoI3Xq58CAwEAAQ=="
+  }
+ },
+ {
+  "Name": "simple_rsa5120",
+  "Comments": "Verifiers MUST be able to validate signatures with keys ranging from 1024 bits to 2048 bits, and they MAY be able to validate signatures with larger keys. (§3.2)",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "Section": [
+   "3.2"
+  ],
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=rsa5120:rsa-sha256:QvJ2AxBwCmdNlu2rNS9psU6xxgM6fheyqSjGmcTsfJGupy/Fj6V/cADcSaCiZBH814XQntCqjk1D1ZjHFE1reY60xDBiM9ROG6w7+Kof5dcOuEqSNztAyxSPH01P76zqkpCjUSaQhS03Xux87Dw6Sgh6WHpeB4HnfiHJU3t1/Sj9ox3xMdnye9buYRw1xl4QdyISNcIm6hT4FrgBwo5cQdC3//bsVixKcKASrsNlYnY7B1kTXWCL7WMEDLFc3TGZxYRUnOjugwBO59e9SKhApiSLHtmho2DWkqsRFMjzUHs58oVEjV1c6axpmg8Qt9mnQbYvy1UF4W2RIzQ507Wo4HAirj9Kf+Arcx0BU12Hlt4mrBIxbynrqgmjWpTZ4wtnFYBhEe8QE3850YN3P7agDbbpD6zY3MFIsozI0++kA3mRJ0U4J8ynPI0lM2EDEBRTT5lqXVrlk6JziosHuIr5dGwV0CIBnpZ5qNEpYNJQm/v1oG7ocd+B9K1jSOOMB3Ab53QDiZUhM+IguI6tIkirSDDRMwTqACOXby/ac0IlzlFSRFApl2Tlg+IEv5QavZq6L6Ind/8PKat/jSpIhSwPzb+5B4kyj8QcH6GGcDms9v2ik14twocQsaTFL/cqAjl3VDWdREZMs3CwTeI+5FdHJ+CoiYc/zmvuyjm2SdQLJyNoBbJhtlHbwseTPC82oITeX8acuksF5+EYUY9+hJF4SPGfvapW5iSH9lCKuh8oF3ElE46cfxtiFwZ2W7BJLJGp9fITrHP4UycULu99D5zBYzauXMBwnuqCdG5hbCt6PLyf+wCiVImkVin2nRSW3VJ8QZV7V4L5MGyj5vK2AId2aA==\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "pass",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=rsa5120:rsa-sha256:\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "rsa5120": "-----BEGIN PRIVATE KEY-----\nMIILgwIBADANBgkqhkiG9w0BAQEFAASCC20wggtpAgEAAoICgQDvwfZmYkTaVPRd\npCUU8+bStMwqFQlCtrwWF+awGvAxXwmv5LgCW0/gevk+inkqQxM0MCv1b71qEA7X\nIkEJZjCVomPs6Kd6TjfSskiW1oN9j/ihOhZFg+JJa2H229yzikv9oRxBTGfg4oRG\nUTjmq7Vh8QF6MXn3Mp9X4ebZD5mqp7fSMfTbkeRGMuWLHIbWoFYy0kV+rWFRnTQz\nLm9gvV+ibI/VTJVR5kD4qSoRh6JP87fLkzsiyMA2QZ9foKGpkV4+6bb2FLNCSuQs\nRf6+PZaTYUex/Rq4Wrck+KMbn2vBPkaO2WZzZSdScyKCgY61yUL/HpIxIzpWhwVR\ndRcnQY9M3Z+45vGbtuEj8R70qyB4Lyjmw75iYUCHIef/hPFljJToeEJOiGD+6DlN\n4TIk3EPnbSaxbb0eDOsYhqnIxaFtoB/DMmtIZtJ3B7rPLnrRHSnrnwjmRqSWXbk5\n8OL2hWOHqX8+399ehYPp96+pXYngUdvCme2pDDbI32BG7WoL2032cxvYOMPpW1sO\njw28k8lOnYk7HK1ZG87FF0BGpi4yo8S4t1ib12L9dofZCHcFEE4sX+WiDCugjWwF\nQcnCbL9NTXvIFE6qXlWkoXNtzGe2gLr81uxzYAw0UhtvolILEYiELcBIkyoMftnn\n01Uek/St1YNNQHMUvASo2AJlc4kayz+SV/OjSV3V1P9SMuBtCZ4vynhFLY5HH/zJ\nMf/njsc7oQiHqz62Rg7kiG3u3AGVcoRcrPivxrfy+yLj8cYk5WhXbbT1s/VObKeF\nY7d/qNUSvh5/X6Q524sXmHZtTutEewJbQstDui+SjCP8byHRNOe+s1VzoD/jxx5U\nOaihp9rdAgMBAAECggKADSQ0WsFJJS8h48i9pZaG0NwgaAVrfVt3F2jropHKF5Ku\nJ792xzOfvwij2mXhpUuJj8M82EDt1hSXk6V+K23ip4OqoXomb+GTVWT4mJfycMfw\nPfoT7W8rUJCRDTmuMQMZY4dYp/Wa/gG8c/7mCl1gCERwVcpvdSQHsDFNeMP4+Bh6\n+WD2mwW18ukS7ts7Qs6wBYIZVWEFzrY5/bzZAFRGRn4CgOj9MuuBen+0iBhx8PBF\nYzmoifa3SQyzbRzor4WBxRtaBXFLWrdbJq1sJ0ZIl2nDccHonIaQYkzkjSeMUvUU\nY1EO41qohfA8nyr1xQiz4jhClWyTuS7BFQlrdvc0y7xGvG5K0O5RtylzY8AbfABD\nEtRTfktMAPwpSLajOp3dgu57Mphuue9wRftcHGwcUWDeDZHxGzwPCMhHdx3qBBBM\ndA2aZ/g7t8DQcOBLt5NyZzr0Ax3TRarYX3aetm4VBTmLzQgI4DrHZHz03CZZYPoY\nlISHhrkQE8yJnh1EL0zyUZcqrce8H9OlSSs73/jQrx9zT0jWX49DRv+iIh1Z8ka9\nZJqc0Fya4FRgnBurgTJi3JWEd/nhzQLCn9o0KCPTLsWNwSfVQ6sGQvw827+l34sq\nEcw7B1ivUkApda6sx+8t3BQz83Gdj1glnFnBLcXHI4f1g41FU5iv7B/lGJ3JZJFd\nf+3LC30Qfu7I09BrDQR8+99tvSws1ADuOPbiyu+z9cvd67fnyQPc7jMJbmL4oXRh\n4s0cPcH8m7EtXMFEPson3KI6gNTvc4Ll9bLFNanMjihmGkh26/rEjJMvZEU3DJfa\nJdfLm/gZh8p418nYx3cqDY/VLq7aq/CnaaS75fnzqwKCAUEA9GK2YOmltDExE+qr\n2FYOuJRKemSmawdP1H1kzAiUMSobxlygVpfsLsm45cfDUCIZr7t4m8pS+mNhY5Rd\nQCGwDIRrpTo9oaW7vdJgaqKR8HlnH3+MKRDEmpxT6hiWrQZVfUfsvUxIKpgSa602\nItEgAgamzQONoez+0WtXI5SY/4K2L+eaOQJHsbocjvySUrl4liaCmuL0PIWEYIch\nhlEtjMM+rcwdJwqKNTc1V1cK3bS6Wmc3uWETHZ+FeBWepQ79s7pasOuz7GEL3Ye/\nrLXib4imZIgrxPTxjGmqdYrEn9x77ozfswKblH+Wq5sRCiWsQXvJt1uo8aWMgBdn\nE8ql0gp1xUUfeTop2fLFJJ4KO2HU8whDdsffrnjlooVyQPB/y24Xpjt1VuDAoeFc\nwBZyS8VTuke8xvXsFkU2MNb5mr8CggFBAPsm8efiTUL/5nuh4h/uILNC+GRoJd5l\n48KsTI4bUVaeORFqJAg6d3v4g2Sj2/FcYnbihvRBevOeqcY0JSwAHA455W0qj0d/\nEGKJbu2PYYXJ1gS4SaSlD2QUOJJt/9JZGF2y2tNaAXd+u1sl08IRtwTfFUZ0otQK\nJynNd1b9WwZoxfAwnAZeswbtiT0lWglDapcOTKhxqpvLNFOYYOIPb8NQ8k0CTlcI\niHPcYlnvwahbmdIAJQztKKJHKKrkPWn0KOeaCcIAkH3GCGvso+kCYjPRVjR0QyAl\naGXbZOwj9IdnI5numOMXebxk7EYv5L1rWuLnzQFXSIUnBesUYXsnIkMcxjTcdepC\nrYa0GR9dE2DP1Oxq2PV7RUOQMOlxchNsd+CoHZuEaV7TRCDqblWFUIjYxv73e0ea\nlORtmNnKnr1jAoIBQQDMfFBodPhu9v4+0QxrX07ACWzsTo2lXp/gh++wfbkqDjbh\nWp3a9xHr8GRi+CyoP3BIx8/aY4fc9Q0HWpxQTh/VyXOc9Eefm2KlKYP9lfwRQDQW\neg4YSmyHhij85wgkzPj5dBZWKp7z7Pz01iFHLr7ekxw8zS1UgU6SgoOORQdkPMYe\n/WbhLtQ4lSbSSepRh9mroZuE6EQ+4+VpM4jMr94yOyiWGgWGpl4QuxpJ844nBtMr\nU9Sfq+dn0RPH8Ccnq4yDN3otMXwCXQ2llrG+XQ6UDr5TvlEJY3894yh7Y9q0fLPC\nXmPLkHIH5l53RrASUoV44ZBeeTa6w6/1eh+IwvbO8muq3fTA5fcg4+8rfYXIPEsH\n9DEnEYVLouNagtigF9yGpp7pPDUptbPZgA2wuNd4KSuu4dnGjP23gMAgS7DdVwKC\nAUEA8eLFUy6qeN/bjLESBuyig+P5NUL1TefV33VwWeFHimPi1LnkMCSXVUe4zGHg\nf+oZTyTHE1JJZ38lRiaMsn78hlsOcwBtdE+VaUGyG4xfQaptvKf9DVyHoTy0a5sT\nqvRyOjP6+1mRVhQxwAyDkULcgQ2WAQBunkeVBnbD/H0QgPDByp4WdzAXvpFh/wkN\nWSSb8RYtkIHA7kFciTKWBMMXQgahBrg02S/3s5bLBpGac1qdoBrRlEyJORnNuiEO\nYRBtoPnDchx3DRuAmukTyGOqTvvLycM7ryc4D/mojqHmbc5RBH0+tGC0t1SAFu0j\noadWpnjYAfWde9hko89CP4kmP3rkDp9R1agYVkb4dzN+aVxhVr1lbbAmunaSFRNU\n6g4quq1PrqttjI1u7UC7uRQnx1T4+zFBg2oHAqXnc8Lo9b8CggFAIPrMkdwocVyS\nlqvKTtloEjGErWS+BkOhw4IufAL/AYUwkP/0AfS9CRm2nk46DKTSF3golnrvh0c6\nWzWqEJHsiCQBzoHaShRfm2W4cc/XaVlPaid+ppSDAaKGZO612KRDWZcAcFBSXVY8\nIIwYCkDG71RYiB2eIZTqEikOZGT1oPybhhzdS02ecaSBTLcYIld6jKdPLvTVT36S\nEZ5i0+3+5F40xv58eohaRTa4NCibCYZKTzkXLWFhIfVb0EAlxY7F+BeCiv6Y/m/G\nsWppxEhm2ebc+eb6FoTz4dnH0ppg05+AMLUEXA59FENR1BDB5SyiAEZ9SWQlI4VZ\nnQzVqwONBwtHzaemLo68M+cA4M2PHOl/7ZcHSvx/ryK5BjZk0aPdRVqz2Ngk9dAB\nE4UWVAT2bWiu6ww7iuxCXISoA7V8MwU=\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "rsa5120._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MIICigKCAoEA78H2ZmJE2lT0XaQlFPPm0rTMKhUJQra8FhfmsBrwMV8Jr+S4AltP4Hr5Pop5KkMTNDAr9W+9ahAO1yJBCWYwlaJj7Oinek430rJIltaDfY/4oToWRYPiSWth9tvcs4pL/aEcQUxn4OKERlE45qu1YfEBejF59zKfV+Hm2Q+Zqqe30jH025HkRjLlixyG1qBWMtJFfq1hUZ00My5vYL1fomyP1UyVUeZA+KkqEYeiT/O3y5M7IsjANkGfX6ChqZFePum29hSzQkrkLEX+vj2Wk2FHsf0auFq3JPijG59rwT5Gjtlmc2UnUnMigoGOtclC/x6SMSM6VocFUXUXJ0GPTN2fuObxm7bhI/Ee9KsgeC8o5sO+YmFAhyHn/4TxZYyU6HhCTohg/ug5TeEyJNxD520msW29HgzrGIapyMWhbaAfwzJrSGbSdwe6zy560R0p658I5kakll25OfDi9oVjh6l/Pt/fXoWD6fevqV2J4FHbwpntqQw2yN9gRu1qC9tN9nMb2DjD6VtbDo8NvJPJTp2JOxytWRvOxRdARqYuMqPEuLdYm9di/XaH2Qh3BRBOLF/logwroI1sBUHJwmy/TU17yBROql5VpKFzbcxntoC6/Nbsc2AMNFIbb6JSCxGIhC3ASJMqDH7Z59NVHpP0rdWDTUBzFLwEqNgCZXOJGss/klfzo0ld1dT/UjLgbQmeL8p4RS2ORx/8yTH/547HO6EIh6s+tkYO5Iht7twBlXKEXKz4r8a38vsi4/HGJOVoV2209bP1TmynhWO3f6jVEr4ef1+kOduLF5h2bU7rRHsCW0LLQ7ovkowj/G8h0TTnvrNVc6A/48ceVDmooafa3QIDAQAB"
+  }
+ },
+ {
+  "Name": "simple_rsa6144",
+  "Comments": "Verifiers MUST be able to validate signatures with keys ranging from 1024 bits to 2048 bits, and they MAY be able to validate signatures with larger keys. (§3.2)",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "Section": [
+   "3.2"
+  ],
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=rsa6144:rsa-sha256:clqRT3CISXX99a2FyE7B9ddv5nurpC6I5sAx+yLdr+jCq8crAHP0VqTLYGtfds5brFEX0ef5q5VXQAzv+xDvuelsc4glMxHNKTgQRiocXPUJVLPPQhUUTrddOGd/vg0ju3+zaRNn/PUfQ7DssXTTig/0cvSQqutTGHWqTRUcsttY9xCJlsM5V4idczGVpmdiOBFkRuiU5CwcWyBnToe3BxL2aSP4tmtznj77nof0mAIWdyuZAoM55t7+/syu82SQNd0/vCBi2jd4nvpcMdeOopQ1jfwHYH5obErNMd1hwEWFAOX+0TWCDhUHXKyjg86mRdvIjHkeEprKlZ6yGHGy2nTJwuq4SLNzlfoal4T+chAcznXMdv1TVg0Xcnhn3FtGV8YOryLwU7HEG1jVmrjFPw3JwWTonH4h5l6zZl8Yq8Sx7+ukQp7XzlXo+LUCHfnF0hAk3epx/iqGAQMfpkamGoXRcbA1YHXy0Y8UOEbS1OsC9HxPXcbfpq0C7wW3s36Xm/jYRJs6yvnqTwkAf5URN4R8SPFL+asI3toebauHYozZvLn4AGjwsZo7BrJL4k2YNTGnu6VKRKusAJjyGFgoLiHFoV3ixRMfvXx4BswB8usXUzVve3ZS+fgUuoRoREqbVd5mrEWGQy9WOIChGRz27P0A+o6FV8F3Wu7ChYVuclD7hfKpuAilTT+t7Dc7K0/RhDYObfXhRMVPDBEjQqSDHzv2WCihTDtV+chmakYVaYDG13H0zoGtPA0hgdrK2n1Q9Lbp6bFeuP0g/d552N/UgeQLoKdhAH646PYdruTIRHa6im8TRorBbU1AzJTumxGxqgv/6pBDTDBdx0CuSR6IUz7gdqmDBYqu+va+b21bE6pHzrPfkWsP4nuwDMDEQKSzhUrI3MBFd2GVs6US77Uu6vSO3ClheFqzJu9oHfxcvb6wMvKwYPPMRch37aJ4eS2BSlmLUi5mCsH7fT9rUIlFFSNKKewQcgohbjhzz/WhWyVk4qUyE22i6R3tiS7InylH\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "pass",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=rsa6144:rsa-sha256:\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "rsa6144": "-----BEGIN PRIVATE KEY-----\nMIINwwIBADANBgkqhkiG9w0BAQEFAASCDa0wgg2pAgEAAoIDAQDUx0CsLqoqoSfU\nj0NcH14zw7H4ETfCL6mIiRrwLCZgSQwpu2EaKBMFw/mpr2o2jwIWbg5PAy53GATx\nkCtVyZvPk5YOsb88cSzRASUi/AoAhLc+btqqLwcwSQ1XhUB4R6rl/HntfUqDnBjc\n6BHuEWl6CKjtaVN3b/1CdrNmKozCMkBWDLDPdEciPRjVZVu7vWQu/cxno2RnMxHL\n5FUemSuWJR6Mdv0FKjyKaqDweCuSQJez4G0fD+9Py/2+vVlgiXysmRJ9lH25Pd4/\n7xEcl4a9aBZW+iRDfef0VW23wEIjWnC890UUPCL7YNWAtM0K/mWskoMPOc8/gP8N\n9WVnuUPTNTm7C5ca8Y51wV9ojYTYd2oHS0iulc3HwLw9s4vrBp3bpE7h6kfAd6CV\nssJVJ0/G7ooDDKPt5rJfBfJkDzUKsWJ0QMBb0hCA7+CaxBRwtHSN2LcjJQ0Y6e4N\nZpW4UJ6kmE4ykklDa7LfSdeMy/7qY0haR2QzQLnSU55noAGXFPryaZZXNzQmOnRh\nH+2VJ+7jT/q0Nd5yOs8SFlYkyH9TmhQ/DiCUnMIXwfvd2M/Xi2QxzIxVXuPiyXhk\nJh7NU9PN92uh/NV7K0+WXvvwGIachGh7myWaQ9F9B9FVSrcoxjA30k1WGoypZ3Yz\nIGmQXZp9DsFZATtSFBnFT9D58LjM9i0esuxH7zCKLVX+PzSzv0kgZr+TyWpOroWR\nFXzQwyGIyeJWLRiD3mp0mndNFltZeIAjByVFOUiVirALKnOxGK9CE28vDz2Io+2P\nP0CIkFyXO1xrv8Kkd7HModybhcGf/IP/+c/69ve/0oMmk4G1MS+naVCQTEjEPL+g\nfW3zY00Uvzlag8+DDjbl2F38M93rw0f3u69vqYjq4V0WPSpu9so/+Dc5s6TIVHNK\npzvBQ4EmBKlrXztGfURKGtDp5or31vwsM5TQdslL6eAiFCIPT4U0Ts0an07A0aQS\nfi9FMyMhn4NtmY5q+QRlxy09Rq/30mmd8KAwbmyhLXKucOh+8mkCAwEAAQKCAwAA\n0AkYzbnquKTeT5x5qjPQXaF7dRI77vKw5G8orX9AKsVZOnQt8x7f9FJhuGSPogtP\nCFwSXky6+cg2APiuKQqi1ZcqrxTLVeiaru9mh2+J6jrkaITnui2cRFlxkHj+PV6X\n5pRYNCcFzxub0f8IZDhrG/Tnx4DhEXUU0NGM8QrTv2B0sWQq3JINaETUKpNf741e\nLG8XMQx0M4rELe3dV4pMIonxe/C1/dO+oH5RK6cuFy795t3AZVhQn8mrGk+HU1if\na4L09cEj4gjnnA6xCsyVyN1IHuCFRPGtbUwNFXnVF/7L3911eQ0ub9v9dYcfwd/z\nCNakd+YjB8AIeu+avwLbOEEL3oLU+nOyj5n+ExOgG37WWY5jWh4jhPA+ib/UnJE6\nCUviu9SgKATOZ9fcFtl0L7OWQo+ohrGRTLI3l9Pk+RiUUd6n6x6M2ZwpBvfBot3Y\n2mlI7q8jg6kcDa7glTN6q4VWjcwd25+rA5908npEOVpMqX4FIXjbEUYkHT9EsEUL\nKSEwdbE+vwhbwDZK/Bro6dJyHcDAYB4jJGuSaSle1wbD6SPUhUXg+tnmxZIrhEF7\nJw5oy45iMWqqCpt6KYudvh2JbHuSlu+MOdCAjU45GjmYBkIoF/YXiO53L+aOpZVx\n4TCFZ3IzIHxO3cZ6f+ZPwVJNDZgQ3/VYftZmAmNeihIWvjSGkCcJzNp3VcObKwwa\n0YTmdqpRXikSh+TXd91fEmYtRhnXrHAm+0Z7SaeSVMEuvluLj8aIfSzl7N+lLZ27\ne4Cw0IL6q8Ajh5K6Bwm7xbmDnDLEjKTSMeaU0PhgYFf1868wIQmTn6G/m7Kgk/tG\nWV2UKtwZpZiM58cr3eYLA4h5jC/O6gv3xwQOw/+JKkjNZL7wh6H1WsEp7vkgNghz\nHrS7IhRQX/iI0sLZiRiP0YIAf3Jq173gj+PqmcElioqOivEatpU1MnkqtSQn1JJ9\nn2z3MjyVM0N9m0qKcpXLW1C/dNqhKLrHbhksB05gS9DQgdR0md5Iv+Q6jq3wKwEC\nggGBAPHXvhYTvI/0aLHpCBBD8ommshqPtDJJd/yXXkfz1qiCSt+3NOPequgQ60GJ\nrv08YaTVIeiDxfn3FT771YUy+mEsRdlMqpmt824y0KxfTuCmFY9IZBVkX8lUpItV\nL/jvLDE330hstt6AULd7UqGunWNOS2GN7Au20/nbvXUBBWAo6HyP+aOa/WCY0hcY\nYeytquMxSAIsiTtYArgSWAtq89B3R1RKOjqPBiA4DFP6wk5qFUYrCPLpB+BU8hpJ\nXd+HFNUA/Q/8FpqK3m+O695QepXTzHeIglnNmRf8hMVRjRXFuuTpy1W0mA4oz69X\nnbha5IRyKLVC6EGDDMRfzvZkws8xEVfHV7uDjNzwvNz7uSJcv8Uzbn7Xf5OjknP3\n94OWC58WFLMaMP4Tstk8qNz6y5EzA8k1Suz8pXrbjBc6ladTfck7wqgJ8FiV/qwN\nm6jxAJN4KHWjJcgvQZZyWRc/UWtGUZoBfqSi94121sT4HHq5cQr3QQwil1BmRbOj\n2CrM6QKCAYEA4TvzVv5jhd5Ya3TBJ7PXEqUnZgbU39mJCCQZVje9R9rDNvzjfXMB\nurNwVYvP5wkPsnFFPuDNiV8kOd3c6Fpy+VK+59OXVNYdyNqQUNCFcyhu5Fc/DwKv\nvhL/3Ccmp+i/ZAOMmsiTtkH8IGXli6KBsmye1fCf+PxI2XN6gIo0S/OZ1i4qzZ48\nV8CvZc1URxBp4sK9j9dUDlTbAEDfUGC7Xf4Rp+bQ7bcpy/D/8U9RtOToX+SklJBS\nwADz6Vgq0WL811Khhtzpf4lPLNdcSzmvq0pEIfNipHesoEerufnbCGyfuMN7ozCt\nv3O4y/9LHbwht3delubdS6XO77Mf3nh6N0e9+QZm2VU8G3QKf0qil6N4MuWejDjA\nv6CeD2KkARJDqkIG7dnVBomCvR3PVZOBFLSC0QhiJGxEvM6XCEQctLAnAtcQLp0r\nY0JEabFV7pepCsHzdOoSxy+5Gm90sqne2Upwodkp861ta3n14c9QFl4Nzr6TVniW\nefwHispp/YmBAoIBgGn5bfRipag3I4GCaeQmwisLftQg0IeQpiFrewbwlMm2fnTV\n5TlNI3sZnt1TJfkV8nu2YWtwAtrsKMU2uXPqyMi4C8uSytcY4KkTX1mJUhki7iOh\nRyoQl+CzVH8xzxm4RJc0soUcDm4lsDkWszjiOVmAv4t6E0t2zCCa58RTtDVU97tN\no8jLa+heTwGLz61U1KNFvxYkyeXVRSu/7hDixwA8pGcNN8LdVYPcy5opMegGmFft\nF7jJ4Ieu8YAPUjFXEgvcqQfOIWGLJLmh2T3L6kupSdm/Wc9cRo+6Obv1Zmt5/9G7\nmTxvLIpX29or/JMCUUywcaIsNXYvpPKQQTK7KJp+F+ltEsa6eImAfGIhdBjYp7gU\nN4EhkWfyr4Rdzno8z87gcCWjfoB3xVFoQV7ED1wLDMeosLJ0a1cQyayMIXP3JBGA\nPGZCJK3M3JIsTF+Va/kzGBekbDPycT0p0lxbhKQLZkqkCQi/2NaGksoxJtmoVR7H\nBhv5NHEov7ZeP6VRsQKCAYEAujoiYhxl12rW+soHZrdYra7mG4KsggVQOu32EQZ3\nNzEW1aFUywXLOT5iNCkslh803lqvYWToLJwAzOO3Ylpe0+zpsa6OYnPDHq4wQtGW\ndXfJ8Hx+w/95pZP5/2JToONdU+lnWRdcooZ+W59EoyaTTB5pWgThkDGwXjMP57Xd\ntarN2HxFocsio3/KxkZ2V2en1PklWQg2FL9ucBAzVDcW1IlcudGrj9Ew+tHiHPhz\nWzklNRxMRBXshZqEEbx3crcAzVwh9+syGOREFZRfWEdzCxKVsOiW99uHXOLFhzii\nNJ3zlgXzdSOrlS+ubOVBi21hB1voVqa99G08443cXMqKaqij14HGig3ia+SPRV5F\nf1GG8bZPWCsYm5jG93uclNIwJlb/eavxab1K3ukF5ADY6nCx9PmUg/8M+ntp/0ip\n33ACYWPGmnQTSreg7y7UGTlGaIGitVlQe2bnCod7Gro/arQU2o0/FZ6gaQvnFHSg\nCE5t5jJGimmcKXIMHmJsLliBAoIBgQCNAikYT4i5fvIrRzL0iA9YpyFjMm3KLF5k\n86WsIXWJxmAzZswiLHAhs1JZ7Cz9qTwz0PQ6TjcIryytKRhjdML0TVRg6eMQCi1m\ncbhc45UckBirYWea4XaapU6zz1UDEVjBJtHQVbb4iwXfBc8smUOmLoXeTVjSHaOR\nOG/E7fKcWvnnbCDn8m3FxcvnMgm87ZkcaJvPtZdnMl5j0/Fs/xTxhditx0BhUEjO\nuB1TtaeXppgBTJVIIlZHBjFhCkzeOU+SIQics7HI8v3XTVP10F71R49u3XTbOQHQ\nrpNeuySMUaSnpUFLtIqJzonDIkg3gLmn1+Z9KOme3Yw1hJKLV1Bl9O6g9AL33ZmP\nV1X9lHtjnkrjo+x45tF1Hv9tX3/PLn76WyImAanLj1YyMZR0FyqTv517O6a9JkL3\n6hCbxV3rNYx4VyZ8tvFYdYWNHSqrLXIp56q627fQ6F+L//FlLOZldD8xGDt4IFPQ\nmDLoD3YEZe8W4PI8EkHnEGzJeKbY5Kw=\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "rsa6144._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MIIDCgKCAwEA1MdArC6qKqEn1I9DXB9eM8Ox+BE3wi+piIka8CwmYEkMKbthGigTBcP5qa9qNo8CFm4OTwMudxgE8ZArVcmbz5OWDrG/PHEs0QElIvwKAIS3Pm7aqi8HMEkNV4VAeEeq5fx57X1Kg5wY3OgR7hFpegio7WlTd2/9QnazZiqMwjJAVgywz3RHIj0Y1WVbu71kLv3MZ6NkZzMRy+RVHpkrliUejHb9BSo8imqg8HgrkkCXs+BtHw/vT8v9vr1ZYIl8rJkSfZR9uT3eP+8RHJeGvWgWVvokQ33n9FVtt8BCI1pwvPdFFDwi+2DVgLTNCv5lrJKDDznPP4D/DfVlZ7lD0zU5uwuXGvGOdcFfaI2E2HdqB0tIrpXNx8C8PbOL6wad26RO4epHwHeglbLCVSdPxu6KAwyj7eayXwXyZA81CrFidEDAW9IQgO/gmsQUcLR0jdi3IyUNGOnuDWaVuFCepJhOMpJJQ2uy30nXjMv+6mNIWkdkM0C50lOeZ6ABlxT68mmWVzc0Jjp0YR/tlSfu40/6tDXecjrPEhZWJMh/U5oUPw4glJzCF8H73djP14tkMcyMVV7j4sl4ZCYezVPTzfdrofzVeytPll778BiGnIRoe5slmkPRfQfRVUq3KMYwN9JNVhqMqWd2MyBpkF2afQ7BWQE7UhQZxU/Q+fC4zPYtHrLsR+8wii1V/j80s79JIGa/k8lqTq6FkRV80MMhiMniVi0Yg95qdJp3TRZbWXiAIwclRTlIlYqwCypzsRivQhNvLw89iKPtjz9AiJBclztca7/CpHexzKHcm4XBn/yD//nP+vb3v9KDJpOBtTEvp2lQkExIxDy/oH1t82NNFL85WoPPgw425dhd/DPd68NH97uvb6mI6uFdFj0qbvbKP/g3ObOkyFRzSqc7wUOBJgSpa187Rn1EShrQ6eaK99b8LDOU0HbJS+ngIhQiD0+FNE7NGp9OwNGkEn4vRTMjIZ+DbZmOavkEZcctPUav99JpnfCgMG5soS1yrnDofvJpAgMBAAE="
+  }
+ },
+ {
+  "Name": "simple_rsa8192",
+  "Comments": "Verifiers MUST be able to validate signatures with keys ranging from 1024 bits to 2048 bits, and they MAY be able to validate signatures with larger keys. (§3.2)",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "Section": [
+   "3.2"
+  ],
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=rsa8192:rsa-sha256:YhGtdWCO5VK4DrN0Dzy9jJnMfZdGQVCvhdVEKlp1m6lF7E4ap6RzddXlTBJbEjLuNTXdh+E76BZ6f1fA5/QlxkbCNUPwavn5UCFfcnh/W02twWRFYi1911wh802TD2mjE+NiReIJgbw4ukt+NaegU2LpPRkji49LibRDrHVtVq3pp8/+3RtYrkBq1+Nnh+1LlPtJi5O5ErxWOa3FTWTld9h2e7HuZuIJxH6q1SFocdrYek/KtXilfUpEmlfkPGYJ59koJjZhcEBcW17nY5tMQ6bLo/1lwbJfKmwVB2SD0ePhm7idKq1h7O6alJMsyE4BASWK0LF4/ligp74j5hZEAm/wJME8RsMMkY+kinpXjU7m1GyB4uhKVauBmrGiwpAA7L8UmlsYEeRbQxyc70hQhE2Mlj00orXozk8OZN6NI069yGEzZaPK1exwMTZRN6mO4kuwkfbcW54ovMYqkjdJHckihFAquno3sywGbtses57J+xNeyNQJqSFzLM3xFlOmoNJi2xWG4F6MSN8TLV927Z/AJTxhXBdp88q2IbhF1osXjMHGzAYJGtmfelJWqeVbgfZPEkJNDKjrnYjcCs+UH1ke1RGhiwE/FhwoFEp/KqIrmzM9/MCV3VpmlXck227T9ruwHCcgDtXIknrbtTuYAEsw3EUMnBseSAifUpUaf4jFPqZ9yIubkUcjQdKK+m3jfkNiIeekCEaM1plmucePo/pm8j7lCKO1XLKpe7haoR9DuR3NA0f307Ng5XH8+ZBCMWdSwXBK3CSHqSZHmC10q6Ii77zHZ+T8KRKynpH1btwRrHPvJN+8YammBJcVfVNhHD9n8Baj/U9k+pQ+QtHk8iy46PCs606bHvCN598c8dNqtF5Dqjk1yThTefbLwULizHLdJI4JP/Ts4UmI4o7+5YskF1IofJ2OCcR439gVzqK1z7UNbEP4hJJrPOAzQJts+ykok0KJeOvRzotiJUTPm5kCDntT0Jy7qK99ytyrolCVZV9OZTEMU96UeMkJNZ1gouDEI+qnbpXYV34KsNaXbz3bV2q4mC80MU16L5SXYTgy83lOKbUfYneE0Hq0u9tIDMIi+a+NCfEhlLZs1WO5Tb/xlHetViXLAoxFSsJhsHWtRbBfAWZGWDBqou+gsBrtXC/pBkbrdTROaSW1BVfqmQ+EZJqdGkjB6JBk3vfQ24ELsz2doPO/rYqp+pb5S7JfNo9Su70dpvr6c40IdvkQ1683JB83W72dBNiO1hCTjgKCqACFBz8WlBmkY60Z952cn1n/ak7/Bi6PuKu4NPLiOkRdBlaJn1jEv7j7IMjUsSj5pIT23FjOR0xcd5xjHKcYU2OKpEJH9DW6kelCjEpZyg==\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "pass",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=rsa8192:rsa-sha256:\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "rsa8192": "-----BEGIN PRIVATE KEY-----\n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\ngmnKiplb5eRwQAp4tSVOku3hSCuzNw==\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "rsa8192._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MIIECgKCBAEAqs6sEPm1uWzXAI/uUdZ8cOLSmRLdEzTN+EsisdvzyElmf7s7QD4NEgU5d9lm+sNoU8jCjbkla/zbnluIuOjuxtbXex1bTjWqu9utoy3qEmEkigJH3NkJthXKXcYSn+6J3gRJZtubGExvt5OQOQu/JQYNl5z8k3CpxcMxF0KBX20Wq+Y2FymN7fg8KNRBc1ralX//oTzxvU2l0qiPiSVlu8Z2PHDUuFkT7TVIYfVzlm6ueDGG++c9GYwD7jPBapZrSzKhjP2K7+vioKVINjNFOLEY836xqs2KZ71ai9vd7/Im7+ywonn0mNC6Ts5bi/JX+oSHN2dXP7HxRPwm/GtGqWrDX6pit6LgPuK4TCFiYEIvq9rySNr7vghpjXrFzF4DFuwqdBu9WzMiAGAboEuWkkVK/rIWThqjhkzns8BbrCviPsjJZRs55oOU3yejlfUj5wZCx7CJJnW138Qf4itN2uWV0rtbtDETIcTKfOxFrbOMxk64udMm+iM9OLd0AShwxzVvc0vKowBPYxVMokV1MF4vj/IcXDJILZG0OZRG/aa5h5q1h2E0HrJrnludI/30WiFRL7PLUDvyWQnYqixMX8+T8IR83M+gSYI1xOje8eeYEG8lR6Kd0sgqNQfnv59RnAjWeoBMayaHr/y3KRBTLlVD95Ii78goYRQ5AW1OzO9PvenfE1gr2w4B1tkG6qLTsWW1xug7ewhIkzhq85mW3gE4aV0gejJDoq3J/IJ5tR/mJTF7IDfgg/GLnuVsEUdZgoHgsV7ZOuXdyafAdM/LkCzwNc0rQVEzgQzLGh6nuuUhIcEcNxYIyZitGMlBG2TiQEfNc4bEIx6dHqRGxLR9dFL/8q5jdqadAKk2w+z6ohpLOYC18xzD/Y+gIaiWNtiJ+2oWjUrsDO+klkiCet0koPVL6MoNv2zcSPRBFZw8J1MUH6Dou/nUz1N4cc/hirJBMon7vkwnIynIA8bs0PJDrm7C/dWVtYRLGJmnw4gFmo4cwVaZuC0kmVTjxIZ0+NATFQriIGHXLjEOhh0zQBd2fwDdPtCT3ovX8QBQ/21o53bWzZDQqRBYhEAs8PpONeRJeY1U2h5A2zDgXsdBIzq9+siFdeaUaUCa0JJhOa+NnNhPX7O0gRzylVe/Eg61tdno6KfDtNvzxKYZMtTlyz6uqIP42mD0Ku0KFLpSL6eqBCZi76d+OkSIobSn91guqt1i31JQnE5VZvIBROekbdURV2pa8+Mcp9LpImOx5kp/wpTT7758xHwXywbTOQcmihvMXXhoXIJTME3dBbNgzhJVRGQxtXtIt7j7wBPHweNs2drBvicgICZgN42tSqDJWq3Lo8usUFmR/UPdijowJ4h/FwIDAQAB"
+  }
+ },
+ {
+  "Name": "tags_mixed_case",
+  "Comments": "header tag names are case insensitive",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: I=1;M=1;T=1782394336;D=test.dkim2.eu;Mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;Rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;S=rsa2048:rsa-sha256:dCLrroRjHqwhJa6Rsd4UaltrA6b3gxV2V13kgh9nh+twxSPMSICB3B6n0bPLp8E4WHUFbljIZflUu49XHnZCOZuEbk6zfQBotk/G0f1vNV7QUY8VFFtL6guypUn46wz6AcTLK8D9wkgeJRxSRkGbD0mmptMaoeW7GObBbb+rr6vBhKkH0tQLaKdjmMgr6H7r5JK/V5mzPzgoCn+L6DxoQUQzRTTlz2ZbZXLFJfllpPuR8OHv7uTll7H2xCdyQftSuuLRe5E9E8W4HHdcCv/KoRYSMyRn3CbIRTzpigdKW8tjAvFEcP4FyQBf8MQyepmubXRIO8Z/Ni5gi06mMuuX1Q==\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "pass",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:I=1;M=1;T=1782394336;D=test.dkim2.eu;Mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;Rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;S=rsa2048:rsa-sha256:\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "rsa2048": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDdbLbeYb/jidOk\nt1ZQGUYCtbkQm54AwCGFrkqIFNgFLQVPqd6/Hcqo2KNpNtZakC5Jk4lRMmV6ra1J\n5Ll6rP3sn1jcV726CmxzAz6bhlkpxp91VNcjLNxV97XTLGPHpi5EmrraLKDVWC1c\nkf6naasaU3jPrusLcOkZcLUqsOBPMEgnuw2YHLc97GG0NINZLHQuU4fMDj0SXdu5\nh2wgEkJoYdh9yA3BQYhKq5i6C4588zABpFHWbvLwMMQwt71y/Qz3f1XZxUIvjO1i\n6g6C5d08V3XkN4EIAbaZg8/kV1Tn2Q1n+usOUae9ViJhEWV5MJbo0iKcue0UWwXj\npvO0ex/7AgMBAAECggEABqg9GM5hjdv/WiL55gzqA2frvkIpWDBHOR7Y55Pfn2jU\nkYKqBneT1WjSUsTMdTJIYfuc4pmImYh6w6z62gD58b1fL+FdmcWgw7OLMcvZ33+X\nV5OBWPue1whgFfGB8nrK0D841Y99eS8Pk54S2KSfNI5Ehw5HpDNDsoz1K5pp7yFb\nKJb+Ik6WYZpo5/3TkSRpx3leeCIKQzY/QLp0CUrAvVLx3AyMUjZA/DBXsXLB2/vd\nvZnm+6s30MxU+GQfgQbgCMZG+mtmN5GQUnFQNAqZa643GGmRiOVNjiLBy2UaCuYu\nERuZjbJgII5VX/Z1wCIzh62hvEhtzjCljD6sb4HwcQKBgQDk1NVgjMR/ShMBTwMN\n/13cKntkUrbRfi9eCu87sU6VlD2VPKL+opp+AR0hCU7Px59me04wEQuTT11pwRKF\nOCYr3QJ3+4bCq3h+LhRbw2aizOfSevQyQiEq6HwyYVjOczBb/ol2SnLahhsVXUXl\nenYl45ywcKGotI0tCJrztkvFAwKBgQD3tsJNdhu27GFzWh1MMGJEeoaGFLlmwkdB\nilqbGnDwgk+GBCMzuDATA8E7rsemCVLiMIXtjrGvR4nqmP/AD44xpt1xNhLXR1gJ\n/CAZxYTlFsPwJQbPXgTiwOPOKdcID0T50nHrfKvYKIJoc+aU1e2vaNHCt1TzNhmJ\nbSHrLnpbqQKBgQDSEFd49ICF4Xgk4WWKefyt2gnABPZyxgWxrRQEljXvtk/6Kdnv\nK1HrjhYxd5vzveskZtlV4q/foSG9rVHVHcBcz9wuTKZfGo3YN3DU9EHJ/ZRqchit\n8msEOruYfCjMDI4+RSHnh1x8IlPGfwNlL9A55AK5LgwZFPXse1PTmmtgBQKBgQDG\ndMP8PSh9B6oXOVYJiSXhSOxnlUjoG7PsvURTyP48oZnGe6AcOm9BfJueDivjSMr/\nbfKOXOjbzYufyM30+EFqZA47OiAkGwNclIK/QvByfSejSHbJQcDWTcT0ka61xU30\ne/ZKvIoMVoAL4PcVvMJ86pRK1IgZhfk1kZpACe97aQKBgByyfzphzVwmde2D06+L\nCbDn9IkXKFPSIrZrzppRTt3I8qeHbcyK+U0mRU6kK9O92a+BPR9N2cWL7VnOlUwU\nYTbUwolasJKYEkH37hCo0inqmYeDAp/rlsJYs6G4B/gFdu6mVl3W5KILMnSQCLOk\nmn5tt9iSb+dPbCLcD8adkmlB\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "rsa2048._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MIIBCgKCAQEA3Wy23mG/44nTpLdWUBlGArW5EJueAMAhha5KiBTYBS0FT6nevx3KqNijaTbWWpAuSZOJUTJleq2tSeS5eqz97J9Y3Fe9ugpscwM+m4ZZKcafdVTXIyzcVfe10yxjx6YuRJq62iyg1VgtXJH+p2mrGlN4z67rC3DpGXC1KrDgTzBIJ7sNmBy3PexhtDSDWSx0LlOHzA49El3buYdsIBJCaGHYfcgNwUGISquYuguOfPMwAaRR1m7y8DDEMLe9cv0M939V2cVCL4ztYuoOguXdPFd15DeBCAG2mYPP5FdU59kNZ/rrDlGnvVYiYRFleTCW6NIinLntFFsF46bztHsf+wIDAQAB"
+  }
+ },
+ {
+  "Name": "tags_reversed",
+  "Comments": "header tags have no required order (§7)",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "Section": [
+   "7"
+  ],
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: s=rsa2048:rsa-sha256:Qeglf99awpPmKQlqzninxKGDLWK8ASGpXvS19gde3fg2sQ9cZKQhoi7ao9H1KaufHDBxp0Gull9R+D3E6KyEUkkoUdyQYLQcgd7GbxwOMuUdXNFwNsACAPTpVAATKBy6XEZb+fy4CZQU2c84R2nNC9FGqelVnDRjju3CHGEl5ugPhFMi9PvAHP5ip8Fy/DhNURnI3uMP/TdAzCsRKRhUfHwVUGZ33CUejNdTWwehbWnwHwlpqaoDQ1dcDOMLVxwFF8WCpfcL4lP4mOuUMi33kyK2PG9xLnvyBaH4CtUFs+PZb+Qof0wyqKFYZsoiW68kTELiqdJgYEcMwA/AAjX57g==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;d=test.dkim2.eu;t=1782394336;m=1;i=1\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "pass",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:s=rsa2048:rsa-sha256:;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;d=test.dkim2.eu;t=1782394336;m=1;i=1\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "rsa2048": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDdbLbeYb/jidOk\nt1ZQGUYCtbkQm54AwCGFrkqIFNgFLQVPqd6/Hcqo2KNpNtZakC5Jk4lRMmV6ra1J\n5Ll6rP3sn1jcV726CmxzAz6bhlkpxp91VNcjLNxV97XTLGPHpi5EmrraLKDVWC1c\nkf6naasaU3jPrusLcOkZcLUqsOBPMEgnuw2YHLc97GG0NINZLHQuU4fMDj0SXdu5\nh2wgEkJoYdh9yA3BQYhKq5i6C4588zABpFHWbvLwMMQwt71y/Qz3f1XZxUIvjO1i\n6g6C5d08V3XkN4EIAbaZg8/kV1Tn2Q1n+usOUae9ViJhEWV5MJbo0iKcue0UWwXj\npvO0ex/7AgMBAAECggEABqg9GM5hjdv/WiL55gzqA2frvkIpWDBHOR7Y55Pfn2jU\nkYKqBneT1WjSUsTMdTJIYfuc4pmImYh6w6z62gD58b1fL+FdmcWgw7OLMcvZ33+X\nV5OBWPue1whgFfGB8nrK0D841Y99eS8Pk54S2KSfNI5Ehw5HpDNDsoz1K5pp7yFb\nKJb+Ik6WYZpo5/3TkSRpx3leeCIKQzY/QLp0CUrAvVLx3AyMUjZA/DBXsXLB2/vd\nvZnm+6s30MxU+GQfgQbgCMZG+mtmN5GQUnFQNAqZa643GGmRiOVNjiLBy2UaCuYu\nERuZjbJgII5VX/Z1wCIzh62hvEhtzjCljD6sb4HwcQKBgQDk1NVgjMR/ShMBTwMN\n/13cKntkUrbRfi9eCu87sU6VlD2VPKL+opp+AR0hCU7Px59me04wEQuTT11pwRKF\nOCYr3QJ3+4bCq3h+LhRbw2aizOfSevQyQiEq6HwyYVjOczBb/ol2SnLahhsVXUXl\nenYl45ywcKGotI0tCJrztkvFAwKBgQD3tsJNdhu27GFzWh1MMGJEeoaGFLlmwkdB\nilqbGnDwgk+GBCMzuDATA8E7rsemCVLiMIXtjrGvR4nqmP/AD44xpt1xNhLXR1gJ\n/CAZxYTlFsPwJQbPXgTiwOPOKdcID0T50nHrfKvYKIJoc+aU1e2vaNHCt1TzNhmJ\nbSHrLnpbqQKBgQDSEFd49ICF4Xgk4WWKefyt2gnABPZyxgWxrRQEljXvtk/6Kdnv\nK1HrjhYxd5vzveskZtlV4q/foSG9rVHVHcBcz9wuTKZfGo3YN3DU9EHJ/ZRqchit\n8msEOruYfCjMDI4+RSHnh1x8IlPGfwNlL9A55AK5LgwZFPXse1PTmmtgBQKBgQDG\ndMP8PSh9B6oXOVYJiSXhSOxnlUjoG7PsvURTyP48oZnGe6AcOm9BfJueDivjSMr/\nbfKOXOjbzYufyM30+EFqZA47OiAkGwNclIK/QvByfSejSHbJQcDWTcT0ka61xU30\ne/ZKvIoMVoAL4PcVvMJ86pRK1IgZhfk1kZpACe97aQKBgByyfzphzVwmde2D06+L\nCbDn9IkXKFPSIrZrzppRTt3I8qeHbcyK+U0mRU6kK9O92a+BPR9N2cWL7VnOlUwU\nYTbUwolasJKYEkH37hCo0inqmYeDAp/rlsJYs6G4B/gFdu6mVl3W5KILMnSQCLOk\nmn5tt9iSb+dPbCLcD8adkmlB\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "rsa2048._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MIIBCgKCAQEA3Wy23mG/44nTpLdWUBlGArW5EJueAMAhha5KiBTYBS0FT6nevx3KqNijaTbWWpAuSZOJUTJleq2tSeS5eqz97J9Y3Fe9ugpscwM+m4ZZKcafdVTXIyzcVfe10yxjx6YuRJq62iyg1VgtXJH+p2mrGlN4z67rC3DpGXC1KrDgTzBIJ7sNmBy3PexhtDSDWSx0LlOHzA49El3buYdsIBJCaGHYfcgNwUGISquYuguOfPMwAaRR1m7y8DDEMLe9cv0M939V2cVCL4ztYuoOguXdPFd15DeBCAG2mYPP5FdU59kNZ/rrDlGnvVYiYRFleTCW6NIinLntFFsF46bztHsf+wIDAQAB"
+  }
+ },
+ {
+  "Name": "tags_whitespace",
+  "Comments": "header tags may have whitespace in them",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i = 1\t; m = 1\t; t = 1782394336\t; d = test.dkim2.eu\t; mf = PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==\t; rt = PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=\t; s = rsa2048:rsa-sha256:Cl1VoqV4DBuTrWHBcE3SMXi5Cen+1Z2crXciBzIBmG1AT3YeeCbzgrAqfwzM8h3VEbvXrS/1C4evlblcD6jYWhSjjtErwS+1fD6X9mLzVHmv8dWAD9dDyXL8moXN1JUE+7XNuFu2VgEKYSX2ImPHnnUF7eAKZ9JhB4kfHBdug89rba5OVNSZLZDj8kJStjyRdQ+A4XJc8Gl0Z6JVrnPuflLtjVqMw9BgDJG1xKZatWiF70Mugt2GluXitQ02LNRHgwcQ2nC5a9Wc8kTia7d2Lb9MFhbuGKona0B7FiroCujyL/q5jtyEWAfuGKwbYvFhfZGXy167X+LeTasMVteHgg==\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "pass",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=rsa2048:rsa-sha256:\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "rsa2048": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDdbLbeYb/jidOk\nt1ZQGUYCtbkQm54AwCGFrkqIFNgFLQVPqd6/Hcqo2KNpNtZakC5Jk4lRMmV6ra1J\n5Ll6rP3sn1jcV726CmxzAz6bhlkpxp91VNcjLNxV97XTLGPHpi5EmrraLKDVWC1c\nkf6naasaU3jPrusLcOkZcLUqsOBPMEgnuw2YHLc97GG0NINZLHQuU4fMDj0SXdu5\nh2wgEkJoYdh9yA3BQYhKq5i6C4588zABpFHWbvLwMMQwt71y/Qz3f1XZxUIvjO1i\n6g6C5d08V3XkN4EIAbaZg8/kV1Tn2Q1n+usOUae9ViJhEWV5MJbo0iKcue0UWwXj\npvO0ex/7AgMBAAECggEABqg9GM5hjdv/WiL55gzqA2frvkIpWDBHOR7Y55Pfn2jU\nkYKqBneT1WjSUsTMdTJIYfuc4pmImYh6w6z62gD58b1fL+FdmcWgw7OLMcvZ33+X\nV5OBWPue1whgFfGB8nrK0D841Y99eS8Pk54S2KSfNI5Ehw5HpDNDsoz1K5pp7yFb\nKJb+Ik6WYZpo5/3TkSRpx3leeCIKQzY/QLp0CUrAvVLx3AyMUjZA/DBXsXLB2/vd\nvZnm+6s30MxU+GQfgQbgCMZG+mtmN5GQUnFQNAqZa643GGmRiOVNjiLBy2UaCuYu\nERuZjbJgII5VX/Z1wCIzh62hvEhtzjCljD6sb4HwcQKBgQDk1NVgjMR/ShMBTwMN\n/13cKntkUrbRfi9eCu87sU6VlD2VPKL+opp+AR0hCU7Px59me04wEQuTT11pwRKF\nOCYr3QJ3+4bCq3h+LhRbw2aizOfSevQyQiEq6HwyYVjOczBb/ol2SnLahhsVXUXl\nenYl45ywcKGotI0tCJrztkvFAwKBgQD3tsJNdhu27GFzWh1MMGJEeoaGFLlmwkdB\nilqbGnDwgk+GBCMzuDATA8E7rsemCVLiMIXtjrGvR4nqmP/AD44xpt1xNhLXR1gJ\n/CAZxYTlFsPwJQbPXgTiwOPOKdcID0T50nHrfKvYKIJoc+aU1e2vaNHCt1TzNhmJ\nbSHrLnpbqQKBgQDSEFd49ICF4Xgk4WWKefyt2gnABPZyxgWxrRQEljXvtk/6Kdnv\nK1HrjhYxd5vzveskZtlV4q/foSG9rVHVHcBcz9wuTKZfGo3YN3DU9EHJ/ZRqchit\n8msEOruYfCjMDI4+RSHnh1x8IlPGfwNlL9A55AK5LgwZFPXse1PTmmtgBQKBgQDG\ndMP8PSh9B6oXOVYJiSXhSOxnlUjoG7PsvURTyP48oZnGe6AcOm9BfJueDivjSMr/\nbfKOXOjbzYufyM30+EFqZA47OiAkGwNclIK/QvByfSejSHbJQcDWTcT0ka61xU30\ne/ZKvIoMVoAL4PcVvMJ86pRK1IgZhfk1kZpACe97aQKBgByyfzphzVwmde2D06+L\nCbDn9IkXKFPSIrZrzppRTt3I8qeHbcyK+U0mRU6kK9O92a+BPR9N2cWL7VnOlUwU\nYTbUwolasJKYEkH37hCo0inqmYeDAp/rlsJYs6G4B/gFdu6mVl3W5KILMnSQCLOk\nmn5tt9iSb+dPbCLcD8adkmlB\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "rsa2048._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MIIBCgKCAQEA3Wy23mG/44nTpLdWUBlGArW5EJueAMAhha5KiBTYBS0FT6nevx3KqNijaTbWWpAuSZOJUTJleq2tSeS5eqz97J9Y3Fe9ugpscwM+m4ZZKcafdVTXIyzcVfe10yxjx6YuRJq62iyg1VgtXJH+p2mrGlN4z67rC3DpGXC1KrDgTzBIJ7sNmBy3PexhtDSDWSx0LlOHzA49El3buYdsIBJCaGHYfcgNwUGISquYuguOfPMwAaRR1m7y8DDEMLe9cv0M939V2cVCL4ztYuoOguXdPFd15DeBCAG2mYPP5FdU59kNZ/rrDlGnvVYiYRFleTCW6NIinLntFFsF46bztHsf+wIDAQAB"
+  }
+ },
+ {
+  "Name": "too_short_rsa512",
+  "Comments": "Signers MUST use RSA keys of at least 1024 bits (§3.2)",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "Section": [
+   "3.2"
+  ],
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=rsa512:rsa-sha256:LHYcxp+5YdaFQJKBZuDV0MgwcNDM7vghj33WlTGZwpCmOJvOYVCnjl6umMNJn8w67UgEwVqkz/Ue6jzWVo0PHg==\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "permerror",
+  "ExpectedError": "PERMERROR: DKIM2-Signature i=1 public key rsa512._domainkey.test.dkim2.eu. has a syntax error [RSA public key size too small, 512 bits]",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=rsa512:rsa-sha256:\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "rsa512": "-----BEGIN PRIVATE KEY-----\nMIIBVQIBADANBgkqhkiG9w0BAQEFAASCAT8wggE7AgEAAkEAvb7VB/WLBkOgmkBJ\nf86QOz2z6cjatz89Ctem2hFnhEDJ0B84/OYSwPMn6RfwwSZscuZm1a0bPjHWABb8\nmlMj7QIDAQABAkAkVdTpr0WuL2kj4MeyZ9YK4if/zuzDRqLj3qQfAlI2avTZbvtG\nXIPxj5WgMECSftqO1T2q4Porhxl4IkJVSJXBAiEAxl3x9EA4aKNM9Imhlj3dPOxx\nmLeB3d3Tb3s887EpE6UCIQD036NcXy0l+S++SmnlIAn4SvAVOWh0UcdEy641oii8\nqQIgV1aPrEIGVBPqUxSx/4t3eFaGYX4SgNQlPsVc/dK3yj0CIQChymVgMc5dyZ++\n5eHDroCH2dN44n5eZG35yW2oKCUsSQIhAIvd0P3cngPpoTkNm0+QfCVkWR/6sLmL\n+UdouZbLJ6CT\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "rsa512._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MEgCQQC9vtUH9YsGQ6CaQEl/zpA7PbPpyNq3Pz0K16baEWeEQMnQHzj85hLA8yfpF/DBJmxy5mbVrRs+MdYAFvyaUyPtAgMBAAE="
+  }
+ },
+ {
+  "Name": "too_short_rsa768",
+  "Comments": "Signers MUST use RSA keys of at least 1024 bits (§3.2)",
+  "Spec": "draft-ietf-dkim-dkim2-spec-02",
+  "Section": [
+   "3.2"
+  ],
+  "OriginalMessage": "From: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "SignedMessage": "Message-Instance: m=1; h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\nDkim2-Signature: i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=rsa768:rsa-sha256:rY3TH2dCcAN0NDtWR5VFnvGsp2nIK05jYRisurL+3S9N7hKHyJllCJyC9FAbN1hhAkR61r7leJU4iBGw/9C6STFjv0BBtGQbmgUhBf8F4YM4Dal6yGmjBEDhovfgC1He\r\nFrom: sender@test.dkim2.eu\r\nTo: recipient@example.com\r\nSubject: Simple test message\r\nDate: Sat, 01 Mar 2026 12:00:00 +0000\r\nMessage-ID: <test-simple@test1.dkim2.com>\r\n\r\nHello, this is a simple test message.\r\n",
+  "MailFrom": "<sender@test.dkim2.eu>",
+  "RcptTo": [
+   "<recipient@example.com>"
+  ],
+  "ExpectedState": "permerror",
+  "ExpectedError": "PERMERROR: DKIM2-Signature i=1 public key rsa768._domainkey.test.dkim2.eu. has a syntax error [RSA public key size too small, 768 bits]",
+  "CanonicalDkim2Headers": "message-instance:m=1;h=sha256:JhBJq79bbNbN5ASEJvYpb/QwHL+x5Hyl1SoV5s/tGVk=:SgG5fNGEg1x24MwItCUYGDHQkWKng06W1/IvTGBdwzU=\r\ndkim2-signature:i=1;m=1;t=1782394336;d=test.dkim2.eu;mf=PHNlbmRlckB0ZXN0LmRraW0yLmV1Pg==;rt=PHJlY2lwaWVudEBleGFtcGxlLmNvbT4=;s=rsa768:rsa-sha256:\r\n",
+  "ExpectedFlags": [],
+  "PrivateKeys": {
+   "rsa768": "-----BEGIN PRIVATE KEY-----\nMIIB5QIBADANBgkqhkiG9w0BAQEFAASCAc8wggHLAgEAAmEAvKDd/FdmiKmGjwIu\nhoKEGpK7Avw8MgYT47+/cI93C7XvxNcSO+2MvWgHRyUGHhtuKW7wUqTiImqT4wpo\nhthnKUlYqYXlmnAedpyfRCv2IZNyYdVy8/uB35QHFgLqtcR7AgMBAAECYB8j4kHn\nHpLv2bpWPolk6/DZycHjvlRL0ztwIRIGEpMpBV0BBzju2KM+6foBehG9A+6iPcel\ngLH/A5iYsWeU/EQDTFvyLAgkbojVsgdP3DWn/ffpPWsuAq0ziN7iiKVYQQIxAMrL\nhE/oBrAqpYc8Z7bLG74CV15/A9yIlRxnpkNsqjzi8bvUl4DMh3weyhtiFv8g6wIx\nAO4d3hOqKBrqKRRbOtbvoHtMbC5ucK4yt14M5saPCeO8/SQW+QhPki/S626dTf+G\nsQIxAJXYJW8Jqg93o5G2r4fgsiIHBtm7DnZgsZUofTDq1StiIW5BmqS//AhZk8sC\nAq4HewIxANDVBwCOGfBI71A4FqmMrV2Vj8dE+rP8LM9iVz9LEaxXAlgVgcElMBub\nSvnPIin5cQIwHdEQ4VIWkNgkhqVLNEYxdL8KtcY2Y95GTmk8cWFFpOdlZxGDaI97\nIm7nbEDYqxVR\n-----END PRIVATE KEY-----\n"
+  },
+  "DNS": {
+   "rsa768._domainkey.test.dkim2.eu": "v=DKIM1; k=rsa; p=MGgCYQC8oN38V2aIqYaPAi6GgoQakrsC/DwyBhPjv79wj3cLte/E1xI77Yy9aAdHJQYeG24pbvBSpOIiapPjCmiG2GcpSVipheWacB52nJ9EK/Yhk3Jh1XLz+4HflAcWAuq1xHsCAwEAAQ=="
+  }
+ }
+]
