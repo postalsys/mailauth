@@ -1,5 +1,20 @@
 # Changelog
 
+## [7.3.0](https://github.com/postalsys/mailauth/compare/v7.2.0...v7.3.0) (2026-10-10)
+
+
+### Features
+
+* **dkim2:** add dkim2-verify and dkim2-hash CLI commands ([abc5867](https://github.com/postalsys/mailauth/commit/abc586767ac60a37aacb5ae4ef2cc5957b14d5cd))
+* **dkim2:** add experimental DKIM2 signing and verification ([767ce96](https://github.com/postalsys/mailauth/commit/767ce96a0128f3054a4634d7f2e29ccb734c1b8b))
+* **dkim2:** reject timestamps more than 5 minutes in the future by default ([85ec5b8](https://github.com/postalsys/mailauth/commit/85ec5b8a9ed6f3fe9126ae04d12fca6a6d4c003e))
+* **dkim2:** warn when the SMTP envelope is not checked ([6c0f570](https://github.com/postalsys/mailauth/commit/6c0f570e1b9630b0a383876b6f9a603514731efc))
+
+
+### Bug Fixes
+
+* **dkim2:** match the draft-06 vectors of croessner/dkim2 ([968d0b3](https://github.com/postalsys/mailauth/commit/968d0b303be75580ea76d2207394cf26edafc2bc))
+
 ## [7.2.0](https://github.com/postalsys/mailauth/compare/v7.1.1...v7.2.0) (2026-10-09)
 
 
