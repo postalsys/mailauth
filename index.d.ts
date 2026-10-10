@@ -1540,6 +1540,8 @@ export interface DKIM2VerifyOptions {
 
 export type DKIM2Result = 'pass' | 'fail' | 'permerror' | 'temperror';
 
+export type DKIM2Warning = 'mail-from-not-checked' | 'rcpt-to-not-checked';
+
 export interface DKIM2Error {
     result: DKIM2Result;
 
@@ -1610,6 +1612,13 @@ export interface DKIM2VerifyResult {
          */
         comment?: string;
         header?: { d?: string; i?: number };
+
+        /**
+         * The parts of the SMTP envelope that were not given, so the highest DKIM2-Signature was
+         * not compared with them and an unchanged copy sent to someone else would pass as well.
+         * Only present when there is something to report, never written into `info`
+         */
+        warnings?: DKIM2Warning[];
     };
 
     /**

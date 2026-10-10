@@ -44,6 +44,14 @@ describe('DKIM2 in authenticate()', () => {
         expect(result.dkim.results).to.be.an('array');
     });
 
+    it('warns when authenticate() has the MAIL FROM but not the RCPT TO', async () => {
+        let signed = await signMessage(message(), originatorOptions());
+        let result = await authenticate(signed, Object.assign(baseOptions(), { dkim2: true }));
+        expect(result.dkim2.status.result).to.equal('pass');
+        expect(result.dkim2.status.warnings).to.deep.equal(['rcpt-to-not-checked']);
+        expect(result.headers).to.not.include('not-checked');
+    });
+
     it('reports a chain of custody mismatch with the SMTP envelope', async () => {
         let signed = await signMessage(message(), originatorOptions());
         let result = await authenticate(signed, Object.assign(baseOptions(), { dkim2: true, sender: 'other@example.com' }));

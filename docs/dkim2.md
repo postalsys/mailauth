@@ -48,14 +48,24 @@ When there are several problems, `fail` wins over `permerror`, and `permerror` o
 
 ### status
 
-| Field      | Type     | Description                                                                                                                          |
-| ---------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `result`   | `string` | One of the results above                                                                                                             |
-| `comment`  | `string` | The human-readable string of the reported problem, as specified in section 11, such as `DKIM2-Signature i=1 rsa incorrect signature` |
-| `header.d` | `string` | `d=` of the `i=1` signature, the originator (draft-gondwana-dkim2-authres-00 section 3.2.1)                                          |
-| `header.i` | `number` | `i=` of the signature the problem is reported against. Not set for `pass`, or for a problem of the whole message                     |
+| Field      | Type       | Description                                                                                                                                         |
+| ---------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `result`   | `string`   | One of the results above                                                                                                                            |
+| `comment`  | `string`   | The human-readable string of the reported problem, as specified in section 11, such as `DKIM2-Signature i=1 rsa incorrect signature`                |
+| `header.d` | `string`   | `d=` of the `i=1` signature, the originator (draft-gondwana-dkim2-authres-00 section 3.2.1)                                                         |
+| `header.i` | `number`   | `i=` of the signature the problem is reported against. Not set for `pass`, or for a problem of the whole message                                    |
+| `warnings` | `string[]` | `mail-from-not-checked` and/or `rcpt-to-not-checked` when that part of the SMTP envelope was not given, see [Envelope Warnings](#envelope-warnings) |
 
 `header.d` is an authenticated identity only when the result is `pass`.
+
+### Envelope Warnings
+
+The chain of custody is what stops DKIM2 replay: the highest `DKIM2-Signature` names the MAIL FROM and RCPT TO the message was delivered with (section 11.4). A library does not see the SMTP transaction, so this check only runs for the parts of the envelope you pass as `mailFrom` and `rcptTo`. When one is missing, `status.warnings` says so:
+
+- `mail-from-not-checked`: `mailFrom` was not given (`""` counts as given, it is the null sender)
+- `rcpt-to-not-checked`: `rcptTo` was not given
+
+Without them an unchanged copy of the message, sent to anyone, passes as well. The warnings do not change the result and are never written into `info`, in the same way as the DKIM1 warnings. `authenticate()` passes its `sender` and `rcptTo` options on, so set `rcptTo` there to have the recipients checked.
 
 ### instances
 
@@ -89,7 +99,7 @@ Each entry of `values` has `selector`, `algorithm`, `result` (`pass`, `fail`, `p
 2. **Recipes (sections 5 and 11).** Starting from the message as it is, the Recipe of every instance is applied to recreate the one before it.
 3. **Hashes (section 11.7).** The header and body hashes of every instance are compared with the recreated message.
 4. **Timestamps (section 11.3).** A signature older than `maxSignatureAge` (14 days) is a PERMERROR.
-5. **Chain of custody (sections 8.7, 8.8, 9.4 and 11.4).** `d=` matches the `mf=` domain of every signature, `nd=` names the next signer exactly, the MAIL FROM of every hop matches a RCPT TO of the hop before it, and, when `mailFrom` or `rcptTo` is given, the highest signature matches the delivery.
+5. **Chain of custody (sections 8.7, 8.8, 9.4 and 11.4).** `d=` matches the `mf=` domain of every signature, `nd=` names the next signer exactly, the MAIL FROM of every hop matches a RCPT TO of the hop before it, and, for the parts of the envelope given as `mailFrom` and `rcptTo`, the highest signature matches the delivery. A missing part is reported in `status.warnings`.
 6. **Signatures (sections 9.6, 11.5 and 11.6).** Every signature value with a supported algorithm is checked with its key.
 7. **Requests (section 11.8).** `donotmodify` and `donotexplode` were honored by the later hops.
 8. **Replay (section 11.9).** When `checkReplay` is given and reports a duplicate, the message fails unless a signature has `f=exploded`.
@@ -103,7 +113,7 @@ The drafts leave some questions open. mailauth answers them like this:
 - **Signature values that can not be checked.** Section 11.6 requires every signature value that can be checked to pass. A value whose key is missing or broken can not be checked: when at least one other value passes and none fails, the signature passes and the key problem is reported in its `values` entry. When no value could be checked, the key problem is the result.
 - **Chain of custody between hops.** Section 9.4 matches the MAIL FROM of a hop with a RCPT TO of the hop before it. A signature with `nd=` has no MAIL FROM, and the null MAIL FROM `<>` has no domain, so for those the `d=` is matched instead (section 9.3 says the signer of such a hop holds a key "associated with a domain in the RCPT TO entry"). Section 8.8 waives only the `d=` and `mf=` match for the null MAIL FROM, not the chain of custody, so a hop with `mf=<>` can not be added by a domain the message was never sent to.
 - **`d=` and `mf=`.** Section 8.8 requires every signature's `d=` to match its `mf=` domain, so this is checked for every signature, not only the highest as section 11.4 describes.
-- **Envelope.** The chain of custody against the SMTP envelope is only checked when `mailFrom` or `rcptTo` is given. When it is and the highest signature has `nd=`, the result is `DKIM2-Signature i=<x> unexpected nd= tag`, since the delivery can then only be accepted on out-of-band arrangements (section 9.3).
+- **Envelope.** The chain of custody against the SMTP envelope is only checked for the parts given as `mailFrom` and `rcptTo`, a missing part gives a warning. When either is given and the highest signature has `nd=`, the result is `DKIM2-Signature i=<x> unexpected nd= tag`, since the delivery can then only be accepted on out-of-band arrangements (section 9.3).
 - **Future timestamps.** Section 8.4 allows ignoring signatures with a timestamp in the future. mailauth does not, as ignoring the only signature makes the message unsigned.
 - **`donotmodify`.** Section 8.10 allows adding header fields. A message passes when every signed header field of the instance the request was made on is still present, in the same order, and the body hash is unchanged. A null body Recipe after the request counts as a change.
 - **Key records.** Records are read with the tag-list rules of draft-ietf-dkim-dkim2-dns-00: tag names are case sensitive, `v=`, when present, is exactly `DKIM1` and the first tag, duplicate tags and other syntax errors make the record unusable, several TXT records are an error, and `k=` has to match the algorithm (`rsa` for `rsa-sha256`, `ed25519` for `ed25519-sha256`). The retired `h=`, `n=` and `s=` tags are ignored, and so is the `t=s` flag, as DKIM2 has no `i=` identity. Ed25519 keys are published as the bare 32 byte key (RFC 8463). RSA keys need at least 1024 bits and the public exponent 65537 (section 3.2).
