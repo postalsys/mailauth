@@ -8,10 +8,12 @@ const expect = chai.expect;
 
 const { dkim2Sign, Dkim2SignStream } = require('../../lib/dkim2/sign');
 const { dkim2Verify } = require('../../lib/dkim2/verify');
+const { dkim2Hash } = require('../../lib/dkim2/hash');
 const { dkimSign, dkimVerify } = require('../../lib/mailauth');
 const { rsaKey, ed25519Key, resolver, message, originatorOptions, signMessage } = require('../helpers/dkim2');
 const { dkimTxtRecord } = require('../helpers/keys');
 const reference = require('../helpers/dkim2-reference');
+const { parseMessageInstance } = require('../../lib/dkim2/fields');
 
 chai.config.includeStack = true;
 
@@ -96,6 +98,23 @@ describe('DKIM2 signing and verification', () => {
 
         let result = await dkim2Sign(input, originatorOptions({ mailFrom: 'one@example.com' }));
         expect(result.messageInstance.replace(/\s/g, '')).to.equal(`Message-Instance:m=1;h=sha256:${expectedHash}:${expectedBodyHash};`);
+    });
+
+    it('computes the Message-Instance hashes with dkim2Hash()', async () => {
+        let input = message(['X-Mailer: test', 'Received: from somewhere']);
+        let signed = await dkim2Sign(input, originatorOptions({ hashAlgorithms: ['sha256', 'sha512'] }));
+        let hashSets = parseMessageInstance(signed.messageInstance).hashes;
+
+        let result = await dkim2Hash(input, { algorithms: ['SHA256', 'sha512', 'sha256'] });
+        expect(result.hashes).to.deep.equal(hashSets);
+        expect(result.headers).to.deep.equal(['date', 'from', 'message-id', 'subject', 'to']);
+
+        // the DKIM2 header fields of a signed message are not hashed, and sha256 is the default
+        let again = await dkim2Hash(Readable.from([Buffer.concat([Buffer.from(signed.signatures), input])]));
+        expect(again.hashes).to.deep.equal([hashSets[0]]);
+
+        let err = await dkim2Hash(input, { algorithms: ['sha1'] }).catch(err => err);
+        expect(err.code).to.equal('EINVALIDALGO');
     });
 
     it('verifies with sha512 hashes only', async () => {

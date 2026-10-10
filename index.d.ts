@@ -1636,6 +1636,37 @@ export interface DKIM2VerifyResult {
 }
 
 /**
+ * DKIM2 hashing options
+ */
+export interface DKIM2HashOptions {
+    /**
+     * Hash algorithms (default: ["sha256"])
+     */
+    algorithms?: ('sha256' | 'sha512')[];
+}
+
+/**
+ * DKIM2 hashes of a message
+ */
+export interface DKIM2HashResult {
+    /**
+     * Names of the hashed header fields, in the order they are hashed
+     */
+    headers: string[];
+
+    /**
+     * The hash-sets of the h= tag of a Message-Instance
+     */
+    hashes: { algorithm: 'sha256' | 'sha512'; headerHash: string; bodyHash: string }[];
+}
+
+/**
+ * Computes the DKIM2 header and body hashes of a message, as they go into the h= tag of a
+ * Message-Instance header field. Rejects for an unsupported hash algorithm
+ */
+export function dkim2Hash(input: MessageInput, options?: DKIM2HashOptions): Promise<DKIM2HashResult>;
+
+/**
  * Verifies the DKIM2 header fields of a message
  */
 export function dkim2Verify(input: MessageInput, options?: DKIM2VerifyOptions): Promise<DKIM2VerifyResult>;
