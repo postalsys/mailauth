@@ -5,7 +5,7 @@ const { Readable } = require('node:stream');
 const chai = require('chai');
 const expect = chai.expect;
 
-const { authenticate, dkim2Sign, dkim2Verify, Dkim2SignStream } = require('../../lib/mailauth');
+const { authenticate, dkim2Sign, dkim2Verify, dkim2Hash, Dkim2SignStream } = require('../../lib/mailauth');
 const { resolver, message, originatorOptions, signMessage } = require('../helpers/dkim2');
 
 chai.config.includeStack = true;
@@ -26,6 +26,7 @@ describe('DKIM2 in authenticate()', () => {
         expect(dkim2Sign).to.be.a('function');
         expect(dkim2Verify).to.be.a('function');
         expect(Dkim2SignStream).to.be.a('function');
+        expect(dkim2Hash).to.be.a('function');
     });
 
     it('does not verify DKIM2 unless asked to', async () => {

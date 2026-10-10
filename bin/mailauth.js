@@ -12,6 +12,8 @@ const commandSpf = require('../lib/commands/spf');
 const commandVmc = require('../lib/commands/vmc');
 const commandBodyhash = require('../lib/commands/bodyhash');
 const commandDkim2Sign = require('../lib/commands/dkim2-sign');
+const commandDkim2Verify = require('../lib/commands/dkim2-verify');
+const commandDkim2Hash = require('../lib/commands/dkim2-hash');
 
 const fs = require('node:fs');
 const pathlib = require('node:path');
@@ -160,6 +162,34 @@ program
         }
     })
     .action(runCommand(commandDkim2Sign, 'Failed to sign the input message with DKIM2.'));
+
+program
+    .command('dkim2-verify')
+    .description('Verify the DKIM2 signatures of an email and return a JSON report (experimental, built against draft-ietf-dkim-dkim2-spec-06)')
+    .argument('[email]', emailArgDescription)
+    .helpOption('--help', 'Show help.')
+    .option(
+        '-f, --mail-from <address>',
+        'MAIL FROM address the message was delivered with, "<>" for the null sender. Checked against the highest DKIM2-Signature.'
+    )
+    .option('-r, --rcpt-to <address>', 'RCPT TO address the message was delivered to, checked against the highest DKIM2-Signature. Can be repeated.', collect)
+    .option(
+        '-n, --dns-cache <file>',
+        'Path to a JSON file with cached DNS responses. When provided, DNS queries use these cached responses instead of performing actual DNS lookups.'
+    )
+    .option('-t, --time <timestamp>', 'Time to verify against as a UNIX timestamp. Defaults to the current time.', numberArg)
+    .option('--max-age <seconds>', 'Seconds after which a signature expires, 0 to not check. Defaults to 14 days.', numberArg)
+    .option('--max-instances <number>', 'Most Message-Instance, and most DKIM2-Signature, header fields to process. Defaults to 20.', numberArg)
+    .option('-o, --headers-only', 'If set, outputs only the Authentication-Results entry (dkim2=...) instead of the JSON report.')
+    .action(runCommand(commandDkim2Verify, 'Failed to verify DKIM2 for the input message.'));
+
+program
+    .command('dkim2-hash')
+    .description('Generate the DKIM2 header and body hashes of an email (the h= tag of a Message-Instance)')
+    .argument('[email]', emailArgDescription)
+    .helpOption('--help', 'Show help.')
+    .option('-a, --algo <algorithm>', 'Hash algorithm, "sha256" or "sha512". Can be repeated. Defaults to "sha256".', collect)
+    .action(runCommand(commandDkim2Hash, 'Failed to calculate the DKIM2 hashes for the input message.'));
 
 program
     .command('seal')

@@ -423,7 +423,9 @@ console.log(result.info); // dkim2=pass (i=1 example.com pass, i=2 list.example.
 
 The verifier recreates every instance of the message with the Recipes, checks every hash and signature, the chain of custody between the hops, the timestamps, and the `donotmodify` and `donotexplode` requests. Failures use the human-readable strings of section 11 of the specification. See [DKIM2 Result Reference](docs/dkim2.md) for the result object and for how ambiguities of the drafts are handled.
 
-With the CLI, `mailauth dkim2-sign` signs a message, and `mailauth report --dkim2 --sender <address> --rcpt-to <address>` includes DKIM2 in the report.
+`dkim2Hash(message, { algorithms })` computes the header and body hashes of a message as they go into the `h=` tag of a `Message-Instance` header field, which helps when writing or checking a Recipe. It resolves with `{ headers, hashes }`, the names of the hashed header fields and `[{ algorithm, headerHash, bodyHash }]`.
+
+With the CLI, `mailauth dkim2-sign` signs a message, `mailauth dkim2-verify` verifies it, `mailauth dkim2-hash` prints the hashes of its `Message-Instance`, and `mailauth report --dkim2 --sender <address> --rcpt-to <address>` includes DKIM2 in the report. See the [command-line documentation](cli.md#dkim2-sign).
 
 ### SPF
 

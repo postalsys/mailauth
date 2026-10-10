@@ -14,6 +14,9 @@ mailauth provides a command-line utility for email authentication, complementing
 - [Available Commands](#available-commands)
     - [`report`](#report) &mdash; Validate SPF, DKIM, DMARC, ARC, and BIMI
     - [`sign`](#sign) &mdash; Sign an email with DKIM
+    - [`dkim2-sign`](#dkim2-sign) &mdash; Sign an email with DKIM2 (experimental)
+    - [`dkim2-verify`](#dkim2-verify) &mdash; Verify the DKIM2 signatures of an email (experimental)
+    - [`dkim2-hash`](#dkim2-hash) &mdash; Generate the DKIM2 header and body hashes for an email
     - [`seal`](#seal) &mdash; Seal an email with ARC
     - [`spf`](#spf) &mdash; Validate SPF for an IP address and email address
     - [`vmc`](#vmc) &mdash; Validate BIMI VMC logo files
@@ -56,13 +59,19 @@ mailauth spf --help
 
 The mailauth CLI offers several commands to perform different email authentication tasks:
 
-1. [`report`](#report) &mdash; Validate SPF, DKIM, DMARC, ARC, and BIMI.
+1. [`report`](#report) &mdash; Validate SPF, DKIM, DMARC, ARC, and BIMI, and optionally DKIM2.
 2. [`sign`](#sign) &mdash; Sign an email with DKIM.
-3. [`seal`](#seal) &mdash; Seal an email with ARC.
-4. [`spf`](#spf) &mdash; Validate SPF for an IP address and email address.
-5. [`vmc`](#vmc) &mdash; Validate BIMI VMC logo files.
-6. [`bodyhash`](#bodyhash) &mdash; Generate the body hash value for an email.
-7. [`license`](#license) &mdash; Display licenses for mailauth and included modules.
+3. [`dkim2-sign`](#dkim2-sign) &mdash; Sign an email with DKIM2 (experimental).
+4. [`dkim2-verify`](#dkim2-verify) &mdash; Verify the DKIM2 signatures of an email (experimental).
+5. [`dkim2-hash`](#dkim2-hash) &mdash; Generate the DKIM2 header and body hashes for an email.
+6. [`seal`](#seal) &mdash; Seal an email with ARC.
+7. [`spf`](#spf) &mdash; Validate SPF for an IP address and email address.
+8. [`vmc`](#vmc) &mdash; Validate BIMI VMC logo files.
+9. [`bodyhash`](#bodyhash) &mdash; Generate the body hash value for an email.
+10. [`license`](#license) &mdash; Display licenses for mailauth and included modules.
+
+> [!WARNING]
+> DKIM2 is not a published RFC yet. The DKIM2 commands are experimental and built against draft-ietf-dkim-dkim2-spec-06, draft-ietf-dkim-dkim2-dns-00 and draft-ietf-dkim-dkim2-bcp-01, see [DKIM2](README.md#dkim2).
 
 ### report
 
@@ -88,6 +97,8 @@ mailauth report [options] [email]
 - `--max-void-lookups number`, `-z number`: Sets the maximum number of void DNS lookups for SPF checks. Defaults to `2`.
 - `--strict`: Follows the RFCs exactly instead of the lenient defaults, for example an `rsa-sha1` DKIM signature is reported as `dkim=policy`. See [Strict mode](README.md#strict-mode).
 - `--reject-rsa-sha1`: Reports an `rsa-sha1` DKIM signature as `dkim=policy` and does not count it for DMARC, as `--strict` does, while every other check keeps the lenient default.
+- `--dkim2`: Verifies DKIM2 header fields as well. The result is in the `dkim2` key of the report and a `dkim2=` entry is added to Authentication-Results. DKIM2 does not take part in DMARC.
+- `--rcpt-to user@example.com`, `-r user@example.com`: RCPT TO address of the delivery, checked against the highest DKIM2-Signature together with `--sender`. Can be repeated. Without it the DKIM2 result has the `rcpt-to-not-checked` warning.
 
 #### Example
 
@@ -154,6 +165,136 @@ Signing time:               2023-03-15T12:00:00.000Z
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=example.com;
  h=MIME-Version:Date:Message-ID:Subject:To:From:Content-Type;
  ...
+```
+
+### dkim2-sign
+
+The `dkim2-sign` command signs an email message with DKIM2. It adds a `DKIM2-Signature` header field, and a `Message-Instance` header field when the message has none yet or has changed since its last instance. Use it as the originator of a message, or as a forwarder that adds its own hop to a message that is already DKIM2 signed.
+
+#### Usage
+
+```bash
+mailauth dkim2-sign [options] [email]
+```
+
+- **email**: (Optional) Path to the EML-formatted email message file. If omitted, the email is read from standard input.
+
+#### Options
+
+- `--private-key /path/to/private.key`, `-k /path/to/private.key`: Path to a private key, RSA (at least 1024 bits) or Ed25519. Repeat it to sign with several keys, each with its own `--selector`.
+- `--selector selector`, `-s selector`: Selector of the private key in the same position. Can be repeated. At most two keys can use the same algorithm.
+- `--domain example.com`, `-d example.com`: Signing domain (`d=` tag). It has to be the MAIL FROM domain or a parent of it.
+- `--mail-from user@example.com`, `-f user@example.com`: MAIL FROM address the message is sent with (`mf=` tag), `<>` for the null sender.
+- `--rcpt-to user@example.net`, `-r user@example.net`: RCPT TO address the message is sent to (`rt=` tag). Can be repeated.
+- `--next-domain example.net`: For a hop across a trust boundary, the domain of the next DKIM2 signature (`nd=` tag). Used instead of `--mail-from` and `--rcpt-to`.
+- `--flag flag`: Flag to set (`f=` tag): `donotmodify`, `donotexplode`, `exploded`, `feedback` or `feedhere`. Can be repeated.
+- `--nonce value`: A value for your own use (`n=` tag), at most 64 characters.
+- `--hash algorithm`: Hash algorithm of a new `Message-Instance`, `sha256` or `sha512`. Can be repeated. Defaults to `sha256`.
+- `--recipe /path/to/recipe.json`: For a forwarder that changed the message, a JSON file with the Recipe that recreates the previous instance (`r=` tag). It is checked before signing, and the command fails if it does not recreate the previous instance.
+- `--time timestamp`, `-t timestamp`: Signing time as a Unix timestamp (`t=` tag). Defaults to the current time.
+- `--headers-only`, `-o`: Outputs only the DKIM2 header fields without the message.
+
+Either `--mail-from` and `--rcpt-to`, or `--next-domain`, is required.
+
+#### Example
+
+```bash
+mailauth dkim2-sign /path/to/message.eml \
+    -k /path/to/rsa.key -s rsa2026 -k /path/to/ed25519.key -s ed2026 \
+    -d example.com -f bounces@example.com -r user@example.net
+```
+
+**Sample Output:**
+
+```
+DKIM2-Signature: i=1; m=1; t=1791646747; d=example.com; mf=
+ PGJvdW5jZXNAZXhhbXBsZS5jb20+; rt=PHVzZXJAZXhhbXBsZS5uZXQ+; s=rsa2026:rsa-sha256:
+ MXp6X81Tuu/cwbedt/kFqdO1sE4yPkfYVnFzfBMO2ZjfAtoXuptS+G79SYEpEaAo
+ ...
+Message-Instance: m=1; h=sha256:
+ sbKYVMaA7tqVLzGg5HTTU3o95q7ufdnBincKg/jBBQc=:
+ GjyEkbey2OupCW5AKJv4dzTPsPHSaZjRDMqUSmhpTyQ=;
+From: ...
+```
+
+A mailing list that replaced the `Subject` header field, added a `List-Id` header field and appended a footer after the first 3 body lines signs its revision with a Recipe:
+
+```json
+{ "h": { "subject": [{ "d": ["Original subject"] }], "list-id": [] }, "b": [{ "c": [1, 3] }] }
+```
+
+```bash
+mailauth dkim2-sign revised.eml -k list.key -s list -d list.example.org \
+    -f bounce@list.example.org -r member@example.net --recipe recipe.json
+```
+
+### dkim2-verify
+
+The `dkim2-verify` command verifies only the DKIM2 header fields of an email message and returns a JSON report. See [DKIM2 Result Reference](docs/dkim2.md) for the structure. Use `report --dkim2` to check DKIM2 together with everything else.
+
+#### Usage
+
+```bash
+mailauth dkim2-verify [options] [email]
+```
+
+- **email**: (Optional) Path to the EML-formatted email message file. If omitted, the email is read from standard input.
+
+#### Options
+
+- `--mail-from user@example.com`, `-f user@example.com`: MAIL FROM address the message was delivered with, `<>` for the null sender. Checked against the highest DKIM2-Signature.
+- `--rcpt-to user@example.net`, `-r user@example.net`: RCPT TO address the message was delivered to, checked against the highest DKIM2-Signature. Can be repeated.
+- `--dns-cache /path/to/dns.json`, `-n /path/to/dns.json`: Path to a DNS cache file. When provided, DNS queries use cached responses.
+- `--time timestamp`, `-t timestamp`: Time to verify against as a Unix timestamp. Defaults to the current time.
+- `--max-age seconds`: Seconds after which a signature expires, `0` to not check. Defaults to 14 days.
+- `--max-instances number`: The most `Message-Instance`, and the most `DKIM2-Signature`, header fields to process. Defaults to `20`.
+- `--headers-only`, `-o`: Outputs only the Authentication-Results entry (`dkim2=...`) instead of the JSON report.
+- `--verbose`, `-v`: Shows the DNS queries, and the parts of the envelope that were not checked.
+
+The chain of custody against the delivery, which is what stops DKIM2 replay, is only checked for the parts of the envelope given with `--mail-from` and `--rcpt-to`. A missing part is reported in `status.warnings`.
+
+#### Example
+
+```bash
+mailauth dkim2-verify -f bounces@example.com -r user@example.net -o /path/to/message.eml
+```
+
+**Sample Output:**
+
+```
+dkim2=pass (i=1 example.com pass) header.d=example.com
+```
+
+### dkim2-hash
+
+The `dkim2-hash` command computes the DKIM2 header and body hashes of an email message, in the `algorithm:header-hash:body-hash` form of the `h=` tag of a `Message-Instance` header field. Use it to check what a `Message-Instance` should contain, for example when writing a Recipe.
+
+#### Usage
+
+```bash
+mailauth dkim2-hash [options] [email]
+```
+
+- **email**: (Optional) Path to the EML-formatted email message file. If omitted, the email is read from standard input.
+
+#### Options
+
+- `--algo algorithm`, `-a algorithm`: Hash algorithm, `sha256` or `sha512`. Can be repeated. Defaults to `sha256`.
+- `--verbose`, `-v`: Also lists the header fields that go into the header hash. DKIM2 does not sign trace header fields, `X-` header fields, DKIM1, ARC and Authentication-Results header fields, or its own header fields.
+
+#### Example
+
+```bash
+mailauth dkim2-hash -v /path/to/message.eml
+```
+
+**Sample Output:**
+
+```
+Reading email message from /path/to/message.eml
+Hashed header fields: content-type, date, from, message-id, mime-version, subject, to
+--------
+sha256:sbKYVMaA7tqVLzGg5HTTU3o95q7ufdnBincKg/jBBQc=:GjyEkbey2OupCW5AKJv4dzTPsPHSaZjRDMqUSmhpTyQ=
 ```
 
 ### seal
@@ -413,7 +554,7 @@ The `--dns-cache` option allows you to use a JSON-formatted DNS cache file for t
 
 The DNS cache file is a JSON object where:
 
-- **Keys**: Fully qualified domain names (e.g., `"example.com"`).
+- **Keys**: Fully qualified domain names (e.g., `"example.com"`). DKIM and DKIM2 keys are looked up as `selector._domainkey.domain`.
 - **Values**: Objects with DNS record types as keys (e.g., `"TXT"`, `"MX"`) and their corresponding values.
 
 **Example:**
