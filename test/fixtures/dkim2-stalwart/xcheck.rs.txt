@@ -1,0 +1,152 @@
+// Cross-check against mailauth (scratch harness, not part of mail-auth).
+// XCHECK_DIR=<dir> cargo test --lib xcheck_sign  -> writes stalwart-signed <name>.eml + <name>.json
+// XCHECK_DIR=<dir> cargo test --lib xcheck_verify -> verifies every <name>.eml in <dir>/in, writes results.json
+
+use super::{load_caches, resource};
+use crate::{
+    AuthenticatedMessage, MessageAuthenticator,
+    crypto::{Ed25519Key, RsaKey, Sha256},
+    dkim2::{Dkim2Signed, Dkim2Signer, Envelope, Flag, Hop},
+};
+use rustls_pki_types::{PrivateKeyDer, pem::PemObject};
+use std::path::PathBuf;
+
+fn ed(domain: &str) -> Ed25519Key {
+    let pem = std::fs::read(resource(&["keys", &format!("ed25519._domainkey.{domain}.pem")])).unwrap();
+    let PrivateKeyDer::Pkcs8(der) = PrivateKeyDer::from_pem_slice(&pem).unwrap() else { panic!() };
+    Ed25519Key::from_pkcs8_maybe_unchecked_der(der.secret_pkcs8_der()).unwrap()
+}
+
+fn rsa(domain: &str, selector: &str) -> RsaKey<Sha256> {
+    let pem = std::fs::read(resource(&["keys", &format!("{selector}._domainkey.{domain}.pem")])).unwrap();
+    RsaKey::<Sha256>::from_key_der(PrivateKeyDer::from_pem_slice(&pem).unwrap()).unwrap()
+}
+
+fn dir() -> PathBuf {
+    PathBuf::from(std::env::var("XCHECK_DIR").expect("XCHECK_DIR"))
+}
+
+fn crlf(raw: &[u8]) -> Vec<u8> {
+    let s = String::from_utf8_lossy(raw).replace("\r\n", "\n").replace('\n', "\r\n");
+    s.into_bytes()
+}
+
+fn prepend(signed: &Dkim2Signed, message: &[u8]) -> Vec<u8> {
+    let mut out = Vec::new();
+    signed.write(&mut out);
+    out.extend_from_slice(message);
+    out
+}
+
+fn save(name: &str, message: &[u8], mail_from: &str, rcpt_to: &[&str]) {
+    let out = dir().join("stalwart");
+    std::fs::create_dir_all(&out).unwrap();
+    std::fs::write(out.join(format!("{name}.eml")), message).unwrap();
+    let envelope = serde_json::json!({ "mail_from": mail_from, "rcpt_to": rcpt_to });
+    std::fs::write(out.join(format!("{name}.json")), envelope.to_string()).unwrap();
+}
+
+#[test]
+fn xcheck_sign() {
+    let emails = ["simple", "dupheaders", "emptybody", "multiheader", "multirecipient", "trailingblank"];
+    for email in emails {
+        let msg = crlf(&std::fs::read(resource(&["emails", &format!("{email}.eml")])).unwrap());
+
+        // originator, Ed25519 only
+        let s = Dkim2Signer::from_key(ed("test1.dkim2.com"))
+            .domain("test1.dkim2.com")
+            .selector("ed25519")
+            .sign(msg.as_slice(), Hop::real("sender@test1.dkim2.com", ["rcpt@test2.dkim2.com"]))
+            .unwrap();
+        save(&format!("{email}-ed"), &prepend(&s, &msg), "<sender@test1.dkim2.com>", &["<rcpt@test2.dkim2.com>"]);
+
+        // originator, RSA and Ed25519 in one signature, flags and nonce, two recipients
+        let s = Dkim2Signer::from_key(rsa("test1.dkim2.com", "sel1"))
+            .domain("test1.dkim2.com")
+            .selector("sel1")
+            .additional_key(ed("test1.dkim2.com"), "ed25519")
+            .flags([Flag::Feedback, Flag::DoNotExplode])
+            .nonce("abc123")
+            .sign(msg.as_slice(), Hop::real("bounces@mail.test1.dkim2.com", ["a@test2.dkim2.com", "b@test3.dkim2.com"]))
+            .unwrap();
+        save(&format!("{email}-dual"), &prepend(&s, &msg), "<bounces@mail.test1.dkim2.com>", &["<b@test3.dkim2.com>"]);
+    }
+
+    let msg = crlf(&std::fs::read(resource(&["emails", "simple.eml"])).unwrap());
+
+    // null sender
+    let s = Dkim2Signer::from_key(ed("test1.dkim2.com"))
+        .domain("test1.dkim2.com")
+        .selector("ed25519")
+        .sign(msg.as_slice(), Hop::real("<>", ["rcpt@test2.dkim2.com"]))
+        .unwrap();
+    save("null-sender", &prepend(&s, &msg), "<>", &["<rcpt@test2.dkim2.com>"]);
+
+    // two hops: test1 -> list@test2, test2 forwards unchanged -> member@test3
+    let s1 = Dkim2Signer::from_key(ed("test1.dkim2.com"))
+        .domain("test1.dkim2.com")
+        .selector("ed25519")
+        .sign(msg.as_slice(), Hop::real("sender@test1.dkim2.com", ["list@test2.dkim2.com"]))
+        .unwrap();
+    let hop1 = prepend(&s1, &msg);
+    let s2 = Dkim2Signer::from_key(ed("test2.dkim2.com"))
+        .domain("test2.dkim2.com")
+        .selector("ed25519")
+        .sign(hop1.as_slice(), Hop::real("bounce@test2.dkim2.com", ["member@test3.dkim2.com"]))
+        .unwrap();
+    save("chain-unchanged", &prepend(&s2, &hop1), "<bounce@test2.dkim2.com>", &["<member@test3.dkim2.com>"]);
+
+    // two hops, the list revises the message (subject tag, List-Id, footer), recipe computed by diff
+    let text = String::from_utf8(hop1.clone()).unwrap();
+    let revised = text.replacen("Subject: ", "Subject: [list] ", 1).replacen("\r\n\r\n", "\r\nList-Id: <list.test2.dkim2.com>\r\n\r\n", 1) + "--\r\nlist footer\r\n";
+    let s2 = Dkim2Signer::from_key(ed("test2.dkim2.com"))
+        .domain("test2.dkim2.com")
+        .selector("ed25519")
+        .sign_revised(hop1.as_slice(), revised.as_bytes(), Hop::real("bounce@test2.dkim2.com", ["member@test3.dkim2.com"]))
+        .unwrap();
+    save("chain-revised", &prepend(&s2, revised.as_bytes()), "<bounce@test2.dkim2.com>", &["<member@test3.dkim2.com>"]);
+
+    // imaginary hop: test2 signs with nd=test3, test3 sends on
+    let s2 = Dkim2Signer::from_key(ed("test2.dkim2.com"))
+        .domain("test2.dkim2.com")
+        .selector("ed25519")
+        .sign(hop1.as_slice(), Hop::imaginary("test3.dkim2.com"))
+        .unwrap();
+    let hop2 = prepend(&s2, &hop1);
+    let s3 = Dkim2Signer::from_key(ed("test3.dkim2.com"))
+        .domain("test3.dkim2.com")
+        .selector("ed25519")
+        .sign(hop2.as_slice(), Hop::real("fwd@test3.dkim2.com", ["member@test4.dkim2.com"]))
+        .unwrap();
+    save("chain-nd", &prepend(&s3, &hop2), "<fwd@test3.dkim2.com>", &["<member@test4.dkim2.com>"]);
+}
+
+#[tokio::test]
+async fn xcheck_verify() {
+    let resolver = MessageAuthenticator::new_system_conf().unwrap();
+    let caches = load_caches();
+    let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
+    let input = dir().join("mailauth");
+    let mut results = serde_json::Map::new();
+    let mut names: Vec<_> = std::fs::read_dir(&input)
+        .unwrap()
+        .filter_map(|e| e.ok())
+        .map(|e| e.file_name().to_string_lossy().to_string())
+        .filter(|n| n.ends_with(".eml"))
+        .collect();
+    names.sort();
+    for name in names {
+        let base = name.trim_end_matches(".eml");
+        let raw = std::fs::read(input.join(&name)).unwrap();
+        let env: serde_json::Value = serde_json::from_slice(&std::fs::read(input.join(format!("{base}.json"))).unwrap()).unwrap();
+        let mail_from = env["mail_from"].as_str().unwrap().to_string();
+        let rcpt_to: Vec<String> = env["rcpt_to"].as_array().unwrap().iter().map(|v| v.as_str().unwrap().to_string()).collect();
+        let message = AuthenticatedMessage::parse(&raw).unwrap();
+        let params = caches.parameters(&message);
+        let output = resolver
+            .verify_dkim2_(&message, Envelope::new(&mail_from, &rcpt_to), params.txt_cache(), now, true)
+            .await;
+        results.insert(base.to_string(), serde_json::json!({ "result": format!("{:?}", output.result()), "error": format!("{:?}", output.error()) }));
+    }
+    std::fs::write(dir().join("stalwart-results.json"), serde_json::to_string_pretty(&results).unwrap()).unwrap();
+}

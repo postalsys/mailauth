@@ -9,3 +9,4 @@ node_modules/
 # Test fixtures with embedded content
 test/fixtures/**/*.yml
 test/fixtures/dkim2tests/vectors.json
+test/fixtures/dkim2-stalwart/messages.json

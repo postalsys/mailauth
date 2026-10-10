@@ -1,8 +1,9 @@
 /* eslint no-unused-expressions:0 */
 'use strict';
 
-// Interoperability with an independent DKIM2 implementation: the test vectors of
-// turscar/dkim2tests (test/fixtures/dkim2tests), made with turscar/dkim2
+// Interoperability with independent DKIM2 implementations: the test vectors of turscar/dkim2tests
+// (test/fixtures/dkim2tests), made with turscar/dkim2, and messages signed by stalwart mail-auth
+// (test/fixtures/dkim2-stalwart)
 
 const { Buffer } = require('node:buffer');
 const chai = require('chai');
@@ -14,6 +15,7 @@ const { parseHeaders } = require('../../lib/tools');
 const { parseMessageInstance, parseSignature, buildSignatureInput } = require('../../lib/dkim2/fields');
 const { zoneResolver } = require('../helpers/dns-zone');
 const vectors = require('../fixtures/dkim2tests/vectors.json');
+const stalwart = require('../fixtures/dkim2-stalwart/messages.json');
 
 chai.config.includeStack = true;
 
@@ -88,6 +90,26 @@ describe('DKIM2 interoperability with the turscar/dkim2tests vectors', () => {
                     expect(result.status.result, result.status.comment).to.equal('pass');
                 });
             }
+        });
+    }
+});
+
+describe('DKIM2 interoperability with messages signed by stalwart mail-auth', () => {
+    const resolver = resolverFor(stalwart.dns);
+
+    it('has the messages', () => {
+        expect(stalwart.messages.length).to.be.at.least(16);
+    });
+
+    for (let entry of stalwart.messages) {
+        it(`verifies ${entry.name}`, async () => {
+            let message = Buffer.from(entry.message);
+            let signatures = headerRows(message).filter(row => row.key === 'dkim2-signature');
+            // the highest i=, wherever it is in the header
+            let top = signatures.map(row => parseSignature(row.line)).reduce((a, b) => (b.i > a.i ? b : a));
+            let result = await dkim2Verify(message, { resolver, mailFrom: entry.mailFrom, rcptTo: entry.rcptTo, curTime: signTime(top) });
+            expect(result.status.result, result.status.comment).to.equal('pass');
+            expect(result.status).to.not.have.property('warnings');
         });
     }
 });
