@@ -336,11 +336,14 @@ describe('DKIM2 validation', () => {
     });
 
     describe('timestamps (section 11.3)', () => {
-        it('rejects a timestamp too far in the future only with maxFutureTime', async () => {
+        it('rejects a timestamp more than 5 minutes, or maxFutureTime, in the future', async () => {
             let signed = await signMessage(message(), originatorOptions({ signTime: new Date('2026-09-01T00:10:00Z') }));
             let curTime = new Date('2026-09-01T00:00:00Z');
 
-            expect((await verify(signed, { curTime })).status.result).to.equal('pass');
+            expect((await verify(signed, { curTime: new Date('2026-09-01T00:05:00Z') })).status.result).to.equal('pass');
+            let defaultLimit = await verify(signed, { curTime: new Date('2026-09-01T00:04:59Z') });
+            expect(defaultLimit.status.comment).to.equal('DKIM2-Signature i=1 signature timestamp is in the future');
+            expect((await verify(signed, { curTime, maxFutureTime: false })).status.result).to.equal('pass');
             expect((await verify(signed, { curTime, maxFutureTime: 600 })).status.result).to.equal('pass');
 
             let future = await verify(signed, { curTime, maxFutureTime: 599 });

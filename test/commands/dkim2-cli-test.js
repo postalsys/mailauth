@@ -162,6 +162,12 @@ describe('CLI dkim2-sign and report --dkim2', function () {
 
             let future = await runCli(['dkim2-verify', ...dnsArgs(), '-o', '-t', '1791626300', '--max-future', '99', signedPath]);
             expect(future.stdout).to.include('DKIM2-Signature i=1 signature timestamp is in the future');
+
+            // 5 minutes by default, 0 turns the check off
+            let defaultLimit = await runCli(['dkim2-verify', ...dnsArgs(), '-o', '-t', '1791626000', signedPath]);
+            expect(defaultLimit.stdout).to.include('signature timestamp is in the future');
+            let off = await runCli(['dkim2-verify', ...dnsArgs(), '-o', '-t', '1791626000', '--max-future', '0', signedPath]);
+            expect(off.stdout).to.match(/^dkim2=pass/);
         });
 
         it('limits the DKIM2 header fields with --max-instances', async () => {

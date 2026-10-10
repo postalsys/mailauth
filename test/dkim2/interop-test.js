@@ -189,10 +189,8 @@ describe('DKIM2 interoperability with the croessner/dkim2 draft-06 vectors', () 
         ['typed_temporary_provider_temperror', 'rsa_pass', 'temporary', 'temperror'],
         ['timestamp_exact_14_days_pass', 'age_exact', 'keys', 'pass'],
         ['timestamp_14_days_plus_one_permerror', 'age_over', 'keys', 'permerror'],
-        ['timestamp_exact_five_minutes_future_pass', 'future_exact', 'keys', 'pass', { maxFutureTime: 300 }],
-        ['timestamp_five_minutes_plus_one_permerror', 'future_over', 'keys', 'permerror', { maxFutureTime: 300 }],
-        // future timestamps are only checked with maxFutureTime, section 8.4 makes it a MAY
-        ['timestamp_five_minutes_plus_one_default', 'future_over', 'keys', 'permerror', { ours: 'pass' }],
+        ['timestamp_exact_five_minutes_future_pass', 'future_exact', 'keys', 'pass'],
+        ['timestamp_five_minutes_plus_one_permerror', 'future_over', 'keys', 'permerror'],
         ['timestamp_large_parseable_permerror', 'timestamp_large', 'keys', 'permerror'],
         ['mail_from_exact_pass', 'mail_exact', 'keys', 'pass'],
         ['mail_from_ascii_domain_case_pass', 'mail_domain_case', 'keys', 'pass', { reverse: '<Sender@example.test>' }],
@@ -220,8 +218,7 @@ describe('DKIM2 interoperability with the croessner/dkim2 draft-06 vectors', () 
                 resolver: resolvers[provider],
                 mailFrom: options.reverse || Buffer.from(vector.reverse_path_base64, 'base64').toString(),
                 rcptTo: options.forward || vector.forward_paths_base64.map(path => Buffer.from(path, 'base64').toString()),
-                curTime: new Date(1700000000 * 1000),
-                maxFutureTime: options.maxFutureTime
+                curTime: new Date(1700000000 * 1000)
             });
             expect(verified.status.result, verified.status.comment).to.equal(result);
         });
