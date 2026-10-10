@@ -1,0 +1,129 @@
+# DKIM2 Result Reference
+
+This document describes the result object returned by `dkim2Verify()` and how mailauth reads the parts of the DKIM2 drafts that are open to interpretation.
+
+> [!WARNING]
+> DKIM2 support is experimental. It is built against these Internet-Drafts, which are not finished and can change:
+>
+> - [draft-ietf-dkim-dkim2-spec-06](https://www.ietf.org/archive/id/draft-ietf-dkim-dkim2-spec-06.txt) (28 August 2026), the protocol
+> - [draft-ietf-dkim-dkim2-dns-00](https://www.ietf.org/archive/id/draft-ietf-dkim-dkim2-dns-00.txt) (20 July 2026), the key records. The specification cites its predecessor, draft-chuang-dkim2-dns-04, mailauth follows the working group version
+> - [draft-ietf-dkim-dkim2-bcp-01](https://www.ietf.org/archive/id/draft-ietf-dkim-dkim2-bcp-01.txt) (9 September 2026), best practices
+> - [draft-gondwana-dkim2-authres-00](https://datatracker.ietf.org/doc/html/draft-gondwana-dkim2-authres-00) (3 September 2026, not adopted by the working group), the `dkim2` Authentication-Results method
+>
+> Section numbers below refer to draft-ietf-dkim-dkim2-spec-06 unless noted otherwise.
+
+## Overview
+
+```javascript
+const { dkim2Verify } = require('mailauth');
+
+const result = await dkim2Verify(message, {
+    mailFrom: 'bounce@list.example.org',
+    rcptTo: ['member@example.net']
+});
+```
+
+The whole message gets one result (section 11.1):
+
+| Result      | Meaning                                                                                                    |
+| ----------- | ---------------------------------------------------------------------------------------------------------- |
+| `pass`      | Every instance, signature and chain of custody check passed                                                |
+| `fail`      | A hash or signature was not correct, or a `donotmodify`, `donotexplode` or replay check failed             |
+| `permerror` | The message could not be verified: malformed or missing header fields, missing keys, an envelope mismatch… |
+| `temperror` | A public key could not be fetched because of a temporary DNS failure                                       |
+| `none`      | The message has no DKIM2 header fields                                                                     |
+
+When there are several problems, `fail` wins over `permerror`, and `permerror` over `temperror`, so that a cryptographic failure is never reported as temporary (section 10.4: such failures "MUST NOT provoke 4xx SMTP replies").
+
+## Top-Level Result Object
+
+| Field        | Type       | Description                                                                                               |
+| ------------ | ---------- | --------------------------------------------------------------------------------------------------------- |
+| `status`     | `object`   | `{ result, comment, header }`, see below                                                                  |
+| `info`       | `string`   | Authentication-Results resinfo, such as `dkim2=pass (i=1 example.com pass) header.d=example.com`          |
+| `errors`     | `object[]` | Every problem found, in the order the checks ran: `{ result, message, i, m }`                             |
+| `instances`  | `object[]` | One entry per `Message-Instance`, see below                                                               |
+| `signatures` | `object[]` | One entry per `DKIM2-Signature`, see below                                                                |
+| `replay`     | `object`   | `{ key, exploded }`: the `m=1` hashes that identify the message, and whether a signature has `f=exploded` |
+
+### status
+
+| Field      | Type     | Description                                                                                                                          |
+| ---------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `result`   | `string` | One of the results above                                                                                                             |
+| `comment`  | `string` | The human-readable string of the reported problem, as specified in section 11, such as `DKIM2-Signature i=1 rsa incorrect signature` |
+| `header.d` | `string` | `d=` of the `i=1` signature, the originator (draft-gondwana-dkim2-authres-00 section 3.2.1)                                          |
+| `header.i` | `number` | `i=` of the signature the problem is reported against. Not set for `pass`, or for a problem of the whole message                     |
+
+`header.d` is an authenticated identity only when the result is `pass`.
+
+### instances
+
+| Field    | Type       | Description                                                                                                                                                      |
+| -------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `m`      | `number`   | Revision number                                                                                                                                                  |
+| `hashes` | `object[]` | `{ algorithm, header, body }` for every supported hash algorithm. `body` is `unknown` when a later hop declared that the body can not be recreated (`"b": null`) |
+| `recipe` | `object`   | When the instance has a Recipe: `{ headers, body }`, the header field names it recreates, and `unchanged`, `recipe` or `unrecoverable` for the body              |
+
+### signatures
+
+| Field           | Type       | Description                                                                  |
+| --------------- | ---------- | ---------------------------------------------------------------------------- |
+| `i`             | `number`   | Sequence number                                                              |
+| `m`             | `number`   | Highest `Message-Instance` covered                                           |
+| `signingDomain` | `string`   | `d=`                                                                         |
+| `timestamp`     | `number`   | `t=`, seconds since the epoch, and `signTime` as an ISO 8601 string          |
+| `mailFrom`      | `string`   | Decoded `mf=`, with angle brackets                                           |
+| `rcptTo`        | `string[]` | Decoded `rt=`                                                                |
+| `nextDomain`    | `string`   | `nd=`                                                                        |
+| `nonce`         | `string`   | `n=`                                                                         |
+| `flags`         | `string[]` | `f=`, including flags mailauth does not know                                 |
+| `status`        | `object`   | `{ result, comment }` for this hop, including the errors reported against it |
+| `values`        | `object[]` | One entry per signature value in `s=`, see below                             |
+
+Each entry of `values` has `selector`, `algorithm`, `result` (`pass`, `fail`, `permerror`, `temperror`, or `none` for an algorithm that is not supported and so ignored, section 3.4), and when available `comment`, `rr` (the key record), `modulusLength` and `testing` (the key record has `t=y`; draft-ietf-dkim-dkim2-dns-00 says a signer in testing mode must be treated like unsigned mail, which is up to you).
+
+## What Is Checked
+
+1. **Syntax and numbering (section 11.2).** Every `Message-Instance` and `DKIM2-Signature` is parsed. `m=` and `i=` start at 1 with no gaps, no instance is above the highest `m=` of a signature, no hash algorithm or selector repeats, and no signing algorithm is used more than twice.
+2. **Recipes (sections 5 and 11).** Starting from the message as it is, the Recipe of every instance is applied to recreate the one before it.
+3. **Hashes (section 11.7).** The header and body hashes of every instance are compared with the recreated message.
+4. **Timestamps (section 11.3).** A signature older than `maxSignatureAge` (14 days) is a PERMERROR.
+5. **Chain of custody (sections 8.7, 8.8, 9.4 and 11.4).** `d=` matches the `mf=` domain of every signature, `nd=` names the next signer exactly, the MAIL FROM of every hop matches a RCPT TO of the hop before it, and, when `mailFrom` or `rcptTo` is given, the highest signature matches the delivery.
+6. **Signatures (sections 9.6, 11.5 and 11.6).** Every signature value with a supported algorithm is checked with its key.
+7. **Requests (section 11.8).** `donotmodify` and `donotexplode` were honored by the later hops.
+8. **Replay (section 11.9).** When `checkReplay` is given and reports a duplicate, the message fails unless a signature has `f=exploded`.
+
+## How the Drafts Are Read
+
+The drafts leave some questions open. mailauth answers them like this:
+
+- **Unknown keys in a Recipe step.** Section 2 says unrecognised JSON fields "MUST be ignored", while the JSON schema of section 5 sets `additionalProperties: false` for steps. Unknown keys are ignored, but a step still needs exactly one of `c` and `d`.
+- **Recipe validity.** A Recipe that does not follow the schema (no `h` and no `b`, an empty `h`, an upper case header field name, a `c` range that is out of order or past the last line or header field, a `d` string with CR or LF) is reported as `Message-Instance m=<x> contains invalid JSON: <reason>`. Recipes for header fields that are not signed (section 4) are ignored.
+- **Signature values that can not be checked.** Section 11.6 requires every signature value that can be checked to pass. A value whose key is missing or broken can not be checked: when at least one other value passes and none fails, the signature passes and the key problem is reported in its `values` entry. When no value could be checked, the key problem is the result.
+- **Chain of custody between hops.** Section 9.4 matches the MAIL FROM of a hop with a RCPT TO of the hop before it. A signature with `nd=` has no MAIL FROM, and the null MAIL FROM `<>` has no domain, so for those the `d=` is matched instead (section 9.3 says the signer of such a hop holds a key "associated with a domain in the RCPT TO entry"). Section 8.8 waives only the `d=` and `mf=` match for the null MAIL FROM, not the chain of custody, so a hop with `mf=<>` can not be added by a domain the message was never sent to.
+- **`d=` and `mf=`.** Section 8.8 requires every signature's `d=` to match its `mf=` domain, so this is checked for every signature, not only the highest as section 11.4 describes.
+- **Envelope.** The chain of custody against the SMTP envelope is only checked when `mailFrom` or `rcptTo` is given. When it is and the highest signature has `nd=`, the result is `DKIM2-Signature i=<x> unexpected nd= tag`, since the delivery can then only be accepted on out-of-band arrangements (section 9.3).
+- **Future timestamps.** Section 8.4 allows ignoring signatures with a timestamp in the future. mailauth does not, as ignoring the only signature makes the message unsigned.
+- **`donotmodify`.** Section 8.10 allows adding header fields. A message passes when every signed header field of the instance the request was made on is still present, in the same order, and the body hash is unchanged. A null body Recipe after the request counts as a change.
+- **Key records.** Records are read with the tag-list rules of draft-ietf-dkim-dkim2-dns-00: tag names are case sensitive, `v=`, when present, is exactly `DKIM1` and the first tag, duplicate tags and other syntax errors make the record unusable, several TXT records are an error, and `k=` has to match the algorithm (`rsa` for `rsa-sha256`, `ed25519` for `ed25519-sha256`). The retired `h=`, `n=` and `s=` tags are ignored, and so is the `t=s` flag, as DKIM2 has no `i=` identity. Ed25519 keys are published as the bare 32 byte key (RFC 8463). RSA keys need at least 1024 bits and the public exponent 65537 (section 3.2).
+- **Leading whitespace in Recipe data.** The header hash removes the whitespace after the colon, so `{"d": [" value"]}` and `{"d": ["value"]}` recreate the same header field.
+
+### Error Strings Not in the Specification
+
+Section 11 lists the human-readable strings to use. These cases have no string there, so mailauth adds its own:
+
+- `Message-Instance m=<x> appears more than once` and `DKIM2-Signature i=<x> appears more than once`
+- `Message-Instance m=<x> has no supported hash algorithm` and `DKIM2-Signature i=<x> has no supported signature algorithm`
+- `Message has more than <n> Message-Instance or DKIM2-Signature header fields` (draft-ietf-dkim-dkim2-bcp-01 section 7.5)
+- `DKIM2-Signature i=<x> public key <selector> is too short` and `... has an unsupported exponent`
+
+The strings of section 11 are used as written, including their inconsistencies (`Message Instance` without the hyphen in section 11.7, `MAIL nd= does not match` in section 11.4).
+
+## Signing
+
+`dkim2Sign()` follows section 9:
+
+- A `Message-Instance` is added when the message has none, or when its hashes differ from the highest one. A changed message needs a `recipe`, which is applied before signing to make sure it recreates the highest instance.
+- The new signature continues the chain of custody: its signing domain has to equal the `nd=` of the previous signature, or its MAIL FROM domain (or, with `nextDomain`, its signing domain) has to match a RCPT TO of the previous signature.
+- Long tag values are folded inside base64 values, where section 2.14 allows FWS.
