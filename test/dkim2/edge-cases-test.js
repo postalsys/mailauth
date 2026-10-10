@@ -132,6 +132,31 @@ describe('DKIM2 edge cases', () => {
             expect(result.info).to.match(/^dkim2=permerror \(i=1 example\.com permerror;/);
         });
 
+        it('warns about the parts of the SMTP envelope that were not checked', async () => {
+            let signed = await signMessage(message(), rsaOnly());
+
+            let neither = await verify(signed);
+            expect(neither.status.result).to.equal('pass');
+            expect(neither.status.warnings).to.deep.equal(['mail-from-not-checked', 'rcpt-to-not-checked']);
+            // never written into the Authentication-Results text
+            expect(neither.info).to.equal('dkim2=pass (i=1 example.com pass) header.d=example.com');
+
+            expect((await verify(signed, { mailFrom: 'sender@example.com' })).status.warnings).to.deep.equal(['rcpt-to-not-checked']);
+            expect((await verify(signed, { rcptTo: 'rcpt@example.net' })).status.warnings).to.deep.equal(['mail-from-not-checked']);
+            // the null sender is a MAIL FROM too
+            expect((await verify(signed, { mailFrom: '', rcptTo: ['x@example.org'] })).status.warnings).to.equal(undefined);
+
+            let both = await verify(signed, { mailFrom: 'sender@example.com', rcptTo: 'rcpt@example.net' });
+            expect(both.status).to.not.have.property('warnings');
+
+            // a message without DKIM2 header fields has nothing to warn about
+            expect((await verify(message())).status).to.deep.equal({ result: 'none' });
+
+            // and a message that could not be verified still says the envelope was not checked
+            let broken = Buffer.concat([Buffer.from('DKIM2-Signature: broken\r\n'), signed]);
+            expect((await verify(broken)).status.warnings).to.deep.equal(['mail-from-not-checked', 'rcpt-to-not-checked']);
+        });
+
         it('ignores envelope values that are not strings', async () => {
             let signed = await signMessage(message(), rsaOnly());
             expect((await verify(signed, { mailFrom: null, rcptTo: [null, 5] })).status.result).to.equal('pass');

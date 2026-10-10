@@ -415,7 +415,7 @@ console.log(result.info); // dkim2=pass (i=1 example.com pass, i=2 list.example.
 ```
 
 - **resolver** (`async function`): Custom DNS resolver function.
-- **mailFrom** / **rcptTo**: The SMTP envelope. The chain of custody check against the envelope is only done when these are set, as a library can not know the envelope otherwise.
+- **mailFrom** / **rcptTo**: The SMTP envelope. The chain of custody check against the envelope, which is what stops DKIM2 replay, is only done for what is set here, as a library can not know the envelope otherwise. A missing part is reported in `status.warnings` as `mail-from-not-checked` or `rcpt-to-not-checked`, without changing the result. In `authenticate()` these come from the `sender` and `rcptTo` options.
 - **maxSignatureAge** (`number|false`): Seconds after which a signature expires (section 11.3). Defaults to 14 days, `false` disables the check.
 - **curTime** (`Date`): The time to check against. Defaults to now.
 - **maxInstances** (`number`): The most `Message-Instance`, and the most `DKIM2-Signature`, header fields processed for one message. Defaults to `20`, more is a PERMERROR (BCP section 7.5).
