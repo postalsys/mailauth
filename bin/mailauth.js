@@ -179,6 +179,7 @@ program
     )
     .option('-t, --time <timestamp>', 'Time to verify against as a UNIX timestamp. Defaults to the current time.', numberArg)
     .option('--max-age <seconds>', 'Seconds after which a signature expires, 0 to not check. Defaults to 14 days.', numberArg)
+    .option('--max-future <seconds>', 'Seconds a signature timestamp may be ahead of the current time. Not checked by default.', numberArg)
     .option('--max-instances <number>', 'Most Message-Instance, and most DKIM2-Signature, header fields to process. Defaults to 20.', numberArg)
     .option('-o, --headers-only', 'If set, outputs only the Authentication-Results entry (dkim2=...) instead of the JSON report.')
     .action(runCommand(commandDkim2Verify, 'Failed to verify DKIM2 for the input message.'));

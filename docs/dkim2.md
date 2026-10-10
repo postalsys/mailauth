@@ -25,13 +25,13 @@ const result = await dkim2Verify(message, {
 
 The whole message gets one result (section 11.1):
 
-| Result      | Meaning                                                                                                                                |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `pass`      | Every instance, signature and chain of custody check passed                                                                            |
-| `fail`      | A hash or signature was not correct, a signature had no supported algorithm, or a `donotmodify`, `donotexplode` or replay check failed |
-| `permerror` | The message could not be verified: malformed or missing header fields, missing keys, an envelope mismatch…                             |
-| `temperror` | A public key could not be fetched because of a temporary DNS failure                                                                   |
-| `none`      | The message has no DKIM2 header fields                                                                                                 |
+| Result      | Meaning                                                                                                    |
+| ----------- | ---------------------------------------------------------------------------------------------------------- |
+| `pass`      | Every instance, signature and chain of custody check passed                                                |
+| `fail`      | A hash or signature was not correct, or a `donotmodify`, `donotexplode` or replay check failed             |
+| `permerror` | The message could not be verified: malformed or missing header fields, missing keys, an envelope mismatch… |
+| `temperror` | A public key could not be fetched because of a temporary DNS failure                                       |
+| `none`      | The message has no DKIM2 header fields                                                                     |
 
 When there are several problems, `fail` wins over `permerror`, and `permerror` over `temperror`, so that a cryptographic failure is never reported as temporary (section 10.4: such failures "MUST NOT provoke 4xx SMTP replies").
 
@@ -110,12 +110,13 @@ The drafts leave some questions open. mailauth answers them like this:
 
 - **Unknown keys in a Recipe step.** Section 2 says unrecognised JSON fields "MUST be ignored", while the JSON schema of section 5 sets `additionalProperties: false` for steps. Unknown keys are ignored, but a step still needs exactly one of `c` and `d`.
 - **Recipe validity.** A Recipe that does not follow the schema (no `h` and no `b`, an empty `h`, an upper case header field name, a `c` range that is out of order or past the last line or header field, a `d` string with CR or LF) is reported as `Message-Instance m=<x> contains invalid JSON: <reason>`. Recipes for header fields that are not signed (section 4) are ignored.
-- **Only unknown signature algorithms.** A `DKIM2-Signature` whose `s=` has no signature value with a supported algorithm is a FAIL, `DKIM2-Signature i=<x> has no supported signature algorithm`. Section 11.6 says "If all signatures that can be checked fail then FAIL MUST be reported", and that holds when none can be checked. draft-ietf-dkim-dkim2-spec-02 said PERMFAIL there, and the [turscar dkim2 test vectors](https://forge.turscar.ie/turscar/dkim2tests) expect FAIL.
+- **Only unknown signature algorithms.** A `DKIM2-Signature` whose `s=` has no signature value with a supported algorithm is a PERMERROR, `DKIM2-Signature i=<x> has no supported signature algorithm`. Section 3.4 has the unknown algorithms ignored, so nothing could be verified and nothing was found incorrect, which section 11.1 defines as PERMERROR. The FAIL of section 11.6 step 3 is about the signatures that can be checked. The turscar vectors, written for spec-02, expect FAIL here, croessner/dkim2, written for spec-06, reports PERMERROR.
 - **Signature values that can not be checked.** Section 11.6 requires every signature value that can be checked to pass. A value whose key is missing or broken can not be checked: when at least one other value passes and none fails, the signature passes and the key problem is reported in its `values` entry. When no value could be checked, the key problem is the result.
 - **Chain of custody between hops.** Section 9.4 matches the MAIL FROM of a hop with a RCPT TO of the hop before it. A signature with `nd=` has no MAIL FROM, and the null MAIL FROM `<>` has no domain, so for those the `d=` is matched instead (section 9.3 says the signer of such a hop holds a key "associated with a domain in the RCPT TO entry"). Section 8.8 waives only the `d=` and `mf=` match for the null MAIL FROM, not the chain of custody, so a hop with `mf=<>` can not be added by a domain the message was never sent to.
 - **`d=` and `mf=`.** Section 8.8 requires every signature's `d=` to match its `mf=` domain, so this is checked for every signature, not only the highest as section 11.4 describes.
 - **Envelope.** The chain of custody against the SMTP envelope is only checked for the parts given as `mailFrom` and `rcptTo`, a missing part gives a warning. When either is given and the highest signature has `nd=`, the result is `DKIM2-Signature i=<x> unexpected nd= tag`, since the delivery can then only be accepted on out-of-band arrangements (section 9.3).
-- **Future timestamps.** Section 8.4 allows ignoring signatures with a timestamp in the future. mailauth does not, as ignoring the only signature makes the message unsigned.
+- **Future timestamps.** Section 8.4 allows ignoring signatures with a timestamp in the future. mailauth does not by default, as ignoring the only signature makes the message unsigned. With `maxFutureTime` a timestamp further ahead than that is a PERMERROR, `DKIM2-Signature i=<x> signature timestamp is in the future`.
+- **RSA key size.** Verifiers have to handle 1024 to 2048 bits and may handle more (section 3.2). mailauth accepts up to 8192 bits, a longer key is `public key <selector> is too long`.
 - **`donotmodify`.** Section 8.10 allows adding header fields. A message passes when every signed header field of the instance the request was made on is still present, in the same order, and the body hash is unchanged. A null body Recipe after the request counts as a change.
 - **Key records.** Records are read with the tag-list rules of draft-ietf-dkim-dkim2-dns-00: tag names are case sensitive, `v=`, when present, is exactly `DKIM1` and the first tag, duplicate tags and other syntax errors make the record unusable, several TXT records are an error, and `k=` has to match the algorithm (`rsa` for `rsa-sha256`, `ed25519` for `ed25519-sha256`). The retired `h=`, `n=` and `s=` tags are ignored, and so is the `t=s` flag, as DKIM2 has no `i=` identity. Ed25519 keys are published as the bare 32 byte key (RFC 8463). RSA keys need at least 1024 bits and the public exponent 65537 (section 3.2).
 - **Leading whitespace in Recipe data.** The header hash removes the whitespace after the colon, so `{"d": [" value"]}` and `{"d": ["value"]}` recreate the same header field.
@@ -127,17 +128,22 @@ Section 11 lists the human-readable strings to use. These cases have no string t
 - `Message-Instance m=<x> appears more than once` and `DKIM2-Signature i=<x> appears more than once`
 - `Message-Instance m=<x> has no supported hash algorithm` and `DKIM2-Signature i=<x> has no supported signature algorithm`
 - `Message has more than <n> Message-Instance or DKIM2-Signature header fields` (draft-ietf-dkim-dkim2-bcp-01 section 7.5)
-- `DKIM2-Signature i=<x> public key <selector> is too short` and `... has an unsupported exponent`
+- `DKIM2-Signature i=<x> public key <selector> is too short`, `... is too long` and `... has an unsupported exponent`
+- `DKIM2-Signature i=<x> signature timestamp is in the future`
 
 The strings of section 11 are used as written, including their inconsistencies (`Message Instance` without the hyphen in section 11.7, `MAIL nd= does not match` in section 11.4).
 
 ## Interoperability
 
-mailauth has been checked against two independent DKIM2 implementations. Both follow earlier revisions of the specification, so where they disagree with draft-ietf-dkim-dkim2-spec-06, mailauth follows spec-06.
+mailauth has been checked against three independent DKIM2 implementations. Where an implementation built for an earlier revision of the specification disagrees with draft-ietf-dkim-dkim2-spec-06, mailauth follows spec-06.
 
-- **[turscar/dkim2](https://forge.turscar.ie/Turscar/dkim2)** (draft-ietf-dkim-dkim2-spec-02). All 42 vectors of [turscar/dkim2tests](https://forge.turscar.ie/turscar/dkim2tests) give the expected result, the same section 9.6 canonical form, and the same Message-Instance hashes when mailauth signs the original messages. The vectors are part of the test suite (`test/fixtures/dkim2tests`). One vector, `flags_whitespace`, expects flags that its signed message does not have.
+- **[croessner/dkim2](https://github.com/croessner/dkim2)** (draft-ietf-dkim-dkim2-spec-06 and draft-ietf-dkim-dkim2-dns-00, the same drafts as mailauth). Its public verification vectors are part of the test suite (`test/fixtures/dkim2-croessner`), and its header, body and section 9.6 canonicalization, Recipe application, chain of custody, DNS record and crypto vectors give the same results. The differences are choices outside the protocol:
+    - a message with no DKIM2 header fields is `none` in mailauth (draft-gondwana-dkim2-authres-00 section 3.1, and draft-ietf-dkim-dkim2-bcp-01 section 6.1.3 says the absence alone is not a reason to reject), a PERMERROR in croessner/dkim2, which also refuses messages with bare LF line endings
+    - croessner/dkim2 rejects timestamps more than five minutes in the future, mailauth does that with `maxFutureTime: 300` (section 8.4 makes it a MAY)
+
+- **[turscar/dkim2](https://forge.turscar.ie/Turscar/dkim2)** (draft-ietf-dkim-dkim2-spec-02). The 42 vectors of [turscar/dkim2tests](https://forge.turscar.ie/turscar/dkim2tests) give the expected result, except `algorithm_only_future` (only unknown signature algorithms), which is FAIL in the vector and PERMERROR by spec-06 (see above). They also give the same section 9.6 canonical form, and the same Message-Instance hashes when mailauth signs the original messages. The vectors are part of the test suite (`test/fixtures/dkim2tests`). One vector, `flags_whitespace`, expects flags that its signed message does not have.
 - **[stalwartlabs/mail-auth](https://github.com/stalwartlabs/mail-auth)** (draft-ietf-dkim-dkim2-spec-04). Messages signed by each implementation verify with the other: originators with Ed25519, and with RSA and Ed25519 together, flags, nonce and several recipients, the null reverse-path, forwarders with and without a Recipe, and hops with `nd=`. The messages signed by mail-auth are part of the test suite (`test/fixtures/dkim2-stalwart`). The differences:
-    - mail-auth fails a message whose body was declared unrecoverable with a null body Recipe (`{"b": null}`). mailauth passes it and reports the earlier body as `unknown`, since section 5.2 makes accepting such a declaration local policy, section 9.1 allows the null Recipe, and draft-ietf-dkim-dkim2-bcp-01 sections 5.7 and 7.6 recommend it.
+    - mail-auth fails a message whose body was declared unrecoverable with a null body Recipe (`{"b": null}`). mailauth passes it and reports the earlier body as `unknown`, as croessner/dkim2 does, since section 5.2 makes accepting such a declaration local policy, section 9.1 allows the null Recipe, and draft-ietf-dkim-dkim2-bcp-01 sections 5.7 and 7.6 recommend it.
     - The interop vectors in the mail-auth corpus that were made by an implementation for an earlier draft encode `mf=` and `rt=` without angle brackets, which sections 8.5 and 8.6 of spec-06 require (mail-auth rejects them too, outside its tests), and sign `Received-SPF`, which section 4 of spec-06 leaves unsigned. With those two rules relaxed, mailauth verifies all of them, including a chain of six hops with header and body Recipes.
 
 ## Signing

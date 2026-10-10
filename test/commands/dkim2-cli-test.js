@@ -155,6 +155,15 @@ describe('CLI dkim2-sign and report --dkim2', function () {
             expect(short.stdout).to.match(/^dkim2=permerror .*signature expired/);
         });
 
+        it('rejects a timestamp too far in the future with --max-future', async () => {
+            // the message was signed at 1791626400, verified 100 seconds earlier
+            let ok = await runCli(['dkim2-verify', ...dnsArgs(), '-o', '-t', '1791626300', '--max-future', '100', signedPath]);
+            expect(ok.stdout).to.match(/^dkim2=pass/);
+
+            let future = await runCli(['dkim2-verify', ...dnsArgs(), '-o', '-t', '1791626300', '--max-future', '99', signedPath]);
+            expect(future.stdout).to.include('DKIM2-Signature i=1 signature timestamp is in the future');
+        });
+
         it('limits the DKIM2 header fields with --max-instances', async () => {
             let { stdout } = await runCli(['dkim2-verify', ...dnsArgs(), '-o', '-t', '1791630000', '--max-instances', '0.5', signedPath]);
             expect(stdout).to.include('Message has more than 0.5 Message-Instance or DKIM2-Signature header fields');
