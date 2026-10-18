@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.3.1](https://github.com/postalsys/mailauth/compare/v7.3.0...v7.3.1) (2026-10-18)
+
+
+### Bug Fixes
+
+* parse header blocks and trim field names in linear time ([78580bf](https://github.com/postalsys/mailauth/commit/78580bf379fc7d54c7997b0f4c2241e33f838aa5))
+
 ## [7.3.0](https://github.com/postalsys/mailauth/compare/v7.2.0...v7.3.0) (2026-10-10)
 
 
