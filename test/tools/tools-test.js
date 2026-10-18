@@ -22,6 +22,8 @@ const {
     getCurTime,
     parseDkimHeaders
 } = require('../../lib/tools');
+const assertLinear = require('../helpers/assert-linear');
+const { trimChars, trimEndChars } = require('../../lib/trim');
 
 chai.config.includeStack = true;
 
@@ -114,6 +116,47 @@ describe('Tools Tests', () => {
             const result = parseHeaders(headers);
 
             expect(result.parsed).to.have.length(2);
+        });
+    });
+
+    describe('parseHeaders cost', function () {
+        this.timeout(20000);
+
+        it('Should strip trailing line breaks in linear time', () => {
+            // a header line made of carriage returns, followed by more headers
+            assertLinear(count => {
+                const line = 'X: ' + '\r'.repeat(count);
+                const parsed = parseHeaders(Buffer.from(`From: a@example.com\r\n${line}\r\nSubject: s\r\n`, 'binary')).parsed;
+                expect(parsed.map(row => row.key)).to.deep.equal(['from', 'x', 'subject']);
+                expect(parsed[1].line.toString('binary')).to.equal(line);
+            }, 40 * 1000);
+        });
+
+        it('Should fold continuation lines in linear time', () => {
+            assertLinear(count => {
+                const parsed = parseHeaders(Buffer.from('From: a@example.com\r\nSubject: s' + '\r\n b'.repeat(count) + '\r\n', 'binary')).parsed;
+                expect(parsed.map(row => row.key)).to.deep.equal(['from', 'subject']);
+                expect(parsed[1].line.length).to.equal('Subject: s'.length + count * 4);
+            }, 50 * 1000);
+        });
+
+        it('Should trim the field name in linear time', () => {
+            // a first line without a colon is a field name of its own, spaces inside it included
+            assertLinear(count => {
+                const name = 'a' + ' '.repeat(count) + 'b';
+                const parsed = parseHeaders(Buffer.from(`${name}\r\nFrom: a@example.com\r\n`, 'binary')).parsed;
+                expect(parsed.map(row => row.casedKey)).to.deep.equal([name, 'From']);
+            }, 100 * 1000);
+        });
+    });
+
+    describe('trimChars', () => {
+        it('Should trim the listed characters off the ends only', () => {
+            expect(trimChars(' \t a b\t ', ' \t')).to.equal('a b');
+            expect(trimChars('\r\n', ' \t\r\n')).to.equal('');
+            expect(trimChars('abc', ' \t')).to.equal('abc');
+            expect(trimEndChars('\r\n a\r\n\r\n', '\r\n')).to.equal('\r\n a');
+            expect(trimEndChars('a \t', ' \t')).to.equal('a');
         });
     });
 
