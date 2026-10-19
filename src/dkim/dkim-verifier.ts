@@ -1,7 +1,6 @@
 import { Buffer } from 'node:buffer';
 import {
     getSigningHeaderLines,
-    indexHeaderKeys,
     parseDkimHeaders,
     formatAuthHeaderRow,
     getAlignment,
@@ -31,7 +30,7 @@ import { parseFromHeader, getAuthorDomain } from '../dmarc/author-domain.js';
 import crypto from 'node:crypto';
 import libmime from 'libmime';
 import type { HeaderRow, ParsedHeaders } from './message-parser.js';
-import type { AlignmentEntry, HeaderKeyIndex } from '../tools.js';
+import type { AlignmentEntry } from '../tools.js';
 import type { ParsedHeaderField } from '../parse-dkim-headers.js';
 import type { ARCChainEntry, ARCSealOptions, DKIMResult, DKIMVerifyOptions, DKIMVerifyResult, DKIMWarning } from '../types.js';
 
@@ -150,7 +149,6 @@ class DkimVerifier extends MessageParser {
     declare results: VerifyResult[];
     declare signatureHeaders: SignatureHeader[];
     declare bodyHashes: Map<string, BodyHasher>;
-    declare headerKeyIndex: HeaderKeyIndex | undefined;
     declare headerFrom: string[];
     declare fromFields: number;
     declare fromSyntax: DKIMVerifyResult['fromSyntax'];
@@ -319,12 +317,7 @@ class DkimVerifier extends MessageParser {
         // to every body hasher after all of them exist. Doing it per signature made a message with
         // many signatures cost quadratic time (each one scanned all header rows and all hashers)
         if (bodyHashAdded) {
-            let headersArray = this.headers.parsed;
-            const findLastMethod = typeof headersArray.findLast === 'function' ? headersArray.findLast : headersArray.find;
-            if (typeof headersArray.findLast !== 'function') {
-                headersArray = ([] as HeaderRow[]).concat(headersArray).reverse();
-            }
-            const contentTypeHeader = findLastMethod.call(headersArray, (header: HeaderRow) => header.key === 'content-type');
+            const contentTypeHeader = this.headers.parsed.findLast((header: HeaderRow) => header.key === 'content-type');
             if (contentTypeHeader) {
                 let line = contentTypeHeader.line.toString();
                 if (line.indexOf(':') >= 0) {
@@ -639,9 +632,7 @@ class DkimVerifier extends MessageParser {
         const bodyHashKey = fallback ? signatureHeader.fallbackBodyHashKey : signatureHeader.bodyHashKey;
 
         // finalChunk() only verifies once the headers have been parsed
-        let parsedHeaders = (this.headers as ParsedHeaders).parsed;
-        this.headerKeyIndex = this.headerKeyIndex || indexHeaderKeys(parsedHeaders);
-        let signingHeaderLines = getSigningHeaderLines(parsedHeaders, signatureHeader.parsed?.h?.value, true, this.headerKeyIndex);
+        let signingHeaderLines = getSigningHeaderLines((this.headers as ParsedHeaders).parsed, signatureHeader.parsed?.h?.value, true);
 
         let { canonicalizedHeader } = generateCanonicalizedHeader(signatureHeader.type, signingHeaderLines, {
             signatureHeaderLine: signatureHeader.original,

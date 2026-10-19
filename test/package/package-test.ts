@@ -27,22 +27,6 @@ const cjsShapes: Record<string, { type: string; keys?: string[]; props?: string[
 );
 const esmNamespaces: Record<string, string[]> = readJSON(path.join(root, 'test', 'fixtures', 'esm-namespaces-v7.json'));
 
-// Exports added after 7.3.1. An addition keeps every existing caller working, listing them
-// here keeps it deliberate: anything else that appears in or disappears from a module fails
-const addedExports: Record<string, Record<string, string>> = {
-    tools: { indexHeaderKeys: 'function' }
-};
-
-const expectedShape = (name: string) => {
-    const shape = cjsShapes[name];
-    const added = addedExports[name];
-    if (!added) {
-        return shape;
-    }
-    const members = { ...shape.members, ...added };
-    return { ...shape, keys: Object.keys(members).sort(), members };
-};
-
 const shapeOf = (value: any) => {
     if (typeof value === 'function') {
         return {
@@ -103,7 +87,7 @@ describe('Built package', { timeout: 30 * 1000 }, () => {
         for (const [name, expected] of Object.entries(cjsShapes)) {
             it(`require('mailauth/lib/${name}') keeps its module.exports shape`, () => {
                 const mod = require(subpath(name));
-                expect(shapeOf(mod)).to.deep.equal(expectedShape(name));
+                expect(shapeOf(mod)).to.deep.equal(expected);
                 // with and without the extension
                 expect(require(subpath(name + '.js'))).to.equal(mod);
                 if (expected.type === 'function') {
@@ -117,14 +101,6 @@ describe('Built package', { timeout: 30 * 1000 }, () => {
         it('resolves the directory subpaths to their index module', () => {
             for (const dir of ['arc', 'bimi', 'dkim/body', 'dkim/header', 'dmarc', 'spf']) {
                 expect(require(subpath(dir))).to.equal(require(subpath(dir + '/index')));
-            }
-        });
-
-        it('keeps the default-export modules default-only', () => {
-            // scripts/build.js turns these into module.exports = function, so they must not gain
-            // named exports
-            for (const name of ['dmarc/verify', 'dmarc/get-dmarc-record', 'parse-dkim-headers', 'spf/macro', 'commands/report']) {
-                expect(require(subpath(name))).to.be.a('function');
             }
         });
     });

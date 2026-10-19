@@ -1,16 +1,15 @@
 import { describe, it } from 'node:test';
 import { Buffer } from 'node:buffer';
 import crypto from 'node:crypto';
-import fs from 'node:fs';
-import path from 'node:path';
 import { Readable } from 'node:stream';
-import { fileURLToPath } from 'node:url';
 import { expect } from 'chai';
 
 import { authenticate } from '../../src/mailauth.js';
 import { dkimSign } from '../../src/dkim/sign.js';
 import { sealMessage } from '../../src/arc/index.js';
 import { unfold } from '../helpers/auth-results-reference.js';
+import { privateKey } from '../helpers/keys.js';
+import { spkiB64, edRawB64 } from '../helpers/dkim-reference.js';
 import { fc, check, timeout, chunkBuffer } from './helper.js';
 
 // End-to-end fuzzing of authenticate(). The other property tests drive one component each, or
@@ -27,13 +26,10 @@ import { fc, check, timeout, chunkBuffer } from './helper.js';
 //
 // Runs as part of npm test with a fixed seed, see helper.ts for FC_SEED and FC_NUM_RUNS.
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const fixture = (name: string) => fs.readFileSync(path.join(__dirname, '..', 'fixtures', name));
-
-const rsaKey = fixture('private-rsa.pem');
-const rsaPublic = crypto.createPublicKey(rsaKey).export({ type: 'spki', format: 'der' }).toString('base64');
-const edKey = fixture('private-ed25519.pem');
-const edPublic = crypto.createPublicKey(edKey).export({ type: 'spki', format: 'der' }).subarray(12).toString('base64');
+const rsaKey = privateKey('private-rsa.pem');
+const rsaPublic = spkiB64(crypto.createPublicKey(rsaKey));
+const edKey = privateKey('private-ed25519.pem');
+const edPublic = edRawB64(crypto.createPublicKey(edKey));
 
 const DOMAIN = 'example.com';
 const ALLOWED = {
@@ -56,8 +52,8 @@ const junk = fc.string({ unit: fc.constantFrom(...'az09 ;=:,.-_@%{}()<>"\\\t\x00
 // TXT answers, as lists of character-strings the way dns.resolveTxt returns them
 const txt = (record: string, split: number) => {
     let parts: string[] = [];
-    for (let i = 0; i < record.length; i += Math.max(split, 1)) {
-        parts.push(record.slice(i, i + Math.max(split, 1)));
+    for (let i = 0; i < record.length; i += split) {
+        parts.push(record.slice(i, i + split));
     }
     return parts.length ? parts : [''];
 };
@@ -188,8 +184,6 @@ const createResolver = (z: Zone) => {
                 return key.endsWith(DOMAIN) ? z.mx : fail('ENOTFOUND');
             case 'A':
                 return key.endsWith(DOMAIN) ? z.a : fail('ENOTFOUND');
-            case 'AAAA':
-            case 'PTR':
             default:
                 return fail('ENODATA');
         }

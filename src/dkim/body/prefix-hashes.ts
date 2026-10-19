@@ -3,17 +3,16 @@ import type { SimpleHash } from './simple.js';
 import type { RelaxedHash } from './relaxed.js';
 
 /**
- * Hash states of a canonicalized body at several l= limits, taken while one hasher reads the
- * whole body. The hash of the first N canonicalized bytes is what a hasher with l=N computes,
- * so a copy of the running hash at N gives that value without canonicalizing and hashing the
- * body again for every limit. Signatures with different l= values then cost one pass over the
- * body together, not one pass each.
+ * Hashes of a canonicalized body at several l= limits, taken while one hasher reads the whole
+ * body. The hash of the first N canonicalized bytes is what a hasher with l=N computes, so a
+ * copy of the running hash at N gives that value without canonicalizing and hashing the body
+ * again for every limit. Signatures with different l= values then cost one pass over the body
+ * together, not one pass each.
  */
 class PrefixHashes {
     declare added: Set<number>;
     declare limits: number[] | null;
     declare next: number;
-    declare hashes: Map<number, Hash>;
     declare digests: Map<number, Buffer>;
 
     constructor() {
@@ -22,7 +21,6 @@ class PrefixHashes {
         this.limits = null;
         // position in `limits` of the first limit not reached yet
         this.next = 0;
-        this.hashes = new Map();
         this.digests = new Map();
     }
 
@@ -34,8 +32,8 @@ class PrefixHashes {
     }
 
     /**
-     * Feeds `chunk`, which starts at canonicalized byte `offset`, into `hash`, and copies the
-     * state of `hash` at every limit the chunk reaches
+     * Feeds `chunk`, which starts at canonicalized byte `offset`, into `hash`, and keeps the
+     * digest of a copy of `hash` at every limit the chunk reaches
      */
     update(hash: Hash, offset: number, chunk: Buffer): void {
         if (!this.limits) {
@@ -49,35 +47,28 @@ class PrefixHashes {
                 hash.update(chunk.subarray(pos, end));
                 pos = end;
             }
-            this.hashes.set(limit, hash.copy());
+            this.digests.set(limit, hash.copy().digest());
         }
         if (pos < chunk.length) {
             hash.update(pos ? chunk.subarray(pos) : chunk);
         }
     }
-
-    /**
-     * The final hash at `limit`, or undefined when the body never reached it
-     */
-    digest(limit: number): Buffer | undefined {
-        if (!this.digests.has(limit) && this.hashes.has(limit)) {
-            this.digests.set(limit, this.hashes.get(limit)!.digest());
-        }
-        return this.digests.get(limit);
-    }
 }
 
 /**
  * The body hash of a signature with an l= limit, read from the hasher of the whole body that
- * every signature with the same canonicalization and hash shares (see addPrefixLimit()). The
- * values equal those of a hasher created with that limit
+ * every signature with the same canonicalization and hash shares. The values equal those of a
+ * hasher created with that limit
  */
 class PrefixBodyHash {
     declare source: SimpleHash | RelaxedHash;
     declare limit: number;
 
     constructor(source: SimpleHash | RelaxedHash, limit: number) {
-        source.addPrefixLimit(limit);
+        if (source.byteLength || typeof source.maxBodyLength === 'number') {
+            throw new Error('Prefix limits are only added to an unlimited hasher before the body');
+        }
+        source.prefixHashes.add(limit);
         this.source = source;
         this.limit = limit;
     }
@@ -102,7 +93,10 @@ class PrefixBodyHash {
     digest(): Buffer;
     digest(encoding: BinaryToTextEncoding): string;
     digest(encoding?: BinaryToTextEncoding): Buffer | string {
-        let value = this.source.getPrefixDigest(this.limit);
+        // finishing the shared hasher hashes the end of the body, which may reach the limit
+        let full = this.source.digest();
+        // a limit the body never reached hashes the whole body
+        let value = this.source.prefixHashes.digests.get(this.limit) || full;
         return encoding ? value.toString(encoding) : value;
     }
 

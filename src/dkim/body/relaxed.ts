@@ -27,7 +27,7 @@ class RelaxedHash {
     declare maxSizeReached: boolean;
     declare pendingLineBreaks: number;
     declare mimeStructureStartFinder: MimeStructureStartFinder;
-    declare prefixHashes: PrefixHashes | null;
+    declare prefixHashes: PrefixHashes;
     declare digestValue: Buffer | null;
     declare remainder: Buffer | false;
 
@@ -59,31 +59,9 @@ class RelaxedHash {
 
         this.mimeStructureStartFinder = new MimeStructureStartFinder();
 
-        // hash states at the l= limits of other signatures, see addPrefixLimit()
-        this.prefixHashes = null;
+        // hash states at the l= limits of other signatures, see PrefixBodyHash
+        this.prefixHashes = new PrefixHashes();
         this.digestValue = null;
-    }
-
-    /**
-     * Also keeps the hash of the first `limit` canonicalized bytes, the body hash of a signature
-     * with l=`limit`, read with getPrefixDigest(). Only for a hasher without a limit of its own,
-     * and only before the body is read
-     */
-    addPrefixLimit(limit: number): void {
-        if (this.byteLength || typeof this.maxBodyLength === 'number') {
-            throw new Error('Prefix limits are only added to an unlimited hasher before the body');
-        }
-        this.prefixHashes = this.prefixHashes || new PrefixHashes();
-        this.prefixHashes.add(limit);
-    }
-
-    /**
-     * The body hash for l=`limit`, a limit registered with addPrefixLimit(). A limit the body
-     * never reached hashes the whole body
-     */
-    getPrefixDigest(limit: number): Buffer {
-        let full = this.digest();
-        return this.prefixHashes?.digest(limit) || full;
     }
 
     setContentType(contentTypeObj: BodyContentType): void {
@@ -119,11 +97,7 @@ class RelaxedHash {
             chunk = chunk.subarray(0, this.maxBodyLength - this.bodyHashedBytes);
         }
 
-        if (this.prefixHashes) {
-            this.prefixHashes.update(this.bodyHash, this.bodyHashedBytes, chunk);
-        } else {
-            this.bodyHash.update(chunk);
-        }
+        this.prefixHashes.update(this.bodyHash, this.bodyHashedBytes, chunk);
         this.bodyHashedBytes += chunk.length;
 
         //process.stdout.write(chunk);
@@ -334,7 +308,7 @@ class RelaxedHash {
     digest(encoding: BinaryToTextEncoding): string;
     digest(encoding?: BinaryToTextEncoding): Buffer | string {
         // the hash is final after the first call, later calls return the same value, so that the
-        // signatures sharing this hasher through getPrefixDigest() can each read it
+        // signatures sharing this hasher through PrefixBodyHash can each read it
         if (this.digestValue) {
             return encoding ? this.digestValue.toString(encoding) : this.digestValue;
         }

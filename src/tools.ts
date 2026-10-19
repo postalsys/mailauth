@@ -390,15 +390,16 @@ const getOversignedNames = (fieldNames: string, signingList: ParsedHeaderRow[]):
     return extra;
 };
 
-/**
- * Positions of the header rows by field name, in message order. Built once per message by
- * indexHeaderKeys() for getSigningHeaderLines(), so that verifying many signatures does not
- * scan every header row for every signature
- */
-export type HeaderKeyIndex = Map<string, number[]>;
+// Positions of the header rows by field name, in message order. Built once per header list,
+// so that verifying many signatures does not scan every header row for every signature
+const headerKeyIndexes = new WeakMap<ParsedHeaderRow[], { length: number; index: Map<string, number[]> }>();
 
-const indexHeaderKeys = (parsedHeaders: ParsedHeaderRow[]): HeaderKeyIndex => {
-    let index: HeaderKeyIndex = new Map();
+const getHeaderKeyIndex = (parsedHeaders: ParsedHeaderRow[]): Map<string, number[]> => {
+    let cached = headerKeyIndexes.get(parsedHeaders);
+    if (cached && cached.length === parsedHeaders.length) {
+        return cached.index;
+    }
+    let index = new Map<string, number[]>();
     parsedHeaders.forEach((header, i) => {
         if (typeof header.key === 'string') {
             let positions = index.get(header.key);
@@ -409,6 +410,7 @@ const indexHeaderKeys = (parsedHeaders: ParsedHeaderRow[]): HeaderKeyIndex => {
             positions.push(i);
         }
     });
+    headerKeyIndexes.set(parsedHeaders, { length: parsedHeaders.length, index });
     return index;
 };
 
@@ -416,9 +418,7 @@ const getSigningHeaderLines = (
     parsedHeaders: ParsedHeaderRow[],
     // an h= value or a configured header list, anything else selects the default list
     fieldNames?: string | string[] | false | null,
-    verify?: boolean,
-    // indexHeaderKeys() of parsedHeaders, saves the scan of the header rows when verifying
-    headerKeyIndex?: HeaderKeyIndex | null
+    verify?: boolean
 ): SigningHeaderLines => {
     let configuredFieldNames = typeof fieldNames === 'string' ? fieldNames : false;
 
@@ -430,10 +430,11 @@ const getSigningHeaderLines = (
     // names listed in h= without a header field to hash for them
     let oversigned: string[] = [];
 
-    if (verify && headerKeyIndex) {
+    if (verify) {
         // Every name in h= takes the last header row of that name not taken by an earlier
-        // occurrence of the same name (RFC 6376 section 5.4.2), the same rows the scan below
-        // picks: the n-th occurrence of a name takes its n-th row from the bottom
+        // occurrence of the same name (RFC 6376 section 5.4.2): the n-th occurrence of a name
+        // takes its n-th row from the bottom
+        let headerKeyIndex = getHeaderKeyIndex(parsedHeaders);
         let taken = new Map<string, number>();
         for (let fieldName of fieldNames) {
             let positions = headerKeyIndex.get(fieldName);
@@ -441,18 +442,6 @@ const getSigningHeaderLines = (
             if (positions && count < positions.length) {
                 signingList.push(parsedHeaders[positions[positions.length - 1 - count]]);
                 taken.set(fieldName, count + 1);
-            }
-        }
-    } else if (verify) {
-        let parsedList = ([] as ParsedHeaderRow[]).concat(parsedHeaders);
-        for (let fieldName of fieldNames) {
-            for (let i = parsedList.length - 1; i >= 0; i--) {
-                let header = parsedList[i];
-                if (fieldName === header.key) {
-                    signingList.push(header);
-                    parsedList.splice(i, 1);
-                    break;
-                }
             }
         }
     } else {
@@ -1568,7 +1557,6 @@ export {
     defaultARCFieldNames,
     defaultASFieldNames,
     getSigningHeaderLines,
-    indexHeaderKeys,
     formatSignatureHeaderLine,
     parseDkimHeaders,
     parseTagList,

@@ -7,43 +7,24 @@ const RUNS = 3;
 const FACTOR = 6;
 const SLACK_MS = 50;
 
-const time = (run: (size: number) => unknown, size: number): number => {
+// The fastest of three runs of `run`, in milliseconds
+export const time = async (run: () => unknown): Promise<number> => {
     let best = Infinity;
     for (let i = 0; i < RUNS; i++) {
         let start = process.hrtime.bigint();
-        run(size);
+        await run();
         best = Math.min(best, Number(process.hrtime.bigint() - start) / 1e6);
     }
     return best;
 };
 
-const assertLinear = (run: (size: number) => unknown, small: number): void => {
-    run(Math.ceil(small / 10)); // warm up
-    let smallMs = time(run, small);
-    let largeMs = time(run, small * 4);
+const assertLinear = async (run: (size: number) => unknown, small: number): Promise<void> => {
+    await run(Math.ceil(small / 10)); // warm up
+    let smallMs = await time(() => run(small));
+    let largeMs = await time(() => run(small * 4));
     if (largeMs > smallMs * FACTOR + SLACK_MS) {
         throw new Error(`quadrupling the input took ${smallMs.toFixed(1)} ms -> ${largeMs.toFixed(1)} ms`);
     }
 };
 
 export default assertLinear;
-
-// The same check for an asynchronous `run`
-const timeAsync = async (run: (size: number) => Promise<unknown>, size: number): Promise<number> => {
-    let best = Infinity;
-    for (let i = 0; i < RUNS; i++) {
-        let start = process.hrtime.bigint();
-        await run(size);
-        best = Math.min(best, Number(process.hrtime.bigint() - start) / 1e6);
-    }
-    return best;
-};
-
-export const assertLinearAsync = async (run: (size: number) => Promise<unknown>, small: number): Promise<void> => {
-    await run(Math.ceil(small / 10)); // warm up
-    let smallMs = await timeAsync(run, small);
-    let largeMs = await timeAsync(run, small * 4);
-    if (largeMs > smallMs * FACTOR + SLACK_MS) {
-        throw new Error(`quadrupling the input took ${smallMs.toFixed(1)} ms -> ${largeMs.toFixed(1)} ms`);
-    }
-};

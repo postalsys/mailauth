@@ -118,9 +118,9 @@ describe('Tools Tests', () => {
     });
 
     describe('parseHeaders cost', { timeout: 20000 }, () => {
-        it('Should strip trailing line breaks in linear time', () => {
+        it('Should strip trailing line breaks in linear time', async () => {
             // a header line made of carriage returns, followed by more headers
-            assertLinear((count: number) => {
+            await assertLinear((count: number) => {
                 const line = 'X: ' + '\r'.repeat(count);
                 const parsed = parseHeaders(Buffer.from(`From: a@example.com\r\n${line}\r\nSubject: s\r\n`, 'binary')).parsed;
                 expect(parsed.map(row => row.key)).to.deep.equal(['from', 'x', 'subject']);
@@ -128,17 +128,17 @@ describe('Tools Tests', () => {
             }, 40 * 1000);
         });
 
-        it('Should fold continuation lines in linear time', () => {
-            assertLinear((count: number) => {
+        it('Should fold continuation lines in linear time', async () => {
+            await assertLinear((count: number) => {
                 const parsed = parseHeaders(Buffer.from('From: a@example.com\r\nSubject: s' + '\r\n b'.repeat(count) + '\r\n', 'binary')).parsed;
                 expect(parsed.map(row => row.key)).to.deep.equal(['from', 'subject']);
                 expect(parsed[1].line.length).to.equal('Subject: s'.length + count * 4);
             }, 50 * 1000);
         });
 
-        it('Should trim the field name in linear time', () => {
+        it('Should trim the field name in linear time', async () => {
             // a first line without a colon is a field name of its own, spaces inside it included
-            assertLinear((count: number) => {
+            await assertLinear((count: number) => {
                 const name = 'a' + ' '.repeat(count) + 'b';
                 const parsed = parseHeaders(Buffer.from(`${name}\r\nFrom: a@example.com\r\n`, 'binary')).parsed;
                 expect(parsed.map(row => row.casedKey)).to.deep.equal([name, 'From']);

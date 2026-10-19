@@ -4,13 +4,31 @@ import { expect } from 'chai';
 
 import { dkimBody } from '../../src/dkim/body/index.js';
 import { PrefixBodyHash } from '../../src/dkim/body/prefix-hashes.js';
-import { getSigningHeaderLines, indexHeaderKeys } from '../../src/tools.js';
+import { getSigningHeaderLines } from '../../src/tools.js';
 import type { ParsedHeaderRow } from '../../src/tools.js';
 import { fc, check, timeout, bytesFrom, chunkBuffer } from './helper.js';
 
 // The verifier reads the body hash of every l= value from one hasher of the whole body (a
-// copy of the running hash at each limit), and picks the signed header fields through an index
-// of the header rows. Both must give exactly what the direct computation gives
+// copy of the running hash at each limit), and getSigningHeaderLines() picks the signed header
+// fields through an index of the header rows. Both must give exactly what the direct
+// computation gives
+
+// The header fields of an h= list as RFC 6376 section 5.4.2 describes it: for each name, the
+// last header field of that name not taken yet, scanning from the bottom
+const scanSignedFields = (rows: ParsedHeaderRow[], names: string[]) => {
+    let remaining = rows.slice();
+    let taken: ParsedHeaderRow[] = [];
+    for (let name of names) {
+        for (let i = remaining.length - 1; i >= 0; i--) {
+            if (remaining[i].key === name) {
+                taken.push(remaining[i]);
+                remaining.splice(i, 1);
+                break;
+            }
+        }
+    }
+    return taken;
+};
 
 const bodyBytes = fc.oneof(bytesFrom('ab \t\r\n\x00\xa0\xff', { maxLength: 200 }), bytesFrom('a \t\r\n', { maxLength: 40 }));
 const cuts = fc.array(fc.nat(), { maxLength: 12 });
@@ -61,7 +79,7 @@ describe('Property: shared body hashing for l= values and the header field index
         }
     }
 
-    it('picks the same header rows through the index as by scanning', () =>
+    it('picks the same header rows as scanning the header from the bottom', () =>
         check(
             fc.property(
                 fc.array(fc.constantFrom('from', 'to', 'subject', 'x-a', null), { maxLength: 30 }),
@@ -70,12 +88,17 @@ describe('Property: shared body hashing for l= values and the header field index
                     let rows = keys.map(
                         (key, i) => ({ key, casedKey: key ? key.toUpperCase() : undefined, line: Buffer.from(`${key}: ${i}`) }) as ParsedHeaderRow
                     );
-                    let h = names.join(':');
-                    let scanned = getSigningHeaderLines(rows, h, true);
-                    let indexed = getSigningHeaderLines(rows, h, true, indexHeaderKeys(rows));
-                    expect(indexed.keys).to.equal(scanned.keys);
-                    expect(indexed.headers.length).to.equal(scanned.headers.length);
-                    indexed.headers.forEach((row, i) => expect(row).to.equal(scanned.headers[i]));
+                    let signed = getSigningHeaderLines(rows, names.join(':'), true);
+                    // h= names are compared lowercased and trimmed
+                    let expected = scanSignedFields(
+                        rows,
+                        names.map(name => name.trim().toLowerCase())
+                    );
+                    expect(signed.headers.length).to.equal(expected.length);
+                    signed.headers.forEach((row, i) => expect(row).to.equal(expected[i]));
+                    expect(signed.keys).to.equal(expected.map(row => row.casedKey).join(': '));
+                    // the second call reads the cached index of the same rows
+                    expect(getSigningHeaderLines(rows, names.join(':'), true).headers).to.deep.equal(signed.headers);
                 }
             ),
             500
