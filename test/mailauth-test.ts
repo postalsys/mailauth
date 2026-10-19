@@ -311,6 +311,22 @@ describe('authenticate Tests', () => {
             });
         }
 
+        it('Should list only parsed Received header fields in receivedChain', async () => {
+            // a first header line that is only "Received" has no colon and does not parse
+            const header = `Received\r\nReceived: from mx.sender.example (mx.sender.example [${REAL}]) by mx.receiver.example; Thu, 1 Jan 2026 00:00:00 +0000`;
+            const result = await authenticate(Buffer.from(`${header}\r\nFrom: ceo@bank.example\r\nSubject: x\r\n\r\nhi\r\n`), {
+                trustReceived: true,
+                sender: 'ceo@bank.example',
+                mta: 'mx.receiver.example',
+                resolver,
+                disableArc: true,
+                disableBimi: true
+            });
+            expect(result.receivedChain).to.have.length(1);
+            expect(result.receivedChain![0].from!.value).to.equal('mx.sender.example');
+            expect((result.spf as any)['client-ip']).to.equal(REAL);
+        });
+
         for (const helo of ['x (a [203.0.113.5]) by', 'x (y [203.0.113.5]']) {
             it(`Should not take a client address from the HELO "${helo}"`, async () => {
                 // Postfix copies the HELO argument as it is, and writes the TCP-info comment after it

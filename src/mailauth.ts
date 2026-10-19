@@ -80,8 +80,12 @@ const authenticate = async (input: MessageInput, opts?: AuthenticateOptions): Pr
     });
 
     // parseReceived() returns false for a header line without a colon, which a "received" row
-    // only is when it is the first line of the header block and has no colon at all
-    const receivedChain = dkimResult.headers?.parsed.filter(r => r.key === 'received').map(row => parseReceived(row.line)) as ReceivedChainEntry[] | undefined;
+    // only is when it is the first line of the header block and has no colon at all. Such a row
+    // is left out, the result lists parsed Received header fields only
+    const receivedChain = dkimResult.headers?.parsed
+        .filter(r => r.key === 'received')
+        .map(row => parseReceived(row.line))
+        .filter((entry): entry is ReceivedChainEntry => !!entry);
 
     // parse client information from last Received header if needed
     if (opts.trustReceived) {
