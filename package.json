@@ -79,6 +79,7 @@
         "lint": "npm run typecheck && eslint .",
         "lint:fix": "eslint . --fix",
         "prepare": "npm run build",
+        "prepack": "npm run licenses",
         "build-source": "rm -rf node_modules package-lock.json && npm install && npm run licenses && rm -rf node_modules package-lock.json && npm install --omit=dev --ignore-scripts && rm -rf package-lock.json",
         "build-dist": "npm run build && pkg --compress Brotli package.json && rm -rf package-lock.json && npm install && node winconf.cjs",
         "build-dist-fast": "npm run build && pkg --debug package.json && npm install && node winconf.cjs",

@@ -155,6 +155,13 @@ describe('Built package', { timeout: 30 * 1000 }, () => {
         });
     });
 
+    it('publishes the license files the license command reads', () => {
+        // licenses.txt is gitignored, the prepack script generates it before npm pack and npm publish
+        expect(pkg.scripts.prepack).to.equal('npm run licenses');
+        expect(pkg.scripts.licenses).to.include('> licenses.txt');
+        expect(pkg.files).to.include.members(['LICENSE.txt', 'licenses.txt']);
+    });
+
     it('runs the command line entry from bin/', () => {
         expect(pkg.bin).to.deep.equal({ mailauth: 'bin/mailauth.cjs' });
         const bin = fs.readFileSync(path.join(root, pkg.bin.mailauth), 'utf8');
