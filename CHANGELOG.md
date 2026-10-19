@@ -1,5 +1,12 @@
 # Changelog
 
+## [8.0.1](https://github.com/postalsys/mailauth/compare/v8.0.0...v8.0.1) (2026-10-19)
+
+
+### Bug Fixes
+
+* import getDomain from tldts by name so bundlers can link the ES module build ([8fa60df](https://github.com/postalsys/mailauth/commit/8fa60df1de53bb60e3d2cc492a7680446d8a82e5)), closes [#176](https://github.com/postalsys/mailauth/issues/176)
+
 ## [8.0.0](https://github.com/postalsys/mailauth/compare/v7.3.1...v8.0.0) (2026-10-19)
 
 
