@@ -428,15 +428,15 @@ const verify = async (opts: SPFOptions): Promise<SPFResult> => {
     }
     atPos = sender.lastIndexOf('@');
 
-    let senderDomain = sender.substr(atPos + 1).trim();
+    let senderDomain = sender.slice(atPos + 1).trim();
     let relativeDomain = stripRootDot(senderDomain);
     if (relativeDomain !== senderDomain) {
-        sender = `${sender.substr(0, atPos + 1)}${relativeDomain}`;
+        sender = `${sender.substring(0, atPos + 1)}${relativeDomain}`;
     }
 
     let domain =
         sender
-            .substr(atPos + 1)
+            .slice(atPos + 1)
             .toLowerCase()
             .trim() || '-';
 
@@ -445,7 +445,7 @@ const verify = async (opts: SPFOptions): Promise<SPFResult> => {
     let evalSender = sender;
     if (/[^\x00-\x7F]/.test(domain)) {
         domain = toALabel(domain);
-        evalSender = `${sender.substr(0, atPos)}@${domain}`;
+        evalSender = `${sender.substring(0, atPos)}@${domain}`;
     }
 
     // one DNS query per question for the whole evaluation, includes and redirects included
@@ -608,7 +608,7 @@ const verify = async (opts: SPFOptions): Promise<SPFResult> => {
     if (strict) {
         // RFC 8601 section 2.7.2: only the identity that was checked is reported, and the
         // local-part only if the policy has provisions for it
-        status.smtp = nullSender ? { helo } : { mailfrom: ctx.usedLocalPart ? sender : sender.substr(atPos + 1) };
+        status.smtp = nullSender ? { helo } : { mailfrom: ctx.usedLocalPart ? sender : sender.slice(atPos + 1) };
     }
 
     if (result.rr) {

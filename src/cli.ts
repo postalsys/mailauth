@@ -47,9 +47,9 @@ const rejectRepeated = (option: Option): Option => {
 // every subcommand: merge the positional `email` argument with the parsed
 // options (including the global --verbose flag) into a single `argv` object.
 const runCommand = <A>(fn: (argv: A) => Promise<void>, failMessage: string) =>
-    function () {
-        let command: Command = arguments[arguments.length - 1];
-        let positional = Array.prototype.slice.call(arguments, 0, arguments.length - 2);
+    function (...args: unknown[]) {
+        let command = args[args.length - 1] as Command;
+        let positional = args.slice(0, args.length - 2);
 
         let argv = Object.assign({}, command.optsWithGlobals());
         if (command.registeredArguments && command.registeredArguments.length) {

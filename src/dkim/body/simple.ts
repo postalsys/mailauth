@@ -91,7 +91,7 @@ class SimpleHash {
             }
 
             // only use allowed size of bytes
-            chunk = chunk.slice(0, this.maxBodyLength - this.bodyHashedBytes);
+            chunk = chunk.subarray(0, this.maxBodyLength - this.bodyHashedBytes);
         }
 
         this.bodyHashedBytes += chunk.length;

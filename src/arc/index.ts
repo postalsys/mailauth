@@ -180,7 +180,7 @@ const getHighestArcInstance = (headers: ParsedHeaders | null | undefined): { hig
         let parsed;
         try {
             parsed = parseDkimHeaders(row.line)?.parsed;
-        } catch (err) {
+        } catch {
             continue;
         }
         let instance = parsed?.i?.value;
@@ -245,7 +245,7 @@ const verifyAS = async (chain: ARCChainEntry[], opts: VerifyASChainOptions) => {
     try {
         // rsa-sha256 and ed25519-sha256 only, ARC has no rsa-sha1
         validateAlgorithm(algorithm, true);
-    } catch (err) {
+    } catch {
         throw createError(`i=${chain.length} invalid seal algorithm`, 'invalid_arc_seal');
     }
     let { signAlgo } = splitAlgorithm(algorithm);
@@ -283,7 +283,7 @@ const verifyAS = async (chain: ARCChainEntry[], opts: VerifyASChainOptions) => {
             publicKey,
             Buffer.from((signatureHeader.parsed?.b?.value as string | undefined) || '', 'base64')
         );
-    } catch (err) {
+    } catch {
         pass = false;
     }
 
@@ -423,7 +423,8 @@ const verifyASChain = async (data: ARCData, opts?: VerifyASChainOptions | null):
     for (let link of chain) {
         let seal = link['arc-seal']!;
         if (seal.parsed?.s?.value && seal.parsed?.d?.value) {
-            opts.keyCache.get('AS', sealKeyName(seal), opts.minBitLength, { strict: opts.strict, hashAlgo: 'sha256' });
+            // the cache attaches a catch handler, a failed prefetch is reported when the seal is validated
+            void opts.keyCache.get('AS', sealKeyName(seal), opts.minBitLength, { strict: opts.strict, hashAlgo: 'sha256' });
         }
     }
 
@@ -589,7 +590,7 @@ const getARChain = (headers: ParsedHeaders | null | undefined, opts?: GetARChain
 
         // A d= that is not a host name does not name the zone of its key record (RFC 6376
         // section 3.5), so its key is never looked up and the chain fails in every mode
-        for (let headerKey of (isNewest ? ['arc-seal', 'arc-message-signature'] : ['arc-seal']) as ('arc-seal' | 'arc-message-signature')[]) {
+        for (let headerKey of isNewest ? (['arc-seal', 'arc-message-signature'] as const) : (['arc-seal'] as const)) {
             let signingDomain = (arcInstance[headerKey]!.parsed?.d?.value || '').toString();
             if (signingDomain && !isHostNameDomain(signingDomain)) {
                 throw createError(`i=${arcInstance.i} ${SHORT_NAMES[headerKey]} invalid d=`, 'invalid_arc_tags');
@@ -752,7 +753,7 @@ const arc = async (data: ARCVerifyData, opts?: ARCOptions | null): Promise<ARCRe
                     .replace(/["'()]/g, ' ')
                     .replace(/\s+/g, ' ')
                     .trim()
-                    .substr(0, 128);
+                    .substring(0, 128);
                 break;
 
             case 'ENOTFOUND':
@@ -886,7 +887,7 @@ const createSeal = async (input: MessageInput | false | null | undefined, data: 
         try {
             // rsa-sha256 or ed25519-sha256, no validator accepts an ARC signature made with sha1
             validateAlgorithm(algorithm, true);
-        } catch (err) {
+        } catch {
             return refuse(`Unsupported ARC algorithm ${JSON.stringify(seal.algorithm)}`, 'EINVALIDALGO');
         }
     }

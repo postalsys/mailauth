@@ -4,7 +4,7 @@ import _getDmarcRecord from './get-dmarc-record.js';
 const { createRecordLookup, discoverPolicy, getOrgDomain, getPolicyTags, domainExists } = _getDmarcRecord;
 import { getAuthorDomain } from './author-domain.js';
 import type { AuthorDomainReason } from './author-domain.js';
-import type { DNSResolver, DMARCOptions, DMARCResult } from '../types.js';
+import type { DMARCOptions, DMARCResult } from '../types.js';
 
 /**
  * DMARC verification options
@@ -80,7 +80,7 @@ const evaluateDmarc = async (opts: DMARCVerifyOptions): Promise<DMARCEvaluateRes
     let { headerFrom, fromFields, fromSyntax, spfDomains, dkimDomains, resolver, arcResult, strict } = opts;
 
     strict = !!strict;
-    resolver = resolver || (dns.resolve as DNSResolver);
+    resolver = resolver || dns.resolve;
 
     // RFC 9989 5.3.1: several mailboxes are fine if they share one domain, but with zero or more
     // than one Author Domain DMARC validation is not possible. The response stays false, as it

@@ -94,7 +94,7 @@ const isValidHttpsUrl = (value: string | null | undefined): boolean => {
     try {
         // a missing value throws here
         url = new URL(value as string);
-    } catch (err) {
+    } catch {
         return false;
     }
     let hostname = url.hostname
@@ -209,7 +209,7 @@ const countFromAddresses = (headerRows: HeaderRow[]) => {
     for (let row of fromRows) {
         let value = (row.line || '').toString();
         let splitterPos = value.indexOf(':');
-        count += parseFromHeader(splitterPos >= 0 ? value.substr(splitterPos + 1) : value).addresses.length;
+        count += parseFromHeader(splitterPos >= 0 ? value.slice(splitterPos + 1) : value).addresses.length;
     }
     return count;
 };
@@ -286,7 +286,7 @@ const lookup = async (data: BIMIOptions): Promise<BIMIResult | false> => {
         if (formatDomain(orgDomain) !== formatDomain(appliedDomain) || !appliedRecord) {
             try {
                 orgRecord = await getDmarcRecord(orgDomain, resolver);
-            } catch (err) {
+            } catch {
                 orgRecord = null;
             }
         } else {
@@ -315,7 +315,7 @@ const lookup = async (data: BIMIOptions): Promise<BIMIResult | false> => {
     }
     if (selectorRows.length) {
         // 5.1 and 7.2 step 2: a header without a valid version or selector is ignored
-        selector = parseSelectorHeader(selectorRows[0]!.line, strict, warnings);
+        selector = parseSelectorHeader(selectorRows[0].line, strict, warnings);
     }
 
     selector = selector || 'default';
@@ -502,7 +502,7 @@ const downloadPromise = async (
                 let target: string;
                 try {
                     target = new URL(res.headers.get('location')!, url).href;
-                } catch (err) {
+                } catch {
                     target = res.headers.get('location')!;
                 }
                 if (redirects >= MAX_REDIRECTS || !isValidHttpsUrl(target)) {

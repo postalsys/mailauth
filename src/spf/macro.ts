@@ -42,8 +42,8 @@ const macro = (input: string | null | undefined, values?: MacroValues | null): s
 
     // the local-part may be a quoted string that contains "@", the domain follows the last "@"
     let atPos = sender.lastIndexOf('@');
-    let senderLocal = atPos >= 0 ? sender.substr(0, atPos) : '';
-    let senderDomain = atPos >= 0 ? sender.substr(atPos + 1) : sender;
+    let senderLocal = atPos >= 0 ? sender.substring(0, atPos) : '';
+    let senderDomain = atPos >= 0 ? sender.slice(atPos + 1) : sender;
 
     // the caller can pass the client IP already parsed, it is then not parsed again
     let parsedIp = addr || parseIp(ip);

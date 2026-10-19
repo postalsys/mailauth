@@ -140,7 +140,7 @@ const domainExists = async (domain: string, resolver?: DNSResolver | null): Prom
     if (!isValidName(domain)) {
         return false;
     }
-    resolver = resolver || (dns.resolve as DNSResolver);
+    resolver = resolver || dns.resolve;
     try {
         await resolver(domain, 'A');
         return true;
@@ -189,7 +189,7 @@ const parseDmarcRecord = (txt: string, opts?: DmarcRecordOptions | null): DmarcR
         .map((e, i) => {
             let splitPos = e.indexOf('=');
             // whitespace is allowed around "=" (*WSP in the ABNF), so the value must be trimmed
-            let name = e.substr(0, splitPos).trim();
+            let name = e.substring(0, splitPos).trim();
             let key = name.toLowerCase();
             if (strict && i > 0) {
                 // the version tag is matched case-insensitively by its own ABNF rule, other names are not
@@ -203,7 +203,7 @@ const parseDmarcRecord = (txt: string, opts?: DmarcRecordOptions | null): DmarcR
             }
             seen.add(key);
 
-            let val: string | number = e.substr(splitPos + 1).trim();
+            let val: string | number = e.slice(splitPos + 1).trim();
             if (['pct', 'ri'].includes(key)) {
                 val = parseInt(val, 10) || 0;
             } else if (CASE_INSENSITIVE_TAGS.has(key)) {
@@ -269,7 +269,7 @@ const fetchRecord = async (name: string, resolver: DNSResolver, opts?: DmarcReco
 // opts.strict parses records by the RFC 6376 tag-list rules, opts.warnings is a Set that collects
 // what the default parsing accepted and strict parsing would not.
 const createRecordLookup = (resolver?: DNSResolver | null, opts?: DmarcRecordOptions | null): DmarcRecordLookup => {
-    resolver = resolver || (dns.resolve as DNSResolver);
+    resolver = resolver || dns.resolve;
     let cache = new Map<string, Promise<DmarcRecord | false>>();
     return name => {
         if (!cache.has(name)) {

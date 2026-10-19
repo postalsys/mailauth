@@ -188,8 +188,8 @@ const parseCidrValue = <D extends string | false>(
         }
         domain = cidrMatch[1] || '';
 
-        cidr4 = cidrMatch[2] ? Number(cidrMatch[2].substr(1)) : '';
-        cidr6 = cidrMatch[3] ? Number(cidrMatch[3].substr(2)) : '';
+        cidr4 = cidrMatch[2] ? Number(cidrMatch[2].slice(1)) : '';
+        cidr6 = cidrMatch[3] ? Number(cidrMatch[3].slice(2)) : '';
         dualCidr = !!cidrMatch[3];
 
         if (type === 'ip6' && typeof cidr4 === 'number' && cidr6 === '') {
@@ -277,7 +277,7 @@ const selectPtrName = (validatedNames: string[], domain: string): string => {
 
     let match =
         names.find(entry => entry.formatted === target) ||
-        names.find(entry => target && entry.formatted.substr(-(target.length + 1)) === `.${target}`) ||
+        names.find(entry => target && entry.formatted.slice(-(target.length + 1)) === `.${target}`) ||
         names[0];
 
     return match ? match.name : 'unknown';
@@ -289,6 +289,67 @@ const reportSubQueries = (resolver: SPFResolver & Partial<ResolverCounters>, sub
         resolver.updateSubQueries(type, subResolver.getResolveCount());
         resolver.updateSubQueries(`${type}:void`, subResolver.getVoidCount!());
     }
+};
+
+// strict: the term has already passed the syntax validation (RFC 7208 section 5.6)
+const matchIpTermStrict = (type: string, val: string, addr: IPAddress): boolean => {
+    let match = val.match(/^(.*?)(?:\/(\d+))?$/)!;
+    let network = parseIp(match[1]);
+    if (!network || network.kind() !== (type === 'ip4' ? 'ipv4' : 'ipv6')) {
+        throw permError(`invalid IP address`);
+    }
+    let prefix = typeof match[2] === 'string' ? Number(match[2]) : type === 'ip4' ? 32 : 128;
+    // an IPv4 client only matches ip4 terms, an IPv6 client only matches ip6 terms
+    return ipInNetwork(addr, network, prefix);
+};
+
+// the default mode, keeps the historical handling of malformed ip4 and ip6 terms
+const matchIpTermLax = (type: string, val: string, addr: IPAddress, clientIp: string | undefined): boolean => {
+    let { domain: range, cidr4, cidr6, dualCidr } = parseCidrValue(val, false, type);
+    if (!range) {
+        throw permError(`bare IP address`);
+    }
+
+    // an IPv4 address written in the IPv4-mapped IPv6 form
+    let mappingMatch = range.match(/^[:A-F]+:((\d+\.){3}\d+)$/i);
+
+    if (type === 'ip6') {
+        if (net.isIPv6(range)) {
+            if (dualCidr && mappingMatch) {
+                throw permError(`invalid CIDR for IP`);
+            }
+            // an ip6 network is never converted to IPv4, and only IPv6 clients match it
+            // (IPv4-mapped clients are converted to IPv4 before evaluation)
+            return addr.kind() === 'ipv6' && matchIp(addr, range + cidr6);
+        }
+        if (net.isIPv4(range)) {
+            if (cidr6) {
+                throw permError(`invalid CIDR for IP`);
+            }
+            return false;
+        }
+        throw permError(`invalid IP address`);
+    }
+
+    if (mappingMatch) {
+        range = mappingMatch[1];
+    }
+
+    if (!net.isIP(range)) {
+        throw permError(`invalid IP address`);
+    }
+
+    // validate ipv4 range only, skip ipv6
+    if (cidr6 && net.isIPv4(range)) {
+        throw permError(`invalid CIDR for IP`);
+    }
+
+    if (net.isIP(range) !== net.isIP(clientIp!) || !net.isIPv4(range)) {
+        // nothing to do here
+        return false;
+    }
+
+    return matchIp(addr, range + cidr4);
 };
 
 const spfVerify = async (domain: string, opts?: SPFVerifyOptions): Promise<SPFVerifyResult | false> => {
@@ -321,7 +382,7 @@ const spfVerify = async (domain: string, opts?: SPFVerifyOptions): Promise<SPFVe
 
     // RFC 8616 section 4: a non-ASCII local-part can not be used in a DNS label
     let senderStr = (opts.sender || '').toString();
-    let nonAsciiLocalPart = /[^\x00-\x7F]/.test(senderStr.substr(0, Math.max(senderStr.lastIndexOf('@'), 0)));
+    let nonAsciiLocalPart = /[^\x00-\x7F]/.test(senderStr.substring(0, Math.max(senderStr.lastIndexOf('@'), 0)));
 
     // The macro values with %{p}, the validated domain name of the client IP (RFC 7208 section 7.3).
     // The PTR query counts toward the lookup limit but not as a void lookup, the void limit counts
@@ -465,8 +526,8 @@ const spfVerify = async (domain: string, opts?: SPFVerifyOptions): Promise<SPFVe
                 }
 
                 let splitPos = part.indexOf('=');
-                let modifier = part.substr(0, splitPos).toLowerCase();
-                let rawValue = part.substr(splitPos + 1);
+                let modifier = part.substring(0, splitPos).toLowerCase();
+                let rawValue = part.slice(splitPos + 1);
 
                 if (!strict) {
                     // the default mode checks the expanded values up front
@@ -558,13 +619,13 @@ const spfVerify = async (domain: string, opts?: SPFVerifyOptions): Promise<SPFVe
                 throw permError(`unexpected empty value`);
             }
             if (splitterPos >= 0) {
-                key = (part as string).substr(0, splitterPos);
-                val = (part as string).substr(splitterPos + 1);
+                key = (part as string).substring(0, splitterPos);
+                val = (part as string).slice(splitterPos + 1);
             } else {
                 let splitterPos = (part as string).indexOf('/');
                 if (splitterPos >= 0) {
-                    key = (part as string).substr(0, splitterPos);
-                    val = (part as string).substr(splitterPos); // keep the / for CIDR
+                    key = (part as string).substring(0, splitterPos);
+                    val = (part as string).slice(splitterPos); // keep the / for CIDR
                 } else {
                     key = part as string;
                 }
@@ -572,7 +633,7 @@ const spfVerify = async (domain: string, opts?: SPFVerifyOptions): Promise<SPFVe
 
             if (/^[?\-~+]/.test(key)) {
                 qualifier = key.charAt(0);
-                key = key.substr(1);
+                key = key.slice(1);
             }
 
             let type = key.toLowerCase();
@@ -739,7 +800,7 @@ const spfVerify = async (domain: string, opts?: SPFVerifyOptions): Promise<SPFVe
                         for (let ptrRecord of validatedPtrRecords) {
                             let formattedPtrRecord = formatDomain(ptrRecord);
 
-                            if (formattedPtrRecord === ptrDomain || formattedPtrRecord.substr(-(ptrDomain.length + 1)) === `.${ptrDomain}`) {
+                            if (formattedPtrRecord === ptrDomain || formattedPtrRecord.slice(-(ptrDomain.length + 1)) === `.${ptrDomain}`) {
                                 return { type, val: ptrRecord, qualifier };
                             }
                         }
@@ -787,7 +848,7 @@ const spfVerify = async (domain: string, opts?: SPFVerifyOptions): Promise<SPFVe
             }
 
             return explanation;
-        } catch (err) {
+        } catch {
             return false;
         }
     };
@@ -822,67 +883,6 @@ const spfVerify = async (domain: string, opts?: SPFVerifyOptions): Promise<SPFVe
         }
         throw err;
     }
-};
-
-// strict: the term has already passed the syntax validation (RFC 7208 section 5.6)
-const matchIpTermStrict = (type: string, val: string, addr: IPAddress): boolean => {
-    let match = val.match(/^(.*?)(?:\/(\d+))?$/)!;
-    let network = parseIp(match[1]);
-    if (!network || network.kind() !== (type === 'ip4' ? 'ipv4' : 'ipv6')) {
-        throw permError(`invalid IP address`);
-    }
-    let prefix = typeof match[2] === 'string' ? Number(match[2]) : type === 'ip4' ? 32 : 128;
-    // an IPv4 client only matches ip4 terms, an IPv6 client only matches ip6 terms
-    return ipInNetwork(addr, network, prefix);
-};
-
-// the default mode, keeps the historical handling of malformed ip4 and ip6 terms
-const matchIpTermLax = (type: string, val: string, addr: IPAddress, clientIp: string | undefined): boolean => {
-    let { domain: range, cidr4, cidr6, dualCidr } = parseCidrValue(val, false, type);
-    if (!range) {
-        throw permError(`bare IP address`);
-    }
-
-    // an IPv4 address written in the IPv4-mapped IPv6 form
-    let mappingMatch = range.match(/^[:A-F]+:((\d+\.){3}\d+)$/i);
-
-    if (type === 'ip6') {
-        if (net.isIPv6(range)) {
-            if (dualCidr && mappingMatch) {
-                throw permError(`invalid CIDR for IP`);
-            }
-            // an ip6 network is never converted to IPv4, and only IPv6 clients match it
-            // (IPv4-mapped clients are converted to IPv4 before evaluation)
-            return addr.kind() === 'ipv6' && matchIp(addr, range + cidr6);
-        }
-        if (net.isIPv4(range)) {
-            if (cidr6) {
-                throw permError(`invalid CIDR for IP`);
-            }
-            return false;
-        }
-        throw permError(`invalid IP address`);
-    }
-
-    if (mappingMatch) {
-        range = mappingMatch[1];
-    }
-
-    if (!net.isIP(range)) {
-        throw permError(`invalid IP address`);
-    }
-
-    // validate ipv4 range only, skip ipv6
-    if (cidr6 && net.isIPv4(range)) {
-        throw permError(`invalid CIDR for IP`);
-    }
-
-    if (net.isIP(range) !== net.isIP(clientIp!) || !net.isIPv4(range)) {
-        // nothing to do here
-        return false;
-    }
-
-    return matchIp(addr, range + cidr4);
 };
 
 export { spfVerify };

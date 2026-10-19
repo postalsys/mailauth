@@ -538,8 +538,8 @@ const headerParser = (buf: Buffer | string, options?: ParseOptions): ParsedHeade
     let splitterPos = line.indexOf(':');
     let headerKey: string | undefined;
     if (splitterPos >= 0) {
-        headerKey = line.substr(0, splitterPos).trim().toLowerCase();
-        line = line.substr(splitterPos + 1).trim();
+        headerKey = line.substring(0, splitterPos).trim().toLowerCase();
+        line = line.slice(splitterPos + 1).trim();
     }
 
     if (headerKey && !AR_HEADERS.has(headerKey)) {

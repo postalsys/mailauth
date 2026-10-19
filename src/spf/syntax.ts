@@ -59,7 +59,7 @@ const parseIp = (value: string | null | undefined): IPAddress | null => {
             try {
                 let canonical = new URL(`http://[${address}]/`).hostname.replace(/^\[|\]$/g, '');
                 return ipaddr.parse(canonical);
-            } catch (err) {
+            } catch {
                 return null;
             }
         }

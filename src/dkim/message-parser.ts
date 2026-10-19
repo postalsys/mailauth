@@ -102,8 +102,8 @@ class MessageParser extends Writable {
                         await this.emitHeaders(chunk);
                         return;
                     }
-                    await this.emitHeaders(chunk.slice(0, i + 1));
-                    chunk = chunk.slice(i + 1);
+                    await this.emitHeaders(chunk.subarray(0, i + 1));
+                    chunk = chunk.subarray(i + 1);
                     break;
                 }
             }
@@ -130,7 +130,7 @@ class MessageParser extends Writable {
                 if (i === 0 || pos === i) {
                     buf = Buffer.from('\r\n');
                 } else {
-                    buf = Buffer.concat([input.slice(pos, i), Buffer.from('\r\n')]);
+                    buf = Buffer.concat([input.subarray(pos, i), Buffer.from('\r\n')]);
                 }
                 yield buf;
 
@@ -141,7 +141,7 @@ class MessageParser extends Writable {
         if (pos === 0) {
             yield input;
         } else if (pos < input.length) {
-            let buf = input.slice(pos);
+            let buf = input.subarray(pos);
             yield buf;
         }
     }

@@ -185,6 +185,13 @@ const TLDTS_OPTS = {
     extractHostname: false
 };
 
+// Lowercases a 'binary' string the way RFC 6376 section 3.4.2 means it. String.prototype
+// toLowerCase() is Unicode aware and maps the latin1 bytes 0xC0-0xDE to 0xE0-0xFE, which
+// corrupts a UTF-8 sequence and folds two distinct header names onto one. Only a string
+// that has such a byte needs the slower per character mapping
+const NON_ASCII = /[^\x00-\x7f]/;
+const lowerCaseASCII = (str: string): string => (NON_ASCII.test(str) ? str.replace(/[A-Z]/g, c => c.toLowerCase()) : str.toLowerCase());
+
 /**
  * Converts the U-labels of a domain name to A-labels (RFC 5890 section 2.3.2.1). Only the
  * labels that have non-ASCII characters in them are touched: they are normalized to NFC and
@@ -210,7 +217,7 @@ const toALabel = (domain: StringLike): string => {
             }
             try {
                 return punycode.toASCII(label.normalize('NFC').toLowerCase());
-            } catch (err) {
+            } catch {
                 return label;
             }
         })
@@ -256,9 +263,9 @@ const writeToStream = async (stream: Writable, input: Readable | Buffer | string
 
                 let chunk;
                 if (pos + chunkSize >= (input as Buffer).length) {
-                    chunk = (input as Buffer).slice(pos);
+                    chunk = (input as Buffer).subarray(pos);
                 } else {
-                    chunk = (input as Buffer).slice(pos, pos + chunkSize);
+                    chunk = (input as Buffer).subarray(pos, pos + chunkSize);
                 }
                 pos += chunk.length;
 
@@ -276,13 +283,6 @@ const writeToStream = async (stream: Writable, input: Readable | Buffer | string
         stream.on('error', reject);
     });
 };
-
-// Lowercases a 'binary' string the way RFC 6376 section 3.4.2 means it. String.prototype
-// toLowerCase() is Unicode aware and maps the latin1 bytes 0xC0-0xDE to 0xE0-0xFE, which
-// corrupts a UTF-8 sequence and folds two distinct header names onto one. Only a string
-// that has such a byte needs the slower per character mapping
-const NON_ASCII = /[^\x00-\x7f]/;
-const lowerCaseASCII = (str: string): string => (NON_ASCII.test(str) ? str.replace(/[A-Z]/g, c => c.toLowerCase()) : str.toLowerCase());
 
 // RFC 5322 section 3.6.8: field-name = 1*ftext, and ftext is printable US-ASCII except
 // the colon. A fold, and the obsolete syntax of section 4.5.8, may put whitespace between
@@ -530,7 +530,7 @@ const formatSignatureHeaderLine = (type: StringLike, values: Record<string, any>
                     let atPos = val.lastIndexOf('@');
                     if (atPos >= 0) {
                         // convert to A-label if needed
-                        val = val.substr(0, atPos + 1) + toALabel(val.substr(atPos + 1));
+                        val = val.substring(0, atPos + 1) + toALabel(val.slice(atPos + 1));
                     }
                     // the AUID is dkim-quoted-printable, a raw non-ASCII or "=" in it would be
                     // read back as something else
@@ -617,7 +617,7 @@ const exportPublicKey = (keyObj: KeyObject): string => {
     if (keyObj.asymmetricKeyType !== 'ed25519') {
         try {
             return keyObj.export({ type: 'pkcs1', format: 'pem' }) as string;
-        } catch (err) {
+        } catch {
             // fall back to SubjectPublicKeyInfo
         }
     }
@@ -636,6 +636,8 @@ const isBareRsaPublicKey = (der: Buffer): boolean => {
     if (der.length < 3 || der[0] !== 0x30) {
         return false;
     }
+    // DER long form: the low seven bits are the number of length bytes that follow
+    // eslint-disable-next-line no-bitwise
     let headerLength = der[1] < 0x80 ? 2 : 2 + (der[1] & 0x7f);
     return der[headerLength] === 0x02;
 };
@@ -1466,7 +1468,7 @@ function validateTagValueRecord(record: string | null | undefined, recordType: s
                     try {
                         const url = new URL(value.trim());
                         return url.protocol !== 'https:' ? 'Location must use HTTPS protocol' : null;
-                    } catch (e) {
+                    } catch {
                         return `Invalid location URL: ${value}`;
                     }
                 },
@@ -1475,7 +1477,7 @@ function validateTagValueRecord(record: string | null | undefined, recordType: s
                     try {
                         const url = new URL(value.trim());
                         return url.protocol !== 'https:' ? 'Authority must use HTTPS protocol' : null;
-                    } catch (e) {
+                    } catch {
                         return `Invalid authority URL: ${value}`;
                     }
                 }

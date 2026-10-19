@@ -97,7 +97,7 @@ const normalizeDomain = (address: string): string => {
     let domain = (address || '').toString().trim();
     let atPos = domain.lastIndexOf('@');
     if (atPos >= 0) {
-        domain = domain.substr(atPos + 1);
+        domain = domain.slice(atPos + 1);
     }
     domain = domain.trim().toLowerCase().replace(/\.$/, '');
     return toALabel(domain);
@@ -139,8 +139,8 @@ const parseTxtRecordStrict = (record: string): string | false => {
         if (eqPos < 1) {
             return false;
         }
-        let name = field.substr(0, eqPos);
-        let value = field.substr(eqPos + 1);
+        let name = field.substring(0, eqPos);
+        let value = field.slice(eqPos + 1);
         if (name === 'id' && typeof id !== 'string') {
             if (!TXT_ID.test(value)) {
                 return false;
@@ -172,8 +172,8 @@ const parseTxtRecordLax = (record: string): string | false => {
         if (eqPos < 1) {
             continue;
         }
-        let name = field.substr(0, eqPos).trim().toLowerCase();
-        let value = field.substr(eqPos + 1).trim();
+        let name = field.substring(0, eqPos).trim().toLowerCase();
+        let value = field.slice(eqPos + 1).trim();
         if (name === 'id' && value) {
             // if a field is duplicated, then the first entry wins
             return value;
@@ -268,15 +268,15 @@ const parsePolicyFile = (file: Buffer | string, strict: boolean, warnings: MTAST
 
         let key, value;
         if (strict) {
-            key = line.substr(0, colonPos);
+            key = line.substring(0, colonPos);
             if (!EXT_NAME.test(key)) {
                 continue;
             }
-            value = trimChars(line.substr(colonPos + 1), ' \t');
+            value = trimChars(line.slice(colonPos + 1), ' \t');
         } else {
-            key = line.substr(0, colonPos).toLowerCase().trim();
-            value = line.substr(colonPos + 1).trim();
-            if (['version', 'mode', 'max_age', 'mx'].includes(key) && key !== line.substr(0, colonPos)) {
+            key = line.substring(0, colonPos).toLowerCase().trim();
+            value = line.slice(colonPos + 1).trim();
+            if (['version', 'mode', 'max_age', 'mx'].includes(key) && key !== line.substring(0, colonPos)) {
                 laxSyntax = true;
             }
         }
@@ -397,9 +397,9 @@ const validateMx = (mx: string, policy: MTASTSPolicy, _opts?: MTASTSValidateOpti
         }
         if (/^\*\./.test(allowed)) {
             // the wildcard matches exactly one complete left-most label
-            let suffix = allowed.substr(1);
-            let label = mx.substr(0, mx.length - suffix.length);
-            if (mx.length > suffix.length && mx.substr(-suffix.length) === suffix && !label.includes('.')) {
+            let suffix = allowed.slice(1);
+            let label = mx.substring(0, mx.length - suffix.length);
+            if (mx.length > suffix.length && mx.slice(-suffix.length) === suffix && !label.includes('.')) {
                 return {
                     valid: true,
                     mode: policy.mode,
@@ -442,7 +442,7 @@ const checkPolicyHostIdentity = (hostname: string, cert: PeerCertificate): boole
             multiLabelWildcards: false,
             singleLabelSubdomains: false
         });
-    } catch (err) {
+    } catch {
         return false;
     }
 };
@@ -577,14 +577,14 @@ const fetchPolicyFile = async (domain: string, opts: MTASTSOptions, warnings: MT
                 chunks.push(chunk);
                 chunklen += chunk.length;
                 if (chunklen > maxPolicySize) {
-                    done(tooLarge());
+                    return done(tooLarge());
                 }
             });
             res.on('end', () => done(null, Buffer.concat(chunks, chunklen)));
             res.on('error', (err: Error) => done(err));
             res.on('close', () => {
                 if (!res.complete) {
-                    done(createError(`Incomplete response for https://${servername}${path}`, 'http_incomplete_response'));
+                    return done(createError(`Incomplete response for https://${servername}${path}`, 'http_incomplete_response'));
                 }
             });
         };
@@ -666,7 +666,7 @@ const getPolicy = async (domain: string, knownPolicy?: MTASTSPolicy | null, opts
 
     // RFC 8461 3.3, 5.1: a valid (non-expired) cached policy must be applied if no live policy can be discovered or fetched
     const cacheValid = isPolicyValid(knownPolicy);
-    const useCached = (err: Error) => formatResult(Object.assign({}, knownPolicy, { error: err }) as MTASTSPolicy, 'errored', warnings);
+    const useCached = (err: Error) => formatResult(Object.assign({}, knownPolicy, { error: err }), 'errored', warnings);
 
     let discovery;
     try {
@@ -690,7 +690,7 @@ const getPolicy = async (domain: string, knownPolicy?: MTASTSPolicy | null, opts
     // cacheValid is only true for a cached policy object
     if (cacheValid && knownPolicy!.id === policyId) {
         // no changes, not expired, no need to fetch the policy file
-        return formatResult(Object.assign({}, knownPolicy) as MTASTSPolicy, 'renewed', warnings);
+        return formatResult(Object.assign<object, MTASTSPolicy>({}, knownPolicy!), 'renewed', warnings);
     }
 
     // The cached policy that stays in use when the policy for the new ID can not be fetched. A valid
@@ -716,7 +716,7 @@ const getPolicy = async (domain: string, knownPolicy?: MTASTSPolicy | null, opts
                 error: err,
                 retryId: policyId,
                 retryAfter: new Date(Date.now() + ERROR_RETRY_DELAY).toISOString()
-            }) as MTASTSPolicy,
+            }),
             'errored',
             warnings
         );
@@ -724,7 +724,7 @@ const getPolicy = async (domain: string, knownPolicy?: MTASTSPolicy | null, opts
     let retryAfter = knownPolicy?.retryId === policyId ? new Date(knownPolicy.retryAfter as string).getTime() : NaN;
     if (retryAfter > Date.now() && canUseCached()) {
         // fetching this policy ID failed recently, keep using the cached policy without a new attempt
-        return formatResult(Object.assign({}, knownPolicy) as MTASTSPolicy, 'errored', warnings);
+        return formatResult(Object.assign<object, MTASTSPolicy>({}, knownPolicy!), 'errored', warnings);
     }
 
     try {

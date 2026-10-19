@@ -163,7 +163,7 @@ const fetchKey = async (name: string, resolver: DNSResolver): Promise<DKIM2Key> 
             // an RSAPublicKey, or the SubjectPublicKeyInfo that is published in practice
             publicKey = crypto.createPublicKey({ key: rawKey, format: 'der', type: isBareRsaPublicKey(rawKey) ? 'pkcs1' : 'spki' });
         }
-    } catch (err) {
+    } catch {
         throw permerror('has a syntax error', rr);
     }
 

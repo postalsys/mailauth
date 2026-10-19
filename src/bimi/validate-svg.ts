@@ -234,6 +234,8 @@ function validateSvg(logo: Buffer | string, opts?: BIMISvgValidationOptions): tr
     }
 
     // the parser accepts mismatched tags, repeated attributes and similar errors, the validator does not
+    // fast-xml-validator, the replacement, is a separate package; XMLValidator still ships in fast-xml-parser 5
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
     let validation = XMLValidator.validate(source);
     if (validation !== true) {
         throw invalidXml(validation?.err?.msg || 'Invalid XML');

@@ -67,7 +67,7 @@ const parseRecipe = (json: string): ParseRecipeResult => {
     let recipe: any;
     try {
         recipe = JSON.parse(json);
-    } catch (err) {
+    } catch {
         return { error: 'not valid JSON' };
     }
 

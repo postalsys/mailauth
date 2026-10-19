@@ -125,6 +125,17 @@ const decodeDkimQuotedPrintable = (value: string): string => {
     return Buffer.from(decoded).toString('utf8');
 };
 
+// the lower case header field names of an h= tag
+const normalizeFieldList = (value: string | number | undefined): string[] =>
+    (value || '')
+        .toString()
+        .split(':')
+        .map(name => trimChars(name, ' \t\r\n').toLowerCase())
+        .filter(name => name);
+
+// the body canonicalization of a c= value, 'simple' when it is not set (RFC 6376 section 3.5)
+const getBodyCanon = (canonicalization: string): string => (canonicalization.split('/')[1] || 'simple').toLowerCase().trim();
+
 class DkimVerifier extends MessageParser {
     declare options: DKIMVerifyOptions;
     declare resolver: DKIMVerifyOptions['resolver'];
@@ -227,7 +238,7 @@ class DkimVerifier extends MessageParser {
             fromHeader = (fromHeader as HeaderRow).line.toString();
             let splitterPos = fromHeader.indexOf(':');
             if (splitterPos >= 0) {
-                fromHeader = fromHeader.substr(splitterPos + 1);
+                fromHeader = fromHeader.slice(splitterPos + 1);
             }
             // the full addr-specs, including the mailboxes of a group (RFC 6854). A general
             // purpose address parser guesses at malformed input, which could hand DMARC a domain
@@ -251,10 +262,10 @@ class DkimVerifier extends MessageParser {
         } else {
             let returnPathHeader: HeaderRow | string | undefined = headers.parsed.filter(h => h.key === 'return-path').pop();
             if (returnPathHeader) {
-                returnPathHeader = (returnPathHeader as HeaderRow).line.toString();
+                returnPathHeader = returnPathHeader.line.toString();
                 let splitterPos = returnPathHeader.indexOf(':');
                 if (splitterPos >= 0) {
-                    returnPathHeader = returnPathHeader.substr(splitterPos + 1);
+                    returnPathHeader = returnPathHeader.slice(splitterPos + 1);
                 }
                 let returnPath = addressparser(returnPathHeader.trim());
                 this.envelopeFrom = returnPath.length && returnPath[0].address ? returnPath[0].address : false;
@@ -296,7 +307,7 @@ class DkimVerifier extends MessageParser {
                 );
             }
 
-            let headersArray = (this.headers as ParsedHeaders).parsed;
+            let headersArray = this.headers.parsed;
             const findLastMethod = typeof headersArray.findLast === 'function' ? headersArray.findLast : headersArray.find;
             if (typeof headersArray.findLast !== 'function') {
                 headersArray = ([] as HeaderRow[]).concat(headersArray).reverse();
@@ -571,7 +582,7 @@ class DkimVerifier extends MessageParser {
         // algo
         header.a = signatureHeader.parsed?.a?.value;
         // signature value
-        header.b = signatureHeader.parsed?.b?.value ? `${signatureHeader.parsed?.b?.value.toString().substr(0, 8)}` : false;
+        header.b = signatureHeader.parsed?.b?.value ? `${signatureHeader.parsed?.b?.value.toString().substring(0, 8)}` : false;
 
         return header;
     }
@@ -923,17 +934,6 @@ class DkimVerifier extends MessageParser {
         }
     }
 }
-
-// the body canonicalization of a c= value, 'simple' when it is not set (RFC 6376 section 3.5)
-const getBodyCanon = (canonicalization: string): string => (canonicalization.split('/')[1] || 'simple').toLowerCase().trim();
-
-// the lower case header field names of an h= tag
-const normalizeFieldList = (value: string | number | undefined): string[] =>
-    (value || '')
-        .toString()
-        .split(':')
-        .map(name => trimChars(name, ' \t\r\n').toLowerCase())
-        .filter(name => name);
 
 export { DkimVerifier };
 export type { SignatureHeader, VerifyResult, VerifyStatus };

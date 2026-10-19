@@ -76,7 +76,7 @@ const ordinal = (value: number): number | '?' => (Number.isSafeInteger(value) ? 
 const verifySignature = (algorithm: string, input: Buffer, publicKey: crypto.KeyObject, signature: Buffer): boolean => {
     try {
         return crypto.verify(...signatureData(algorithm, input), publicKey, signature);
-    } catch (err) {
+    } catch {
         return false;
     }
 };
@@ -482,7 +482,9 @@ class Dkim2Verifier extends Dkim2Parser {
         let lookups = signature.signatures.map(({ selector, algorithm }) =>
             ALGORITHM_KEY_TYPES.has(algorithm) ? keyLookup(signature.signingDomain, selector, algorithm) : null
         );
-        lookups.forEach(lookup => lookup?.catch(() => false));
+        for (let lookup of lookups) {
+            void lookup?.catch(() => false);
+        }
 
         let values: DKIM2SignatureValueResult[] = [];
         for (let [index, { selector, algorithm, signature: value }] of signature.signatures.entries()) {
@@ -497,7 +499,7 @@ class Dkim2Verifier extends Dkim2Parser {
 
             let key: DKIM2Key;
             try {
-                key = await lookups[index]!;
+                key = await lookups[index];
             } catch (err) {
                 if (!(err instanceof KeyError)) {
                     throw err;

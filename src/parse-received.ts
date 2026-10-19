@@ -32,7 +32,7 @@ const parseReceived = (buf: Buffer | string): ReceivedChainEntry | false => {
         return false;
     }
 
-    let headerValue = header.substr(splitPos + 1).trim();
+    let headerValue = header.slice(splitPos + 1).trim();
 
     let state = 'none';
 

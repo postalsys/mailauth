@@ -152,7 +152,7 @@ class DkimSigner extends MessageParser {
         super();
 
         let { canonicalization, algorithm, signTime, headerList, signatureData, arc, bodyHash, headers, getARChain, getArcInstance, expires, strict } =
-            options || ({} as DkimSignerOptions);
+            options || {};
 
         this.algorithm = algorithm || false;
         this.canonicalization = canonicalization || 'relaxed/relaxed';
@@ -288,7 +288,7 @@ class DkimSigner extends MessageParser {
         ];
 
         for (let [key, tag, format, code] of checks) {
-            let value = typeof signatureData[key] === 'string' ? (signatureData[key] as string).trim() : '';
+            let value = typeof signatureData[key] === 'string' ? signatureData[key].trim() : '';
             let aLabel = toALabel(value);
 
             if (!value || UNSAFE_TAG_VALUE.test(aLabel)) {
