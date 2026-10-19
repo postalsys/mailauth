@@ -109,6 +109,21 @@ export interface AuthenticateOptions {
     strict?: boolean | undefined;
 
     /**
+     * DNS lookup limit for SPF (default: 10, RFC 7208 section 4.6.4)
+     */
+    maxResolveCount?: number | undefined;
+
+    /**
+     * Limit for SPF DNS lookups that return no records (default: 2, RFC 7208 section 4.6.4)
+     */
+    maxVoidCount?: number | undefined;
+
+    /**
+     * Time limit in milliseconds for the SPF evaluation, temperror when exceeded (no limit by default)
+     */
+    maxElapsedTime?: number | undefined;
+
+    /**
      * Verify DKIM2 header fields as well (default: false). Experimental, built against
      * draft-ietf-dkim-dkim2-spec-06. The result is added to Authentication-Results with the
      * `dkim2` method of draft-gondwana-dkim2-authres-00 and does not take part in DMARC

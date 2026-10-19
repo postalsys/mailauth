@@ -122,6 +122,8 @@ export async function run(): Promise<void> {
     validateBimiSvg('<svg/>');
     const policy = await getPolicy('example.com', null, { resolver });
     policy.policy && validateMx('mx.example.com', policy.policy);
+    validateMx('mx.example.com', null);
+    await authenticate(message, { resolver, maxResolveCount: 5, maxVoidCount: 1, maxElapsedTime: 2000 });
     parseReceived('from a by b');
     await dkim2Sign(message, { signingDomain: 'example.com', mailFrom: 'a@example.com', rcptTo: ['b@example.net'], signatureData: [{ selector: 's', privateKey: 'k' }] });
     await dkim2Verify(message, { resolver });

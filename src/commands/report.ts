@@ -1,7 +1,7 @@
 import { authenticate } from '../mailauth.js';
 import fs from 'node:fs';
 import { createResolver } from './resolver.js';
-import type { AuthenticateOptions, SPFOptions } from '../types.js';
+import type { AuthenticateOptions } from '../types.js';
 
 // the options of the report command
 interface ReportArgv {
@@ -41,7 +41,7 @@ const cmd = async (argv: ReportArgv): Promise<void> => {
     }
 
     // authenticate() passes the SPF lookup limits on to spf()
-    const opts: AuthenticateOptions & Pick<SPFOptions, 'maxResolveCount' | 'maxVoidCount'> = {
+    const opts: AuthenticateOptions = {
         trustReceived: true,
         strict: !!argv.strict,
         rejectRsaSha1: !!argv.rejectRsaSha1,

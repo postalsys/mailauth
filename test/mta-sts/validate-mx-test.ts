@@ -57,7 +57,7 @@ describe('MTA-STS MX host validation (RFC 8461 4.1)', () => {
                 expect(validateMx('b.example', pt, { strict })).to.deep.equal({ valid: false, mode: 'testing', testing: true });
                 const pn = parsePolicy('version: STSv1\nmode: none\nmx: a.example\nmax_age: 60\n');
                 expect(validateMx('b.example', pn, { strict })).to.deep.equal({ valid: true, mode: 'none', testing: false });
-                expect(validateMx('b.example', undefined as any, { strict })).to.deep.equal({ valid: true, mode: 'none', testing: false });
+                expect(validateMx('b.example', undefined, { strict })).to.deep.equal({ valid: true, mode: 'none', testing: false });
             });
         });
     }

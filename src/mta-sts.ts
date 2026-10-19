@@ -374,7 +374,7 @@ const parsePolicy = (file: Buffer | string, opts?: Pick<MTASTSOptions, 'strict'>
  * @param {Boolean} [_opts.strict=false] Accepted for API consistency, matching rules are the same in both modes
  * @returns {Object} validation result
  */
-const validateMx = (mx: string, policy: MTASTSPolicy, _opts?: MTASTSValidateOptions): MTASTSValidationResult => {
+const validateMx = (mx: string, policy: MTASTSPolicy | null | undefined, _opts?: MTASTSValidateOptions): MTASTSValidationResult => {
     policy = policy || { mode: 'none' };
     if (policy.mode === 'none' || !policy.mode) {
         // nothing to check for
