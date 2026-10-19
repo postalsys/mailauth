@@ -8,8 +8,8 @@
     "exclude": ["src/package-info.ts", "src/**/types.ts", "src/**/*.d.ts"],
     "exclude-after-remap": true,
     "check-coverage": true,
-    "statements": 93.5,
-    "branches": 91.2,
-    "functions": 95.5,
-    "lines": 93.5
+    "statements": 96,
+    "branches": 95,
+    "functions": 80,
+    "lines": 96
 }

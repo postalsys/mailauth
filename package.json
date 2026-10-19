@@ -67,7 +67,7 @@
         "typecheck": "node scripts/build.js --generate-only && tsc -p tsconfig.json",
         "pretest": "npm run build",
         "test": "node --import tsx --test --test-concurrency=1 \"test/**/*-test.ts\"",
-        "pretest:coverage": "npm run build",
+        "pretest:coverage": "node scripts/build.js --source-maps",
         "test:coverage": "c8 node --import tsx --test --test-concurrency=1 \"test/**/*-test.ts\"",
         "pretest:cjs": "npm run build",
         "test:cjs": "node --no-experimental-require-module test/package/cjs-smoke.cjs",

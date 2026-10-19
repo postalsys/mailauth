@@ -16,7 +16,7 @@ mailauth is a Node.js library and CLI tool for email authentication. It implemen
 - **Build:** `npm run build` (also runs on install from git and before publish through `prepare`)
 - **CommonJS guard:** `npm run test:cjs` (see Platform constraints)
 - **pkg binaries:** `npm run test:pkg` (slow, see Platform constraints)
-- **Coverage (c8, source-mapped to `src/`, report in `coverage/`):** `npm run test:coverage`, fails below the thresholds in `.c8rc.json`
+- **Coverage (c8, source-mapped to `src/`, report in `coverage/`):** `npm run test:coverage`, fails below the thresholds in `.c8rc.json`. The CLI tests run the built CLI in child processes, so the coverage build writes source maps and c8 maps `dist/` back to `src/`. Lines, statements and branches merge across both; functions are counted once per build that loaded them, which is why their threshold is lower
 - **Mutation testing (StrykerJS, opt-in, slow, report in `reports/mutation/`):** `npm run mutation`. Not part of `npm test` or CI; `stryker.config.json` lists the mutated modules
 
 ## Code Style
