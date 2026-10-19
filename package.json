@@ -53,7 +53,7 @@
     },
     "dependencies": {
         "@postalsys/vmc": "1.1.5",
-        "commander": "15.0.0",
+        "commander": "14.0.3",
         "fast-xml-parser": "5.11.2",
         "ipaddr.js": "2.5.0",
         "joi": "18.2.9",
