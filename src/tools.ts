@@ -390,11 +390,35 @@ const getOversignedNames = (fieldNames: string, signingList: ParsedHeaderRow[]):
     return extra;
 };
 
+/**
+ * Positions of the header rows by field name, in message order. Built once per message by
+ * indexHeaderKeys() for getSigningHeaderLines(), so that verifying many signatures does not
+ * scan every header row for every signature
+ */
+export type HeaderKeyIndex = Map<string, number[]>;
+
+const indexHeaderKeys = (parsedHeaders: ParsedHeaderRow[]): HeaderKeyIndex => {
+    let index: HeaderKeyIndex = new Map();
+    parsedHeaders.forEach((header, i) => {
+        if (typeof header.key === 'string') {
+            let positions = index.get(header.key);
+            if (!positions) {
+                positions = [];
+                index.set(header.key, positions);
+            }
+            positions.push(i);
+        }
+    });
+    return index;
+};
+
 const getSigningHeaderLines = (
     parsedHeaders: ParsedHeaderRow[],
     // an h= value or a configured header list, anything else selects the default list
     fieldNames?: string | string[] | false | null,
-    verify?: boolean
+    verify?: boolean,
+    // indexHeaderKeys() of parsedHeaders, saves the scan of the header rows when verifying
+    headerKeyIndex?: HeaderKeyIndex | null
 ): SigningHeaderLines => {
     let configuredFieldNames = typeof fieldNames === 'string' ? fieldNames : false;
 
@@ -406,7 +430,20 @@ const getSigningHeaderLines = (
     // names listed in h= without a header field to hash for them
     let oversigned: string[] = [];
 
-    if (verify) {
+    if (verify && headerKeyIndex) {
+        // Every name in h= takes the last header row of that name not taken by an earlier
+        // occurrence of the same name (RFC 6376 section 5.4.2), the same rows the scan below
+        // picks: the n-th occurrence of a name takes its n-th row from the bottom
+        let taken = new Map<string, number>();
+        for (let fieldName of fieldNames) {
+            let positions = headerKeyIndex.get(fieldName);
+            let count = taken.get(fieldName) || 0;
+            if (positions && count < positions.length) {
+                signingList.push(parsedHeaders[positions[positions.length - 1 - count]]);
+                taken.set(fieldName, count + 1);
+            }
+        }
+    } else if (verify) {
         let parsedList = ([] as ParsedHeaderRow[]).concat(parsedHeaders);
         for (let fieldName of fieldNames) {
             for (let i = parsedList.length - 1; i >= 0; i--) {
@@ -1531,6 +1568,7 @@ export {
     defaultARCFieldNames,
     defaultASFieldNames,
     getSigningHeaderLines,
+    indexHeaderKeys,
     formatSignatureHeaderLine,
     parseDkimHeaders,
     parseTagList,

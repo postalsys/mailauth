@@ -1,6 +1,7 @@
 import { Buffer } from 'node:buffer';
 import {
     getSigningHeaderLines,
+    indexHeaderKeys,
     parseDkimHeaders,
     formatAuthHeaderRow,
     getAlignment,
@@ -20,6 +21,9 @@ import { trimChars } from '../trim.js';
 import { DOMAIN_NAME, SELECTOR, LOCAL_PART, TIMESTAMP, BODY_LENGTH } from './syntax.js';
 import { MessageParser } from './message-parser.js';
 import { dkimBody } from './body/index.js';
+import { PrefixBodyHash } from './body/prefix-hashes.js';
+import type { SimpleHash } from './body/simple.js';
+import type { RelaxedHash } from './body/relaxed.js';
 import { generateCanonicalizedHeader } from './header/index.js';
 import { getARChain, getHighestArcInstance } from '../arc/index.js';
 import addressparser from 'nodemailer/lib/addressparser';
@@ -27,12 +31,12 @@ import { parseFromHeader, getAuthorDomain } from '../dmarc/author-domain.js';
 import crypto from 'node:crypto';
 import libmime from 'libmime';
 import type { HeaderRow, ParsedHeaders } from './message-parser.js';
-import type { AlignmentEntry } from '../tools.js';
+import type { AlignmentEntry, HeaderKeyIndex } from '../tools.js';
 import type { ParsedHeaderField } from '../parse-dkim-headers.js';
 import type { ARCChainEntry, ARCSealOptions, DKIMResult, DKIMVerifyOptions, DKIMVerifyResult, DKIMWarning } from '../types.js';
 
 // A body hasher, with the values finalChunk() stores on it once the body has been read
-type BodyHasher = ReturnType<typeof dkimBody> & {
+type BodyHasher = (ReturnType<typeof dkimBody> | PrefixBodyHash) & {
     hash?: string | undefined;
     mimeStructureStart?: ReturnType<ReturnType<typeof dkimBody>['getMimeStructureStart']> | undefined;
 };
@@ -146,6 +150,7 @@ class DkimVerifier extends MessageParser {
     declare results: VerifyResult[];
     declare signatureHeaders: SignatureHeader[];
     declare bodyHashes: Map<string, BodyHasher>;
+    declare headerKeyIndex: HeaderKeyIndex | undefined;
     declare headerFrom: string[];
     declare fromFields: number;
     declare fromSyntax: DKIMVerifyResult['fromSyntax'];
@@ -291,6 +296,7 @@ class DkimVerifier extends MessageParser {
             }
         }
 
+        let bodyHashAdded = false;
         for (let signatureHeader of this.signatureHeaders) {
             this.prepareSignature(signatureHeader);
 
@@ -306,7 +312,13 @@ class DkimVerifier extends MessageParser {
                     signatureHeader.maxBodyLength
                 );
             }
+            bodyHashAdded = true;
+        }
 
+        // The Content-Type does not depend on the signature, so it is looked up once and handed
+        // to every body hasher after all of them exist. Doing it per signature made a message with
+        // many signatures cost quadratic time (each one scanned all header rows and all hashers)
+        if (bodyHashAdded) {
             let headersArray = this.headers.parsed;
             const findLastMethod = typeof headersArray.findLast === 'function' ? headersArray.findLast : headersArray.find;
             if (typeof headersArray.findLast !== 'function') {
@@ -326,11 +338,19 @@ class DkimVerifier extends MessageParser {
         }
     }
 
-    // Registers a body hash, once for every canonicalization, hash and length combination
+    // Registers a body hash, once for every canonicalization, hash and length combination.
+    // Lengths (l=) are read from the hasher of the whole body of the same canonicalization and
+    // hash, so the body is canonicalized and hashed once however many l= values the signatures
+    // of a message use
     addBodyHash(bodyCanon: string, hashAlgo: string, maxBodyLength: number | ''): string {
         let bodyHashKey = [bodyCanon, hashAlgo, maxBodyLength].join(':');
         if (!this.bodyHashes.has(bodyHashKey)) {
-            this.bodyHashes.set(bodyHashKey, dkimBody(bodyCanon, hashAlgo, maxBodyLength));
+            if (typeof maxBodyLength === 'number' && !isNaN(maxBodyLength) && maxBodyLength >= 0) {
+                let source = this.bodyHashes.get(this.addBodyHash(bodyCanon, hashAlgo, '')) as SimpleHash | RelaxedHash;
+                this.bodyHashes.set(bodyHashKey, new PrefixBodyHash(source, maxBodyLength));
+            } else {
+                this.bodyHashes.set(bodyHashKey, dkimBody(bodyCanon, hashAlgo, maxBodyLength));
+            }
         }
         return bodyHashKey;
     }
@@ -619,7 +639,9 @@ class DkimVerifier extends MessageParser {
         const bodyHashKey = fallback ? signatureHeader.fallbackBodyHashKey : signatureHeader.bodyHashKey;
 
         // finalChunk() only verifies once the headers have been parsed
-        let signingHeaderLines = getSigningHeaderLines((this.headers as ParsedHeaders).parsed, signatureHeader.parsed?.h?.value, true);
+        let parsedHeaders = (this.headers as ParsedHeaders).parsed;
+        this.headerKeyIndex = this.headerKeyIndex || indexHeaderKeys(parsedHeaders);
+        let signingHeaderLines = getSigningHeaderLines(parsedHeaders, signatureHeader.parsed?.h?.value, true, this.headerKeyIndex);
 
         let { canonicalizedHeader } = generateCanonicalizedHeader(signatureHeader.type, signingHeaderLines, {
             signatureHeaderLine: signatureHeader.original,

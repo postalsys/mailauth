@@ -4,6 +4,7 @@ import type { BinaryToTextEncoding, Hash } from 'node:crypto';
 import { MimeStructureStartFinder } from '../mime-structure-start-finder.js';
 
 import { CHAR_CR, CHAR_LF, CRLF, eachHeldLineBreak } from './line-endings.js';
+import { PrefixHashes } from './prefix-hashes.js';
 
 /**
  * The l= limit of a body hash. Anything that is not a number hashes the whole body
@@ -33,6 +34,8 @@ class SimpleHash {
     declare maxSizeReached: boolean;
     declare pendingLineBreaks: number;
     declare mimeStructureStartFinder: MimeStructureStartFinder;
+    declare prefixHashes: PrefixHashes | null;
+    declare digestValue: Buffer | null;
     declare remainder: Buffer[];
 
     /**
@@ -59,6 +62,32 @@ class SimpleHash {
         this.maxSizeReached = maxBodyLength === 0;
 
         this.mimeStructureStartFinder = new MimeStructureStartFinder();
+
+        // hash states at the l= limits of other signatures, see addPrefixLimit()
+        this.prefixHashes = null;
+        this.digestValue = null;
+    }
+
+    /**
+     * Also keeps the hash of the first `limit` canonicalized bytes, the body hash of a signature
+     * with l=`limit`, read with getPrefixDigest(). Only for a hasher without a limit of its own,
+     * and only before the body is read
+     */
+    addPrefixLimit(limit: number): void {
+        if (this.byteLength || typeof this.maxBodyLength === 'number') {
+            throw new Error('Prefix limits are only added to an unlimited hasher before the body');
+        }
+        this.prefixHashes = this.prefixHashes || new PrefixHashes();
+        this.prefixHashes.add(limit);
+    }
+
+    /**
+     * The body hash for l=`limit`, a limit registered with addPrefixLimit(). A limit the body
+     * never reached hashes the whole body
+     */
+    getPrefixDigest(limit: number): Buffer {
+        let full = this.digest();
+        return this.prefixHashes?.digest(limit) || full;
     }
 
     setContentType(contentTypeObj: BodyContentType): void {
@@ -94,8 +123,12 @@ class SimpleHash {
             chunk = chunk.subarray(0, this.maxBodyLength - this.bodyHashedBytes);
         }
 
+        if (this.prefixHashes) {
+            this.prefixHashes.update(this.bodyHash, this.bodyHashedBytes, chunk);
+        } else {
+            this.bodyHash.update(chunk);
+        }
         this.bodyHashedBytes += chunk.length;
-        this.bodyHash.update(chunk);
 
         //process.stdout.write(chunk);
     }
@@ -158,6 +191,12 @@ class SimpleHash {
     digest(): Buffer;
     digest(encoding: BinaryToTextEncoding): string;
     digest(encoding?: BinaryToTextEncoding): Buffer | string {
+        // the hash is final after the first call, later calls return the same value, so that the
+        // signatures sharing this hasher through getPrefixDigest() can each read it
+        if (this.digestValue) {
+            return encoding ? this.digestValue.toString(encoding) : this.digestValue;
+        }
+
         // RFC 6376 section 3.4.3: "simple" makes no changes to the body beyond converting
         // the *CRLF at its end to a single CRLF. A <CR> that no <LF> follows does not end
         // a line, so it is body content and stays where it is. A lone <LF> is taken as a
@@ -184,7 +223,8 @@ class SimpleHash {
         // a body with no trailing CRLF, and an empty body, both get one
         this._updateBodyHash(CRLF);
 
-        return this.bodyHash.digest(encoding as BinaryToTextEncoding);
+        this.digestValue = this.bodyHash.digest();
+        return encoding ? this.digestValue.toString(encoding) : this.digestValue;
     }
 
     getMimeStructureStart(): number {
