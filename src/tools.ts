@@ -10,7 +10,7 @@ import * as packageData from './package-info.js';
 import parseDkimHeaders from './parse-dkim-headers.js';
 import { trimChars, trimEndChars } from './trim.js';
 const { parseTagList } = parseDkimHeaders;
-import tldts from 'tldts';
+import { getDomain } from 'tldts';
 import Joi from 'joi';
 import { DOMAIN_NAME, HOST_NAME_CHARS } from './dkim/syntax.js';
 import type { Readable, Writable } from 'node:stream';
@@ -1240,7 +1240,7 @@ const getOrgDomain = (domain: unknown): string | false => {
     if (!ALIGNMENT_DOMAIN.test(domain as string)) {
         return false;
     }
-    return tldts.getDomain(domain as string, TLDTS_OPTS) || (domain as string);
+    return getDomain(domain as string, TLDTS_OPTS) || (domain as string);
 };
 
 const getAlignment = (

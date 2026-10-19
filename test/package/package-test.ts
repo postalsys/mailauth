@@ -2,6 +2,7 @@ import { describe, it } from 'node:test';
 import { expect } from 'chai';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
+import { build } from 'esbuild';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -146,6 +147,27 @@ describe('Built package', { timeout: 30 * 1000 }, () => {
                     expect(esmNames, name).to.deep.equal(Object.keys(cjs).sort());
                 }
             }
+        });
+
+        it('links against the ES module entry of every dependency, the way bundlers resolve them', async () => {
+            // Node.js loads the CommonJS main of a dependency without an exports map, where a default
+            // import gets module.exports. Bundlers and Bun prefer its "module" entry, which may have
+            // named exports only (tldts did, #176), so every module is bundled with that resolution
+            const esmDir = path.join(root, 'dist', 'esm');
+            const entryPoints = (fs.readdirSync(esmDir, { recursive: true }) as string[])
+                .filter(name => name.endsWith('.js'))
+                .map(name => path.join(esmDir, name));
+            const result = await build({
+                entryPoints,
+                bundle: true,
+                write: false,
+                outdir: path.join(root, 'dist', 'bundle-check'),
+                platform: 'node',
+                format: 'esm',
+                mainFields: ['module', 'main'],
+                logLevel: 'silent'
+            }).catch(err => err);
+            expect([...new Set((result.errors || []).map((err: { text: string }) => err.text))]).to.deep.equal([]);
         });
 
         it('loads the ES module build as ES modules, not through the CommonJS one', async () => {
