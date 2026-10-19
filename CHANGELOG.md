@@ -1,5 +1,26 @@
 # Changelog
 
+## [8.0.0](https://github.com/postalsys/mailauth/compare/v7.3.1...v8.0.0) (2026-10-19)
+
+
+### ⚠ BREAKING CHANGES
+
+* the package is built from TypeScript. The lib/ sources and the root index.d.ts are no longer published; deep imports resolve through the `mailauth/lib/*` exports map, and a path outside that map (such as `mailauth/bin/mailauth.js`) no longer resolves. The CLI entry is bin/mailauth.cjs. An ES module default import of a deep module that has named exports only (for example `import tools from 'mailauth/lib/tools.js'`) is replaced by named imports. A few declared types were corrected to match what the code returns: DKIMWarning includes 'ams-c-default', and inputs such as ARCData.chain accept the `false` the library already handled.
+
+### Features
+
+* migrate to TypeScript with ES module and CommonJS builds ([f0229a4](https://github.com/postalsys/mailauth/commit/f0229a49fe3f5ea3304611787d5a67edd9880dee))
+
+
+### Bug Fixes
+
+* bump joi to 18.3.0, libmime to 5.5.1, nodemailer to 10.1.7 and undici to 8.12.2 ([78332ca](https://github.com/postalsys/mailauth/commit/78332caf48de26330f2c0b8d83cd7871aea84002))
+* **cli:** pin commander to 14.x, the last CommonJS major ([5f8e6ab](https://github.com/postalsys/mailauth/commit/5f8e6ab82c4f7a4b384abdf71b4c9c0f88f5c501))
+* **cli:** ship licenses.txt so that `mailauth license` works on npm installs ([4a5149c](https://github.com/postalsys/mailauth/commit/4a5149c6ba5a97a20b6c3539737d18a5fcec72b6))
+* **dkim:** verify messages with many signatures in linear time ([ad9107e](https://github.com/postalsys/mailauth/commit/ad9107ec776e453cb1ddf472944cb37cc5c8b9e9))
+* leave unparsable Received header fields out of receivedChain ([4caf090](https://github.com/postalsys/mailauth/commit/4caf090f975c9920d6b83a530a148583de2b0229))
+* **types:** declare the SPF limits of authenticate() and the optional policy of validateMx() ([3882642](https://github.com/postalsys/mailauth/commit/3882642e69cb3edd649782865dbaa8d94d12845f))
+
 ## [7.3.1](https://github.com/postalsys/mailauth/compare/v7.3.0...v7.3.1) (2026-10-18)
 
 
