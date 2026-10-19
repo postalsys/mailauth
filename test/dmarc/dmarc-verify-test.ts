@@ -1,0 +1,738 @@
+/* eslint @typescript-eslint/no-unused-expressions:0 */
+import { describe, it } from 'node:test';
+import { expect, config } from 'chai';
+
+import verifyDmarc from '../../src/dmarc/verify.js';
+import { zoneResolver } from '../helpers/dns-zone.js';
+
+config.includeStack = true;
+
+describe('DMARC Verify Tests', () => {
+    describe('Basic DMARC lookup', () => {
+        it('Should return pass when DKIM aligns', async () => {
+            const stubResolver: any = (domain: string, type: string) => {
+                if (type === 'TXT' && domain === '_dmarc.example.com') {
+                    return [['v=DMARC1; p=reject']];
+                }
+                const err: any = new Error('Not found');
+                err.code = 'ENOTFOUND';
+                throw err;
+            };
+
+            const result: any = await verifyDmarc({
+                headerFrom: 'user@example.com',
+                dkimDomains: [{ domain: 'example.com' }],
+                spfDomains: [],
+                resolver: stubResolver
+            });
+
+            expect(result.status.result).to.equal('pass');
+            expect(result.policy).to.equal('reject');
+        });
+
+        it('Should return pass when SPF aligns', async () => {
+            const stubResolver: any = (domain: string, type: string) => {
+                if (type === 'TXT' && domain === '_dmarc.example.com') {
+                    return [['v=DMARC1; p=quarantine']];
+                }
+                const err: any = new Error('Not found');
+                err.code = 'ENOTFOUND';
+                throw err;
+            };
+
+            const result: any = await verifyDmarc({
+                headerFrom: 'user@example.com',
+                dkimDomains: [],
+                spfDomains: [{ domain: 'example.com' }] as any,
+                resolver: stubResolver
+            });
+
+            expect(result.status.result).to.equal('pass');
+            expect(result.policy).to.equal('quarantine');
+        });
+
+        it('Should return fail when neither DKIM nor SPF aligns', async () => {
+            const stubResolver: any = (domain: string, type: string) => {
+                if (type === 'TXT' && domain === '_dmarc.example.com') {
+                    return [['v=DMARC1; p=reject']];
+                }
+                const err: any = new Error('Not found');
+                err.code = 'ENOTFOUND';
+                throw err;
+            };
+
+            const result: any = await verifyDmarc({
+                headerFrom: 'user@example.com',
+                dkimDomains: [{ domain: 'otherdomain.com' }],
+                spfDomains: [{ domain: 'anotherdomain.com' }] as any,
+                resolver: stubResolver
+            });
+
+            expect(result.status.result).to.equal('fail');
+        });
+
+        it('Should return none when no DMARC record exists', async () => {
+            const stubResolver: any = (domain: string, type: string) => {
+                if (type === 'TXT') {
+                    const err: any = new Error('Not found');
+                    err.code = 'ENOTFOUND';
+                    throw err;
+                }
+            };
+
+            const result: any = await verifyDmarc({
+                headerFrom: 'user@example.com',
+                dkimDomains: [],
+                spfDomains: [],
+                resolver: stubResolver
+            });
+
+            expect(result.status.result).to.equal('none');
+        });
+
+        it('Should return temperror on DNS failure', async () => {
+            const stubResolver: any = () => {
+                const err: any = new Error('DNS timeout');
+                err.code = 'ETIMEOUT';
+                throw err;
+            };
+
+            const result: any = await verifyDmarc({
+                headerFrom: 'user@example.com',
+                dkimDomains: [],
+                spfDomains: [],
+                resolver: stubResolver
+            });
+
+            expect(result.status.result).to.equal('temperror');
+            expect(result.error).to.equal('DNS timeout');
+        });
+    });
+
+    describe('DMARC record parsing', () => {
+        it('Should parse all common tags', async () => {
+            const stubResolver: any = (domain: string, type: string) => {
+                if (type === 'TXT' && domain === '_dmarc.example.com') {
+                    return [['v=DMARC1; p=quarantine; sp=reject; pct=50; adkim=s; aspf=r']];
+                }
+                const err: any = new Error('Not found');
+                err.code = 'ENOTFOUND';
+                throw err;
+            };
+
+            const result: any = await verifyDmarc({
+                headerFrom: 'user@example.com',
+                dkimDomains: [{ domain: 'example.com' }],
+                spfDomains: [],
+                resolver: stubResolver
+            });
+
+            expect(result.p).to.equal('quarantine');
+            expect(result.sp).to.equal('reject');
+            // pct is historic in RFC 9989 (A.6) and no longer reported
+            expect(result).to.not.have.property('pct');
+        });
+
+        it('Should handle minimal DMARC record', async () => {
+            const stubResolver: any = (domain: string, type: string) => {
+                if (type === 'TXT' && domain === '_dmarc.example.com') {
+                    return [['v=DMARC1; p=none']];
+                }
+                const err: any = new Error('Not found');
+                err.code = 'ENOTFOUND';
+                throw err;
+            };
+
+            const result: any = await verifyDmarc({
+                headerFrom: 'user@example.com',
+                dkimDomains: [],
+                spfDomains: [],
+                resolver: stubResolver
+            });
+
+            expect(result.status.result).to.equal('fail');
+            expect(result.p).to.equal('none');
+        });
+
+        it('Should handle split TXT records', async () => {
+            const stubResolver: any = (domain: string, type: string) => {
+                if (type === 'TXT' && domain === '_dmarc.example.com') {
+                    return [['v=DMARC1; p=rej', 'ect; pct=100']];
+                }
+                const err: any = new Error('Not found');
+                err.code = 'ENOTFOUND';
+                throw err;
+            };
+
+            const result: any = await verifyDmarc({
+                headerFrom: 'user@example.com',
+                dkimDomains: [{ domain: 'example.com' }],
+                spfDomains: [],
+                resolver: stubResolver
+            });
+
+            expect(result.p).to.equal('reject');
+            expect(result).to.not.have.property('pct');
+        });
+    });
+
+    describe('Policy evaluation', () => {
+        it('Should use p= policy for direct domain', async () => {
+            const stubResolver: any = (domain: string, type: string) => {
+                if (type === 'TXT' && domain === '_dmarc.example.com') {
+                    return [['v=DMARC1; p=reject; sp=quarantine']];
+                }
+                const err: any = new Error('Not found');
+                err.code = 'ENOTFOUND';
+                throw err;
+            };
+
+            const result: any = await verifyDmarc({
+                headerFrom: 'user@example.com',
+                dkimDomains: [],
+                spfDomains: [],
+                resolver: stubResolver
+            });
+
+            expect(result.policy).to.equal('reject');
+        });
+
+        it('Should use sp= policy for subdomain with org domain record', async () => {
+            const stubResolver: any = (domain: string, type: string) => {
+                if (type === 'TXT' && domain === '_dmarc.sub.example.com') {
+                    const err: any = new Error('Not found');
+                    err.code = 'ENOTFOUND';
+                    throw err;
+                }
+                if (type === 'TXT' && domain === '_dmarc.example.com') {
+                    return [['v=DMARC1; p=reject; sp=quarantine']];
+                }
+                const err: any = new Error('Not found');
+                err.code = 'ENOTFOUND';
+                throw err;
+            };
+
+            const result: any = await verifyDmarc({
+                headerFrom: 'user@sub.example.com',
+                dkimDomains: [],
+                spfDomains: [],
+                resolver: stubResolver
+            });
+
+            expect(result.policy).to.equal('quarantine');
+        });
+
+        it('Should use p= policy for subdomain when sp= not set', async () => {
+            const stubResolver: any = (domain: string, type: string) => {
+                if (type === 'TXT' && domain === '_dmarc.sub.example.com') {
+                    const err: any = new Error('Not found');
+                    err.code = 'ENOTFOUND';
+                    throw err;
+                }
+                if (type === 'TXT' && domain === '_dmarc.example.com') {
+                    return [['v=DMARC1; p=reject']];
+                }
+                const err: any = new Error('Not found');
+                err.code = 'ENOTFOUND';
+                throw err;
+            };
+
+            const result: any = await verifyDmarc({
+                headerFrom: 'user@sub.example.com',
+                dkimDomains: [],
+                spfDomains: [],
+                resolver: stubResolver
+            });
+
+            expect(result.policy).to.equal('reject');
+        });
+    });
+
+    describe('Alignment modes', () => {
+        it('Should use relaxed DKIM alignment by default', async () => {
+            const stubResolver: any = (domain: string, type: string) => {
+                if (type === 'TXT' && domain === '_dmarc.example.com') {
+                    return [['v=DMARC1; p=reject']];
+                }
+                const err: any = new Error('Not found');
+                err.code = 'ENOTFOUND';
+                throw err;
+            };
+
+            const result: any = await verifyDmarc({
+                headerFrom: 'user@mail.example.com',
+                dkimDomains: [{ domain: 'example.com' }],
+                spfDomains: [],
+                resolver: stubResolver
+            });
+
+            expect(result.status.result).to.equal('pass');
+            expect(result.alignment.dkim.strict).to.be.false;
+        });
+
+        it('Should fail strict DKIM alignment when only the org domain matches (adkim=s)', async () => {
+            const stubResolver: any = (domain: string, type: string) => {
+                if (type === 'TXT' && domain === '_dmarc.example.com') {
+                    return [['v=DMARC1; p=reject; adkim=s']];
+                }
+                const err: any = new Error('Not found');
+                err.code = 'ENOTFOUND';
+                throw err;
+            };
+
+            // Author is mail.example.com, signing domain is example.com.
+            // They share an org domain but are not identical, so strict alignment must fail.
+            const result: any = await verifyDmarc({
+                headerFrom: 'user@mail.example.com',
+                dkimDomains: [{ domain: 'example.com' }],
+                spfDomains: [],
+                resolver: stubResolver
+            });
+
+            expect(result.status.result).to.equal('fail');
+            expect(result.alignment.dkim.strict).to.be.true;
+        });
+
+        it('Should pass strict DKIM alignment when the signing domain is identical (adkim=s)', async () => {
+            const stubResolver: any = (domain: string, type: string) => {
+                if (type === 'TXT' && domain === '_dmarc.example.com') {
+                    return [['v=DMARC1; p=reject; adkim=s']];
+                }
+                const err: any = new Error('Not found');
+                err.code = 'ENOTFOUND';
+                throw err;
+            };
+
+            const result: any = await verifyDmarc({
+                headerFrom: 'user@example.com',
+                dkimDomains: [{ domain: 'example.com' }],
+                spfDomains: [],
+                resolver: stubResolver
+            });
+
+            expect(result.status.result).to.equal('pass');
+            expect(result.alignment.dkim.strict).to.be.true;
+        });
+
+        it('Should pass strict DKIM alignment when the signing domain matches a subdomain author (adkim=s)', async () => {
+            const stubResolver: any = (domain: string, type: string) => {
+                if (type === 'TXT' && domain === '_dmarc.mail.example.com') {
+                    return [['v=DMARC1; p=reject; adkim=s']];
+                }
+                const err: any = new Error('Not found');
+                err.code = 'ENOTFOUND';
+                throw err;
+            };
+
+            const result: any = await verifyDmarc({
+                headerFrom: 'user@mail.example.com',
+                dkimDomains: [{ domain: 'mail.example.com' }],
+                spfDomains: [],
+                resolver: stubResolver
+            });
+
+            expect(result.status.result).to.equal('pass');
+            expect(result.alignment.dkim.strict).to.be.true;
+        });
+
+        it('Should fail strict DKIM alignment for different org domain', async () => {
+            const stubResolver: any = (domain: string, type: string) => {
+                if (type === 'TXT' && domain === '_dmarc.example.com') {
+                    return [['v=DMARC1; p=reject; adkim=s']];
+                }
+                const err: any = new Error('Not found');
+                err.code = 'ENOTFOUND';
+                throw err;
+            };
+
+            // With strict alignment, signing domain must have same org domain as header from
+            const result: any = await verifyDmarc({
+                headerFrom: 'user@example.com',
+                dkimDomains: [{ domain: 'otherdomain.net' }],
+                spfDomains: [],
+                resolver: stubResolver
+            });
+
+            expect(result.status.result).to.equal('fail');
+        });
+
+        it('Should use relaxed SPF alignment by default', async () => {
+            const stubResolver: any = (domain: string, type: string) => {
+                if (type === 'TXT' && domain === '_dmarc.example.com') {
+                    return [['v=DMARC1; p=reject']];
+                }
+                const err: any = new Error('Not found');
+                err.code = 'ENOTFOUND';
+                throw err;
+            };
+
+            const result: any = await verifyDmarc({
+                headerFrom: 'user@mail.example.com',
+                spfDomains: [{ domain: 'example.com' }] as any,
+                dkimDomains: [],
+                resolver: stubResolver
+            });
+
+            expect(result.status.result).to.equal('pass');
+            expect(result.alignment.spf.strict).to.be.false;
+        });
+
+        it('Should fail strict SPF alignment when only the org domain matches (aspf=s)', async () => {
+            const stubResolver: any = (domain: string, type: string) => {
+                if (type === 'TXT' && domain === '_dmarc.example.com') {
+                    return [['v=DMARC1; p=reject; aspf=s']];
+                }
+                const err: any = new Error('Not found');
+                err.code = 'ENOTFOUND';
+                throw err;
+            };
+
+            // Author is mail.example.com, SPF domain is example.com.
+            // They share an org domain but are not identical, so strict alignment must fail.
+            const result: any = await verifyDmarc({
+                headerFrom: 'user@mail.example.com',
+                spfDomains: [{ domain: 'example.com' }] as any,
+                dkimDomains: [],
+                resolver: stubResolver
+            });
+
+            expect(result.status.result).to.equal('fail');
+            expect(result.alignment.spf.strict).to.be.true;
+        });
+
+        it('Should pass strict SPF alignment when the SPF domain is identical (aspf=s)', async () => {
+            const stubResolver: any = (domain: string, type: string) => {
+                if (type === 'TXT' && domain === '_dmarc.example.com') {
+                    return [['v=DMARC1; p=reject; aspf=s']];
+                }
+                const err: any = new Error('Not found');
+                err.code = 'ENOTFOUND';
+                throw err;
+            };
+
+            const result: any = await verifyDmarc({
+                headerFrom: 'user@example.com',
+                spfDomains: [{ domain: 'example.com' }] as any,
+                dkimDomains: [],
+                resolver: stubResolver
+            });
+
+            expect(result.status.result).to.equal('pass');
+            expect(result.alignment.spf.strict).to.be.true;
+        });
+
+        it('Should pass when SPF aligns relaxed even though DKIM strict fails (adkim=s; aspf=r)', async () => {
+            const stubResolver: any = (domain: string, type: string) => {
+                if (type === 'TXT' && domain === '_dmarc.example.com') {
+                    return [['v=DMARC1; p=reject; adkim=s; aspf=r']];
+                }
+                const err: any = new Error('Not found');
+                err.code = 'ENOTFOUND';
+                throw err;
+            };
+
+            // DKIM only aligns at org level (strict -> fail), SPF aligns relaxed (pass).
+            // DMARC passes if any mechanism aligns.
+            const result: any = await verifyDmarc({
+                headerFrom: 'user@mail.example.com',
+                dkimDomains: [{ domain: 'example.com' }],
+                spfDomains: [{ domain: 'example.com' }] as any,
+                resolver: stubResolver
+            });
+
+            expect(result.status.result).to.equal('pass');
+            expect(result.alignment.dkim.result).to.not.be.ok;
+            expect(result.alignment.spf.result).to.equal('example.com');
+        });
+    });
+
+    describe('Organizational domain fallback', () => {
+        it('Should fallback to org domain when subdomain has no record', async () => {
+            const stubResolver: any = (domain: string, type: string) => {
+                if (type === 'TXT' && domain === '_dmarc.mail.example.com') {
+                    const err: any = new Error('Not found');
+                    err.code = 'ENOTFOUND';
+                    throw err;
+                }
+                if (type === 'TXT' && domain === '_dmarc.example.com') {
+                    return [['v=DMARC1; p=quarantine']];
+                }
+                const err: any = new Error('Not found');
+                err.code = 'ENOTFOUND';
+                throw err;
+            };
+
+            const result: any = await verifyDmarc({
+                headerFrom: 'user@mail.example.com',
+                dkimDomains: [{ domain: 'example.com' }],
+                spfDomains: [],
+                resolver: stubResolver
+            });
+
+            expect(result.status.result).to.equal('pass');
+            expect(result.domain).to.equal('example.com');
+        });
+
+        it('Should not fallback when subdomain has its own record', async () => {
+            const stubResolver: any = (domain: string, type: string) => {
+                if (type === 'TXT' && domain === '_dmarc.mail.example.com') {
+                    return [['v=DMARC1; p=reject']];
+                }
+                if (type === 'TXT' && domain === '_dmarc.example.com') {
+                    return [['v=DMARC1; p=none']];
+                }
+                const err: any = new Error('Not found');
+                err.code = 'ENOTFOUND';
+                throw err;
+            };
+
+            const result: any = await verifyDmarc({
+                headerFrom: 'user@mail.example.com',
+                dkimDomains: [],
+                spfDomains: [],
+                resolver: stubResolver
+            });
+
+            expect(result.policy).to.equal('reject');
+        });
+    });
+
+    describe('Edge cases', () => {
+        it('Should handle headerFrom without @ symbol', async () => {
+            const stubResolver: any = (domain: string, type: string) => {
+                if (type === 'TXT' && domain === '_dmarc.example.com') {
+                    return [['v=DMARC1; p=reject']];
+                }
+                const err: any = new Error('Not found');
+                err.code = 'ENOTFOUND';
+                throw err;
+            };
+
+            const result: any = await verifyDmarc({
+                headerFrom: 'example.com',
+                dkimDomains: [{ domain: 'example.com' }],
+                spfDomains: [],
+                resolver: stubResolver
+            });
+
+            expect(result.status.result).to.equal('pass');
+        });
+
+        it('Should handle headerFrom array with single element', async () => {
+            const stubResolver: any = (domain: string, type: string) => {
+                if (type === 'TXT' && domain === '_dmarc.example.com') {
+                    return [['v=DMARC1; p=reject']];
+                }
+                const err: any = new Error('Not found');
+                err.code = 'ENOTFOUND';
+                throw err;
+            };
+
+            const result: any = await verifyDmarc({
+                headerFrom: ['user@example.com'],
+                dkimDomains: [{ domain: 'example.com' }],
+                spfDomains: [],
+                resolver: stubResolver
+            });
+
+            expect(result.status.result).to.equal('pass');
+        });
+
+        it('Should evaluate several From addresses in the same domain', async () => {
+            // RFC 9989 5.3.1 only stops when more than one domain is found
+            const resolver = zoneResolver({ '_dmarc.example.com': { TXT: [['v=DMARC1; p=reject']] } });
+
+            const result: any = await verifyDmarc({
+                headerFrom: ['user1@example.com', 'user2@EXAMPLE.com.'],
+                dkimDomains: [],
+                spfDomains: [],
+                resolver
+            });
+
+            expect(result.status.result).to.equal('fail');
+            expect(result.policy).to.equal('reject');
+            expect(result.status.header.from).to.equal('example.com');
+        });
+
+        it('Should return false for From addresses in different domains', async () => {
+            const stubResolver: any = () => [['v=DMARC1; p=reject']];
+
+            const result: any = await verifyDmarc({
+                headerFrom: ['user1@example.com', 'user2@example.net'],
+                dkimDomains: [{ domain: 'example.com' }],
+                spfDomains: [],
+                resolver: stubResolver
+            });
+
+            expect(result).to.be.false;
+        });
+
+        it('Should handle IDN domains', async () => {
+            const stubResolver: any = (domain: string, type: string) => {
+                if (type === 'TXT' && domain === '_dmarc.xn--e1afmkfd.xn--p1ai') {
+                    return [['v=DMARC1; p=reject']];
+                }
+                const err: any = new Error('Not found');
+                err.code = 'ENOTFOUND';
+                throw err;
+            };
+
+            const result: any = await verifyDmarc({
+                headerFrom: 'user@xn--e1afmkfd.xn--p1ai',
+                dkimDomains: [{ domain: 'xn--e1afmkfd.xn--p1ai' }],
+                spfDomains: [],
+                resolver: stubResolver
+            });
+
+            expect(result.status.result).to.equal('pass');
+        });
+
+        it('Should handle domains with string DKIM/SPF entries', async () => {
+            const stubResolver: any = (domain: string, type: string) => {
+                if (type === 'TXT' && domain === '_dmarc.example.com') {
+                    return [['v=DMARC1; p=reject']];
+                }
+                const err: any = new Error('Not found');
+                err.code = 'ENOTFOUND';
+                throw err;
+            };
+
+            const result: any = await verifyDmarc({
+                headerFrom: 'user@example.com',
+                dkimDomains: ['example.com'] as any,
+                spfDomains: [],
+                resolver: stubResolver
+            });
+
+            expect(result.status.result).to.equal('pass');
+        });
+
+        it('Should include ARC result in comment when provided', async () => {
+            const stubResolver: any = (domain: string, type: string) => {
+                if (type === 'TXT' && domain === '_dmarc.example.com') {
+                    return [['v=DMARC1; p=reject']];
+                }
+                const err: any = new Error('Not found');
+                err.code = 'ENOTFOUND';
+                throw err;
+            };
+
+            const result: any = await verifyDmarc({
+                headerFrom: 'user@example.com',
+                dkimDomains: [{ domain: 'example.com' }],
+                spfDomains: [],
+                arcResult: { status: { result: 'pass' } } as any,
+                resolver: stubResolver
+            });
+
+            expect(result.status.comment).to.include('arc=pass');
+        });
+
+        it('Should track undersized DKIM signatures', async () => {
+            const stubResolver: any = (domain: string, type: string) => {
+                if (type === 'TXT' && domain === '_dmarc.example.com') {
+                    return [['v=DMARC1; p=reject']];
+                }
+                const err: any = new Error('Not found');
+                err.code = 'ENOTFOUND';
+                throw err;
+            };
+
+            const result: any = await verifyDmarc({
+                headerFrom: 'user@example.com',
+                dkimDomains: [{ domain: 'example.com', underSized: 100 }],
+                spfDomains: [],
+                resolver: stubResolver
+            });
+
+            expect(result.alignment.dkim.underSized).to.equal(100);
+        });
+
+        it('Should return raw record in rr field', async () => {
+            const stubResolver: any = (domain: string, type: string) => {
+                if (type === 'TXT' && domain === '_dmarc.example.com') {
+                    return [['v=DMARC1; p=reject; pct=100']];
+                }
+                const err: any = new Error('Not found');
+                err.code = 'ENOTFOUND';
+                throw err;
+            };
+
+            const result: any = await verifyDmarc({
+                headerFrom: 'user@example.com',
+                dkimDomains: [{ domain: 'example.com' }],
+                spfDomains: [],
+                resolver: stubResolver
+            });
+
+            expect(result.rr).to.equal('v=DMARC1; p=reject; pct=100');
+        });
+
+        it('Should generate formatted info string', async () => {
+            const stubResolver: any = (domain: string, type: string) => {
+                if (type === 'TXT' && domain === '_dmarc.example.com') {
+                    return [['v=DMARC1; p=reject']];
+                }
+                const err: any = new Error('Not found');
+                err.code = 'ENOTFOUND';
+                throw err;
+            };
+
+            const result: any = await verifyDmarc({
+                headerFrom: 'user@example.com',
+                dkimDomains: [{ domain: 'example.com' }],
+                spfDomains: [],
+                resolver: stubResolver
+            });
+
+            expect(result.info).to.be.a('string');
+            expect(result.info).to.include('dmarc=pass');
+        });
+    });
+
+    describe('Reported identifiers', () => {
+        it('Should report the From domain as header.from, not the org domain', async () => {
+            const result: any = await verifyDmarc({
+                headerFrom: 'user@mail.example.com',
+                dkimDomains: [{ domain: 'example.com' }],
+                spfDomains: [],
+                resolver: zoneResolver({ '_dmarc.example.com': { TXT: [['v=DMARC1; p=reject']] } })
+            });
+
+            expect(result.status.header.from).to.equal('mail.example.com');
+            // the policy was inherited from the org domain, which is what header.d points at
+            expect(result.status.header.d).to.equal('example.com');
+            expect(result.domain).to.equal('example.com');
+        });
+
+        it('Should report the author domain as header.d when it publishes its own record', async () => {
+            const result: any = await verifyDmarc({
+                headerFrom: 'user@mail.example.com',
+                dkimDomains: [{ domain: 'mail.example.com' }],
+                spfDomains: [],
+                resolver: zoneResolver({ '_dmarc.mail.example.com': { TXT: [['v=DMARC1; p=reject']] } })
+            });
+
+            expect(result.status.header.from).to.equal('mail.example.com');
+            expect(result.status.header.d).to.equal('mail.example.com');
+        });
+
+        it('Should report an undersized DKIM signature even when strict alignment rejects it', async () => {
+            const run = (record: any) =>
+                verifyDmarc({
+                    headerFrom: 'user@mail.example.com',
+                    dkimDomains: [{ domain: 'example.com', underSized: 500 }],
+                    spfDomains: [{ domain: 'example.com' }] as any,
+                    resolver: zoneResolver({ '_dmarc.example.com': { TXT: [[record]] } })
+                });
+
+            const relaxed: any = await run('v=DMARC1; p=reject');
+            expect(relaxed.alignment.dkim.underSized).to.equal(500);
+
+            const strict: any = await run('v=DMARC1; p=reject; adkim=s');
+            expect(strict.status.result).to.equal('pass'); // SPF aligns relaxed
+            expect(strict.alignment.dkim.result).to.be.undefined;
+            expect(strict.alignment.dkim.underSized).to.equal(500);
+        });
+    });
+});

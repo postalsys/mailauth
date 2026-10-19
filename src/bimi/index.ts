@@ -1,0 +1,810 @@
+import { Buffer } from 'node:buffer';
+import crypto from 'node:crypto';
+import dns from 'node:dns';
+import net from 'node:net';
+import zlib from 'node:zlib';
+import { formatAuthHeaderRow, parseTagList, formatDomain, getAlignment, createError } from '../tools.js';
+import Joi from 'joi';
+import libmime from 'libmime';
+import getDmarcRecord from '../dmarc/get-dmarc-record.js';
+const { parseDmarcRecord } = getDmarcRecord;
+import { parseFromHeader } from '../dmarc/author-domain.js';
+import type { Response } from 'undici';
+import type { BIMIData, BIMIOptions, BIMIResult, DMARCResult, VMCValidationOptions, VMCValidationResult } from '../types.js';
+
+// The policy tags of a parsed DMARC record that the BIMI checks read
+interface DmarcPolicyTags {
+    p?: unknown;
+    sp?: unknown;
+    pct?: unknown;
+}
+
+// A dmarc() result also carries the records it applied and the number of author mailboxes, as
+// non-enumerable properties
+interface DmarcInput extends DMARCResult {
+    record?: DmarcPolicyTags | false | null | undefined;
+    orgRecord?: DmarcPolicyTags | false | null | undefined;
+    authorMailboxes?: number | undefined;
+}
+
+interface BIMILookupOptions extends BIMIOptions {
+    dmarc?: DmarcInput | false | undefined;
+}
+
+// A row of the parsed message headers
+interface HeaderRow {
+    key: string;
+    line?: Buffer | string | undefined;
+}
+
+// The bimi() result while it is built, the header ptype is always set
+type BIMIResponse = BIMIResult & { status: { header: Record<string, any> } };
+
+// A download result of Promise.allSettled()
+interface SettledDownload {
+    status: 'fulfilled' | 'rejected';
+    value?: Buffer | false | undefined;
+    reason?: any;
+}
+//const packageData = require('../../package.json');
+const httpsSchema = Joi.string().uri({
+    scheme: ['https']
+});
+
+const FETCH_TIMEOUT = 5 * 1000;
+// overall time limit for a download, including redirects and the response body
+const DOWNLOAD_TIMEOUT = 30 * 1000;
+const MAX_REDIRECTS = 3;
+// SVG Tiny PS 2.4: an Indicator SHOULD NOT exceed 32 kilobytes, uncompressed
+const MAX_LOGO_SIZE = 64 * 1024;
+const MAX_EVIDENCE_SIZE = 256 * 1024;
+
+import { fetch as fetchCmd, Agent } from 'undici';
+const fetchAgent = new Agent({
+    connect: { timeout: FETCH_TIMEOUT }
+});
+
+import { vmc } from '@postalsys/vmc';
+import { validateSvg } from './validate-svg.js';
+import { SELECTOR } from '../dkim/syntax.js';
+
+// Records that do not start with a "v=" tag for the current version are discarded (7.2 steps 4 and 7)
+const BIMI_VERSION_RE = /^v[ \t]*=[ \t]*BIMI1[ \t]*(?:;|$)/i;
+// 4.3: the value of v= MUST match precisely
+const BIMI_VERSION_STRICT_RE = /^v[ \t]*=[ \t]*BIMI1[ \t]*(?:;|$)/;
+
+// Tags of the Assertion Record (4.3), used to report capitalization errors
+const KNOWN_TAGS = new Set(['v', 'l', 'a', 'lps', 'avp']);
+
+// 4.3.2: only SVG and SVGZ are acceptable, a URI ending with another image format suffix is an error
+const OTHER_IMAGE_SUFFIX_RE = /\.(?:png|apng|jpe?g|jfif|gif|bmp|webp|ico|tiff?|heic|heif|avif|jxl)$/i;
+
+const POLICY_VALUES = new Set(['none', 'quarantine', 'reject']);
+
+// 4.3: avp= values, any other value is ignored and not added to headers
+const AVATAR_PREFERENCES = new Set(['personal', 'brand']);
+
+// Checks that a URL is an HTTPS URL with a fully qualified domain name (4.3): IP literals,
+// single-label names and localhost are not allowed
+const isValidHttpsUrl = (value: string | null | undefined): boolean => {
+    if (httpsSchema.validate(value).error) {
+        return false;
+    }
+    let url;
+    try {
+        // a missing value throws here
+        url = new URL(value as string);
+    } catch (err) {
+        return false;
+    }
+    let hostname = url.hostname
+        .replace(/^\[|\]$/g, '')
+        .replace(/\.$/, '')
+        .toLowerCase();
+    if (url.protocol !== 'https:' || !hostname || net.isIP(hostname) || !hostname.includes('.')) {
+        return false;
+    }
+    // URL parsing already turns numeric hosts like "https://2130706433/" into IPv4 addresses
+    if (/^[0-9.]+$/.test(hostname) || hostname === 'localhost' || hostname.endsWith('.localhost')) {
+        return false;
+    }
+    return true;
+};
+
+// Returns the reason a DMARC record does not meet the policy requirements of
+// draft-brand-indicators-for-message-identification 7.1 steps 7 to 9, or false if it does
+const checkDmarcRecord = (record: DmarcPolicyTags): string | false => {
+    // a record without a valid "p" is applied as p=none, or not at all (RFC 9989 4.10.1)
+    if (!POLICY_VALUES.has(record.p as string) || record.p === 'none') {
+        return 'too lax DMARC policy';
+    }
+    if (record.sp === 'none') {
+        return 'too lax DMARC subdomain policy';
+    }
+    if (record.p === 'quarantine' && record.pct !== undefined && record.pct !== 100) {
+        return 'DMARC policy applied to a percentage of messages';
+    }
+    return false;
+};
+
+// Parses a BIMI Assertion Record, which uses the DKIM tag-list syntax (4.3, RFC 6376 3.2). The
+// values are the strings of the tag list: the parsed map of parseTagList would turn an empty "l="
+// into the number 0. By default tag names are case-folded and the last duplicate wins. In strict
+// mode tag names are case-sensitive and syntax errors such as duplicate tags are reported.
+const parseAssertionRecord = (record: string, strict: boolean | undefined, warnings: string[]) => {
+    let tags: Record<string, string> = {};
+    let { tags: tagList, syntaxErrors } = parseTagList(record);
+    for (let tag of tagList) {
+        let name = tag.name.trim();
+        if (!strict) {
+            if (name !== name.toLowerCase() && KNOWN_TAGS.has(name.toLowerCase())) {
+                warnings.push('record-tag-case');
+            }
+            name = name.toLowerCase();
+        }
+        if (name) {
+            tags[name] = tag.value;
+        }
+    }
+    if (syntaxErrors.length && !strict) {
+        warnings.push('record-syntax');
+    }
+    return { tags, syntaxErrors };
+};
+
+// 4.4: selector = sub-domain *( "." sub-domain ), sub-domain from RFC 5321, the same grammar as
+// the DKIM selector. The lax variant allows labels with underscores, as DKIM selectors sometimes have
+const LAX_LABEL = '[A-Za-z0-9_](?:[A-Za-z0-9_-]{0,61}[A-Za-z0-9_])?';
+const LAX_SELECTOR_RE = new RegExp(`^${LAX_LABEL}(?:\\.${LAX_LABEL})*$`);
+
+// Returns the selector of a BIMI-Selector header (5.1), or false if the header has to be ignored
+const parseSelectorHeader = (line: Buffer | string | undefined, strict: boolean | undefined, warnings: string[]): string | false => {
+    // the header field value, with or without the field name in front of it
+    let value = (line || '').toString().replace(/^\s*bimi-selector\s*:/i, '');
+    let { tags, syntaxErrors } = parseTagList(value);
+    if (syntaxErrors.length) {
+        if (strict) {
+            return false;
+        }
+        warnings.push('selector-syntax');
+    }
+
+    let values: Record<string, string> = {};
+    for (let tag of tags) {
+        let name = strict ? tag.name : tag.name.toLowerCase();
+        values[name] = tag.value;
+    }
+
+    // the version MUST match precisely and be the first tag
+    let version = values.v;
+    if (strict ? tags[0]?.name !== 'v' || version !== 'BIMI1' : version?.toLowerCase() !== 'bimi1') {
+        return false;
+    }
+    if (version !== 'BIMI1') {
+        warnings.push('selector-version-case');
+    }
+    if (tags[0]?.name.toLowerCase() !== 'v') {
+        warnings.push('selector-syntax');
+    }
+
+    let selector = (values.s || '').trim();
+    if (SELECTOR.test(selector)) {
+        return selector;
+    }
+    if (!strict && LAX_SELECTOR_RE.test(selector)) {
+        warnings.push('selector-syntax');
+        return selector;
+    }
+    return false;
+};
+
+// Counts the addresses in the From header fields, including members of a group. The From header
+// field is parsed the same way as for the DMARC check
+const countFromAddresses = (headerRows: HeaderRow[]) => {
+    let fromRows = headerRows.filter(row => row.key === 'from');
+    if (fromRows.length > 1) {
+        return fromRows.length;
+    }
+    let count = 0;
+    for (let row of fromRows) {
+        let value = (row.line || '').toString();
+        let splitterPos = value.indexOf(':');
+        count += parseFromHeader(splitterPos >= 0 ? value.substr(splitterPos + 1) : value).addresses.length;
+    }
+    return count;
+};
+
+const lookup = async (data: BIMIOptions): Promise<BIMIResult | false> => {
+    let { dmarc, headers, resolver, bimiWithAlignedDkim, strict }: BIMILookupOptions = data;
+    let headerRows: HeaderRow[] = (headers && headers.parsed) || [];
+
+    resolver = resolver || dns.promises.resolve;
+
+    if (!dmarc) {
+        // DMARC check not performed
+        return false;
+    }
+
+    let response = { status: { header: {} } } as BIMIResponse;
+    // syntax deviations that were accepted because strict is not set
+    let warnings: string[] = [];
+
+    const finish = (result: BIMIResult['status']['result'], comment?: string) => {
+        response.status.result = result;
+        if (comment) {
+            response.status.comment = comment;
+        }
+        response.info = formatAuthHeaderRow('bimi', response.status, { strict });
+        if (warnings.length) {
+            response.warnings = Array.from(new Set(warnings));
+        }
+        return response;
+    };
+
+    // 7.1 step 1: one From header field with one address. DMARC evaluates several addresses of the same domain.
+    let mailboxes = typeof dmarc.authorMailboxes === 'number' ? dmarc.authorMailboxes : 0;
+    if (mailboxes > 1 || countFromAddresses(headerRows) > 1) {
+        return finish('skipped', 'multiple From addresses');
+    }
+
+    if (dmarc.status?.result !== 'pass') {
+        return finish('skipped', dmarc.status?.result === 'none' ? 'DMARC not enabled' : 'message failed DMARC');
+    }
+
+    // a domain testing its policy (t=y) is not enforcing it yet
+    if (dmarc.policy === 'none' || dmarc.testMode) {
+        return finish('skipped', 'too lax DMARC policy');
+    }
+
+    if (!dmarc.alignment?.dkim?.result && bimiWithAlignedDkim) {
+        return finish('skipped', 'Aligned DKIM signature required');
+    }
+
+    if (dmarc.alignment?.dkim?.underSized) {
+        return finish('skipped', 'undersized DKIM signature');
+    }
+
+    const authorDomain = dmarc.status?.header?.from;
+    const orgDomain = dmarc.domain;
+
+    if (!authorDomain || !orgDomain) {
+        // should this even happen?
+        return finish('skipped', 'could not determine domain');
+    }
+
+    // 7.1 steps 7 to 9: neither the record for the Author Domain nor the one for the Author
+    // Organizational Domain may be p=none or sp=none, or apply quarantine to a percentage only.
+    // dmarc() provides both records, for a result built elsewhere they are looked up here.
+    let dmarcRecords: DmarcPolicyTags[] = [];
+    let appliedRecord = dmarc.record || (dmarc.rr ? parseDmarcRecord(dmarc.rr) : null);
+    if (appliedRecord) {
+        dmarcRecords.push(appliedRecord);
+    }
+    let orgRecord: DmarcPolicyTags | false | null | undefined = dmarc.orgRecord;
+    if (orgRecord === undefined) {
+        let appliedDomain = dmarc.policyDomain || dmarc.status?.header?.d || formatDomain(authorDomain);
+        if (formatDomain(orgDomain) !== formatDomain(appliedDomain) || !appliedRecord) {
+            try {
+                orgRecord = await getDmarcRecord(orgDomain, resolver);
+            } catch (err) {
+                orgRecord = null;
+            }
+        } else {
+            orgRecord = false;
+        }
+    }
+    if (orgRecord === null) {
+        // the Tree Walk that finds the Organizational Domain failed
+        return finish('temperror', 'failed to resolve the DMARC policy of the organizational domain');
+    }
+    if (orgRecord) {
+        dmarcRecords.push(orgRecord);
+    }
+    for (let record of dmarcRecords) {
+        let reason = checkDmarcRecord(record);
+        if (reason) {
+            return finish('skipped', reason);
+        }
+    }
+
+    let selector: string | false | undefined;
+
+    let selectorRows = headerRows.filter(row => row.key === 'bimi-selector');
+    if (selectorRows.length > 1) {
+        return finish('fail', 'multiple BIMI-Selector headers');
+    }
+    if (selectorRows.length) {
+        // 5.1 and 7.2 step 2: a header without a valid version or selector is ignored
+        selector = parseSelectorHeader(selectorRows[0]!.line, strict, warnings);
+    }
+
+    selector = selector || 'default';
+
+    // 7.2 steps 3 and 6: the selector at the Author Domain, then the same selector at the
+    // Organizational Domain. A custom selector does not fall back to "default".
+    let bimiTags = [`${selector}._bimi.${authorDomain}`];
+    if (formatDomain(authorDomain) !== formatDomain(orgDomain)) {
+        bimiTags.push(`${selector}._bimi.${orgDomain}`);
+    }
+
+    let record: string | undefined;
+    for (let d of bimiTags) {
+        let txt;
+        try {
+            txt = await resolver(d, 'TXT');
+        } catch (err: any) {
+            if (err.code === 'ENOTFOUND' || err.code === 'ENODATA') {
+                continue;
+            }
+            // "temperror" is the result keyword of the draft (7.7), older versions used "temperr"
+            return finish('temperror', `failed to resolve ${d}`);
+        }
+
+        // 7.2 steps 4 and 7: other TXT records, such as site verification tokens, are discarded
+        let records = ([] as (string[] | string)[])
+            .concat(txt || [])
+            .map(row => (Array.isArray(row) ? row.join('') : String(row)).trim())
+            .filter(row => (strict ? BIMI_VERSION_STRICT_RE : BIMI_VERSION_RE).test(row));
+
+        if (records.length === 1) {
+            record = records[0];
+            response.status.header.selector = d.split('._bimi.').shift();
+            response.status.header.d = d.split('._bimi.').pop();
+            response.rr = record;
+            break;
+        } else if (records.length > 1) {
+            // 7.2 step 9: several records end the discovery
+            return finish('fail', `multiple BIMI records for ${d}`);
+        }
+    }
+
+    if (!record) {
+        return finish('none');
+    }
+
+    if (!BIMI_VERSION_STRICT_RE.test(record)) {
+        warnings.push('record-version-case');
+    }
+
+    let { tags: recordData, syntaxErrors } = parseAssertionRecord(record, strict, warnings);
+    if (recordData.v?.toLowerCase() !== 'bimi1') {
+        return finish('fail', 'missing bimi version in dns record');
+    }
+
+    // 4.3: Assertion Records are defined precisely, receivers MUST NOT fix syntax or capitalization errors
+    if (strict && syntaxErrors.length) {
+        return finish('fail', 'invalid syntax in dns record');
+    }
+
+    let location = recordData.l;
+    let authority = recordData.a;
+
+    // 4.3.1 and 7.5: an empty l= with an empty or missing a= is a Declination to Publish
+    if (location === '' && !authority) {
+        return finish('declined');
+    }
+
+    // l= is required (4.3), and 7.3 step 1 needs a valid one even when a= is set
+    if (!location) {
+        return finish('fail', 'missing location value in dns record');
+    }
+
+    if (!isValidHttpsUrl(location)) {
+        return finish('fail', 'invalid location value in dns record');
+    }
+
+    if (authority && !isValidHttpsUrl(authority)) {
+        return finish('fail', 'invalid authority value in dns record');
+    }
+
+    // 4.3: a single URI, commas within a URI MUST be encoded
+    for (let [value, comment] of [
+        [location, 'invalid location value in dns record'],
+        [authority, 'invalid authority value in dns record']
+    ]) {
+        if (value && value.includes(',')) {
+            if (strict) {
+                return finish('fail', comment);
+            }
+            warnings.push('uri-comma');
+        }
+    }
+
+    // 4.3.2: an l= URI that ends with another image format suffix is a permanent error
+    if (OTHER_IMAGE_SUFFIX_RE.test(new URL(location).pathname)) {
+        if (strict) {
+            return finish('fail', 'unsupported image format in location value');
+        }
+        warnings.push('location-format');
+    }
+
+    response.location = location;
+
+    if (authority) {
+        response.authority = authority;
+
+        // Apple Mail requires additional policy header values in Authentication-Results header
+        response.status.policy = { authority: 'none', 'authority-uri': authority }; // VMC has not been actually checked here yet, so authority is none
+    }
+
+    if (AVATAR_PREFERENCES.has(recordData.avp)) {
+        response.preference = recordData.avp as 'personal' | 'brand';
+    }
+
+    return finish('pass');
+};
+
+const tooLarge = (maxSize: number) => createError(`File is larger than ${maxSize} bytes`, 'FILE_TOO_LARGE');
+
+// Reads a response body, stops at maxSize bytes (7.6 step 1 allows a retrieval limit)
+const readBody = async (res: Response, maxSize: number): Promise<Buffer> => {
+    if (Number(res.headers.get('content-length')) > maxSize) {
+        await res.body?.cancel().catch(() => false);
+        throw tooLarge(maxSize);
+    }
+    let chunks: Buffer[] = [];
+    let size = 0;
+    if (res.body) {
+        // leaving the loop early cancels the stream
+        for await (let chunk of res.body) {
+            size += chunk.length;
+            if (size > maxSize) {
+                throw tooLarge(maxSize);
+            }
+            chunks.push(Buffer.from(chunk.buffer, chunk.byteOffset, chunk.byteLength));
+        }
+    }
+    return Buffer.concat(chunks, size);
+};
+
+const getSizeOption = (value: unknown, defaultValue: number): number => (typeof value === 'number' && value > 0 ? value : defaultValue);
+
+const downloadPromise = async (
+    url: string | undefined,
+    cachedFile: Buffer | undefined,
+    maxSize: number,
+    opts: VMCValidationOptions
+): Promise<Buffer | false> => {
+    if (cachedFile) {
+        if (cachedFile.length > maxSize) {
+            throw tooLarge(maxSize);
+        }
+        return cachedFile;
+    }
+
+    if (!url) {
+        return false;
+    }
+
+    let timeout = getSizeOption(opts.timeout, DOWNLOAD_TIMEOUT);
+    let signal = AbortSignal.timeout(timeout);
+
+    try {
+        // Redirects are followed manually, each target has to be a valid HTTPS URL (7.5 step 1)
+        for (let redirects = 0; ; redirects++) {
+            if (!isValidHttpsUrl(url)) {
+                throw createError('Download URL must be an HTTPS URL with a domain name', 'INVALID_URL', { details: { url } });
+            }
+
+            let res = await fetchCmd(url, {
+                headers: {
+                    // Comment: AKAMAI does some strange UA based filtering that messes up the request
+                    // 'User-Agent': `mailauth/${packageData.version} (+${packageData.homepage}`
+                },
+                redirect: 'manual',
+                signal,
+                dispatcher: opts.dispatcher || fetchAgent
+            });
+
+            if (res.status >= 300 && res.status < 400 && res.headers.get('location')) {
+                await res.body?.cancel().catch(() => false);
+                // the location header was checked above
+                let target: string;
+                try {
+                    target = new URL(res.headers.get('location')!, url).href;
+                } catch (err) {
+                    target = res.headers.get('location')!;
+                }
+                if (redirects >= MAX_REDIRECTS || !isValidHttpsUrl(target)) {
+                    throw createError(
+                        redirects >= MAX_REDIRECTS ? 'Too many redirects' : 'Redirect target must be an HTTPS URL with a domain name',
+                        'HTTP_REDIRECT_NOT_ALLOWED',
+                        { redirect: target }
+                    );
+                }
+                url = target;
+                continue;
+            }
+
+            if (!res.ok) {
+                await res.body?.cancel().catch(() => false);
+                throw createError(`Request failed with status ${res.status}`, 'HTTP_REQUEST_FAILED');
+            }
+
+            return await readBody(res, maxSize);
+        }
+    } catch (err: any) {
+        // DOMException codes are numbers
+        if (signal.aborted && typeof err.code !== 'string') {
+            throw createError(`Request timed out after ${timeout} ms`, 'HTTP_REQUEST_TIMEOUT');
+        }
+        throw err;
+    }
+};
+
+// Returns the SVG document of a downloaded Indicator. An SVGZ file is uncompressed (5.3, 7.10).
+const getIndicatorSvg = (data: Buffer, maxSize: number): Buffer => {
+    if (data.length >= 2 && data[0] === 0x1f && data[1] === 0x8b) {
+        try {
+            return zlib.gunzipSync(data, { maxOutputLength: maxSize });
+        } catch (err: any) {
+            if (err.code === 'ERR_BUFFER_TOO_LARGE') {
+                throw tooLarge(maxSize);
+            }
+            throw createError('Invalid SVGZ file', 'INVALID_SVGZ_FILE');
+        }
+    }
+    return data;
+};
+
+const validateVMC = async (bimiData: BIMIData | false | null | undefined, opts?: VMCValidationOptions): Promise<VMCValidationResult | false> => {
+    opts = opts || {};
+    if (!bimiData) {
+        return false;
+    }
+
+    let selector: string | undefined = bimiData?.status?.header?.selector;
+    let d: string | undefined = bimiData?.status?.header?.d;
+
+    let promises: Promise<Buffer | false>[] = [];
+
+    let maxLogoSize = getSizeOption(opts.maxLogoSize, MAX_LOGO_SIZE);
+    let maxEvidenceSize = getSizeOption(opts.maxEvidenceSize, MAX_EVIDENCE_SIZE);
+
+    promises.push(downloadPromise(bimiData.location, bimiData.locationPath, maxLogoSize, opts));
+    promises.push(downloadPromise(bimiData.authority, bimiData.authorityPath, maxEvidenceSize, opts));
+
+    if (!promises.length) {
+        return false;
+    }
+
+    let [{ reason: locationError, value: locationValue, status: locationStatus }, { reason: authorityError, value: authorityValue, status: authorityStatus }] =
+        (await Promise.allSettled(promises)) as SettledDownload[];
+
+    let result: VMCValidationResult = {};
+    // profile deviations of the logo files that were accepted because strict is not set
+    let warnings: string[] = [];
+    let svgOpts = { strict: !!opts.strict, warnings };
+    // the uncompressed l= logo, once it passed validation
+    let validatedLogo: Buffer | null = null;
+    if (locationValue || locationError) {
+        result.location = {
+            url: bimiData.location as string,
+            success: locationStatus === 'fulfilled'
+        };
+
+        if (locationError) {
+            let err = locationError;
+            result.location.error = { message: err.message };
+            if (err.redirect) {
+                result.location.error.redirect = err.redirect;
+            }
+            if (err.code) {
+                result.location.error.code = err.code;
+            }
+        }
+
+        if (result.location.success) {
+            // 7.6: the Indicator is validated whether or not an evidence document vouches for it
+            try {
+                // a fulfilled download with a value, see above
+                let svg = getIndicatorSvg(locationValue as Buffer, maxLogoSize);
+                validateSvg(svg, svgOpts);
+                validatedLogo = svg;
+                result.location.logoFile = svg.toString('base64');
+            } catch (err: any) {
+                result.location.success = false;
+                if (err.code === 'FILE_TOO_LARGE') {
+                    // an SVGZ file that is too large when uncompressed
+                    result.location.error = { message: err.message, code: err.code };
+                } else {
+                    result.location.error = {
+                        message: 'Logo SVG validation failed',
+                        details: Object.assign({ message: err.message }, err.details ? { details: err.details } : {}, err.code ? { code: err.code } : {}),
+                        code: 'SVG_VALIDATION_FAILED'
+                    };
+                }
+            }
+        }
+    }
+
+    if (authorityValue || authorityError) {
+        result.authority = {
+            url: bimiData.authority as string,
+            success: authorityStatus === 'fulfilled'
+        };
+
+        if (authorityError) {
+            let err = authorityError;
+            result.authority.error = { message: err.message };
+            if (err.redirect) {
+                result.authority.error.redirect = err.redirect;
+            }
+            if (err.code) {
+                result.authority.error.code = err.code;
+            }
+        }
+
+        if (authorityValue) {
+            try {
+                let vmcData = await vmc(authorityValue, opts);
+
+                if (!vmcData.logoFile) {
+                    throw createError('VMC does not contain a log file', 'MISSING_VMC_LOGO');
+                }
+
+                if (vmcData?.mediaType?.toLowerCase() !== 'image/svg+xml') {
+                    throw createError('Invalid media type for the logo file', 'INVALID_MEDIATYPE', { details: { mediaType: vmcData.mediaType } });
+                }
+
+                if (!vmcData.validHash) {
+                    throw createError('VMC hash does not match logo file', 'INVALID_LOGO_HASH', {
+                        details: {
+                            hashAlgo: vmcData.hashAlgo,
+                            hashValue: vmcData.hashValue,
+                            logoFile: vmcData.logoFile
+                        }
+                    });
+                }
+
+                // throws on invalid logo file. The same bytes as the l= logo were validated already
+                let vmcLogo = Buffer.from(vmcData.logoFile, 'base64');
+                if (!validatedLogo || !vmcLogo.equals(validatedLogo)) {
+                    try {
+                        validateSvg(vmcLogo, svgOpts);
+                    } catch (err: any) {
+                        throw createError('VMC logo SVG validation failed', 'SVG_VALIDATION_FAILED', {
+                            details: Object.assign({ message: err.message }, err.code ? { code: err.code } : {})
+                        });
+                    }
+                }
+
+                if (d) {
+                    // validate domain
+                    let selectorSet: string[] = [];
+                    let domainSet: string[] = [];
+                    vmcData?.certificate?.subjectAltName?.map(formatDomain)?.forEach(domain => {
+                        if (/\b_bimi\./.test(domain)) {
+                            selectorSet.push(domain);
+                        } else {
+                            domainSet.push(domain);
+                        }
+                    });
+
+                    let domainVerified = false;
+
+                    if (selector && selectorSet.includes(formatDomain(`${selector}._bimi.${d}`))) {
+                        domainVerified = true;
+                    } else {
+                        let alignedDomain = getAlignment(d, domainSet, false);
+                        if (alignedDomain) {
+                            domainVerified = true;
+                        }
+                    }
+
+                    if (!domainVerified) {
+                        throw createError('Domain can not be verified', 'VMC_DOMAIN_MISMATCH', {
+                            details: {
+                                subjectAltName: vmcData?.certificate?.subjectAltName,
+                                selector,
+                                d
+                            }
+                        });
+                    } else {
+                        result.authority.domainVerified = true;
+                    }
+                }
+
+                result.authority.vmc = vmcData;
+            } catch (err: any) {
+                result.authority.success = false;
+                result.authority.error = { message: err.message };
+                if (err.details) {
+                    result.authority.error.details = err.details;
+                }
+                if (err.code) {
+                    result.authority.error.code = err.code;
+                }
+            }
+        }
+
+        if (result.location && result.location.success && result.authority.success) {
+            try {
+                if (result.location.success && result.authority.vmc.hashAlgo && result.authority.vmc.validHash) {
+                    let hash = crypto
+                        .createHash(result.authority.vmc.hashAlgo)
+                        .update(locationValue as Buffer)
+                        .digest('hex');
+                    result.location.hashAlgo = result.authority.vmc.hashAlgo;
+                    result.location.hashValue = hash;
+                    result.authority.hashMatch = hash === result.authority.vmc.hashValue;
+                }
+            } catch (err: any) {
+                result.authority.success = false;
+                result.authority.error = { message: err.message };
+                if (err.details) {
+                    result.authority.error.details = err.details;
+                }
+                if (err.code) {
+                    result.authority.error.code = err.code;
+                }
+            }
+        }
+    }
+
+    // 7.9: with an evidence document, the Indicator from l= must be identical to the one in the document
+    let evidenceVerified = !!(result.authority?.success && result.authority.hashMatch === true);
+
+    // Header values come from the Assertion Record, where a tag value can not contain ";" or whitespace
+    const isHeaderSafeUrl = (value: string | undefined) => isValidHttpsUrl(value) && /^[\x21-\x3a\x3c-\x7e]+$/.test(value!);
+
+    // Generate headers when validation succeeds (7.9 to 7.11)
+    let canGenerateHeaders =
+        result.location?.success && result.location?.logoFile && (!result.authority || evidenceVerified) && isHeaderSafeUrl(bimiData.location);
+
+    if (canGenerateHeaders) {
+        let locationHeader = `BIMI-Location: v=BIMI1; l=${bimiData.location}`;
+        if (evidenceVerified && isHeaderSafeUrl(bimiData.authority)) {
+            // 5.2: a= is required when the evidence document was verified
+            locationHeader += `; a=${bimiData.authority}`;
+        }
+
+        result.headers = {
+            // canGenerateHeaders requires result.location
+            indicator: libmime.foldLines(`BIMI-Indicator: ${result.location!.logoFile}`, 160),
+            location: locationHeader
+        };
+
+        // 5.4 and 7.11: the header is not added for an invalid value
+        if (AVATAR_PREFERENCES.has(bimiData.preference as string)) {
+            result.headers.preference = `BIMI-Logo-Preference: avp=${bimiData.preference}`;
+        }
+    }
+
+    // 7.7: the Authentication-Results entry of bimi() only covers record discovery. Update it with the
+    // results of Indicator and evidence validation.
+    if (bimiData.status?.result === 'pass') {
+        let status = Object.assign({}, bimiData.status, { header: Object.assign({}, bimiData.status.header) });
+        delete status.comment;
+
+        if (result.authority) {
+            // policy.authority is "pass" or "fail" once the evidence document was checked
+            status.policy = Object.assign({}, status.policy, { authority: evidenceVerified ? 'pass' : 'fail', 'authority-uri': bimiData.authority });
+        }
+
+        let comment;
+        if (!result.location?.success) {
+            comment = result.location?.error?.code === 'SVG_VALIDATION_FAILED' ? 'invalid SVG indicator' : 'failed to retrieve indicator';
+        } else if (result.authority && !result.authority.success) {
+            comment = 'evidence document validation failed';
+        } else if (result.authority && !evidenceVerified) {
+            comment = 'indicator does not match evidence document';
+        }
+
+        if (comment) {
+            status.result = 'fail';
+            status.comment = comment;
+        }
+
+        result.status = status;
+        result.info = formatAuthHeaderRow('bimi', status, { strict: !!opts.strict });
+    }
+
+    if (warnings.length) {
+        result.warnings = warnings;
+    }
+
+    return result;
+};
+
+export { lookup as bimi, validateVMC };

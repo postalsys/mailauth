@@ -1,0 +1,102 @@
+/* eslint no-unused-expressions:0 */
+import { describe, it } from 'node:test';
+import { expect, config } from 'chai';
+
+import macro from '../../src/spf/macro.js';
+import { spf } from '../../src/spf/index.js';
+import { zoneResolver } from '../helpers/dns-zone.js';
+
+config.includeStack = true;
+
+describe('SPF Macro Tests', () => {
+    it('Should render macro values', async () => {
+        let sender = 'strong-bad@email.example.com';
+        let ipv4 = '192.0.2.3';
+        let ipv6 = '2001:db8::cb01';
+
+        expect(macro('%{s}', { sender })).to.equal('strong-bad@email.example.com');
+        expect(macro('%{o}', { sender })).to.equal('email.example.com');
+        expect(macro('%{d}', { sender })).to.equal('email.example.com');
+        expect(macro('%{d4}', { sender })).to.equal('email.example.com');
+        expect(macro('%{d3}', { sender })).to.equal('email.example.com');
+        expect(macro('%{d2}', { sender })).to.equal('example.com');
+        expect(macro('%{d1}', { sender })).to.equal('com');
+        expect(macro('%{dr}', { sender })).to.equal('com.example.email');
+        expect(macro('%{d2r}', { sender })).to.equal('example.email');
+        expect(macro('%{l}', { sender })).to.equal('strong-bad');
+        expect(macro('%{l-}', { sender })).to.equal('strong.bad');
+        expect(macro('%{lr}', { sender })).to.equal('strong-bad');
+        expect(macro('%{lr-}', { sender })).to.equal('bad.strong');
+        expect(macro('%{l1r-}', { sender })).to.equal('strong');
+
+        expect(macro('%{ir}.%{v}._spf.%{d2}', { sender, ip: ipv4 })).to.equal('3.2.0.192.in-addr._spf.example.com');
+        expect(macro('%{lr-}.lp._spf.%{d2}', { sender, ip: ipv4 })).to.equal('bad.strong.lp._spf.example.com');
+        expect(macro('%{lr-}.lp.%{ir}.%{v}._spf.%{d2}', { sender, ip: ipv4 })).to.equal('bad.strong.lp.3.2.0.192.in-addr._spf.example.com');
+        expect(macro('%{ir}.%{v}.%{l1r-}.lp._spf.%{d2}', { sender, ip: ipv4 })).to.equal('3.2.0.192.in-addr.strong.lp._spf.example.com');
+        expect(macro('%{d2}.trusted-domains.example.net', { sender, ip: ipv4 })).to.equal('example.com.trusted-domains.example.net');
+        expect(macro('%{ir}.%{v}._spf.%{d2}', { sender, ip: ipv6 })).to.equal(
+            '1.0.b.c.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6._spf.example.com'
+        );
+    });
+
+    it('Should expand %{d} using the currently evaluated domain, not the sender domain', async () => {
+        let sender = 'strong-bad@email.example.com';
+        let domain = 'included.example.net';
+        let ipv4 = '192.0.2.3';
+
+        // %{d} follows <domain>, %{o} and %{s} stay on the sender (RFC 7208 sections 7.2, 7.3)
+        expect(macro('%{d}', { sender, domain })).to.equal('included.example.net');
+        expect(macro('%{d2}', { sender, domain })).to.equal('example.net');
+        expect(macro('%{o}', { sender, domain })).to.equal('email.example.com');
+        expect(macro('%{s}', { sender, domain })).to.equal('strong-bad@email.example.com');
+        expect(macro('%{ir}.%{v}.%{d}.spf.example.org', { sender, domain, ip: ipv4 })).to.equal('3.2.0.192.in-addr.included.example.net.spf.example.org');
+
+        // without an explicit domain, %{d} falls back to the sender domain (top-level evaluation)
+        expect(macro('%{d}', { sender })).to.equal('email.example.com');
+    });
+
+    it('Should split on exactly the listed delimiters, in any order', async () => {
+        let sender = 'a.b-c+d,e/f=g_h@example.com';
+
+        // "-" between two other delimiters is not a range of characters
+        expect(macro('%{l.-+}', { sender })).to.equal('a.b.c.d,e/f=g_h');
+        expect(macro('%{l+-.}', { sender })).to.equal('a.b.c.d,e/f=g_h');
+        expect(macro('%{l,-/}', { sender })).to.equal('a.b.c+d.e.f=g_h');
+        // "," to "/" would also match ".", which shows once the parts are reversed
+        expect(macro('%{lr,-/}', { sender })).to.equal('f=g_h.e.c+d.a.b');
+        expect(macro('%{l=-_/,.+}', { sender })).to.equal('a.b.c.d.e.f.g.h');
+    });
+
+    it('Should evaluate a record with "-" between two other delimiters', async () => {
+        let res = await spf({
+            sender: 'a-b+c@example.com',
+            ip: '192.0.2.1',
+            helo: 'mx.example.com',
+            mta: 'mx.test',
+            resolver: zoneResolver({
+                'example.com': { TXT: [['v=spf1 exists:%{l.-+}._spf.example.com -all']] },
+                'a.b.c._spf.example.com': { A: ['127.0.0.2'] }
+            })
+        });
+        expect(res.status.result).to.equal('pass');
+    });
+
+    it('Should read every digit of the transformer', async () => {
+        expect(macro('%{d10}', { sender: 'a@a.b.c.example.com' })).to.equal('a.b.c.example.com');
+        expect(macro('%{d9r}', { sender: 'a@1.2.3.4.5.6.7.8.9.10.11' })).to.equal('9.8.7.6.5.4.3.2.1');
+    });
+
+    it('Should URL escape a byte below 0x10 with two hex digits', async () => {
+        expect(macro('%{S}', { sender: 'a\tb@example.com' })).to.equal('a%09b%40example.com');
+    });
+
+    it('Should take the domain of a sender with an empty local-part', async () => {
+        expect(macro('%{o}', { sender: '@example.com' })).to.equal('example.com');
+        expect(macro('%{l}', { sender: '@example.com' })).to.equal('');
+    });
+
+    it('Should expand %{t} to the current time in seconds', async () => {
+        let value = Number(macro('%{t}', {}));
+        expect(Math.abs(value - Date.now() / 1000)).to.be.below(5);
+    });
+});

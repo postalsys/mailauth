@@ -2,19 +2,88 @@
     "name": "mailauth",
     "version": "7.3.1",
     "description": "Email authentication library for Node.js",
-    "main": "lib/mailauth.js",
-    "types": "index.d.ts",
+    "type": "module",
+    "main": "./dist/cjs/mailauth.js",
+    "types": "./dist/cjs/mailauth.d.ts",
+    "typesVersions": {
+        "*": {
+            "lib/*": [
+                "dist/cjs/*/index.d.ts",
+                "dist/cjs/*.d.ts",
+                "dist/cjs/*"
+            ]
+        }
+    },
+    "exports": {
+        ".": {
+            "import": "./dist/esm/mailauth.js",
+            "require": "./dist/cjs/mailauth.js"
+        },
+        "./lib/arc": {
+            "import": "./dist/esm/arc/index.js",
+            "require": "./dist/cjs/arc/index.js"
+        },
+        "./lib/bimi": {
+            "import": "./dist/esm/bimi/index.js",
+            "require": "./dist/cjs/bimi/index.js"
+        },
+        "./lib/dkim/body": {
+            "import": "./dist/esm/dkim/body/index.js",
+            "require": "./dist/cjs/dkim/body/index.js"
+        },
+        "./lib/dkim/header": {
+            "import": "./dist/esm/dkim/header/index.js",
+            "require": "./dist/cjs/dkim/header/index.js"
+        },
+        "./lib/dmarc": {
+            "import": "./dist/esm/dmarc/index.js",
+            "require": "./dist/cjs/dmarc/index.js"
+        },
+        "./lib/spf": {
+            "import": "./dist/esm/spf/index.js",
+            "require": "./dist/cjs/spf/index.js"
+        },
+        "./lib/*.js": {
+            "import": "./dist/esm/*.js",
+            "require": "./dist/cjs/*.js"
+        },
+        "./lib/*": {
+            "import": "./dist/esm/*.js",
+            "require": "./dist/cjs/*.js"
+        },
+        "./package.json": "./package.json"
+    },
+    "files": [
+        "dist",
+        "bin",
+        "docs",
+        "cli.md",
+        "CHANGELOG.md",
+        "LICENSE.txt",
+        "licenses.txt"
+    ],
     "scripts": {
-        "test": "eslint \"lib/**/*.js\" \"test/**/*.js\" && mocha --recursive \"./test/**/*-test.js\" --reporter spec",
-        "coverage": "c8 mocha --recursive \"./test/**/*-test.js\" --reporter dot",
-        "coverage:check": "c8 check-coverage",
+        "build": "node scripts/build.js",
+        "typecheck": "node scripts/build.js --generate-only && tsc -p tsconfig.json",
+        "pretest": "npm run build",
+        "test": "node --import tsx --test --test-concurrency=1 \"test/**/*-test.ts\"",
+        "pretest:coverage": "npm run build",
+        "test:coverage": "c8 node --import tsx --test --test-concurrency=1 \"test/**/*-test.ts\"",
+        "pretest:cjs": "npm run build",
+        "test:cjs": "node --no-experimental-require-module test/package/cjs-smoke.cjs",
+        "pretest:pkg": "npm run build",
+        "test:pkg": "node test/package/pkg-smoke.cjs",
         "mutation": "stryker run",
-        "format": "prettier --write .",
-        "build-source": "rm -rf node_modules package-lock.json && npm install && npm run licenses && rm -rf node_modules package-lock.json && npm install --production && rm -rf package-lock.json",
-        "build-dist": "pkg --compress Brotli package.json && rm -rf package-lock.json && npm install && node winconf.js",
-        "build-dist-fast": "pkg --debug package.json && npm install && node winconf.js",
+        "format": "prettier --write \"**/*.{js,cjs,ts,json,md,yml,yaml}\"",
+        "format:check": "prettier --check \"**/*.{js,cjs,ts,json,md,yml,yaml}\"",
+        "lint": "npm run typecheck && eslint .",
+        "lint:fix": "eslint . --fix",
+        "prepare": "npm run build",
+        "build-source": "rm -rf node_modules package-lock.json && npm install && npm run licenses && rm -rf node_modules package-lock.json && npm install --omit=dev --ignore-scripts && rm -rf package-lock.json",
+        "build-dist": "npm run build && pkg --compress Brotli package.json && rm -rf package-lock.json && npm install && node winconf.cjs",
+        "build-dist-fast": "npm run build && pkg --debug package.json && npm install && node winconf.cjs",
         "licenses": "license-report --only=prod --output=table --config license-report-config.json > licenses.txt",
-        "update": "rm -rf node_modules package-lock.json && npx ncu -u && npm install"
+        "update": "rm -rf node_modules package-lock.json && ncu -u && npm install"
     },
     "repository": {
         "type": "git",
@@ -38,18 +107,23 @@
     "homepage": "https://github.com/postalsys/mailauth",
     "devDependencies": {
         "@stryker-mutator/core": "10.0.0",
+        "@types/chai": "5.2.3",
+        "@types/node": "22.20.5",
+        "@yao-pkg/pkg": "6.23.0",
         "c8": "12.0.0",
-        "chai": "4.4.1",
+        "chai": "6.3.0",
         "eslint": "10.12.0",
-        "eslint-config-nodemailer": "1.2.0",
         "eslint-config-prettier": "10.1.8",
         "fast-check": "4.10.2",
+        "globals": "17.13.0",
         "js-yaml": "5.4.3",
         "license-report": "6.8.6",
         "mbox-reader": "1.2.0",
-        "mocha": "12.0.3",
         "prettier": "3.9.10",
-        "resedit": "3.1.0"
+        "resedit": "3.1.0",
+        "tsx": "4.23.15",
+        "typescript": "6.0.3",
+        "typescript-eslint": "8.71.2"
     },
     "dependencies": {
         "@postalsys/vmc": "1.1.5",
@@ -67,7 +141,7 @@
         "node": ">=22.19.0"
     },
     "bin": {
-        "mailauth": "bin/mailauth.js"
+        "mailauth": "bin/mailauth.cjs"
     },
     "pkg": {
         "assets": [
@@ -80,7 +154,10 @@
             "node24-macos-arm64",
             "node24-win-x64"
         ],
-        "outputPath": "ee-dist"
+        "outputPath": "ee-dist",
+        "scripts": [
+            "dist/cjs/**/*.js"
+        ]
     },
     "overrides": {
         "qs": "6.16.0"

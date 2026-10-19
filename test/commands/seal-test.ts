@@ -1,0 +1,289 @@
+/* eslint @typescript-eslint/no-unused-expressions:0 */
+import { describe, it, before, after } from 'node:test';
+import { Buffer } from 'node:buffer';
+import { expect } from 'chai';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import util from 'node:util';
+import childProcess from 'node:child_process';
+const execFile = util.promisify(childProcess.execFile);
+
+import { authenticate } from '../../src/mailauth.js';
+import type { ARCResult } from '../../src/types.js';
+import { dkimTxtRecord } from '../helpers/keys.js';
+import { zoneResolver } from '../helpers/dns-zone.js';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const CLI_PATH = path.join(__dirname, '..', '..', 'bin', 'mailauth.cjs');
+const DENY_DNS_PATH = path.join(__dirname, '..', 'fixtures', 'deny-dns.cjs');
+const FIXTURES_PATH = path.join(__dirname, '..', 'fixtures');
+
+const AUTH_RESULTS = 'mx.shield.test; spf=pass smtp.mailfrom=example.com; dkim=pass header.i=@example.com; dmarc=pass header.from=example.com';
+
+// run the CLI in a child process where every DNS lookup is reported and rejected
+const runSeal = async (args: any) =>
+    execFile('node', ['-r', DENY_DNS_PATH, CLI_PATH, 'seal'].concat(args), {
+        env: Object.assign({}, process.env, { DENY_DNS: '1' })
+    });
+
+const keyArgs = ['-k', path.join(FIXTURES_PATH, 'private-rsa.pem'), '-d', 'tahvel.info', '-s', 'test.rsa'];
+
+// resolver that only knows the public key for the sealing selector
+const resolver = zoneResolver({ 'test.rsa._domainkey.tahvel.info': { TXT: [[dkimTxtRecord('public-rsa.pem')]] } });
+
+describe('CLI seal command', () => {
+    let tmpDir: any;
+
+    before(
+        async () => {
+            tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'mailauth-seal-test-'));
+        },
+        { timeout: 15000 }
+    );
+
+    after(
+        async () => {
+            await fs.promises.rm(tmpDir, { recursive: true, force: true });
+        },
+        { timeout: 15000 }
+    );
+
+    describe('seal-only mode (--auth-results)', () => {
+        it('should seal with the provided Authentication-Results without performing DNS lookups', { timeout: 15000 }, async () => {
+            let { stdout, stderr } = await runSeal(keyArgs.concat(['--auth-results', AUTH_RESULTS, '-o', path.join(FIXTURES_PATH, 'message1.eml')]));
+
+            expect(stderr).to.not.include('DNS_LOOKUP_ATTEMPTED');
+
+            expect(stdout).to.match(/^ARC-Seal: i=1;/m);
+            expect(stdout).to.match(/^ARC-Message-Signature: i=1;/m);
+            expect(stdout).to.include('cv=none');
+            expect(stdout).to.include(`ARC-Authentication-Results: i=1; ${AUTH_RESULTS}`);
+        });
+
+        it('should read the Authentication-Results value from a file', { timeout: 15000 }, async () => {
+            let authResultsFile = path.join(tmpDir, 'auth-results.txt');
+            let multiLineValue =
+                'mx.shield.test;\r\n spf=pass smtp.mailfrom=example.com;\r\n dkim=pass header.i=@example.com;\r\n dmarc=pass header.from=example.com';
+            await fs.promises.writeFile(authResultsFile, multiLineValue + '\r\n');
+
+            let { stdout, stderr } = await runSeal(
+                keyArgs.concat(['--auth-results-file', authResultsFile, '--cv', 'none', '-o', path.join(FIXTURES_PATH, 'message1.eml')])
+            );
+
+            expect(stderr).to.not.include('DNS_LOOKUP_ATTEMPTED');
+            expect(stdout).to.include(`ARC-Authentication-Results: i=1; ${multiLineValue}`);
+        });
+
+        it('should accept a folded value with LF line endings from a file', { timeout: 15000 }, async () => {
+            let authResultsFile = path.join(tmpDir, 'auth-results-lf.txt');
+            await fs.promises.writeFile(authResultsFile, 'mx.shield.test;\n spf=pass smtp.mailfrom=example.com;\n dkim=pass header.i=@example.com\n');
+
+            let { stdout } = await runSeal(keyArgs.concat(['--auth-results-file', authResultsFile, '-o', path.join(FIXTURES_PATH, 'message1.eml')]));
+
+            expect(stdout).to.include(
+                'ARC-Authentication-Results: i=1; mx.shield.test;\r\n spf=pass smtp.mailfrom=example.com;\r\n dkim=pass header.i=@example.com\r\n'
+            );
+        });
+
+        for (let [title, value] of [
+            ['a line that would start a new header field', 'mx.shield.test; spf=pass\nX-Injected: yes\n'],
+            ['an empty line that would end the header block', 'mx.shield.test; spf=pass\n\nInjected body\n'],
+            ['a bare CR', 'mx.shield.test; spf=pass\rX-Injected: yes\n']
+        ]) {
+            it(`should refuse a file value with ${title}`, { timeout: 15000 }, async () => {
+                let authResultsFile = path.join(tmpDir, 'auth-results-injected.txt');
+                await fs.promises.writeFile(authResultsFile, value);
+
+                let err = await runSeal(keyArgs.concat(['--auth-results-file', authResultsFile, '-o', path.join(FIXTURES_PATH, 'message1.eml')])).then(
+                    () => null,
+                    e => e
+                );
+                expect(err).to.be.an('error');
+                expect(err.stderr).to.include('line break that is not header folding');
+                expect(err.stdout).to.not.include('X-Injected');
+                expect(err.stdout).to.not.match(/^ARC-Seal:/m);
+            });
+        }
+
+        it('should refuse an --auth-results value with a line break that is not folding', { timeout: 15000 }, async () => {
+            let err = await runSeal(
+                keyArgs.concat(['--auth-results', 'mx.shield.test; spf=pass\r\nX-Injected: yes', '-o', path.join(FIXTURES_PATH, 'message1.eml')])
+            ).then(
+                () => null,
+                e => e
+            );
+            expect(err).to.be.an('error');
+            expect(err.stderr).to.include('line break that is not header folding');
+            expect(err.stdout).to.not.include('X-Injected');
+        });
+
+        it('should refuse an empty --auth-results-file', { timeout: 15000 }, async () => {
+            let authResultsFile = path.join(tmpDir, 'auth-results-empty.txt');
+            await fs.promises.writeFile(authResultsFile, '\n \n');
+
+            let err = await runSeal(keyArgs.concat(['--auth-results-file', authResultsFile, '-o', path.join(FIXTURES_PATH, 'message1.eml')])).then(
+                () => null,
+                e => e
+            );
+            expect(err).to.be.an('error');
+            expect(err.stdout).to.not.match(/^ARC-Seal:/m);
+        });
+
+        it('should produce a seal that validates against the original message', { timeout: 15000 }, async () => {
+            let { stdout } = await runSeal(keyArgs.concat(['--auth-results', AUTH_RESULTS, path.join(FIXTURES_PATH, 'message1.eml')]));
+
+            // without --headers-only the output is the sealed headers followed by the full message
+            let res = await authenticate(Buffer.from(stdout, 'binary'), {
+                ip: '127.0.0.1',
+                helo: 'example.com',
+                mta: 'example.com',
+                disableDmarc: true,
+                resolver
+            });
+
+            expect((res.arc as ARCResult).status.result).to.equal('pass');
+        });
+
+        it('should extend an existing ARC chain with the provided cv value', { timeout: 15000 }, async () => {
+            let { stdout, stderr } = await runSeal(
+                keyArgs.concat(['--auth-results', AUTH_RESULTS, '--cv', 'pass', '-o', path.join(FIXTURES_PATH, 'arc-pass.eml')])
+            );
+
+            expect(stderr).to.not.include('DNS_LOOKUP_ATTEMPTED');
+
+            // arc-pass.eml already carries an ARC chain with instances 1 and 2
+            expect(stdout).to.match(/^ARC-Seal: i=3;/m);
+            expect(stdout).to.match(/^ARC-Message-Signature: i=3;/m);
+            expect(stdout).to.include('cv=pass');
+            expect(stdout).to.include(`ARC-Authentication-Results: i=3; ${AUTH_RESULTS}`);
+        });
+
+        it('should use an explicitly provided instance number', { timeout: 15000 }, async () => {
+            let { stdout, stderr } = await runSeal(
+                keyArgs.concat(['--auth-results', AUTH_RESULTS, '--instance', '5', '-o', path.join(FIXTURES_PATH, 'message1.eml')])
+            );
+
+            expect(stdout).to.match(/^ARC-Seal: i=5;/m);
+            expect(stdout).to.include(`ARC-Authentication-Results: i=5; ${AUTH_RESULTS}`);
+            // the message has no chain, so this can not validate, which the lenient mode allows
+            // as an explicit override
+            expect(stderr).to.include('does not follow the existing ARC chain');
+        });
+
+        it('should reject using --auth-results and --auth-results-file together', { timeout: 15000 }, async () => {
+            let err = await runSeal(
+                keyArgs.concat(['--auth-results', AUTH_RESULTS, '--auth-results-file', 'whatever.txt', '-o', path.join(FIXTURES_PATH, 'message1.eml')])
+            ).then(
+                () => null,
+                e => e
+            );
+            expect(err).to.be.an('error');
+        });
+
+        it('should reject an empty --auth-results value instead of silently authenticating', { timeout: 15000 }, async () => {
+            let err = await runSeal(keyArgs.concat(['--auth-results', '', '-o', path.join(FIXTURES_PATH, 'message1.eml')])).then(
+                () => null,
+                e => e
+            );
+            expect(err).to.be.an('error');
+            expect(err.stderr).to.include('--auth-results must not be empty');
+        });
+
+        it('should reject --cv and --instance without --auth-results', { timeout: 15000 }, async () => {
+            for (let extra of [
+                ['--cv', 'pass'],
+                ['--instance', '2']
+            ]) {
+                let err = await runSeal(keyArgs.concat(extra, ['-o', path.join(FIXTURES_PATH, 'message1.eml')])).then(
+                    () => null,
+                    e => e
+                );
+                expect(err, extra.join(' ')).to.be.an('error');
+                expect(err.stderr, extra.join(' ')).to.include('can only be used together with');
+            }
+        });
+
+        it('should refuse an explicit instance that does not follow the chain in strict mode', { timeout: 15000 }, async () => {
+            let err = await runSeal(
+                keyArgs.concat(['--auth-results', AUTH_RESULTS, '--instance', '5', '--strict', '-o', path.join(FIXTURES_PATH, 'message1.eml')])
+            ).then(
+                () => null,
+                e => e
+            );
+            expect(err).to.be.an('error');
+            expect(err.stderr).to.include('does not follow the highest existing instance');
+            expect(err.stdout).to.not.match(/^ARC-Seal:/m);
+        });
+
+        it('should refuse an instance that already exists on the message', { timeout: 15000 }, async () => {
+            let err = await runSeal(
+                keyArgs.concat(['--auth-results', AUTH_RESULTS, '--cv', 'pass', '--instance', '2', '-o', path.join(FIXTURES_PATH, 'arc-pass.eml')])
+            ).then(
+                () => null,
+                e => e
+            );
+            expect(err).to.be.an('error');
+            expect(err.stderr).to.include('already exists on the message');
+            expect(err.stdout).to.not.match(/^ARC-Seal:/m);
+        });
+
+        it('should refuse cv=none for an existing chain in strict mode', { timeout: 15000 }, async () => {
+            let err = await runSeal(keyArgs.concat(['--auth-results', AUTH_RESULTS, '--strict', '-o', path.join(FIXTURES_PATH, 'arc-pass.eml')])).then(
+                () => null,
+                e => e
+            );
+            expect(err).to.be.an('error');
+            expect(err.stderr).to.include('cv=none is not valid for ARC instance 3');
+        });
+
+        it('should refuse to seal a chain whose newest seal is cv=fail', { timeout: 15000 }, async () => {
+            let source = await fs.promises.readFile(path.join(FIXTURES_PATH, 'arc-pass.eml'), 'binary');
+            // mark the newest seal as failed, its signature does not matter for the sealer
+            let failed = source.replace(/^(ARC-Seal: i=2;[\s\S]*?)cv=pass/m, '$1cv=fail');
+            expect(failed).to.not.equal(source);
+            let failedPath = path.join(tmpDir, 'arc-fail.eml');
+            await fs.promises.writeFile(failedPath, failed, 'binary');
+
+            let err = await runSeal(keyArgs.concat(['--auth-results', AUTH_RESULTS, '--cv', 'fail', '-o', failedPath])).then(
+                () => null,
+                e => e
+            );
+            expect(err).to.be.an('error');
+            expect(err.stderr).to.include('has cv=fail');
+        });
+
+        it('should warn when sealing an existing chain with the default cv=none', { timeout: 15000 }, async () => {
+            let { stderr } = await runSeal(keyArgs.concat(['--auth-results', AUTH_RESULTS, '-o', path.join(FIXTURES_PATH, 'arc-pass.eml')]));
+            expect(stderr).to.include('only validates when cv=pass');
+        });
+    });
+
+    describe('default mode (backward compatibility)', () => {
+        it('should authenticate and seal when no auth-results option is provided', { timeout: 15000 }, async () => {
+            let dnsCacheFile = path.join(tmpDir, 'dns-cache.json');
+            await fs.promises.writeFile(dnsCacheFile, '{}');
+
+            let { stdout } = await runSeal(keyArgs.concat(['--dns-cache', dnsCacheFile, path.join(FIXTURES_PATH, 'message1.eml')]));
+
+            // the authenticate() path computes its own Authentication-Results header
+            expect(stdout).to.match(/^Authentication-Results:/m);
+            expect(stdout).to.match(/^ARC-Seal: i=1;/m);
+            expect(stdout).to.match(/^ARC-Authentication-Results: i=1;/m);
+        });
+
+        it('should report arc=none in strict mode', { timeout: 15000 }, async () => {
+            let dnsCacheFile = path.join(tmpDir, 'dns-cache-strict.json');
+            await fs.promises.writeFile(dnsCacheFile, '{}');
+
+            let { stdout } = await runSeal(
+                keyArgs.concat(['--dns-cache', dnsCacheFile, '--strict', '-i', '192.0.2.1', path.join(FIXTURES_PATH, 'message1.eml')])
+            );
+
+            expect(stdout).to.match(/^ARC-Seal: i=1;/m);
+            expect(stdout).to.include('arc=none smtp.remote-ip=192.0.2.1');
+        });
+    });
+});

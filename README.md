@@ -16,7 +16,7 @@
 - **BIMI** resolving and **VMC** validation
 - **MTA-STS** helper functions
 
-mailauth is a pure JavaScript implementation, requiring no external applications or compilation. It runs on any server or device with Node.js version 22.19.0 or later.
+mailauth is written in TypeScript and ships compiled JavaScript with type declarations, requiring no external applications or native compilation. It runs on any server or device with Node.js version 22.19.0 or later.
 
 > [!NOTE]
 > mailauth is used by [EmailEngine](https://emailengine.app/) for validating email authentication settings. See the [Email Authentication Testing documentation](https://learn.emailengine.app/docs/advanced/email-authentication-testing) for details.
@@ -56,11 +56,17 @@ First, install mailauth from npm:
 npm install mailauth
 ```
 
-Then, import the desired methods into your script:
+Then, import the desired methods into your script. The package works both as a CommonJS module and as an ES module:
 
 ```javascript
 const { authenticate } = require('mailauth');
 ```
+
+```javascript
+import { authenticate } from 'mailauth';
+```
+
+Deep imports such as `mailauth/lib/dkim/sign` or `mailauth/lib/spf` work the same way in both module systems. Type declarations are included, so TypeScript projects need no separate typings package.
 
 ## Command-Line Usage
 

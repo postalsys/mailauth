@@ -1,0 +1,388 @@
+// The mailauth command line interface. bin/mailauth.cjs calls run() with the process
+// arguments and the package root, where the license files are read from.
+
+import { Command, InvalidArgumentError, Option } from 'commander';
+import fs from 'node:fs';
+import os from 'node:os';
+import pathlib from 'node:path';
+
+import commandReport from './commands/report.js';
+import commandSign from './commands/sign.js';
+import commandSeal from './commands/seal.js';
+import commandSpf from './commands/spf.js';
+import commandVmc from './commands/vmc.js';
+import commandBodyhash from './commands/bodyhash.js';
+import commandDkim2Sign from './commands/dkim2-sign.js';
+import commandDkim2Verify from './commands/dkim2-verify.js';
+import commandDkim2Hash from './commands/dkim2-hash.js';
+
+import { version } from './package-info.js';
+
+// Commander hands every option value over as a string, so numeric options have
+// to be coerced. A value that is not a number is rejected instead of being
+// passed on: a non-numeric --max-lookups would disable the SPF lookup limit
+// entirely, and a non-numeric --time would produce an empty t= tag.
+const numberArg = (value: string): number => {
+    let num = Number(value);
+    if (isNaN(num)) {
+        throw new InvalidArgumentError('Not a number.');
+    }
+    return num;
+};
+
+// Repeating a single-value option is a mistake worth reporting instead of
+// silently keeping the last occurrence. Wraps whatever parser the option
+// already has (`.choices()` installs one) so its validation still runs.
+const rejectRepeated = (option: Option): Option => {
+    let parseArg = option.parseArg;
+    return option.argParser((value: string, previous: unknown) => {
+        if (previous !== undefined) {
+            throw new InvalidArgumentError(`--${option.name()} can only be provided once`);
+        }
+        return parseArg ? parseArg(value, previous) : value;
+    });
+};
+
+// Wrap an async command implementation with the shared promise handling used by
+// every subcommand: merge the positional `email` argument with the parsed
+// options (including the global --verbose flag) into a single `argv` object.
+const runCommand = <A>(fn: (argv: A) => Promise<void>, failMessage: string) =>
+    function () {
+        let command: Command = arguments[arguments.length - 1];
+        let positional = Array.prototype.slice.call(arguments, 0, arguments.length - 2);
+
+        let argv = Object.assign({}, command.optsWithGlobals());
+        if (command.registeredArguments && command.registeredArguments.length) {
+            command.registeredArguments.forEach((arg, i) => {
+                argv[arg.name()] = positional[i];
+            });
+        }
+
+        fn(argv as A)
+            .then(() => {
+                process.exit();
+            })
+            .catch((err: any) => {
+                if (!err || !err.suppress) {
+                    console.error(failMessage);
+                    console.error(err);
+                }
+                process.exit(1);
+            });
+    };
+
+// Collects the values of an option that can be repeated
+const collect = (value: string, previous: string[] | undefined): string[] => (previous || []).concat(value);
+
+const emailArgDescription = 'Path to the email message file in EML format. If not specified, the content is read from standard input.';
+
+export interface RunOptions {
+    /** Directory that holds LICENSE.txt and licenses.txt */
+    root: string;
+}
+
+export function run(argv: string[], opts: RunOptions): void {
+    const program = new Command();
+
+    program
+        .name('mailauth')
+        .description('Email authentication tools for Node.js')
+        // yargs registered --version automatically, commander does not
+        .version(version, '--version', 'Show version number.')
+        .option('-v, --verbose', 'Enable verbose logging for debugging purposes.')
+        // sign/seal use -h as an alias for --header-fields, so free it up from the
+        // built-in help option and expose help via --help only.
+        .helpOption('--help', 'Show help.');
+
+    program
+        .command('report', { isDefault: true })
+        .description('Validate an email message and return a detailed JSON report')
+        .argument('[email]', emailArgDescription)
+        .helpOption('--help', 'Show help.')
+        .option('-i, --client-ip <ip>', 'IP address of the remote client (used for SPF checks). If not provided, it is parsed from the latest Received header.')
+        .option(
+            '-m, --mta <hostname>',
+            'Hostname of the server performing the validation (used in the Authentication-Results header). Defaults to the local hostname.',
+            os.hostname()
+        )
+        .option('-e, --helo <hostname>', 'Client hostname from the HELO/EHLO command (used in some SPF checks).')
+        .option('-f, --sender <address>', 'Email address from the MAIL FROM command. If not provided, the address from the latest Return-Path header is used.')
+        .option(
+            '-n, --dns-cache <file>',
+            'Path to a JSON file with cached DNS responses. When provided, DNS queries use these cached responses instead of performing actual DNS lookups.'
+        )
+        .option('-x, --max-lookups <number>', 'Maximum allowed DNS lookups during SPF checks. Defaults to 10.', numberArg, 10)
+        .option(
+            '-z, --max-void-lookups <number>',
+            'Maximum allowed DNS lookups that return no data (void lookups) during SPF checks. Defaults to 2.',
+            numberArg,
+            2
+        )
+        .option('--strict', 'Follow the RFCs exactly instead of the lenient defaults (for example, reject rsa-sha1 DKIM signatures).')
+        .option(
+            '--reject-rsa-sha1',
+            'Report rsa-sha1 DKIM signatures as dkim=policy and do not count them for DMARC, while keeping the other lenient defaults.'
+        )
+        .option('--dkim2', 'Verify DKIM2 header fields as well (experimental, built against draft-ietf-dkim-dkim2-spec-06).')
+        .option('-r, --rcpt-to <address>', 'Email address from a RCPT TO command, checked against the DKIM2 chain of custody. Can be repeated.', collect)
+        .action(runCommand(commandReport, 'Failed to generate report for the input message.'));
+
+    program
+        .command('sign')
+        .description('Sign an email with a DKIM digital signature')
+        .argument('[email]', emailArgDescription)
+        .helpOption('--help', 'Show help.')
+        .requiredOption('-k, --private-key <file>', 'Path to the private key file used for signing.')
+        .requiredOption('-d, --domain <domain>', 'Domain name to use in the DKIM signature (d= tag).')
+        .requiredOption('-s, --selector <selector>', 'Selector to use in the DKIM signature (s= tag).')
+        // no default value: without one the algorithm follows the key type, so an ed25519 key
+        // signs with ed25519-sha256 as the description says
+        .option('-a, --algo <algorithm>', 'Signing algorithm. Defaults to "rsa-sha256" or "ed25519-sha256" depending on the private key type.')
+        .option('-c, --canonicalization <method>', 'Canonicalization method (c= tag). Defaults to "relaxed/relaxed".', 'relaxed/relaxed')
+        .option('-t, --time <timestamp>', 'Signing time as a UNIX timestamp (t= tag). Defaults to the current time.', numberArg)
+        .option(
+            '-l, --body-length <number>',
+            'Maximum length of the canonicalized body to include in the signature (l= tag). Not recommended for general use.',
+            numberArg
+        )
+        .option('-h, --header-fields <fields>', 'Colon-separated list of header field names to include in the signature (h= tag).')
+        .option('-o, --headers-only', 'If set, outputs only the DKIM signature headers without the message body.')
+        .option('--strict', 'Follow the RFCs exactly (for example, refuse to sign with rsa-sha1 or with an RSA key shorter than 1024 bits).')
+        .action(runCommand(commandSign, 'Failed to sign the input message.'));
+
+    program
+        .command('dkim2-sign')
+        .description('Sign an email with DKIM2 (experimental, built against draft-ietf-dkim-dkim2-spec-06)')
+        .argument('[email]', emailArgDescription)
+        .helpOption('--help', 'Show help.')
+        .requiredOption('-k, --private-key <file>', 'Path to a private key file. Repeat it together with --selector to sign with several keys.', collect)
+        .requiredOption('-s, --selector <selector>', 'Selector of the private key with the same position. Can be repeated.', collect)
+        .requiredOption('-d, --domain <domain>', 'Signing domain (d= tag).')
+        .option('-f, --mail-from <address>', 'MAIL FROM address the message is sent with (mf= tag). Use "<>" for the null sender.')
+        .option('-r, --rcpt-to <address>', 'RCPT TO address the message is sent to (rt= tag). Can be repeated.', collect)
+        .option('--next-domain <domain>', 'Domain of the next DKIM2 signature, instead of --mail-from and --rcpt-to (nd= tag).')
+        .option('--nonce <value>', 'Nonce value (n= tag).')
+        .option('--flag <flag>', 'Flag to set, such as "donotmodify" or "exploded" (f= tag). Can be repeated.', collect)
+        .option('--hash <algorithm>', 'Hash algorithm for the Message-Instance, "sha256" or "sha512". Can be repeated. Defaults to "sha256".', collect)
+        .option('--recipe <file>', 'Path to a JSON file with the Recipe that recreates the previous instance of a changed message.')
+        .option('-t, --time <timestamp>', 'Signing time as a UNIX timestamp (t= tag). Defaults to the current time.', numberArg)
+        .option('-o, --headers-only', 'If set, outputs only the DKIM2 header fields without the message.')
+        .hook('preAction', command => {
+            let opts = command.opts();
+            if (opts.nextDomain ? opts.mailFrom || opts.rcptTo : !opts.mailFrom || !opts.rcptTo) {
+                command.error('error: use either --mail-from and --rcpt-to, or --next-domain');
+            }
+        })
+        .action(runCommand(commandDkim2Sign, 'Failed to sign the input message with DKIM2.'));
+
+    program
+        .command('dkim2-verify')
+        .description('Verify the DKIM2 signatures of an email and return a JSON report (experimental, built against draft-ietf-dkim-dkim2-spec-06)')
+        .argument('[email]', emailArgDescription)
+        .helpOption('--help', 'Show help.')
+        .option(
+            '-f, --mail-from <address>',
+            'MAIL FROM address the message was delivered with, "<>" for the null sender. Checked against the highest DKIM2-Signature.'
+        )
+        .option(
+            '-r, --rcpt-to <address>',
+            'RCPT TO address the message was delivered to, checked against the highest DKIM2-Signature. Can be repeated.',
+            collect
+        )
+        .option(
+            '-n, --dns-cache <file>',
+            'Path to a JSON file with cached DNS responses. When provided, DNS queries use these cached responses instead of performing actual DNS lookups.'
+        )
+        .option('-t, --time <timestamp>', 'Time to verify against as a UNIX timestamp. Defaults to the current time.', numberArg)
+        .option('--max-age <seconds>', 'Seconds after which a signature expires, 0 to not check. Defaults to 14 days.', numberArg)
+        .option('--max-future <seconds>', 'Seconds a signature timestamp may be ahead of the current time, 0 to not check. Defaults to 300.', numberArg)
+        .option('--max-instances <number>', 'Most Message-Instance, and most DKIM2-Signature, header fields to process. Defaults to 20.', numberArg)
+        .option('-o, --headers-only', 'If set, outputs only the Authentication-Results entry (dkim2=...) instead of the JSON report.')
+        .action(runCommand(commandDkim2Verify, 'Failed to verify DKIM2 for the input message.'));
+
+    program
+        .command('dkim2-hash')
+        .description('Generate the DKIM2 header and body hashes of an email (the h= tag of a Message-Instance)')
+        .argument('[email]', emailArgDescription)
+        .helpOption('--help', 'Show help.')
+        .option('-a, --algo <algorithm>', 'Hash algorithm, "sha256" or "sha512". Can be repeated. Defaults to "sha256".', collect)
+        .action(runCommand(commandDkim2Hash, 'Failed to calculate the DKIM2 hashes for the input message.'));
+
+    program
+        .command('seal')
+        .description('Authenticate and seal an email with an ARC digital signature')
+        .argument('[email]', emailArgDescription)
+        .helpOption('--help', 'Show help.')
+        .requiredOption('-k, --private-key <file>', 'Path to the private key file used for sealing.')
+        .requiredOption('-d, --domain <domain>', 'Domain name to use in the ARC seal (d= tag).')
+        .requiredOption('-s, --selector <selector>', 'Selector to use in the ARC seal (s= tag).')
+        // no default value: without one the algorithm follows the key type
+        .option('-a, --algo <algorithm>', 'Sealing algorithm. Defaults to "rsa-sha256" or "ed25519-sha256" depending on the private key type.')
+        .option('-c, --canonicalization <method>', 'Canonicalization method. Note: RFC8617 only allows "relaxed/relaxed" (c= tag).', 'relaxed/relaxed')
+        .option('-t, --time <timestamp>', 'Sealing time as a UNIX timestamp (t= tag). Defaults to the current time.', numberArg)
+        .option('-h, --header-fields <fields>', 'Colon-separated list of header field names to include in the seal (h= tag).')
+        .option('-i, --client-ip <ip>', 'IP address of the remote client (used for SPF checks). If not provided, it is parsed from the latest Received header.')
+        .option(
+            '-m, --mta <hostname>',
+            'Hostname of the server performing the validation (used in the Authentication-Results header). Defaults to the local hostname.',
+            os.hostname()
+        )
+        .option('-e, --helo <hostname>', 'Client hostname from the HELO/EHLO command (used in some SPF checks).')
+        .option('-f, --sender <address>', 'Email address from the MAIL FROM command. If not provided, the address from the latest Return-Path header is used.')
+        .option(
+            '-n, --dns-cache <file>',
+            'Path to a JSON file with cached DNS responses. When provided, DNS queries use these cached responses instead of performing actual DNS lookups.'
+        )
+        .option('-o, --headers-only', 'If set, outputs only the ARC seal headers without the message body.')
+        .option('--strict', 'Follow the RFCs exactly instead of the lenient defaults.')
+        .addOption(
+            rejectRepeated(
+                new Option(
+                    '--auth-results <value>',
+                    'Authentication-Results value to embed in the ARC-Authentication-Results header (the part after "i=N;"). When set, the message is sealed using this value as is and no authentication checks are performed.'
+                ).conflicts('authResultsFile')
+            )
+        )
+        .addOption(
+            rejectRepeated(
+                new Option(
+                    '--auth-results-file <file>',
+                    'Path to a file containing the Authentication-Results value. Same as --auth-results, but read from a file.'
+                )
+            )
+        )
+        .addOption(
+            rejectRepeated(
+                new Option(
+                    '--cv <status>',
+                    'Chain validation status for the ARC-Seal header (cv= tag). Only used together with --auth-results or --auth-results-file. Defaults to "none".'
+                ).choices(['none', 'pass', 'fail'])
+            )
+        )
+        .addOption(
+            rejectRepeated(
+                new Option(
+                    '--instance <number>',
+                    'ARC instance number (i= tag). Only used together with --auth-results or --auth-results-file. Defaults to the next instance number based on the existing ARC chain, or 1.'
+                ).argParser(numberArg)
+            )
+        )
+        .hook('preAction', command => {
+            let opts = command.opts();
+            let fromCli = (key: string) => command.getOptionValueSource(key) === 'cli';
+
+            // a missing value would silently flip the command back into full
+            // authentication mode, the opposite of what the caller asked for
+            for (let [key, flag] of [
+                ['authResults', '--auth-results'],
+                ['authResultsFile', '--auth-results-file']
+            ]) {
+                if (fromCli(key) && (typeof opts[key] !== 'string' || !opts[key].trim())) {
+                    command.error(`error: ${flag} must not be empty`);
+                }
+            }
+
+            // .implies() cannot express "requires one of", so enforce it here
+            if (!opts.authResults && !opts.authResultsFile) {
+                for (let key of ['cv', 'instance']) {
+                    if (fromCli(key)) {
+                        command.error(`error: --${key} can only be used together with --auth-results or --auth-results-file`);
+                    }
+                }
+            }
+        })
+        .action(runCommand(commandSeal, 'Failed to seal the input message.'));
+
+    program
+        .command('spf')
+        .description('Validate SPF for an email address and MTA IP address')
+        .helpOption('--help', 'Show help.')
+        .requiredOption('-f, --sender <address>', 'Email address from the MAIL FROM command.')
+        .requiredOption('-i, --client-ip <ip>', 'IP address of the remote client (used for SPF checks).')
+        .option('-e, --helo <hostname>', 'Client hostname from the HELO/EHLO command (used in some SPF checks).')
+        .option(
+            '-m, --mta <hostname>',
+            'Hostname of the server performing the SPF check (used in the Authentication-Results header). Defaults to the local hostname.',
+            os.hostname()
+        )
+        .option(
+            '-n, --dns-cache <file>',
+            'Path to a JSON file with cached DNS responses. When provided, DNS queries use these cached responses instead of performing actual DNS lookups.'
+        )
+        .option('-o, --headers-only', 'If set, outputs only the SPF authentication header.')
+        .option('-x, --max-lookups <number>', 'Maximum allowed DNS lookups during SPF checks. Defaults to 10.', numberArg, 10)
+        .option(
+            '-z, --max-void-lookups <number>',
+            'Maximum allowed DNS lookups that return no data (void lookups) during SPF checks. Defaults to 2.',
+            numberArg,
+            2
+        )
+        .option(
+            '--max-elapsed-time <ms>',
+            'Maximum time in milliseconds for the whole SPF evaluation, after which the result is temperror. Not limited by default.',
+            numberArg
+        )
+        .option('--strict', 'Follow RFC 7208 exactly instead of the lenient defaults.')
+        .action(runCommand(commandSpf, 'Failed to verify SPF for the email address.'));
+
+    program
+        .command('vmc')
+        .description('Validate a Verified Mark Certificate (VMC) logo file')
+        .helpOption('--help', 'Show help.')
+        .option('-p, --authorityPath <file>', 'Path to a local VMC file.')
+        .option('-a, --authority <url>', 'URL of the VMC file.')
+        .option('-d, --domain <domain>', 'Sending domain to validate against the VMC.')
+        .option('-t, --date <timestamp>', 'ISO-formatted timestamp to use for certificate expiration checks.')
+        .action(runCommand(commandVmc, 'Failed to verify the VMC file.'));
+
+    program
+        .command('bodyhash')
+        .description('Generate a DKIM body hash for an email message')
+        .argument('[email]', emailArgDescription)
+        .helpOption('--help', 'Show help.')
+        .option('-a, --algo <algorithm>', 'Hashing algorithm to use. Defaults to "sha256". Can also use DKIM-style algorithms like "rsa-sha256".', 'sha256')
+        .option(
+            '-c, --canonicalization <method>',
+            'Body canonicalization method (c= tag). Defaults to "relaxed". Can use DKIM-style formats like "relaxed/relaxed".',
+            'relaxed'
+        )
+        .option('-l, --body-length <number>', 'Maximum length of the canonicalized body to include in the hash (l= tag).', numberArg)
+        .action(runCommand(commandBodyhash, 'Failed to calculate the body hash for the input message.'));
+
+    program
+        .command('license')
+        .description('Display license information for mailauth and included modules')
+        .helpOption('--help', 'Show help.')
+        .action(() => {
+            fs.readFile(pathlib.join(opts.root, 'LICENSE.txt'), (err, license) => {
+                if (err) {
+                    console.error('Failed to load license information.');
+                    console.error(err);
+                    return process.exit(1);
+                }
+
+                console.error('mailauth License');
+                console.error('================');
+
+                console.error(license.toString().trim());
+
+                console.error('');
+
+                fs.readFile(pathlib.join(opts.root, 'licenses.txt'), (err, data) => {
+                    if (err) {
+                        console.error('Failed to load included modules license information.');
+                        console.error(err);
+                        return process.exit(1);
+                    }
+
+                    console.error('Included Modules');
+                    console.error('================');
+
+                    console.error(data.toString().trim());
+                    process.exit();
+                });
+            });
+        });
+
+    program.parse(argv);
+}

@@ -4,11 +4,18 @@ on:
     push:
     pull_request:
 
+permissions:
+    contents: read
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
 jobs:
     test:
         strategy:
             matrix:
-                node: [22.x, 24.x]
+                node: [22.x, 24.x, 26.x]
                 os: [ubuntu-latest, windows-latest]
                 include:
                     # The minimum version allowed by "engines" in package.json
@@ -21,9 +28,32 @@ jobs:
               uses: actions/setup-node@v7
               with:
                   node-version: ${{ matrix.node }}
-            - run: npm install
+                  cache: npm
+            - run: npm ci
+            - run: npm run lint
+            # Windows checkouts may convert line endings of the files .gitattributes does not pin
+            - run: npm run format:check
+              if: matrix.os == 'ubuntu-latest'
             - run: npm test
+            # Requires the built CommonJS entry with require(esm) switched off, the way the
+            # @yao-pkg/pkg binaries (EmailEngine, the mailauth CLI) load it
+            - run: npm run test:cjs
 
+    # Builds single-file executables with @yao-pkg/pkg from the packed package and from the
+    # CLI, and runs them
+    pkg:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+            - name: Use Node.js 24.x
+              uses: actions/setup-node@v7
+              with:
+                  node-version: 24.x
+                  cache: npm
+            - run: npm ci
+            - run: npm run test:pkg
+
+    # Coverage is gated on a single Node.js version, the numbers are the same across versions
     coverage:
         runs-on: ubuntu-latest
         steps:
@@ -32,6 +62,6 @@ jobs:
               uses: actions/setup-node@v7
               with:
                   node-version: 24.x
-            - run: npm install
-            - run: npm run coverage
-            - run: npm run coverage:check
+                  cache: npm
+            - run: npm ci
+            - run: npm run test:coverage

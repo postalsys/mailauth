@@ -1,0 +1,545 @@
+{
+    "arc/index": {
+        "type": "object",
+        "keys": ["arc", "createSeal", "getARChain", "getHighestArcInstance", "sealMessage", "verifyASChain"],
+        "members": {
+            "arc": "function",
+            "createSeal": "function",
+            "getARChain": "function",
+            "getHighestArcInstance": "function",
+            "sealMessage": "function",
+            "verifyASChain": "function"
+        }
+    },
+    "arc/trustlist": {
+        "type": "object",
+        "keys": ["trusted"],
+        "members": {
+            "trusted": "object"
+        }
+    },
+    "bimi/index": {
+        "type": "object",
+        "keys": ["bimi", "validateVMC"],
+        "members": {
+            "bimi": "function",
+            "validateVMC": "function"
+        }
+    },
+    "bimi/validate-svg": {
+        "type": "object",
+        "keys": ["validateSvg"],
+        "members": {
+            "validateSvg": "function"
+        }
+    },
+    "commands/bodyhash": {
+        "type": "function",
+        "props": []
+    },
+    "commands/dkim2-hash": {
+        "type": "function",
+        "props": []
+    },
+    "commands/dkim2-sign": {
+        "type": "function",
+        "props": []
+    },
+    "commands/dkim2-verify": {
+        "type": "function",
+        "props": []
+    },
+    "commands/report": {
+        "type": "function",
+        "props": []
+    },
+    "commands/resolver": {
+        "type": "object",
+        "keys": ["createResolver"],
+        "members": {
+            "createResolver": "function"
+        }
+    },
+    "commands/seal": {
+        "type": "function",
+        "props": []
+    },
+    "commands/sign": {
+        "type": "function",
+        "props": []
+    },
+    "commands/spf": {
+        "type": "function",
+        "props": []
+    },
+    "commands/vmc": {
+        "type": "function",
+        "props": []
+    },
+    "dkim/body/index": {
+        "type": "object",
+        "keys": ["BodyHashStream", "dkimBody"],
+        "members": {
+            "BodyHashStream": "function",
+            "dkimBody": "function"
+        }
+    },
+    "dkim/body/line-endings": {
+        "type": "object",
+        "keys": ["CHAR_CR", "CHAR_LF", "CRLF", "eachHeldLineBreak"],
+        "members": {
+            "CHAR_CR": "number",
+            "CHAR_LF": "number",
+            "CRLF": "object",
+            "eachHeldLineBreak": "function"
+        }
+    },
+    "dkim/body/relaxed": {
+        "type": "object",
+        "keys": ["RelaxedHash"],
+        "members": {
+            "RelaxedHash": "function"
+        }
+    },
+    "dkim/body/simple": {
+        "type": "object",
+        "keys": ["SimpleHash"],
+        "members": {
+            "SimpleHash": "function"
+        }
+    },
+    "dkim/dkim-signer": {
+        "type": "object",
+        "keys": ["DkimSigner"],
+        "members": {
+            "DkimSigner": "function"
+        }
+    },
+    "dkim/dkim-verifier": {
+        "type": "object",
+        "keys": ["DkimVerifier"],
+        "members": {
+            "DkimVerifier": "function"
+        }
+    },
+    "dkim/header/index": {
+        "type": "object",
+        "keys": ["generateCanonicalizedHeader"],
+        "members": {
+            "generateCanonicalizedHeader": "function"
+        }
+    },
+    "dkim/header/relaxed": {
+        "type": "object",
+        "keys": ["relaxedHeaders"],
+        "members": {
+            "relaxedHeaders": "function"
+        }
+    },
+    "dkim/header/signature-opts": {
+        "type": "object",
+        "keys": ["buildSignatureOpts"],
+        "members": {
+            "buildSignatureOpts": "function"
+        }
+    },
+    "dkim/header/simple": {
+        "type": "object",
+        "keys": ["simpleHeaders"],
+        "members": {
+            "simpleHeaders": "function"
+        }
+    },
+    "dkim/message-parser": {
+        "type": "object",
+        "keys": ["MessageParser"],
+        "members": {
+            "MessageParser": "function"
+        }
+    },
+    "dkim/mime-structure-start-finder": {
+        "type": "object",
+        "keys": ["MimeStructureStartFinder"],
+        "members": {
+            "MimeStructureStartFinder": "function"
+        }
+    },
+    "dkim/sign": {
+        "type": "object",
+        "keys": ["DkimSignStream", "dkimSign", "formatSignatures"],
+        "members": {
+            "DkimSignStream": "function",
+            "dkimSign": "function",
+            "formatSignatures": "function"
+        }
+    },
+    "dkim/syntax": {
+        "type": "object",
+        "keys": ["ARC_HEADER_KEYS", "BODY_LENGTH", "DOMAIN_LABEL", "DOMAIN_NAME", "HOST_NAME_CHARS", "LOCAL_PART", "MAX_ARC_INSTANCE", "SELECTOR", "TIMESTAMP"],
+        "members": {
+            "ARC_HEADER_KEYS": "object",
+            "BODY_LENGTH": "object",
+            "DOMAIN_LABEL": "string",
+            "DOMAIN_NAME": "object",
+            "HOST_NAME_CHARS": "object",
+            "LOCAL_PART": "object",
+            "MAX_ARC_INSTANCE": "number",
+            "SELECTOR": "object",
+            "TIMESTAMP": "object"
+        }
+    },
+    "dkim/verify": {
+        "type": "object",
+        "keys": ["dkimVerify"],
+        "members": {
+            "dkimVerify": "function"
+        }
+    },
+    "dkim2/dkim2-parser": {
+        "type": "object",
+        "keys": ["Dkim2Parser"],
+        "members": {
+            "Dkim2Parser": "function"
+        }
+    },
+    "dkim2/dkim2-signer": {
+        "type": "object",
+        "keys": ["Dkim2Signer"],
+        "members": {
+            "Dkim2Signer": "function"
+        }
+    },
+    "dkim2/dkim2-verifier": {
+        "type": "object",
+        "keys": ["Dkim2Verifier"],
+        "members": {
+            "Dkim2Verifier": "function"
+        }
+    },
+    "dkim2/fields": {
+        "type": "object",
+        "keys": [
+            "HASH_ALGORITHMS",
+            "MI_KEY",
+            "NONCE",
+            "SIG_KEY",
+            "TEXTSTRING",
+            "buildSignatureInput",
+            "canonicalHeaderField",
+            "canonicalSignatureField",
+            "continuesCustody",
+            "formatMessageInstance",
+            "formatSignature",
+            "isBase64",
+            "isDomain",
+            "isHashedField",
+            "parseMessageInstance",
+            "parsePath",
+            "parseSignature"
+        ],
+        "members": {
+            "HASH_ALGORITHMS": "object",
+            "MI_KEY": "string",
+            "NONCE": "object",
+            "SIG_KEY": "string",
+            "TEXTSTRING": "object",
+            "buildSignatureInput": "function",
+            "canonicalHeaderField": "function",
+            "canonicalSignatureField": "function",
+            "continuesCustody": "function",
+            "formatMessageInstance": "function",
+            "formatSignature": "function",
+            "isBase64": "function",
+            "isDomain": "function",
+            "isHashedField": "function",
+            "parseMessageInstance": "function",
+            "parsePath": "function",
+            "parseSignature": "function"
+        }
+    },
+    "dkim2/hash": {
+        "type": "object",
+        "keys": ["dkim2Hash"],
+        "members": {
+            "dkim2Hash": "function"
+        }
+    },
+    "dkim2/key": {
+        "type": "object",
+        "keys": ["ALGORITHM_KEY_TYPES", "KeyError", "createKeyLookup", "rsaKeyProblem", "signatureData"],
+        "members": {
+            "ALGORITHM_KEY_TYPES": "object",
+            "KeyError": "function",
+            "createKeyLookup": "function",
+            "rsaKeyProblem": "function",
+            "signatureData": "function"
+        }
+    },
+    "dkim2/message-state": {
+        "type": "object",
+        "keys": ["MessageState", "splitBodyLines"],
+        "members": {
+            "MessageState": "function",
+            "splitBodyLines": "function"
+        }
+    },
+    "dkim2/recipe": {
+        "type": "object",
+        "keys": ["applySteps", "parseRecipe"],
+        "members": {
+            "applySteps": "function",
+            "parseRecipe": "function"
+        }
+    },
+    "dkim2/sign": {
+        "type": "object",
+        "keys": ["Dkim2SignStream", "dkim2Sign"],
+        "members": {
+            "Dkim2SignStream": "function",
+            "dkim2Sign": "function"
+        }
+    },
+    "dkim2/verify": {
+        "type": "object",
+        "keys": ["dkim2Verify"],
+        "members": {
+            "dkim2Verify": "function"
+        }
+    },
+    "dmarc/author-domain": {
+        "type": "object",
+        "keys": ["getAddressDomains", "getAuthorDomain", "parseFromHeader"],
+        "members": {
+            "getAddressDomains": "function",
+            "getAuthorDomain": "function",
+            "parseFromHeader": "function"
+        }
+    },
+    "dmarc/get-dmarc-record": {
+        "type": "function",
+        "props": ["createRecordLookup", "discoverPolicy", "domainExists", "getOrgDomain", "getPolicyTags", "parseDmarcRecord"]
+    },
+    "dmarc/index": {
+        "type": "object",
+        "keys": ["dmarc", "evaluateDmarc"],
+        "members": {
+            "dmarc": "function",
+            "evaluateDmarc": "function"
+        }
+    },
+    "dmarc/verify": {
+        "type": "function",
+        "props": ["evaluateDmarc"]
+    },
+    "gatherer-stream": {
+        "type": "object",
+        "keys": ["GathererStream"],
+        "members": {
+            "GathererStream": "function"
+        }
+    },
+    "mailauth": {
+        "type": "object",
+        "keys": [
+            "Dkim2SignStream",
+            "DkimSignStream",
+            "arc",
+            "authenticate",
+            "bimi",
+            "createSeal",
+            "dkim2Hash",
+            "dkim2Sign",
+            "dkim2Verify",
+            "dkimSign",
+            "dkimVerify",
+            "dmarc",
+            "getARChain",
+            "sealMessage",
+            "spf",
+            "validateBimiSvg",
+            "validateBimiVmc",
+            "verifyASChain"
+        ],
+        "members": {
+            "Dkim2SignStream": "function",
+            "DkimSignStream": "function",
+            "arc": "function",
+            "authenticate": "function",
+            "bimi": "function",
+            "createSeal": "function",
+            "dkim2Hash": "function",
+            "dkim2Sign": "function",
+            "dkim2Verify": "function",
+            "dkimSign": "function",
+            "dkimVerify": "function",
+            "dmarc": "function",
+            "getARChain": "function",
+            "sealMessage": "function",
+            "spf": "function",
+            "validateBimiSvg": "function",
+            "validateBimiVmc": "function",
+            "verifyASChain": "function"
+        }
+    },
+    "mta-sts": {
+        "type": "object",
+        "keys": ["fetchPolicy", "getPolicy", "parsePolicy", "resolvePolicy", "validateMx"],
+        "members": {
+            "fetchPolicy": "function",
+            "getPolicy": "function",
+            "parsePolicy": "function",
+            "resolvePolicy": "function",
+            "validateMx": "function"
+        }
+    },
+    "parse-dkim-headers": {
+        "type": "function",
+        "props": ["parseTagList"]
+    },
+    "parse-received": {
+        "type": "object",
+        "keys": ["getClientAddress", "getClientHelo", "parseReceived"],
+        "members": {
+            "getClientAddress": "function",
+            "getClientHelo": "function",
+            "parseReceived": "function"
+        }
+    },
+    "safe-keys": {
+        "type": "object",
+        "keys": ["DANGEROUS_KEYS"],
+        "members": {
+            "DANGEROUS_KEYS": "object"
+        }
+    },
+    "spf/index": {
+        "type": "object",
+        "keys": ["spf"],
+        "members": {
+            "spf": "function"
+        }
+    },
+    "spf/macro": {
+        "type": "function",
+        "props": []
+    },
+    "spf/spf-verify": {
+        "type": "object",
+        "keys": ["spfVerify"],
+        "members": {
+            "spfVerify": "function"
+        }
+    },
+    "spf/syntax": {
+        "type": "object",
+        "keys": ["ipInNetwork", "isValidTargetName", "normalizeTargetName", "parseIp", "parseMacroString", "stripRootDot", "validateTerms"],
+        "members": {
+            "ipInNetwork": "function",
+            "isValidTargetName": "function",
+            "normalizeTargetName": "function",
+            "parseIp": "function",
+            "parseMacroString": "function",
+            "stripRootDot": "function",
+            "validateTerms": "function"
+        }
+    },
+    "tools": {
+        "type": "object",
+        "keys": [
+            "KEY_ERROR_COMMENTS",
+            "MAX_HEADER_VALUE_LENGTH",
+            "TLDTS_OPTS",
+            "addWarning",
+            "convertToASCII",
+            "createError",
+            "createKeyCache",
+            "defaultARCFieldNames",
+            "defaultASFieldNames",
+            "defaultDKIMFieldNames",
+            "escapeCommentValue",
+            "escapePropValue",
+            "fetch",
+            "formatAuthHeaderRow",
+            "formatAuthservId",
+            "formatDomain",
+            "formatDotAtomOrQuoted",
+            "formatRelaxedLine",
+            "formatSignatureHeaderLine",
+            "getAlignment",
+            "getCurTime",
+            "getPrivateKey",
+            "getPtrHostname",
+            "getPublicKey",
+            "getSigningHeaderLines",
+            "isBareRsaPublicKey",
+            "isHostNameDomain",
+            "isSameOrSubdomain",
+            "isSupportedAlgorithm",
+            "isValidDnsName",
+            "normalizeDomainName",
+            "parseDkimHeaders",
+            "parseHeaders",
+            "parseTagList",
+            "parseTagValueRecord",
+            "splitAlgorithm",
+            "stripSignatureValue",
+            "toALabel",
+            "toLineBytes",
+            "validateAlgorithm",
+            "validateTagValueRecord",
+            "writeToStream"
+        ],
+        "members": {
+            "KEY_ERROR_COMMENTS": "object",
+            "MAX_HEADER_VALUE_LENGTH": "number",
+            "TLDTS_OPTS": "object",
+            "addWarning": "function",
+            "convertToASCII": "function",
+            "createError": "function",
+            "createKeyCache": "function",
+            "defaultARCFieldNames": "string",
+            "defaultASFieldNames": "string",
+            "defaultDKIMFieldNames": "string",
+            "escapeCommentValue": "function",
+            "escapePropValue": "function",
+            "fetch": "function",
+            "formatAuthHeaderRow": "function",
+            "formatAuthservId": "function",
+            "formatDomain": "function",
+            "formatDotAtomOrQuoted": "function",
+            "formatRelaxedLine": "function",
+            "formatSignatureHeaderLine": "function",
+            "getAlignment": "function",
+            "getCurTime": "function",
+            "getPrivateKey": "function",
+            "getPtrHostname": "function",
+            "getPublicKey": "function",
+            "getSigningHeaderLines": "function",
+            "isBareRsaPublicKey": "function",
+            "isHostNameDomain": "function",
+            "isSameOrSubdomain": "function",
+            "isSupportedAlgorithm": "function",
+            "isValidDnsName": "function",
+            "normalizeDomainName": "function",
+            "parseDkimHeaders": "function",
+            "parseHeaders": "function",
+            "parseTagList": "function",
+            "parseTagValueRecord": "function",
+            "splitAlgorithm": "function",
+            "stripSignatureValue": "function",
+            "toALabel": "function",
+            "toLineBytes": "function",
+            "validateAlgorithm": "function",
+            "validateTagValueRecord": "function",
+            "writeToStream": "function"
+        }
+    },
+    "trim": {
+        "type": "object",
+        "keys": ["trimChars", "trimEndChars"],
+        "members": {
+            "trimChars": "function",
+            "trimEndChars": "function"
+        }
+    }
+}

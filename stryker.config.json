@@ -1,15 +1,19 @@
 {
     "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
-    "_comment": "Opt-in mutation testing, run with `npm run mutation`. The mocha runner plugin does not support mocha 12, so every mutant runs the tests of the mutated modules through the command runner. The long mocha timeout keeps the slower instrumented code from failing tests by timeout, which would count as a killed mutant",
+    "_comment": "Opt-in mutation testing, run with `npm run mutation`. Every mutant runs the tests of the mutated modules through the command runner on the Node.js test runner, which loads the instrumented TypeScript sources through tsx. The long test timeout keeps the slower instrumented code from failing tests by timeout, which would count as a killed mutant",
     "testRunner": "command",
     "commandRunner": {
-        "command": "npx mocha --bail --timeout 60000 --reporter dot \"test/dkim/**/*-test.js\" \"test/spf/**/*-test.js\" \"test/dmarc/**/*-test.js\" \"test/dkim2/**/*-test.js\" \"test/property/*-test.js\" test/mailauth-test.js"
+        "command": "node --import tsx --test --test-concurrency=1 --test-timeout=60000 --test-reporter=dot \"test/dkim/**/*-test.ts\" \"test/spf/**/*-test.ts\" \"test/dmarc/**/*-test.ts\" \"test/dkim2/**/*-test.ts\" \"test/property/*-test.ts\" test/mailauth-test.ts"
     },
     "coverageAnalysis": "off",
-    "mutate": ["lib/dkim/body/*.js", "lib/spf/macro.js", "lib/dmarc/author-domain.js", "lib/dkim2/*.js"],
+    "mutate": ["src/dkim/body/*.ts", "src/spf/macro.ts", "src/dmarc/author-domain.ts", "src/dkim2/*.ts"],
     "reporters": ["clear-text", "progress", "html", "json"],
-    "htmlReporter": { "fileName": "reports/mutation/mutation.html" },
-    "jsonReporter": { "fileName": "reports/mutation/mutation.json" },
+    "htmlReporter": {
+        "fileName": "reports/mutation/mutation.html"
+    },
+    "jsonReporter": {
+        "fileName": "reports/mutation/mutation.json"
+    },
     "tempDirName": ".stryker-tmp",
     "cleanTempDir": true,
     "timeoutMS": 60000
