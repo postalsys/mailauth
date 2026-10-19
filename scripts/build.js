@@ -122,12 +122,9 @@ function build() {
     generatePackageInfo();
     fs.rmSync(path.join(root, 'dist'), { recursive: true, force: true });
 
-    // Source maps are only written for coverage runs (npm run test:coverage), so that c8 can map
-    // what the CLI tests run from dist/ in child processes back to src/
-    const extra = process.argv.includes('--source-maps') ? ['--sourceMap'] : [];
-    runTsc('tsconfig.esm.json', ...extra);
+    runTsc('tsconfig.esm.json');
     // The ES module compile has already type-checked the same sources
-    runTsc('tsconfig.cjs.json', '--noCheck', ...extra);
+    runTsc('tsconfig.cjs.json', '--noCheck');
 
     fs.writeFileSync(path.join(root, 'dist', 'esm', 'package.json'), JSON.stringify({ type: 'module' }, null, 4) + '\n');
     fs.writeFileSync(path.join(root, 'dist', 'cjs', 'package.json'), JSON.stringify({ type: 'commonjs' }, null, 4) + '\n');

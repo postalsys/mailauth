@@ -17,7 +17,8 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const CLI_PATH = path.join(__dirname, '..', '..', 'bin', 'mailauth.cjs');
+// the CLI from src/, see test/helpers/cli-entry.ts
+const CLI_PATH = path.join(__dirname, '..', 'helpers', 'cli-entry.ts');
 const DENY_DNS_PATH = path.join(__dirname, '..', 'fixtures', 'deny-dns.cjs');
 const FIXTURES_PATH = path.join(__dirname, '..', 'fixtures');
 
@@ -25,7 +26,7 @@ const AUTH_RESULTS = 'mx.shield.test; spf=pass smtp.mailfrom=example.com; dkim=p
 
 // run the CLI in a child process where every DNS lookup is reported and rejected
 const runSeal = async (args: any) =>
-    execFile('node', ['-r', DENY_DNS_PATH, CLI_PATH, 'seal'].concat(args), {
+    execFile('node', ['-r', DENY_DNS_PATH, '--import', 'tsx', CLI_PATH, 'seal'].concat(args), {
         env: Object.assign({}, process.env, { DENY_DNS: '1' })
     });
 

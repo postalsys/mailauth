@@ -13,13 +13,14 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const CLI_PATH = path.join(__dirname, '..', '..', 'bin', 'mailauth.cjs');
+// the CLI from src/, see test/helpers/cli-entry.ts
+const CLI_PATH = path.join(__dirname, '..', 'helpers', 'cli-entry.ts');
 const DENY_DNS_PATH = path.join(__dirname, '..', 'fixtures', 'deny-dns.cjs');
 const FIXTURES_PATH = path.join(__dirname, '..', 'fixtures');
 const MESSAGE = path.join(FIXTURES_PATH, 'message1.eml');
 
 const runCli = async (args: any) =>
-    execFile('node', ['-r', DENY_DNS_PATH, CLI_PATH].concat(args), {
+    execFile('node', ['-r', DENY_DNS_PATH, '--import', 'tsx', CLI_PATH].concat(args), {
         env: Object.assign({}, process.env, { DENY_DNS: '1' }),
         maxBuffer: 10 * 1024 * 1024
     });

@@ -14,7 +14,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const packageData = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'package.json'), 'utf8'));
 
-const CLI_PATH = path.join(__dirname, '..', '..', 'bin', 'mailauth.cjs');
+// the CLI from src/, see test/helpers/cli-entry.ts
+const CLI_PATH = path.join(__dirname, '..', 'helpers', 'cli-entry.ts');
 const DENY_DNS_PATH = path.join(__dirname, '..', 'fixtures', 'deny-dns.cjs');
 const FIXTURES_PATH = path.join(__dirname, '..', 'fixtures');
 
@@ -23,7 +24,7 @@ const signArgs = ['-k', path.join(FIXTURES_PATH, 'private-rsa.pem'), '-d', 'tahv
 
 // run the CLI in a child process where every DNS lookup is reported and rejected
 const runCli = async (args: any) =>
-    execFile('node', ['-r', DENY_DNS_PATH, CLI_PATH].concat(args), {
+    execFile('node', ['-r', DENY_DNS_PATH, '--import', 'tsx', CLI_PATH].concat(args), {
         env: Object.assign({}, process.env, { DENY_DNS: '1' })
     });
 

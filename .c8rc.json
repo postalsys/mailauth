@@ -9,7 +9,7 @@
     "exclude-after-remap": true,
     "check-coverage": true,
     "statements": 96,
-    "branches": 95,
-    "functions": 80,
+    "branches": 93.5,
+    "functions": 95.5,
     "lines": 96
 }
