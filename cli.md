@@ -70,6 +70,8 @@ The mailauth CLI offers several commands to perform different email authenticati
 9. [`bodyhash`](#bodyhash) &mdash; Generate the body hash value for an email.
 10. [`license`](#license) &mdash; Display licenses for mailauth and included modules.
 
+Every command writes its result, the signed or sealed message or the JSON report, to standard output, so it can be redirected to a file or piped into the next command, for example `mailauth sign -k private.key -d example.com -s s1 message.eml | mailauth report`. Everything else, including `--verbose` diagnostics, warnings and error messages, goes to standard error. The exit status is 0 when the command ran, also when it reports a failed authentication check, and 1 when the command itself failed, for example because the message could not be read or an option was invalid.
+
 > [!WARNING]
 > DKIM2 is not a published RFC yet. The DKIM2 commands are experimental and built against draft-ietf-dkim-dkim2-spec-06, draft-ietf-dkim-dkim2-dns-00 and draft-ietf-dkim-dkim2-bcp-01, see [DKIM2](README.md#dkim2).
 
