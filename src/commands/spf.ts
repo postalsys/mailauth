@@ -61,14 +61,8 @@ const cmd = async (argv: SpfArgv): Promise<void> => {
 
     opts.resolver = await createResolver(argv);
 
-    let result;
-    try {
-        // --client-ip is a required option
-        result = await spf(opts as SPFOptions);
-    } catch (err) {
-        console.error(err);
-        process.exit(1);
-    }
+    // --client-ip is a required option
+    let result = await spf(opts as SPFOptions);
 
     if (argv.headersOnly) {
         process.stdout.write(result.header + '\r\n');

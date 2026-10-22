@@ -161,6 +161,25 @@ describe('CLI argument handling', () => {
             expect(err.code).to.equal(1);
             expect(err.stdout).to.not.include('DKIM-Signature');
         });
+
+        // process.stdout is an asynchronous pipe on macOS and Windows and process.exit()
+        // does not wait for it, so a message larger than the pipe buffer used to lose
+        // its tail when the CLI exited right after the last write
+        it('should write the whole message before exiting', { timeout: 15000 }, async () => {
+            let dir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'mailauth-cli-'));
+            try {
+                let body = Array.from({ length: 10000 }, (_, i) => `line ${i} ${'x'.repeat(40)}`).join('\r\n') + '\r\n';
+                let message = `From: sender@example.com\r\nTo: rcpt@example.com\r\nSubject: large\r\n\r\n${body}`;
+                let messagePath = path.join(dir, 'large.eml');
+                await fs.promises.writeFile(messagePath, message);
+
+                let { stdout } = await runCli(['sign'].concat(signArgs, [messagePath]));
+                expect(stdout).to.match(/^DKIM-Signature:/);
+                expect(stdout.slice(stdout.indexOf('From: sender'))).to.equal(message);
+            } finally {
+                await fs.promises.rm(dir, { recursive: true, force: true });
+            }
+        });
     });
 
     describe('report', () => {

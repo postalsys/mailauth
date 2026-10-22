@@ -58,17 +58,17 @@ const runCommand = <A>(fn: (argv: A) => Promise<void>, failMessage: string) =>
             });
         }
 
-        fn(argv as A)
-            .then(() => {
-                process.exit();
-            })
-            .catch((err: any) => {
-                if (!err || !err.suppress) {
-                    console.error(failMessage);
-                    console.error(err);
-                }
-                process.exit(1);
-            });
+        // No process.exit() here: it would not wait for process.stdout to drain, and stdout is
+        // an asynchronous pipe on macOS and Windows, so a message piped into the next command
+        // could lose its tail. The commands leave nothing behind that keeps the event loop
+        // alive, so the process ends on its own once the output is written.
+        fn(argv as A).catch((err: any) => {
+            if (!err || !err.suppress) {
+                console.error(failMessage);
+                console.error(err);
+            }
+            process.exitCode = 1;
+        });
     };
 
 // Collects the values of an option that can be repeated
@@ -358,7 +358,8 @@ export function run(argv: string[], opts: RunOptions): void {
                 if (err) {
                     console.error('Failed to load license information.');
                     console.error(err);
-                    return process.exit(1);
+                    process.exitCode = 1;
+                    return;
                 }
 
                 console.error('mailauth License');
@@ -372,14 +373,14 @@ export function run(argv: string[], opts: RunOptions): void {
                     if (err) {
                         console.error('Failed to load included modules license information.');
                         console.error(err);
-                        return process.exit(1);
+                        process.exitCode = 1;
+                        return;
                     }
 
                     console.error('Included Modules');
                     console.error('================');
 
                     console.error(data.toString().trim());
-                    process.exit();
                 });
             });
         });
