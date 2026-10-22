@@ -133,10 +133,10 @@
         "fast-xml-parser": "5.11.2",
         "ipaddr.js": "2.5.0",
         "joi": "18.3.0",
-        "libmime": "5.5.2",
-        "nodemailer": "10.1.7",
+        "libmime": "5.6.2",
+        "nodemailer": "10.2.0",
         "punycode.js": "2.3.1",
-        "tldts": "7.4.18",
+        "tldts": "7.4.19",
         "undici": "8.12.3"
     },
     "engines": {
