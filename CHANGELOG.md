@@ -1,5 +1,12 @@
 # Changelog
 
+## [8.0.4](https://github.com/postalsys/mailauth/compare/v8.0.3...v8.0.4) (2026-10-22)
+
+
+### Bug Fixes
+
+* document the CLI output streams and exit status, 8.0.3 never reached npm ([79e7895](https://github.com/postalsys/mailauth/commit/79e78959f5078ed50b2dee88f030eed8df33bc48))
+
 ## [8.0.3](https://github.com/postalsys/mailauth/compare/v8.0.2...v8.0.3) (2026-10-22)
 
 
