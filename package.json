@@ -66,9 +66,9 @@
         "build": "node scripts/build.js",
         "typecheck": "node scripts/build.js --generate-only && tsc -p tsconfig.json",
         "pretest": "npm run build",
-        "test": "node --import tsx --test --test-concurrency=1 \"test/**/*-test.ts\"",
+        "test": "node scripts/run-tests.cjs",
         "pretest:coverage": "npm run build",
-        "test:coverage": "c8 node --import tsx --test --test-concurrency=1 \"test/**/*-test.ts\"",
+        "test:coverage": "c8 node scripts/run-tests.cjs",
         "pretest:cjs": "npm run build",
         "test:cjs": "node --no-experimental-require-module test/package/cjs-smoke.cjs",
         "pretest:pkg": "npm run build",
@@ -109,7 +109,7 @@
     "devDependencies": {
         "@stryker-mutator/core": "10.0.0",
         "@types/chai": "5.2.3",
-        "@types/node": "22.20.5",
+        "@types/node": "20.19.43",
         "@yao-pkg/pkg": "6.23.0",
         "c8": "12.0.0",
         "chai": "6.3.0",
@@ -137,10 +137,10 @@
         "nodemailer": "10.2.0",
         "punycode.js": "2.3.1",
         "tldts": "7.4.19",
-        "undici": "8.12.3"
+        "undici": "7.30.1"
     },
     "engines": {
-        "node": ">=22.19.0"
+        "node": ">=20.18.1"
     },
     "bin": {
         "mailauth": "bin/mailauth.cjs"

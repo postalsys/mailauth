@@ -8,8 +8,13 @@ module.exports = {
         if (name === 'commander') {
             return 'minor';
         }
-        // @types/node stays on the 22.x line so the compiler rejects APIs that do not
-        // exist on Node 22, the oldest supported version
+        // undici 8 needs Node.js 22.19, and the oldest version supported here is 20, as
+        // for every other package of ours, so undici stays on the 7.x line
+        if (name === 'undici') {
+            return 'minor';
+        }
+        // @types/node stays on the 20.x line so the compiler rejects APIs that do not
+        // exist on Node 20, the oldest supported version
         if (name === '@types/node') {
             return 'minor';
         }

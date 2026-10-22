@@ -4,13 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-mailauth is a Node.js library and CLI tool for email authentication. It implements SPF, DKIM, DKIM2, DMARC, ARC, BIMI, and MTA-STS. Written in TypeScript under `src/` and published as a dual package: ES modules in `dist/esm/` and CommonJS in `dist/cjs/`, each with its own type declarations. No native dependencies. Requires Node.js >= 22.19.0.
+mailauth is a Node.js library and CLI tool for email authentication. It implements SPF, DKIM, DKIM2, DMARC, ARC, BIMI, and MTA-STS. Written in TypeScript under `src/` and published as a dual package: ES modules in `dist/esm/` and CommonJS in `dist/cjs/`, each with its own type declarations. No native dependencies. Requires Node.js >= 20.18.1 (the floor of undici 7, see `.ncurc.cjs`).
 
 ## Commands
 
-- **Run all tests:** `npm test` (builds `dist/` first, then runs every `test/**/*-test.ts` with the Node.js test runner through tsx)
+- **Run all tests:** `npm test` (builds `dist/` first, then `scripts/run-tests.cjs` runs every `test/**/*-test.ts` with the Node.js test runner through tsx; the script lists the files itself because Node 20 does not expand a glob in a `--test` argument and the CI also runs on Windows)
 - **Run a single test file:** `node --import tsx --test test/dkim/body/relaxed-test.ts`
-- **Run tests matching a name:** `node --import tsx --test --test-name-pattern="pattern" "test/**/*-test.ts"`
+- **Run tests matching a name:** `node scripts/run-tests.cjs --test-name-pattern="pattern"`
 - **Lint and type-check:** `npm run lint` (`tsc --noEmit` over `src/` and `test/`, then ESLint with type-aware rules on `src/`)
 - **Format:** `npm run format`, check with `npm run format:check` (Prettier)
 - **Build:** `npm run build` (also runs on install from git and before publish through `prepare`)

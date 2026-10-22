@@ -16,7 +16,7 @@
 - **BIMI** resolving and **VMC** validation
 - **MTA-STS** helper functions
 
-mailauth is written in TypeScript and ships compiled JavaScript with type declarations, requiring no external applications or native compilation. It runs on any server or device with Node.js version 22.19.0 or later.
+mailauth is written in TypeScript and ships compiled JavaScript with type declarations, requiring no external applications or native compilation. It runs on any server or device with Node.js version 20.18.1 or later.
 
 > [!NOTE]
 > mailauth is used by [EmailEngine](https://emailengine.app/) for validating email authentication settings. See the [Email Authentication Testing documentation](https://learn.emailengine.app/docs/sending/deliverability/email-authentication-testing) for details.

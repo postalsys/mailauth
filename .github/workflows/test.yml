@@ -15,11 +15,11 @@ jobs:
     test:
         strategy:
             matrix:
-                node: [22.x, 24.x, 26.x]
+                node: [20.x, 22.x, 24.x, 26.x]
                 os: [ubuntu-latest, windows-latest]
                 include:
                     # The minimum version allowed by "engines" in package.json
-                    - node: 22.19.0
+                    - node: 20.18.1
                       os: ubuntu-latest
         runs-on: ${{ matrix.os }}
         steps:
