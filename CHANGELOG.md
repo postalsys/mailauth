@@ -1,5 +1,13 @@
 # Changelog
 
+## [8.0.3](https://github.com/postalsys/mailauth/compare/v8.0.2...v8.0.3) (2026-10-22)
+
+
+### Bug Fixes
+
+* let the CLI end on its own so piped output is never cut short ([7b8e2f4](https://github.com/postalsys/mailauth/commit/7b8e2f4b61dd14b369e37e5900a9eb7754000349))
+* support Node.js 20 again by holding undici on the 7.x line ([add9fc1](https://github.com/postalsys/mailauth/commit/add9fc17e96596d13df0be2bd289a560a325694f))
+
 ## [8.0.2](https://github.com/postalsys/mailauth/compare/v8.0.1...v8.0.2) (2026-10-22)
 
 
