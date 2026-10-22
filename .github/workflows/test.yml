@@ -53,6 +53,23 @@ jobs:
             - run: npm ci
             - run: npm run test:pkg
 
+    # Compares DKIM signing and verification with OpenDKIM, the test file is skipped where
+    # OpenDKIM is not installed
+    opendkim:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+            - name: Use Node.js 24.x
+              uses: actions/setup-node@v7
+              with:
+                  node-version: 24.x
+                  cache: npm
+            - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends opendkim
+            - run: npm ci
+            - run: node --import tsx --test test/dkim/opendkim-interop-test.ts
+              env:
+                  OPENDKIM_REQUIRED: 1
+
     # Coverage is gated on a single Node.js version, the numbers are the same across versions
     coverage:
         runs-on: ubuntu-latest

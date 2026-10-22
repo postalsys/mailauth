@@ -17,6 +17,7 @@ mailauth is a Node.js library and CLI tool for email authentication. It implemen
 - **CommonJS guard:** `npm run test:cjs` (see Platform constraints)
 - **pkg binaries:** `npm run test:pkg` (slow, see Platform constraints)
 - **Coverage (c8, source-mapped to `src/`, report in `coverage/`):** `npm run test:coverage`, fails below the thresholds in `.c8rc.json`. The CLI tests run `src/cli.ts` in child processes through tsx (`test/helpers/cli-entry.ts`), so their coverage counts too; the built `bin/mailauth.cjs` is run by the CommonJS and pkg smoke tests
+- **OpenDKIM interoperability:** `test/dkim/opendkim-interop-test.ts` signs and verifies against OpenDKIM and is skipped when `opendkim` is not installed (CI installs it in the `opendkim` job). Without a local package (macOS), run it in a container: `OPENDKIM=test/helpers/opendkim-docker.sh node --import tsx --test test/dkim/opendkim-interop-test.ts`
 - **Mutation testing (StrykerJS, opt-in, slow, report in `reports/mutation/`):** `npm run mutation`. Not part of `npm test` or CI; `stryker.config.json` lists the mutated modules
 
 ## Code Style
