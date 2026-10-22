@@ -1,5 +1,12 @@
 # Changelog
 
+## [8.0.2](https://github.com/postalsys/mailauth/compare/v8.0.1...v8.0.2) (2026-10-22)
+
+
+### Bug Fixes
+
+* **deps:** bump libmime to 5.6.2, nodemailer to 10.2.0 and tldts to 7.4.19 ([285f76e](https://github.com/postalsys/mailauth/commit/285f76eb842f883aa4fa0e6be53ad8f3516a423e))
+
 ## [8.0.1](https://github.com/postalsys/mailauth/compare/v8.0.0...v8.0.1) (2026-10-19)
 
 
