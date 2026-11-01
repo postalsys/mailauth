@@ -90,14 +90,14 @@ interface Atom {
 const MI_KEY = 'message-instance';
 const SIG_KEY = 'dkim2-signature';
 
-// Section 4.1: header fields that are not signed, processed as if they were not present
+// Section 4.1 of draft-ietf-dkim-dkim2-spec-08: header fields that are not signed, processed as if they
+// were not present
 const UNSIGNED_FIELDS = new Set([
     'apparently-to',
     'arc-authentication-results',
     'arc-message-signature',
     'arc-seal',
     'authentication-results',
-    'auto-submitted',
     'delivered-to',
     'dkim-signature',
     'dl-expansion-history',
@@ -105,7 +105,6 @@ const UNSIGNED_FIELDS = new Set([
     'received',
     'return-path',
     'sio-label-history',
-    'vbr-info',
     'x400-received',
     'x400-trace'
 ]);

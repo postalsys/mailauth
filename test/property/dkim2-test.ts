@@ -40,7 +40,8 @@ const fieldName = fc.constantFrom(
     'Received',
     'Received-SPF',
     'Authentication-Results',
-    'Delivered-To'
+    'Delivered-To',
+    'Auto-Submitted'
 );
 // values with runs of whitespace, folds and 8-bit bytes
 const fieldValue = bytesFrom('ab \t\xe9', { minLength: 1, maxLength: 30 }).map(value => value.replace(/^[ \t]+/, '') || 'x');

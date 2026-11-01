@@ -21,7 +21,6 @@ const UNSIGNED = [
     'arc-message-signature',
     'arc-seal',
     'authentication-results',
-    'auto-submitted',
     'delivered-to',
     'dkim-signature',
     'dl-expansion-history',
@@ -29,7 +28,6 @@ const UNSIGNED = [
     'received',
     'return-path',
     'sio-label-history',
-    'vbr-info',
     'x400-received',
     'x400-trace'
 ];

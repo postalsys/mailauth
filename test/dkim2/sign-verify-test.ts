@@ -188,12 +188,22 @@ describe('DKIM2 signing and verification', () => {
         let signed = await signMessage(input, originatorOptions());
         let changed = Buffer.concat([
             Buffer.from(
-                'Authentication-Results: mx.example.net; dkim2=pass\r\nReceived: from x by y\r\nReceived-SPF: pass\r\nX-Spam: 0\r\nReturn-Path: <a@b>\r\nDelivered-To: rcpt@example.net\r\nARC-Seal: i=1\r\nDKIM-Signature: v=1\r\nAuto-Submitted: no\r\n'
+                'Authentication-Results: mx.example.net; dkim2=pass\r\nReceived: from x by y\r\nReceived-SPF: pass\r\nX-Spam: 0\r\nReturn-Path: <a@b>\r\nDelivered-To: rcpt@example.net\r\nARC-Seal: i=1\r\nDKIM-Signature: v=1\r\n'
             ),
             tamper(tamper(signed, 'X-Original: 1\r\n', ''), 'Received: from a by b', 'Received: changed')
         ]);
         let result = await verify(changed, envelope);
         expect(result.status.result).to.equal('pass');
+    });
+
+    it('signs Auto-Submitted and VBR-Info, which draft-ietf-dkim-dkim2-spec-08 section 4.1 no longer ignores', async () => {
+        for (let field of ['Auto-Submitted: auto-replied', 'VBR-Info: md=example.com; mc=example.net; mv=example.org']) {
+            let signed = await signMessage(message([field]), originatorOptions());
+            expect((await verify(signed, envelope)).status.result).to.equal('pass');
+
+            let result = await verify(tamper(signed, `${field}\r\n`, ''), envelope);
+            expect(result.status.result).to.equal('fail');
+        }
     });
 
     it('passes when header fields with different names are reordered or refolded', async () => {
