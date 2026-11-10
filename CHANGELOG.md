@@ -1,5 +1,16 @@
 # Changelog
 
+## [8.0.5](https://github.com/postalsys/mailauth/compare/v8.0.4...v8.0.5) (2026-11-10)
+
+
+### Bug Fixes
+
+* **dkim2:** sign Auto-Submitted and VBR-Info as in spec-08 ([66dc826](https://github.com/postalsys/mailauth/commit/66dc82669db31b7de0042c48ec66b54f47bdc541))
+* **dkim2:** sign Auto-Submitted and VBR-Info as in spec-08 ([1b61603](https://github.com/postalsys/mailauth/commit/1b61603a18185ce7f2958b48e0e603cdbb2a1122))
+* report a skipped DMARC evaluation as dmarc=permerror in Authentication-Results ([8c0b96c](https://github.com/postalsys/mailauth/commit/8c0b96c057245f7db20b6d3ae557636b7c296dd0))
+* update joi to 18.3.2 for GHSA-4528-x5fx-h6hg ([797ae04](https://github.com/postalsys/mailauth/commit/797ae04989c67ff2faf0ea6dcd76224e727bd6ae))
+* update joi to 18.3.2 for GHSA-4528-x5fx-h6hg ([bbc492d](https://github.com/postalsys/mailauth/commit/bbc492d5597291c1951edc0a579d01206c650217)), closes [#181](https://github.com/postalsys/mailauth/issues/181)
+
 ## [8.0.4](https://github.com/postalsys/mailauth/compare/v8.0.3...v8.0.4) (2026-10-22)
 
 
