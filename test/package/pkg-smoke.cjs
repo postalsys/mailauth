@@ -9,6 +9,8 @@
 //    installed copy resolves it. The application requires mailauth, deep imports included,
 //    and runs authenticate() inside the binary.
 // 2. The mailauth CLI itself is packaged from bin/mailauth.cjs and run.
+// 3. The Windows CLI is packaged and given its icon and version resource by winconf.cjs, as
+//    build-dist does, and run when the host is Windows x64.
 //
 // pkg snapshots a CommonJS require() graph and can not load ES modules, so either binary
 // fails at startup when an ES module creeps into the graph.
@@ -94,6 +96,19 @@ try {
     const help = run(cliOut, ['--help']);
     assert.match(help, /dkim2-verify/);
     console.log('pkg: CLI binary ok');
+
+    // 3. The Windows CLI as build-dist makes it: pkg, then winconf.cjs for the icon and the
+    //    version resource. winconf.cjs refuses to write an executable whose appended payload
+    //    moved, which is what makes one that cannot start, so this catches it on any platform
+    const winOut = path.join(dir, 'mailauth-win.exe');
+    run(process.execPath, [pkgBin, path.join(root, 'package.json'), '--targets', `node${process.versions.node.split('.')[0]}-win-x64`, '--output', winOut], {
+        cwd: root
+    });
+    run(process.execPath, [path.join(root, 'winconf.cjs'), winOut]);
+    if (process.platform === 'win32' && process.arch === 'x64') {
+        assert.strictEqual(run(winOut, ['--version']).trim(), pkg.version);
+    }
+    console.log('pkg: Windows CLI binary with resources ok');
 } finally {
     fs.rmSync(dir, { recursive: true, force: true });
 }
