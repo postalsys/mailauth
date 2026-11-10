@@ -139,7 +139,8 @@ describe('Property: generated Authentication-Results and Received-SPF header fie
                         'dkim',
                         'spf',
                         ...((res.arc as any)?.info ? ['arc'] : []),
-                        ...((res.dmarc as any)?.info ? ['dmarc'] : []),
+                        // a skipped DMARC evaluation is reported as dmarc=permerror
+                        ...((res.dmarc as any)?.info || res.dmarcSkipReason ? ['dmarc'] : []),
                         ...((res.bimi as any)?.info ? ['bimi'] : [])
                     ]);
 

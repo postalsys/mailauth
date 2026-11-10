@@ -212,6 +212,12 @@ const authenticate = async (input: MessageInput, opts?: AuthenticateOptions): Pr
         }));
         if ((dmarcResult as DMARCResult | undefined)?.info) {
             arHeader.push(`${libmime.foldLines((dmarcResult as DMARCResult).info, 160)}`);
+        } else if (!dmarcResult && dmarcSkipReason) {
+            // RFC 9989 section 11.5: a message DMARC can not be evaluated for is one a receiver
+            // has to recognize as a possible threat, and an absent dmarc= entry reads the same as
+            // a message nobody checked. permerror is the unrecoverable evaluation error of the
+            // RFC 9989 registry, and the reason is one of the fixed AuthorDomainReason keywords
+            arHeader.push(`dmarc=permerror reason="${dmarcSkipReason}"`);
         }
 
         if (dkimAligned && dmarcResult) {

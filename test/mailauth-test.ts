@@ -270,6 +270,41 @@ describe('authenticate Tests', () => {
             expect(result.dkim.fromFields).to.equal(2);
             expect(result.dmarc).to.be.false;
             expect(result.dmarcSkipReason).to.equal('multiple-from-fields');
+            expect(result.headers).to.include('dmarc=permerror reason="multiple-from-fields"');
+        });
+
+        // RFC 9989 section 11.5: a header-only consumer has to see that DMARC could not be
+        // evaluated, an absent dmarc= entry reads the same as a message nobody checked. A domain
+        // with an invisible character renders as the real one in most mail clients.
+        it('Should report a skipped DMARC evaluation as permerror in Authentication-Results', async () => {
+            for (const [from, reason] of [
+                ['From: ceo@bank\ufeff.example\r\n', 'invalid-author-domain'],
+                ['From: ceo@bank\u00a0.example\r\n', 'invalid-author-domain'],
+                ['From: a@bank.example, b@other.example\r\n', 'multiple-author-domains'],
+                ['', 'no-author-domain']
+            ]) {
+                const result = await runFrom(from);
+                expect(result.dmarc, from).to.be.false;
+                expect(result.dmarcSkipReason, from).to.equal(reason);
+                expect(result.headers, from).to.include(`dmarc=permerror reason="${reason}"`);
+                expect(result.headers.match(/dmarc=/g), from).to.have.length(1);
+            }
+        });
+
+        it('Should not add a permerror entry when DMARC is evaluated or disabled', async () => {
+            let result = await runFrom('From: ceo@bank.example\r\n');
+            expect(result.headers).to.include('dmarc=fail');
+            expect(result.headers).to.not.include('dmarc=permerror');
+
+            result = await authenticate(Buffer.from('From: ceo@bank\ufeff.example\r\nSubject: x\r\n\r\nhi\r\n'), {
+                ip: '192.0.2.1',
+                helo: 'h.attacker.example',
+                sender: 'x@attacker.example',
+                mta: 'mx.example.net',
+                disableBimi: true,
+                disableDmarc: true,
+                resolver: zoneResolver({})
+            });
             expect(result.headers).to.not.include('dmarc=');
         });
 
