@@ -135,7 +135,7 @@ The strings of section 11 are used as written, including their inconsistencies (
 
 ## Interoperability
 
-mailauth has been checked against three independent DKIM2 implementations. Where an implementation built for an earlier revision of the specification disagrees with draft-ietf-dkim-dkim2-spec-06, mailauth follows spec-06.
+mailauth has been checked against three independent DKIM2 implementations. Where an implementation built for an earlier revision of the specification disagrees with draft-ietf-dkim-dkim2-spec-06, mailauth follows spec-06. The exception is the list of unsigned header fields, which follows section 4.1 of draft-ietf-dkim-dkim2-spec-08: `Auto-Submitted` and `VBR-Info`, unsigned in spec-06 and spec-07, are signed, so a message that carries either field hashes differently under those two drafts.
 
 - **[croessner/dkim2](https://github.com/croessner/dkim2)** (draft-ietf-dkim-dkim2-spec-06 and draft-ietf-dkim-dkim2-dns-00, the same drafts as mailauth). Its public verification vectors are part of the test suite (`test/fixtures/dkim2-croessner`), and its header, body and section 9.6 canonicalization, Recipe application, chain of custody, DNS record and crypto vectors give the same results. The differences are choices outside the protocol:
     - a message with no DKIM2 header fields is `none` in mailauth (draft-gondwana-dkim2-authres-00 section 3.1, and draft-ietf-dkim-dkim2-bcp-01 section 6.1.3 says the absence alone is not a reason to reject), a PERMERROR in croessner/dkim2, which also refuses messages with bare LF line endings
