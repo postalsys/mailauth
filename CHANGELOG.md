@@ -1,5 +1,13 @@
 # Changelog
 
+## [8.0.6](https://github.com/postalsys/mailauth/compare/v8.0.5...v8.0.6) (2026-11-10)
+
+
+### Bug Fixes
+
+* ship a Windows CLI binary that starts ([97b09ac](https://github.com/postalsys/mailauth/commit/97b09aca2c765bc52b314d388dc3ed67c4f28215))
+* ship a Windows CLI binary that starts ([7431a1f](https://github.com/postalsys/mailauth/commit/7431a1f79d3ec0e6455d5c9311e497789c368716))
+
 ## [8.0.5](https://github.com/postalsys/mailauth/compare/v8.0.4...v8.0.5) (2026-11-10)
 
 
