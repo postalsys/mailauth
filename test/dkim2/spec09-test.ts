@@ -767,6 +767,30 @@ describe('DKIM2 draft-ietf-dkim-dkim2-spec-09', () => {
         });
     });
 
+    describe('Authentication-Results output', () => {
+        it('keeps attacker text from a Recipe error inside one escaped comment', async () => {
+            let input = message();
+            let { fields, body } = reference.splitMessage(input.toString('binary'));
+            let hashes = `h=sha256:${reference.headerHash(fields, 'sha256')}:${reference.bodyHash(body, 'sha256')}`;
+            let recipe = '{"b":[{"d":["x"],"evil":")\\r\\n; dkim2=pass header.d=bank.example (\\u0000"}]}';
+            let signed = craftSignature(
+                Buffer.concat([Buffer.from(`Message-Instance: m=2; ${hashes}; r=${b64(recipe)}\r\nMessage-Instance: m=1; ${hashes}\r\n`), input]),
+                `DKIM2-Signature: i=1; m=2; t=${Math.floor(Date.now() / 1000)}; d=example.com; mf=${b64('<sender@example.com>')}; rt=${b64('<rcpt@example.net>')}; s=rsa:rsa-sha256:;`,
+                { rsa: rsaKey }
+            );
+            let result = await dkim2Verify(signed, { resolver: resolver() });
+            expect(result.status.result).to.equal('permerror');
+            expect(result.status.comment).to.match(/^Message-Instance m=2 recipe \{"d":\["x"\],"evil":/);
+            // one resinfo: no line break, and every parenthesis inside the comment is escaped, so
+            // the attacker text can not end the comment and add a result of its own
+            expect(result.info).to.not.match(/[\r\n\u0000]/);
+            let comment = result.info.match(/^dkim2=permerror \((.*)\) header\.d=example\.com$/)![1];
+            expect(comment.replace(/\\./g, '')).to.not.match(/[()]/);
+            // the text is still there, as text inside the comment
+            expect(comment).to.include('\\)').and.to.include('dkim2=pass header.d=bank.example');
+        });
+    });
+
     describe('instance numbering (sections 13.2 and 14.2)', () => {
         it('reports a highest signature that does not cover the highest instance', async () => {
             let input = message();
