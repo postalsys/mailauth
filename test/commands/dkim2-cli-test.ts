@@ -300,6 +300,26 @@ describe('CLI dkim2-sign and report --dkim2', () => {
             // unless an out-of-band arrangement covers it
             let { stdout: outOfBand } = await runCli(['dkim2-sign', '--out-of-band', ...args]);
             expect(outOfBand).to.match(/^DKIM2-Signature: i=2; m=2;/);
+
+            // without --received-* the arrival envelope is not compared
+            let unknown = [...listArgs(), '-f', 'bounce@list.example.org', '-r', 'member@example.net', '--recipe', recipePath, revisedPath];
+            let { stdout: noEnvelope } = await runCli(['dkim2-sign', ...unknown]);
+            expect(noEnvelope).to.match(/^DKIM2-Signature: i=2; m=2;/);
+
+            // a broken signature is refused with the DNS cache too, and signed with --out-of-band
+            let broken = path.join(dir, 'broken.eml');
+            await fs.promises.writeFile(
+                broken,
+                revised.replace(/(s=rsa:rsa-sha256:\s*)(.)/, (m: string, lead: string, c: string) => lead + (c === 'A' ? 'B' : 'A'))
+            );
+            let brokenArgs = [...listArgs(), '-f', 'bounce@list.example.org', '-r', 'member@example.net', '--recipe', recipePath, broken];
+            err = await runCli(['dkim2-sign', ...brokenArgs]).then(
+                () => null,
+                err => err
+            );
+            expect(err.stderr).to.include('selector rsa incorrect signature');
+            let { stdout: brokenSigned } = await runCli(['dkim2-sign', '--out-of-band', ...brokenArgs]);
+            expect(brokenSigned).to.match(/^DKIM2-Signature: i=2; m=2;/);
         });
 
         it('signs an imaginary hop with --next-domain', { timeout: 15000 }, async () => {

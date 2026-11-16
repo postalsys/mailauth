@@ -530,6 +530,64 @@ describe('DKIM2 draft-ietf-dkim-dkim2-spec-09', () => {
             expect(declared.m).to.equal(3);
         });
 
+        it('refuses a lower instance that does not verify, while the highest one does', async () => {
+            let first = await toList();
+            // the list changed the body and declared a Recipe that does not recreate the original
+            let changed = Buffer.from(first.toString('binary').replace('Hello world!', 'Hello there!'), 'binary');
+            let { fields, body } = reference.splitMessage(changed.toString('binary'));
+            let recipe = { b: [{ c: [1, 3] }] };
+            let instance = `Message-Instance: m=2; h=sha256:${reference.headerHash(fields, 'sha256')}:${reference.bodyHash(body, 'sha256')}; r=${b64(JSON.stringify(recipe))}`;
+            let header = `DKIM2-Signature: i=2; m=2; t=1790812860; d=list.example.org; mf=${b64('<bounce@list.example.org>')}; rt=${b64('<next@example.com>')}; s=lrsa:rsa-sha256:;`;
+            let listed = craftSignature(Buffer.concat([Buffer.from(`${instance}\r\n`), changed]), header, { lrsa: generated.rsa });
+
+            // the next hop does not change the message, so only the verification can catch it
+            let err = await dkim2Sign(listed, {
+                signingDomain: 'example.com',
+                selector: 'rsa',
+                privateKey: rsaKey,
+                mailFrom: 'next@example.com',
+                rcptTo: 'final@example.org',
+                signTime: new Date('2026-10-01T00:02:00Z'),
+                resolver: resolver()
+            }).catch(err => err);
+            expect(err.code).to.equal('ENOTVERIFIED');
+            expect(err.message).to.equal(
+                'Can not sign a message that is not a Fully Verified DKIM2 Message (dkim2=fail: Message-Instance m=1 body hash sha256 mismatch)'
+            );
+        });
+
+        it('does not let the nd= domain skip the checks of the lower signatures', async () => {
+            let first = await toList();
+            let withNd = await signMessage(first, listOptions({ mailFrom: undefined, rcptTo: undefined, nextDomain: 'fwd.example.net' }));
+            let broken = Buffer.from(
+                withNd.toString('binary').replace(/(s=rsa:rsa-sha256:\s*)(.)/, (m, lead, c) => lead + (c === 'A' ? 'B' : 'A')),
+                'binary'
+            );
+            let err = await dkim2Sign(broken, {
+                signingDomain: 'fwd.example.net',
+                selector: 'frsa',
+                privateKey: generated.rsa,
+                mailFrom: 'bounce@fwd.example.net',
+                rcptTo: 'member@example.net',
+                signTime: new Date('2026-10-01T00:02:00Z'),
+                resolver: resolver()
+            }).catch(err => err);
+            // i=2 signs the i=1 header field, so the change breaks both, and the result is reported
+            expect(err.code).to.equal('ENOTVERIFIED');
+            expect(err.message).to.match(/dkim2=fail: DKIM2-Signature i=[12] selector l?rsa incorrect signature\)$/);
+            let verified = await dkim2Verify(broken, { resolver: resolver(), curTime: new Date('2026-10-01T00:02:00Z') });
+            expect(verified.errors.map(error => error.message)).to.include('DKIM2-Signature i=1 selector rsa incorrect signature');
+        });
+
+        it('compares the arrival envelope only when it is given', async () => {
+            let first = await toList();
+            // without `received` an unchanged copy sent to anyone is signed, the envelope is unknown
+            expect((await dkim2Sign(first, listOptions())).i).to.equal(2);
+            let err = await dkim2Sign(first, listOptions({ received: { mailFrom: 'other@example.com' } })).catch(err => err);
+            expect(err.code).to.equal('ENOTVERIFIED');
+            expect(err.message).to.include('MAIL FROM other@example.com did not match');
+        });
+
         it('completes an nd= hop only with the nd= domain', async () => {
             let first = await toList();
             let withNd = await signMessage(first, listOptions({ mailFrom: undefined, rcptTo: undefined, nextDomain: 'fwd.example.net' }));

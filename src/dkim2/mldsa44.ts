@@ -290,4 +290,7 @@ const mlDsa44Verify = (publicKey: Buffer, message: Buffer, signature: Buffer, co
     return expected.equals(cTilde);
 };
 
-export { mlDsa44Verify, PUBLIC_KEY_LENGTH, SIGNATURE_LENGTH };
+// the building blocks, for tests that construct signatures
+const internals = { ntt, inverseNtt, mod, mul, rejNttPoly, useHint, decompose, shake, packBits };
+
+export { mlDsa44Verify, PUBLIC_KEY_LENGTH, SIGNATURE_LENGTH, internals };

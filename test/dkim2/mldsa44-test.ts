@@ -10,7 +10,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, config } from 'chai';
 
-import { mlDsa44Verify } from '../../src/dkim2/mldsa44.js';
+import { mlDsa44Verify, internals as M } from '../../src/dkim2/mldsa44.js';
 import { supportsMlDsa, verifySignature } from '../../src/dkim2/algorithms.js';
 import { createKeyLookup } from '../../src/dkim2/key.js';
 import { dkim2Verify } from '../../src/dkim2/verify.js';
@@ -105,6 +105,163 @@ describe('ML-DSA-44 verification in JavaScript (FIPS 204)', () => {
         large[Z_START + 1] = 0;
         large[Z_START + 2] &= 0xfc;
         expect(mlDsa44Verify(publicKey, input, large, CONTEXT)).to.be.false;
+    });
+
+    describe('signatures built for a key with t1 = 0', () => {
+        // With t1 = 0 the verifier computes w' = A z, which does not depend on c~, so any z and hints
+        // give a signature that verifies once c~ = H(mu || w1Encode(UseHint(h, A z))). Changing only
+        // z, or only the hint encoding, then shows that its own check rejects
+        const Q = 8380417;
+        const GAMMA1 = 1 << 17;
+        const LIMIT = GAMMA1 - 78;
+        const HALF_ALPHA = (Q - 1) / 88;
+        const rho = crypto.createHash('sha256').update('mailauth').digest();
+        const key = Buffer.concat([rho, Buffer.alloc(1280)]);
+        const message = Buffer.from('message');
+
+        // the 2420 byte signature of c~, z and hint positions per polynomial
+        const encode = (cTilde: Buffer, z: number[][], hints: Buffer) =>
+            Buffer.concat([
+                cTilde,
+                ...z.map(poly =>
+                    M.packBits(
+                        poly.map(value => GAMMA1 - value),
+                        18
+                    )
+                ),
+                hints
+            ]);
+        const hintBytes = (positions: number[][]) => {
+            let y = Buffer.alloc(84);
+            let index = 0;
+            positions.forEach((list, i) => {
+                for (let position of list) {
+                    y[index++] = position;
+                }
+                y[80 + i] = index;
+            });
+            return y;
+        };
+        // the w' coefficients of z, and the c~ that makes z and the hints h verify
+        const azOf = (z: number[][]) => {
+            let zHat = z.map(poly => M.ntt(poly.map(M.mod)));
+            return [0, 1, 2, 3].map(i => {
+                let acc: number[] = new Array(256).fill(0);
+                for (let j = 0; j < 4; j++) {
+                    let a = M.rejNttPoly(Buffer.concat([rho, Buffer.from([j, i])]));
+                    for (let n = 0; n < 256; n++) {
+                        acc[n] = M.mod(acc[n] + M.mul(a[n], zHat[j][n]));
+                    }
+                }
+                return M.inverseNtt(acc);
+            });
+        };
+        const cTildeOf = (az: number[][], h: number[][], context: Buffer) => {
+            let tr = M.shake('shake256', [key], 64);
+            let mu = M.shake('shake256', [tr, Buffer.from([0, context.length]), context, message], 64);
+            let w1 = az.flatMap((poly, i) => poly.map((value, n) => M.useHint(h[i][n], value)));
+            return M.shake('shake256', [mu, M.packBits(w1, 6)], 32);
+        };
+        const hintsOf = (positions: number[][]) => positions.map(list => Array.from({ length: 256 }, (v, n) => (list.includes(n) ? 1 : 0)));
+        const zOf = (value: (i: number, n: number) => number) => [0, 1, 2, 3].map(i => Array.from({ length: 256 }, (v, n) => value(i, n)));
+        const nodeVerify = (signature: Buffer, context: Buffer) =>
+            crypto.verify(
+                null,
+                message,
+                {
+                    key: crypto.createPublicKey({
+                        key: Buffer.concat([Buffer.from('30820532300b06096086480165030403110382052100', 'hex'), key]),
+                        format: 'der',
+                        type: 'spki'
+                    }),
+                    context
+                } as any,
+                signature
+            );
+        // our result, and the node:crypto result where Node.js has ML-DSA
+        const verifyBoth = (signature: Buffer, context = CONTEXT) => {
+            let ours = mlDsa44Verify(key, message, signature, context);
+            if (supportsMlDsa()) {
+                expect(nodeVerify(signature, context), 'node:crypto').to.equal(ours);
+            }
+            return ours;
+        };
+
+        const zMax = zOf((i, n) => ((i + n) % 2 ? LIMIT - 1 : -(LIMIT - 1)));
+        const azMax = azOf(zMax);
+        const positions = [[1, 7, 200], [], [0, 255], [42]];
+
+        it('accepts z at the largest allowed value and hints in every polynomial', () => {
+            let h = hintsOf(positions);
+            expect(verifyBoth(encode(cTildeOf(azMax, h, CONTEXT), zMax, hintBytes(positions)))).to.be.true;
+            // the same with no hints at all, and with a context of 255 bytes
+            let none = hintsOf([[], [], [], []]);
+            expect(verifyBoth(encode(cTildeOf(azMax, none, CONTEXT), zMax, hintBytes([[], [], [], []])))).to.be.true;
+            let long = Buffer.alloc(255, 9);
+            expect(verifyBoth(encode(cTildeOf(azMax, h, long), zMax, hintBytes(positions)), long)).to.be.true;
+        });
+
+        it('rejects a z coefficient of gamma1 - beta or more, in either direction', () => {
+            for (let bad of [LIMIT, -LIMIT, GAMMA1, -(GAMMA1 - 1), LIMIT + 1]) {
+                let z = zMax.map(poly => poly.slice());
+                z[2][100] = bad;
+                let h = hintsOf(positions);
+                expect(verifyBoth(encode(cTildeOf(azOf(z), h, CONTEXT), z, hintBytes(positions))), `z = ${bad}`).to.be.false;
+            }
+        });
+
+        it('rejects hint encodings that FIPS 204 Algorithm 21 does not allow, whatever c~ says', () => {
+            let h = hintsOf(positions);
+            let cTilde = cTildeOf(azMax, h, CONTEXT);
+            let good = hintBytes(positions);
+            let variants: [string, Buffer][] = [];
+            const variant = (label: string, change: (y: Buffer) => void) => {
+                let y = Buffer.from(good);
+                change(y);
+                variants.push([label, y]);
+            };
+            variant('non-zero padding', y => (y[10] = 1));
+            variant('a count above omega', y => (y[83] = 81));
+            variant('a count that goes down', y => (y[81] = 2));
+            variant('positions out of order', y => ([y[0], y[1]] = [y[1], y[0]]));
+            variant('a repeated position', y => (y[1] = y[0]));
+            // the same hints decode the same with the strict and a lenient reading only when valid
+            expect(verifyBoth(encode(cTilde, zMax, good))).to.be.true;
+            for (let [label, y] of variants) {
+                expect(verifyBoth(encode(cTilde, zMax, y)), label).to.be.false;
+            }
+        });
+
+        it('applies a hint on a coefficient where r+ - r0 = q - 1 (FIPS 204 Algorithm 36)', () => {
+            // find coefficients of A z whose decomposition takes the q - 1 branch, by searching z
+            let found: [number, number][] = [];
+            let z = zMax;
+            let az = azMax;
+            for (let attempt = 0; attempt < 400 && !found.length; attempt++) {
+                z = zOf((i, n) => ((((i * 7 + n * 13 + attempt * 31) % 509) * 517) % (2 * LIMIT - 1)) - (LIMIT - 1));
+                az = azOf(z);
+                az.forEach((poly, i) =>
+                    poly.forEach((value, n) => {
+                        let r0 = value % (2 * HALF_ALPHA);
+                        if (r0 > HALF_ALPHA) {
+                            r0 -= 2 * HALF_ALPHA;
+                        }
+                        if (value - r0 === Q - 1) {
+                            found.push([i, n]);
+                        }
+                    })
+                );
+            }
+            expect(found.length, 'a coefficient on the q - 1 branch').to.be.greaterThan(0);
+            let [i, n] = found[0];
+            expect(M.decompose(az[i][n])[0]).to.equal(0);
+            let hinted = [[], [], [], []] as number[][];
+            hinted[i] = [n];
+            let h = hintsOf(hinted);
+            expect(verifyBoth(encode(cTildeOf(az, h, CONTEXT), z, hintBytes(hinted)))).to.be.true;
+            // a c~ made without the hint does not verify with it
+            expect(verifyBoth(encode(cTildeOf(az, hintsOf([[], [], [], []]), CONTEXT), z, hintBytes(hinted)))).to.be.false;
+        });
     });
 
     it('is used for a bare ML-DSA-44 key by verifySignature()', () => {
