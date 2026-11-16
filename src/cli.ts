@@ -176,6 +176,7 @@ export function run(argv: string[], opts: RunOptions): void {
         )
         .option('--received-rcpt-to <address>', 'RCPT TO address the message arrived with, see --received-mail-from. Can be repeated.', collect)
         .option('--out-of-band', 'Sign a message that is already DKIM2 signed without verifying it first, because an out-of-band arrangement covers it.')
+        .option('--strict', 'Refuse to sign a message that is already DKIM2 signed without --received-mail-from and --received-rcpt-to.')
         .option(
             '-n, --dns-cache <file>',
             'Path to a JSON file with cached DNS responses, used to verify a message that is already DKIM2 signed and for Domain Policy Records.'

@@ -1504,6 +1504,13 @@ export interface DKIM2SignOptions {
      * out-of-band arrangement covers it (section 12). Default: false
      */
     outOfBand?: boolean | undefined;
+
+    /**
+     * Refuse to sign a message that already has DKIM2 header fields when `received` is not given: a
+     * Fully Verified DKIM2 Message includes that its highest DKIM2-Signature names the envelope it
+     * arrived with (section 13). Default: false, the envelope is then not compared
+     */
+    strict?: boolean | undefined;
 }
 
 /**

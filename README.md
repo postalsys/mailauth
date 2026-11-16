@@ -390,6 +390,7 @@ const signedMessage = signatures + message;
 - **resolver** (`async function`): DNS resolver, for verifying a message that is already DKIM2 signed and for the Domain Policy Record, see **signingDomain**.
 - **received** (`object`): `{ mailFrom, rcptTo }`, the SMTP envelope the message arrived with. A message that already has DKIM2 header fields is verified before it is signed again, see below, and its highest signature has to name this envelope.
 - **outOfBand** (`boolean`): Sign a message that already has DKIM2 header fields without verifying it, because an out-of-band arrangement covers it (section 12). Defaults to `false`.
+- **strict** (`boolean`): Refuse to sign a message that already has DKIM2 header fields when `received` is not given, since a Fully Verified DKIM2 Message includes the envelope it arrived with. Defaults to `false`, the envelope is then not compared.
 
 A message that already has DKIM2 header fields may only be signed when it is a Fully Verified DKIM2 Message (section 12), so `dkim2Sign` verifies it first, as it arrived (before the changes the `recipe` documents), at `signTime`, with `resolver` and against the `received` envelope. When the result is not `pass` it rejects with the code `ENOTVERIFIED`, or `ETEMPNOTVERIFIED` for a temporary DNS failure, unless `outOfBand` is set.
 

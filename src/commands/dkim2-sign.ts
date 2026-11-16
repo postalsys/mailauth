@@ -26,6 +26,7 @@ interface Dkim2SignArgv {
     receivedMailFrom?: string | undefined;
     receivedRcptTo?: string[] | undefined;
     outOfBand?: boolean | undefined;
+    strict?: boolean | undefined;
     dnsCache?: string | undefined;
 }
 
@@ -83,7 +84,8 @@ const cmd = async (argv: Dkim2SignArgv): Promise<void> => {
         flags: argv.flag,
         nonce: argv.nonce,
         resolver: await createResolver(argv),
-        outOfBand: !!argv.outOfBand
+        outOfBand: !!argv.outOfBand,
+        strict: !!argv.strict
     };
 
     if (argv.receivedMailFrom !== undefined || argv.receivedRcptTo) {

@@ -197,6 +197,7 @@ mailauth dkim2-sign [options] [email]
 - `--time timestamp`, `-t timestamp`: Signing time as a Unix timestamp (`t=` tag). Defaults to the current time.
 - `--received-mail-from user@example.com`, `--received-rcpt-to user@example.net`: The SMTP envelope the message arrived with. A message that is already DKIM2 signed is verified before it is signed again (section 12), and its highest signature has to name this envelope. `--received-rcpt-to` can be repeated.
 - `--out-of-band`: Signs a message that is already DKIM2 signed without verifying it first, because an out-of-band arrangement covers it.
+- `--strict`: Refuses to sign a message that is already DKIM2 signed without `--received-mail-from` and `--received-rcpt-to`.
 - `--dns-cache /path/to/dns.json`, `-n /path/to/dns.json`: Cached DNS responses for that verification and for Domain Policy Records, instead of DNS queries.
 - `--headers-only`, `-o`: Outputs only the DKIM2 header fields without the message.
 

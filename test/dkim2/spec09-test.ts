@@ -579,6 +579,30 @@ describe('DKIM2 draft-ietf-dkim-dkim2-spec-09', () => {
             expect(verified.errors.map(error => error.message)).to.include('DKIM2-Signature i=1 selector rsa incorrect signature');
         });
 
+        it('requires the arrival envelope in strict mode', async () => {
+            let first = await toList();
+            for (let received of [
+                undefined,
+                { mailFrom: 'sender@example.com' },
+                { rcptTo: 'list@list.example.org' },
+                { mailFrom: 'sender@example.com', rcptTo: [] }
+            ]) {
+                let err = await dkim2Sign(first, listOptions({ strict: true, received })).catch(err => err);
+                expect(err.code, JSON.stringify(received)).to.equal('EINVALIDOPTS');
+                expect(err.message).to.equal('The envelope the message arrived with (received) is required to verify it in strict mode');
+            }
+            let received = { mailFrom: 'sender@example.com', rcptTo: 'list@list.example.org' };
+            expect((await dkim2Sign(first, listOptions({ strict: true, received }))).i).to.equal(2);
+            // the null sender counts as given
+            let nullSender = await dkim2Sign(first, listOptions({ strict: true, received: { mailFrom: '', rcptTo: 'list@list.example.org' } })).catch(
+                err => err
+            );
+            expect(nullSender.code).to.equal('ENOTVERIFIED');
+            // a new message has nothing to verify, and out-of-band signing needs no envelope
+            expect((await dkim2Sign(message(), originatorOptions({ strict: true }))).i).to.equal(1);
+            expect((await dkim2Sign(first, listOptions({ strict: true, outOfBand: true }))).i).to.equal(2);
+        });
+
         it('compares the arrival envelope only when it is given', async () => {
             let first = await toList();
             // without `received` an unchanged copy sent to anyone is signed, the envelope is unknown

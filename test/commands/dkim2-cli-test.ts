@@ -301,6 +301,24 @@ describe('CLI dkim2-sign and report --dkim2', () => {
             let { stdout: outOfBand } = await runCli(['dkim2-sign', '--out-of-band', ...args]);
             expect(outOfBand).to.match(/^DKIM2-Signature: i=2; m=2;/);
 
+            // --strict needs the arrival envelope
+            err = await runCli([
+                'dkim2-sign',
+                '--strict',
+                ...listArgs(),
+                '-f',
+                'bounce@list.example.org',
+                '-r',
+                'member@example.net',
+                '--recipe',
+                recipePath,
+                revisedPath
+            ]).then(
+                () => null,
+                err => err
+            );
+            expect(err.stderr).to.include('is required to verify it in strict mode');
+
             // without --received-* the arrival envelope is not compared
             let unknown = [...listArgs(), '-f', 'bounce@list.example.org', '-r', 'member@example.net', '--recipe', recipePath, revisedPath];
             let { stdout: noEnvelope } = await runCli(['dkim2-sign', ...unknown]);

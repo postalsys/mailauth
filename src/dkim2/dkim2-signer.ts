@@ -55,6 +55,7 @@ interface SignerOptions {
     resolver?: DNSResolver | undefined;
     received?: DKIM2SignOptions['received'];
     outOfBand?: boolean | undefined;
+    strict?: boolean | undefined;
 }
 
 // A new Message-Instance to format
@@ -166,7 +167,8 @@ const normalizeOptions = (options: Partial<DKIM2SignOptions> | undefined): Signe
         keys: loadKeys(options),
         resolver: options.resolver,
         received: options.received,
-        outOfBand: !!options.outOfBand
+        outOfBand: !!options.outOfBand,
+        strict: !!options.strict
     } as SignerOptions;
 
     if (options.nextDomain) {
@@ -290,7 +292,11 @@ class Dkim2Signer extends Dkim2Parser {
             // Fully Verified DKIM2 Message, so the existing fields are verified at the signing time.
             // The verifier gets the message from this signer, so the body is hashed with every
             // algorithm of every instance, and kept when a Recipe copies lines from it
-            let { resolver, received, t } = this.options;
+            let { resolver, received, t, strict } = this.options;
+            if (strict && (typeof received?.mailFrom !== 'string' || !([] as string[]).concat(received.rcptTo || []).length)) {
+                // section 13: the envelope is part of a Fully Verified DKIM2 Message
+                throw signError('The envelope the message arrived with (received) is required to verify it in strict mode', 'EINVALIDOPTS');
+            }
             this.verifier = new Dkim2Verifier({ resolver, mailFrom: received?.mailFrom, rcptTo: received?.rcptTo, curTime: new Date(t * 1000) });
             this.verifier.nextSigner = this.options.signingDomain;
             await this.verifier.messageHeaders(headers);
