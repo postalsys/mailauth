@@ -28,6 +28,18 @@ const runCli = async (args: any) =>
         maxBuffer: 10 * 1024 * 1024
     });
 
+// runs the CLI with `input` on standard input
+const runCliStdin = (args: any, input: Buffer | string): Promise<{ stdout: string; stderr: string }> =>
+    new Promise((resolve, reject) => {
+        let child = childProcess.execFile(
+            'node',
+            ['-r', DENY_DNS_PATH, '--import', 'tsx', CLI_PATH].concat(args),
+            { env: Object.assign({}, process.env, { DENY_DNS: '1' }), maxBuffer: 10 * 1024 * 1024 },
+            (err, stdout, stderr) => (err ? reject(err) : resolve({ stdout, stderr }))
+        );
+        child.stdin!.end(input);
+    });
+
 const keyArgs = [
     '-k',
     path.join(FIXTURES_PATH, 'private-rsa.pem'),
@@ -369,6 +381,25 @@ describe('CLI dkim2-sign and report --dkim2', () => {
             expect(err, groups.join(' ')).to.be.an('error');
             expect(err.stderr).to.match(/--group/);
         }
+    });
+
+    it('reads the message from standard input, and reports its steps with --verbose', { timeout: 15000 }, async () => {
+        let input = await fs.promises.readFile(messageFile());
+        let signed = await runCliStdin(['dkim2-sign', '-v', ...keyArgs, '-f', 'sender@example.com', '-r', 'rcpt@example.net', '-t', '1791626400'], input);
+        expect(signed.stdout).to.match(/^DKIM2-Signature: i=1;/);
+        expect(signed.stderr).to.include('Reading email message from standard input');
+        expect(signed.stderr).to.include('Signing domain: example.com');
+        expect(signed.stderr).to.include('Selectors:      rsa, ed');
+        expect(signed.stderr).to.include('Signing time:   2026-10-10T10:00:00.000Z');
+
+        let verified = await runCliStdin(['dkim2-verify', '-v', '-n', path.join(dir, 'dns.json'), '-o', '-t', '1791630000'], signed.stdout);
+        expect(verified.stdout).to.match(/^dkim2=pass /);
+        expect(verified.stderr).to.include('Reading email message from standard input');
+
+        let hashed = await runCliStdin(['dkim2-hash', '-v'], input);
+        expect(hashed.stdout).to.match(/^sha256:/);
+        expect(hashed.stderr).to.include('Reading email message from standard input');
+        expect(hashed.stderr).to.match(/Hashed header fields: .*from/);
     });
 
     it('requires either an envelope or --next-domain, and a selector for every key', { timeout: 15000 }, async () => {

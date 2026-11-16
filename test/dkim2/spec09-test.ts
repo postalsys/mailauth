@@ -6,6 +6,7 @@
 import { describe, it } from 'node:test';
 import { Buffer } from 'node:buffer';
 import crypto from 'node:crypto';
+import { promises as dnsPromises } from 'node:dns';
 import { expect, config } from 'chai';
 
 import { dkim2Sign } from '../../src/dkim2/sign.js';
@@ -765,6 +766,23 @@ describe('DKIM2 draft-ietf-dkim-dkim2-spec-09', () => {
             expect(keyErr).to.be.an.instanceOf(TypeError);
             expect(entry).to.not.have.property('result');
         });
+    });
+
+    it('looks keys and policies up with dns.promises.resolve when no resolver is given', async () => {
+        let original = dnsPromises.resolve;
+        let queries: string[] = [];
+        (dnsPromises as any).resolve = async (name: string, type: string) => {
+            queries.push(`${name} ${type}`);
+            return resolver()(name, type);
+        };
+        try {
+            let signed = await signMessage(message(), rsaOnly());
+            let result = await dkim2Verify(signed);
+            expect(result.status.result).to.equal('pass');
+            expect(queries).to.deep.equal(['rsa._domainkey.example.com TXT']);
+        } finally {
+            (dnsPromises as any).resolve = original;
+        }
     });
 
     describe('Authentication-Results output', () => {
