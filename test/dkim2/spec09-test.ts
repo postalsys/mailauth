@@ -179,6 +179,30 @@ describe('DKIM2 draft-ietf-dkim-dkim2-spec-09', () => {
                 }
             });
 
+            it('looks up the record of a From domain once, however many instances use it', async () => {
+                // m=1 and m=2 have different From fields in the same domain, both signed by the subdomain
+                let input = withFrom('a@example.org');
+                let first = reference.splitMessage(input.toString('binary'));
+                let changed = Buffer.from(input.toString('binary').replace('From: a@example.org', 'From: b@example.org'), 'binary');
+                let second = reference.splitMessage(changed.toString('binary'));
+                let recipe = { h: { from: [{ d: [' a@example.org'] }] } };
+                let instances = [
+                    `Message-Instance: m=2; h=sha256:${reference.headerHash(second.fields, 'sha256')}:${reference.bodyHash(second.body, 'sha256')}; r=${b64(JSON.stringify(recipe))}`,
+                    `Message-Instance: m=1; h=sha256:${reference.headerHash(first.fields, 'sha256')}:${reference.bodyHash(first.body, 'sha256')}`
+                ];
+                let header = `DKIM2-Signature: i=1; m=2; t=${Math.floor(Date.now() / 1000)}; d=mail.example.org; mf=${b64('<>')}; rt=${b64('<rcpt@example.net>')}; s=lrsa:rsa-sha256:;`;
+                let signed = craftSignature(Buffer.concat([Buffer.from(instances.join('\r\n') + '\r\n'), changed]), header, { lrsa: generated.rsa });
+
+                let lookups = failing({}, zone([['v=DKIM1; f=strict']]));
+                let result = await dkim2Verify(signed, { resolver: lookups });
+                expect(result.status.result).to.equal('fail');
+                expect(result.errors.map(error => error.message)).to.deep.equal([
+                    'DKIM2-Signature i=1 From example.org forbids subdomain signing',
+                    'DKIM2-Signature i=1 From example.org forbids subdomain signing'
+                ]);
+                expect(lookups.queries.filter(name => name === '_domainkey.example.org')).to.have.length(1);
+            });
+
             it('does not inherit a policy up or down the DNS tree', async () => {
                 // a strict record of the parent of the From domain does not apply
                 let parent = Object.assign(zone(), { '_domainkey.org': { TXT: [['v=DKIM1; f=strict']] } });
@@ -317,6 +341,45 @@ describe('DKIM2 draft-ietf-dkim-dkim2-spec-09', () => {
             err = await dkim2Sign(message(), options(failing({ '_domainkey.example.com': 'ESERVFAIL' }, zone))).catch(err => err);
             expect(err.code).to.equal('EFROMPOLICY');
             expect(err.message).to.match(/policy for example\.com unavailable$/);
+        });
+
+        it('checks the From of a message that has a Message-Instance but no DKIM2-Signature yet', async () => {
+            // the originator added an instance itself (section 12.1 allows a Recipe on m=1)
+            let input = withFrom('ceo@bank.example');
+            let { fields, body } = reference.splitMessage(input.toString('binary'));
+            let instance = `Message-Instance: m=1; h=sha256:${reference.headerHash(fields, 'sha256')}:${reference.bodyHash(body, 'sha256')}\r\n`;
+            let err = await dkim2Sign(Buffer.concat([Buffer.from(instance), input]), rsaOnly()).catch(err => err);
+            expect(err.code).to.equal('EFROMNOTAUTHENTIC');
+
+            let ok = await dkim2Sign(
+                Buffer.concat([
+                    Buffer.from(
+                        instance.replace(
+                            /sha256:[^:]+/,
+                            `sha256:${reference.headerHash(reference.splitMessage(message().toString('binary')).fields, 'sha256')}`
+                        )
+                    ),
+                    message()
+                ]),
+                rsaOnly()
+            );
+            expect(ok.i).to.equal(1);
+            expect(ok.messageInstance).to.equal(null);
+        });
+
+        it('checks the From of a forwarder that changes it, even when the From is otherwise unchanged in later instances', async () => {
+            let signed = await signMessage(message(), originatorOptions({ rcptTo: 'list@list.example.org' }));
+            let changed = Buffer.from(signed.toString('binary').replace('From: Sender <sender@example.com>', 'From: sender@example.com'), 'binary');
+            // the address is the same but the field changed, so the list has to make it Authentic
+            let err = await dkim2Sign(changed, {
+                signingDomain: 'list.example.org',
+                selector: 'lrsa',
+                privateKey: generated.rsa,
+                mailFrom: 'bounce@list.example.org',
+                rcptTo: 'member@example.net',
+                recipe: { h: { from: [{ d: [' Sender <sender@example.com>'] }] } }
+            }).catch(err => err);
+            expect(err.code).to.equal('EFROMNOTAUTHENTIC');
         });
 
         it('does not look at the From when forwarding, unless the forwarder changes it', async () => {
