@@ -71,14 +71,17 @@ const originatorOptions = (extra?: Record<string, any> | null): DKIM2SignOptions
                 { selector: 'ed', privateKey: ed25519Key }
             ],
             mailFrom: 'sender@example.com',
-            rcptTo: 'rcpt@example.net'
+            rcptTo: 'rcpt@example.net',
+            // a message that is already DKIM2 signed is verified against the test zone first
+            resolver: resolver()
         },
         extra || {}
     );
 
-// signs and returns the message with the new header fields on top
+// signs and returns the message with the new header fields on top. A message that is already DKIM2
+// signed is verified first, against the test zone unless the options name another resolver
 const signMessage = async (input: Buffer | string, options: DKIM2SignOptions) => {
-    let result = await dkim2Sign(input, options);
+    let result = await dkim2Sign(input, Object.assign({ resolver: resolver() }, options));
     return Buffer.concat([Buffer.from(result.signatures), Buffer.from(input)]);
 };
 

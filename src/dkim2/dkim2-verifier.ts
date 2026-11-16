@@ -141,6 +141,8 @@ class Dkim2Verifier extends Dkim2Parser {
     declare maxInstances: number;
     declare instanceRows: InstanceRow[];
     declare signatureRows: SignatureRow[];
+    // set by the signer that completes an nd= hop: the d= it signs with (section 12.3)
+    declare nextSigner: string | undefined;
 
     /**
      * @param {Object} [options]
@@ -207,7 +209,14 @@ class Dkim2Verifier extends Dkim2Parser {
         this.result = await this.verify();
     }
 
-    async verify(): Promise<DKIM2VerifyResult> {
+    /**
+     * Verifies the DKIM2 header fields of the message
+     *
+     * @param {MessageState} [arrived] The message to start from instead of the one that was read,
+     *        used by the signer for a message it changed: the instance its Recipe recreates
+     * @returns {Object} Verification result
+     */
+    async verify(arrived?: MessageState): Promise<DKIM2VerifyResult> {
         let errors: DKIM2Error[] = [];
         let instances = new Map<number, ChainInstance>();
         let signatures = new Map<number, ChainSignature>();
@@ -307,7 +316,7 @@ class Dkim2Verifier extends Dkim2Parser {
             return finish();
         }
 
-        let states = this.recreateStates(instances, maxM, addError);
+        let states = this.recreateStates(instances, maxM, addError, arrived);
         if (!states) {
             return finish();
         }
@@ -351,8 +360,8 @@ class Dkim2Verifier extends Dkim2Parser {
      *
      * @returns {Map|null} m to message state, null when a Recipe could not be applied
      */
-    recreateStates(instances: Map<number, ChainInstance>, maxM: number, addError: AddError): Map<number, MessageState> | null {
-        let states = new Map<number, MessageState>([[maxM, this.currentState()]]);
+    recreateStates(instances: Map<number, ChainInstance>, maxM: number, addError: AddError, arrived?: MessageState): Map<number, MessageState> | null {
+        let states = new Map<number, MessageState>([[maxM, arrived || this.currentState()]]);
         for (let m = maxM; m > 1; m--) {
             let state = states.get(m)!;
             let recipe = instances.get(m)!.recipe;
@@ -457,6 +466,11 @@ class Dkim2Verifier extends Dkim2Parser {
         }
 
         let top = signatures.get(maxI)!;
+        if (top.nextDomain && top.nextDomain === this.nextSigner) {
+            // section 12.3: the system that signs with the nd= domain is adding the signature that
+            // completes the hop, so there is no envelope to compare yet
+            return;
+        }
         if (top.nextDomain) {
             // sections 12.3 and 13.2: a message whose highest signature has nd= is not verified
             // unless out-of-band arrangements are in place, and the signature that completes it,

@@ -195,6 +195,9 @@ mailauth dkim2-sign [options] [email]
 - `--hash algorithm`: Hash algorithm of a new `Message-Instance`, `sha256` or `sha512`. Can be repeated. Defaults to `sha256`.
 - `--recipe /path/to/recipe.json`: For a forwarder that changed the message, a JSON file with the Recipe that recreates the previous instance (`r=` tag). It is checked before signing, and the command fails if it does not recreate the previous instance.
 - `--time timestamp`, `-t timestamp`: Signing time as a Unix timestamp (`t=` tag). Defaults to the current time.
+- `--received-mail-from user@example.com`, `--received-rcpt-to user@example.net`: The SMTP envelope the message arrived with. A message that is already DKIM2 signed is verified before it is signed again (section 12), and its highest signature has to name this envelope. `--received-rcpt-to` can be repeated.
+- `--out-of-band`: Signs a message that is already DKIM2 signed without verifying it first, because an out-of-band arrangement covers it.
+- `--dns-cache /path/to/dns.json`, `-n /path/to/dns.json`: Cached DNS responses for that verification and for Domain Policy Records, instead of DNS queries.
 - `--headers-only`, `-o`: Outputs only the DKIM2 header fields without the message.
 
 Either `--mail-from` and `--rcpt-to`, or `--next-domain`, is required.

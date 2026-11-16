@@ -387,9 +387,11 @@ const signedMessage = signatures + message;
 - **hashAlgorithms** (`string[]`): `sha256` (default) and/or `sha512`.
 - **recipe** (`object`): When the message was changed since it was last signed, a Recipe that recreates the previous instance (section 5). The signer checks that the Recipe really recreates it before signing.
 - **signTime** (`Date`): The signing time (`t=`). Defaults to now.
-- **resolver** (`async function`): DNS resolver for the Domain Policy Record, see **signingDomain**.
+- **resolver** (`async function`): DNS resolver, for verifying a message that is already DKIM2 signed and for the Domain Policy Record, see **signingDomain**.
+- **received** (`object`): `{ mailFrom, rcptTo }`, the SMTP envelope the message arrived with. A message that already has DKIM2 header fields is verified before it is signed again, see below, and its highest signature has to name this envelope.
+- **outOfBand** (`boolean`): Sign a message that already has DKIM2 header fields without verifying it, because an out-of-band arrangement covers it (section 12). Defaults to `false`.
 
-A message that already has DKIM2 header fields may only be signed when it is a Fully Verified DKIM2 Message (section 12). That needs the SMTP envelope the message arrived with, so verify it with `dkim2Verify()` first and sign only on `pass`; `dkim2Sign` does not verify the existing signatures itself.
+A message that already has DKIM2 header fields may only be signed when it is a Fully Verified DKIM2 Message (section 12), so `dkim2Sign` verifies it first, as it arrived (before the changes the `recipe` documents), at `signTime`, with `resolver` and against the `received` envelope. When the result is not `pass` it rejects with the code `ENOTVERIFIED`, or `ETEMPNOTVERIFIED` for a temporary DNS failure, unless `outOfBand` is set.
 
 `dkim2Sign` resolves with `{ signatures, signature, messageInstance, i, m }` and rejects for invalid options, an invalid DKIM2 chain on the message, or a Recipe that does not fit. A new `Message-Instance` is only added when the message has no instance yet or has changed since the last one. `Dkim2SignStream` is a Transform stream that outputs the signed message, like `DkimSignStream`.
 

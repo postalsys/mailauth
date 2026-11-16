@@ -233,7 +233,8 @@ describe('CLI dkim2-sign and report --dkim2', () => {
     });
 
     describe('dkim2-sign as a forwarder', () => {
-        const listArgs = () => ['-k', path.join(dir, 'list.key'), '-s', 'list', '-d', 'list.example.org'];
+        // the existing DKIM2 header fields are verified before signing, with the keys of dns.json
+        const listArgs = () => ['-k', path.join(dir, 'list.key'), '-s', 'list', '-d', 'list.example.org', '-n', path.join(dir, 'dns.json')];
 
         it('signs a revision with --recipe that dkim2-verify accepts', { timeout: 15000 }, async () => {
             let { stdout: original } = await runCli(['dkim2-sign', ...keyArgs, '-f', 'sender@example.com', '-r', 'list@list.example.org', messageFile()]);
@@ -248,6 +249,10 @@ describe('CLI dkim2-sign and report --dkim2', () => {
             let { stdout: forwarded } = await runCli([
                 'dkim2-sign',
                 ...listArgs(),
+                '--received-mail-from',
+                'sender@example.com',
+                '--received-rcpt-to',
+                'list@list.example.org',
                 '-f',
                 'bounce@list.example.org',
                 '-r',
@@ -280,6 +285,21 @@ describe('CLI dkim2-sign and report --dkim2', () => {
             );
             expect(err.code).to.equal(1);
             expect(err.stderr).to.include('a recipe is required');
+
+            // a message that arrived with another envelope is not Fully Verified (section 12)
+            let wrongEnvelope = ['--received-mail-from', 'sender@example.com', '--received-rcpt-to', 'someone@list.example.org'];
+            let args = [...listArgs(), ...wrongEnvelope, '-f', 'bounce@list.example.org', '-r', 'member@example.net', '--recipe', recipePath, revisedPath];
+            err = await runCli(['dkim2-sign', ...args]).then(
+                () => null,
+                err => err
+            );
+            expect(err.code).to.equal(1);
+            expect(err.stderr).to.include('Can not sign a message that is not a Fully Verified DKIM2 Message');
+            expect(err.stderr).to.include('RCPT TO someone@list.example.org did not match');
+
+            // unless an out-of-band arrangement covers it
+            let { stdout: outOfBand } = await runCli(['dkim2-sign', '--out-of-band', ...args]);
+            expect(outOfBand).to.match(/^DKIM2-Signature: i=2; m=2;/);
         });
 
         it('signs an imaginary hop with --next-domain', { timeout: 15000 }, async () => {

@@ -26,7 +26,8 @@ const listOptions = (extra?: any) =>
                 { selector: 'led', privateKey: generated.ed25519 }
             ],
             mailFrom: 'bounce@bounces.list.example.org',
-            rcptTo: 'member@example.net'
+            rcptTo: 'member@example.net',
+            resolver: resolver()
         },
         extra || {}
     );
@@ -187,7 +188,14 @@ describe('DKIM2 chains', () => {
             let replaced = Buffer.from(signed.toString('binary').replace(/Hello world![\s\S]*$/, 'New body\r\n'), 'binary');
             let first = await signMessage(replaced, listOptions({ rcptTo: 'list@list.example.org', recipe: { b: null } }));
             let footer = Buffer.from(first.toString('binary') + 'footer\r\n', 'binary');
-            let second = await signMessage(footer, listOptions({ recipe: { b: [{ c: [1, 1] }] } }));
+            // a message with a null Recipe is never Fully Verified (section 13), so signing it again
+            // needs an out-of-band arrangement
+            let refused = await dkim2Sign(footer, listOptions({ recipe: { b: [{ c: [1, 1] }] } })).catch(err => err);
+            expect(refused.code).to.equal('ENOTVERIFIED');
+            expect(refused.message).to.equal(
+                'Can not sign a message that is not a Fully Verified DKIM2 Message (dkim2=permerror: Message-Instance m=2 has a null recipe)'
+            );
+            let second = await signMessage(footer, listOptions({ recipe: { b: [{ c: [1, 1] }] }, outOfBand: true }));
             let result = await verify(second, listEnvelope);
             expect(result.status.result).to.equal('permerror');
             expect(result.errors.map((error: any) => error.message)).to.deep.equal(['Message-Instance m=2 has a null recipe']);

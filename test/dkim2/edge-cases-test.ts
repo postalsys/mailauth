@@ -256,7 +256,8 @@ describe('DKIM2 edge cases', () => {
                 selector: 'lrsa',
                 privateKey: generated.rsa,
                 mailFrom: 'bounce@list.example.org',
-                rcptTo: 'member@example.net'
+                rcptTo: 'member@example.net',
+                resolver: resolver()
             };
 
             let unchanged = await dkim2Sign(first, options);

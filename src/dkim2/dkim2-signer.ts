@@ -19,6 +19,7 @@ import {
 import { parsePath, isSmtpPath, relaxedMatch, custodyProblem } from './domains.js';
 import { parseRecipe } from './recipe.js';
 import { Dkim2Parser } from './dkim2-parser.js';
+import { Dkim2Verifier } from './dkim2-verifier.js';
 import { rsaKeyProblem } from './key.js';
 import { ALGORITHM_KEY_TYPES, KEY_TYPES, createSignature } from './algorithms.js';
 import { createPolicyLookup } from './records.js';
@@ -52,6 +53,8 @@ interface SignerOptions {
     parsedRecipe?: ParsedRecipe | undefined;
     t: number;
     resolver?: DNSResolver | undefined;
+    received?: DKIM2SignOptions['received'];
+    outOfBand?: boolean | undefined;
 }
 
 // A new Message-Instance to format
@@ -158,7 +161,13 @@ const normalizeOptions = (options: Partial<DKIM2SignOptions> | undefined): Signe
         throw signError(`Invalid signing domain ${JSON.stringify(options.signingDomain)}`, 'EINVALIDDOMAIN');
     }
 
-    let result = { signingDomain, keys: loadKeys(options), resolver: options.resolver } as SignerOptions;
+    let result = {
+        signingDomain,
+        keys: loadKeys(options),
+        resolver: options.resolver,
+        received: options.received,
+        outOfBand: !!options.outOfBand
+    } as SignerOptions;
 
     if (options.nextDomain) {
         // section 10.7: nd= replaces both mf= and rt=
@@ -258,6 +267,8 @@ class Dkim2Signer extends Dkim2Parser {
     declare instances: Map<number, ChainInstance>;
     declare signatures: Map<number, ChainSignature>;
     declare topInstance: ChainInstance | undefined;
+    // verifies the DKIM2 header fields that are already on the message
+    declare verifier: Dkim2Verifier | null;
     declare i: number;
     declare m: number;
 
@@ -272,6 +283,24 @@ class Dkim2Signer extends Dkim2Parser {
     override async messageHeaders(headers: ParsedHeaders): Promise<void> {
         this.instances = readChain(headers.parsed, MI_KEY, parseMessageInstance, 'Message-Instance', 'm');
         this.signatures = readChain(headers.parsed, SIG_KEY, parseSignature, 'DKIM2-Signature', 'i') as Map<number, ChainSignature>;
+
+        this.verifier = null;
+        if ((this.instances.size || this.signatures.size) && !this.options.outOfBand) {
+            // section 12: a message that already has DKIM2 header fields is only signed when it is a
+            // Fully Verified DKIM2 Message, so the existing fields are verified at the signing time.
+            // The verifier gets the message from this signer, so the body is hashed with every
+            // algorithm of every instance, and kept when a Recipe copies lines from it
+            let { resolver, received, t } = this.options;
+            this.verifier = new Dkim2Verifier({ resolver, mailFrom: received?.mailFrom, rcptTo: received?.rcptTo, curTime: new Date(t * 1000) });
+            this.verifier.nextSigner = this.options.signingDomain;
+            await this.verifier.messageHeaders(headers);
+            for (let instance of this.instances.values()) {
+                instance.hashes.filter(({ algorithm }) => HASH_ALGORITHMS.has(algorithm)).forEach(({ algorithm }) => this.hashBodyWith(algorithm));
+                if (Array.isArray(instance.recipe?.b)) {
+                    this.keepBody();
+                }
+            }
+        }
 
         this.options.hashAlgorithms.forEach(algorithm => this.hashBodyWith(algorithm));
         this.topInstance = this.instances.get(this.instances.size);
@@ -382,6 +411,21 @@ class Dkim2Signer extends Dkim2Parser {
         }
     }
 
+    // Section 12: refuses to sign over DKIM2 header fields that do not verify. `arrived` is the
+    // message as it arrived, before the changes this signer documents with its Recipe
+    async checkVerified(arrived: MessageState): Promise<void> {
+        if (!this.verifier) {
+            return;
+        }
+        let { status } = await this.verifier.verify(arrived);
+        if (status.result !== 'pass') {
+            throw signError(
+                `Can not sign a message that is not a Fully Verified DKIM2 Message (dkim2=${status.result}: ${status.comment})`,
+                status.result === 'temperror' ? 'ETEMPNOTVERIFIED' : 'ENOTVERIFIED'
+            );
+        }
+    }
+
     override async finalChunk(): Promise<void> {
         let options = this.options;
 
@@ -397,6 +441,7 @@ class Dkim2Signer extends Dkim2Parser {
         }
 
         await this.checkFrom(current, instance?.previous);
+        await this.checkVerified(instance?.previous || current);
 
         let instanceHeader = instance ? formatMessageInstance(instance) : null;
         let signature: SignatureFields = {

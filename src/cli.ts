@@ -170,6 +170,16 @@ export function run(argv: string[], opts: RunOptions): void {
         .option('--flag <flag>', 'Flag to set, such as "exploded" or "feedback" (f= tag). Can be repeated.', collect)
         .option('--hash <algorithm>', 'Hash algorithm for the Message-Instance, "sha256" or "sha512". Can be repeated. Defaults to "sha256".', collect)
         .option('--recipe <file>', 'Path to a JSON file with the Recipe that recreates the previous instance of a changed message.')
+        .option(
+            '--received-mail-from <address>',
+            'MAIL FROM address the message arrived with. A message that is already DKIM2 signed is verified before it is signed again, against this envelope.'
+        )
+        .option('--received-rcpt-to <address>', 'RCPT TO address the message arrived with, see --received-mail-from. Can be repeated.', collect)
+        .option('--out-of-band', 'Sign a message that is already DKIM2 signed without verifying it first, because an out-of-band arrangement covers it.')
+        .option(
+            '-n, --dns-cache <file>',
+            'Path to a JSON file with cached DNS responses, used to verify a message that is already DKIM2 signed and for Domain Policy Records.'
+        )
         .option('-t, --time <timestamp>', 'Signing time as a UNIX timestamp (t= tag). Defaults to the current time.', numberArg)
         .option('-o, --headers-only', 'If set, outputs only the DKIM2 header fields without the message.')
         .hook('preAction', command => {

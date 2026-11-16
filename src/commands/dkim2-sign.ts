@@ -1,5 +1,6 @@
 import { dkim2Sign } from '../dkim2/sign.js';
 import { GathererStream } from '../gatherer-stream.js';
+import { createResolver } from './resolver.js';
 import fs from 'node:fs';
 import type { Readable } from 'node:stream';
 import type { DKIM2SignOptions, DKIM2SignatureKey } from '../types.js';
@@ -22,6 +23,10 @@ interface Dkim2SignArgv {
     recipe?: string | undefined;
     time?: number | undefined;
     headersOnly?: boolean | undefined;
+    receivedMailFrom?: string | undefined;
+    receivedRcptTo?: string[] | undefined;
+    outOfBand?: boolean | undefined;
+    dnsCache?: string | undefined;
 }
 
 // Splits the keys into the groups of --group, lists of key positions counted from 1. Every key
@@ -76,8 +81,15 @@ const cmd = async (argv: Dkim2SignArgv): Promise<void> => {
         signatureData,
         signTime: argv.time ? new Date(argv.time * 1000) : new Date(),
         flags: argv.flag,
-        nonce: argv.nonce
+        nonce: argv.nonce,
+        resolver: await createResolver(argv),
+        outOfBand: !!argv.outOfBand
     };
+
+    if (argv.receivedMailFrom !== undefined || argv.receivedRcptTo) {
+        // the envelope the message arrived with, for verifying a message that is already signed
+        options.received = { mailFrom: argv.receivedMailFrom, rcptTo: argv.receivedRcptTo };
+    }
 
     if (argv.hash?.length) {
         options.hashAlgorithms = argv.hash as DKIM2SignOptions['hashAlgorithms'];

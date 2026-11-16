@@ -350,27 +350,27 @@ describe('DKIM2 draft-ietf-dkim-dkim2-spec-09', () => {
         });
 
         it('checks the From of a message that has a Message-Instance but no DKIM2-Signature yet', async () => {
-            // the originator added an instance itself (section 12.1 allows a Recipe on m=1)
+            // a Message-Instance without a signature is not Fully Verified, so it is only signed on an
+            // out-of-band arrangement (section 12), and then the From still has to be Authentic
             let input = withFrom('ceo@bank.example');
             let { fields, body } = reference.splitMessage(input.toString('binary'));
             let instance = `Message-Instance: m=1; h=sha256:${reference.headerHash(fields, 'sha256')}:${reference.bodyHash(body, 'sha256')}\r\n`;
-            let err = await dkim2Sign(Buffer.concat([Buffer.from(instance), input]), rsaOnly()).catch(err => err);
+            let err = await dkim2Sign(Buffer.concat([Buffer.from(instance), input]), rsaOnly({ outOfBand: true })).catch(err => err);
             expect(err.code).to.equal('EFROMNOTAUTHENTIC');
 
-            let ok = await dkim2Sign(
-                Buffer.concat([
-                    Buffer.from(
-                        instance.replace(
-                            /sha256:[^:]+/,
-                            `sha256:${reference.headerHash(reference.splitMessage(message().toString('binary')).fields, 'sha256')}`
-                        )
-                    ),
-                    message()
-                ]),
-                rsaOnly()
-            );
+            let unsigned = Buffer.concat([
+                Buffer.from(
+                    instance.replace(/sha256:[^:]+/, `sha256:${reference.headerHash(reference.splitMessage(message().toString('binary')).fields, 'sha256')}`)
+                ),
+                message()
+            ]);
+            let ok = await dkim2Sign(unsigned, rsaOnly({ outOfBand: true }));
             expect(ok.i).to.equal(1);
             expect(ok.messageInstance).to.equal(null);
+
+            let notVerified = await dkim2Sign(unsigned, rsaOnly()).catch(err => err);
+            expect(notVerified.code).to.equal('ENOTVERIFIED');
+            expect(notVerified.message).to.match(/dkim2=permerror: DKIM2-Signature i=1 missing\)$/);
         });
 
         it('checks the From of a forwarder that changes it, even when the From is otherwise unchanged in later instances', async () => {
@@ -396,9 +396,123 @@ describe('DKIM2 draft-ietf-dkim-dkim2-spec-09', () => {
                 selector: 'lrsa',
                 privateKey: generated.rsa,
                 mailFrom: 'bounce@list.example.org',
-                rcptTo: 'member@example.net'
+                rcptTo: 'member@example.net',
+                resolver: resolver()
             });
             expect(forwarded.i).to.equal(2);
+        });
+    });
+
+    describe('signing a message that is already DKIM2 signed (section 12)', () => {
+        const toList = () => signMessage(message(), originatorOptions({ rcptTo: 'list@list.example.org', signTime: new Date('2026-10-01T00:00:00Z') }));
+        const listOptions = (extra?: any) =>
+            Object.assign(
+                {
+                    signingDomain: 'list.example.org',
+                    selector: 'lrsa',
+                    privateKey: generated.rsa,
+                    mailFrom: 'bounce@list.example.org',
+                    rcptTo: 'member@example.net',
+                    signTime: new Date('2026-10-01T00:01:00Z'),
+                    resolver: resolver()
+                },
+                extra || {}
+            );
+
+        it('signs a message that verifies, with or without the envelope it arrived with', async () => {
+            let first = await toList();
+            expect((await dkim2Sign(first, listOptions())).i).to.equal(2);
+            let received = { mailFrom: 'sender@example.com', rcptTo: ['list@list.example.org'] };
+            expect((await dkim2Sign(first, listOptions({ received }))).i).to.equal(2);
+        });
+
+        for (let [label, change, options, comment] of [
+            [
+                'a changed signature value',
+                (input: Buffer) =>
+                    Buffer.from(
+                        input.toString('binary').replace(/(s=rsa:rsa-sha256:\s*)(.)/, (m, lead, c) => lead + (c === 'A' ? 'B' : 'A')),
+                        'binary'
+                    ),
+                {},
+                'dkim2=fail: DKIM2-Signature i=1 selector rsa incorrect signature'
+            ],
+            ['a changed body with no Recipe for it', (input: Buffer) => Buffer.concat([input, Buffer.from('added\r\n')]), { recipe: undefined }, null],
+            [
+                'an expired signature',
+                (input: Buffer) => input,
+                { signTime: new Date('2026-10-20T00:00:00Z') },
+                'dkim2=fail: DKIM2-Signature i=1 signature expired'
+            ],
+            [
+                'another envelope than the one it arrived with',
+                (input: Buffer) => input,
+                { received: { mailFrom: 'sender@example.com', rcptTo: 'other@list.example.org' } },
+                'dkim2=fail: DKIM2-Signature i=1 RCPT TO other@list.example.org did not match'
+            ],
+            [
+                'a key that is gone',
+                (input: Buffer) => input,
+                { resolver: resolver({ 'rsa._domainkey.example.com': { TXT: [] }, 'ed._domainkey.example.com': { TXT: [] } }) },
+                'dkim2=permerror: DKIM2-Signature i=1 public key rsa does not exist'
+            ]
+        ] as [string, (input: Buffer) => Buffer, any, string | null][]) {
+            it(`refuses ${label}`, async () => {
+                let first = change(await toList());
+                let err = await dkim2Sign(first, listOptions(options)).catch(err => err);
+                if (comment) {
+                    expect(err.code).to.equal('ENOTVERIFIED');
+                    expect(err.message).to.equal(`Can not sign a message that is not a Fully Verified DKIM2 Message (${comment})`);
+                } else {
+                    // the signer's own check comes first
+                    expect(err.code).to.equal('ENORECIPE');
+                }
+            });
+        }
+
+        it('reports a temporary DNS failure with its own code', async () => {
+            let first = await toList();
+            let err = await dkim2Sign(first, listOptions({ resolver: failing({ 'rsa._domainkey.example.com': 'ETIMEOUT' }) })).catch(err => err);
+            expect(err.code).to.equal('ETEMPNOTVERIFIED');
+            expect(err.message).to.match(/dkim2=temperror: DKIM2-Signature i=1 public key rsa could not be fetched\)$/);
+        });
+
+        it('signs without verifying when an out-of-band arrangement covers it', async () => {
+            let first = Buffer.from(
+                (await toList()).toString('binary').replace(/(s=rsa:rsa-sha256:\s*)(.)/, (m, lead, c) => lead + (c === 'A' ? 'B' : 'A')),
+                'binary'
+            );
+            let lookups = failing({});
+            let result = await dkim2Sign(first, listOptions({ outOfBand: true, resolver: lookups }));
+            expect(result.i).to.equal(2);
+            expect(lookups.queries).to.deep.equal([]);
+        });
+
+        it('verifies the message as it arrived when the signer changed it', async () => {
+            let first = await toList();
+            let revised = Buffer.from(first.toString('binary').replace('Subject: Hello DKIM2', 'Subject: [list] Hello DKIM2'), 'binary');
+            let result = await dkim2Sign(revised, listOptions({ recipe: { h: { subject: [{ d: ['Hello DKIM2'] }] } } }));
+            expect(result.m).to.equal(2);
+
+            // a change the Recipe does not cover is refused by the Recipe check
+            let more = Buffer.from(revised.toString('binary').replace('To: rcpt@example.net', 'To: other@example.net'), 'binary');
+            let err = await dkim2Sign(more, listOptions({ recipe: { h: { subject: [{ d: ['Hello DKIM2'] }] } } })).catch(err => err);
+            expect(err.code).to.equal('EINVALIDRECIPE');
+        });
+
+        it('completes an nd= hop only with the nd= domain', async () => {
+            let first = await toList();
+            let withNd = await signMessage(first, listOptions({ mailFrom: undefined, rcptTo: undefined, nextDomain: 'fwd.example.net' }));
+            let completing = await dkim2Sign(withNd, {
+                signingDomain: 'fwd.example.net',
+                selector: 'frsa',
+                privateKey: generated.rsa,
+                mailFrom: 'bounce@fwd.example.net',
+                rcptTo: 'member@example.net',
+                signTime: new Date('2026-10-01T00:02:00Z'),
+                resolver: resolver()
+            });
+            expect(completing.i).to.equal(3);
         });
     });
 

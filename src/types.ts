@@ -1486,10 +1486,24 @@ export interface DKIM2SignOptions {
     signTime?: Date | string | number | undefined;
 
     /**
-     * DNS resolver for the Domain Policy Record of the From domain, only looked up when the
-     * signing domain is a subdomain of the From domain (draft-ietf-dkim-dkim2-spec-09 section 11.1)
+     * DNS resolver, for verifying a message that already has DKIM2 header fields, and for the Domain
+     * Policy Record of the From domain when the signing domain is a subdomain of it
+     * (draft-ietf-dkim-dkim2-spec-09 section 11.1)
      */
     resolver?: DNSResolver | undefined;
+
+    /**
+     * The SMTP envelope the message arrived with. A message that already has DKIM2 header fields is
+     * only signed when it is a Fully Verified DKIM2 Message (section 12), which includes that its
+     * highest DKIM2-Signature names this envelope. Without it the envelope is not compared
+     */
+    received?: { mailFrom?: string | undefined; rcptTo?: string | string[] | undefined } | undefined;
+
+    /**
+     * Sign a message that already has DKIM2 header fields without verifying it first, because an
+     * out-of-band arrangement covers it (section 12). Default: false
+     */
+    outOfBand?: boolean | undefined;
 }
 
 /**

@@ -25,7 +25,9 @@ const list = {
     selector: 'led',
     privateKey: generated.ed25519,
     mailFrom: 'bounce@list.example.org',
-    rcptTo: 'member@example.net'
+    rcptTo: 'member@example.net',
+    // the originator's signature is verified before the list signs (section 12)
+    resolver: zone
 };
 
 // header field names, including ones DKIM2 does not sign, in mixed case
