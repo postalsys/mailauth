@@ -216,14 +216,7 @@ class Dkim2Verifier extends Dkim2Parser {
 
         // the DKIM2-Signature a failure of a Message-Instance is reported against, the one with
         // the lowest i= that covers it (draft-gondwana-dkim2-authres-01 section 3.2.2)
-        const signatureFor = (m: number): number | undefined => {
-            for (let i = 1; signatures.has(i); i++) {
-                if (signatures.get(i)!.m >= m) {
-                    return i;
-                }
-            }
-            return undefined;
-        };
+        const signatureFor = (m: number): number | undefined => Array.from(signatures.values()).find(signature => signature.m >= m)?.i;
 
         const addError: AddError = (result, message, ref) => {
             let entry: DKIM2Error = { result, message };
