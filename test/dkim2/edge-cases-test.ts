@@ -8,6 +8,7 @@ import { dkim2Sign } from '../../src/dkim2/sign.js';
 import { dkim2Verify } from '../../src/dkim2/verify.js';
 import { parseMessageInstance, parseSignature, parsePath } from '../../src/dkim2/fields.js';
 import { parseRecipe } from '../../src/dkim2/recipe.js';
+import { MessageState } from '../../src/dkim2/message-state.js';
 import {
     rsaKey,
     ed25519Key,
@@ -65,6 +66,15 @@ describe('DKIM2 edge cases', () => {
             expect(instance.error).to.equal('syntax error');
             let tags = `i=1; t=1; d=example.com; mf=${b64('<a@example.com>')}; rt=${b64('<b@example.net>')}; s=sel:rsa-sha256:${H}`;
             expect(parseSignature(`DKIM2-Signature: m=1 2; ${tags}`).error).to.equal('syntax error');
+        });
+
+        it('refuses a body Recipe on a message whose body lines were not kept', () => {
+            // the verifier and the signer keep the body whenever a Recipe needs it, this is the guard
+            let state = new MessageState(new Map(), { lines: null, hashes: new Map([['sha256', 'x']]) });
+            let recipe = parseRecipe('{"b":[{"c":[1,1]}]}').value!;
+            expect(() => state.previous(recipe)).to.throw('The message body was not kept for the body Recipe');
+            // a header Recipe does not need the body
+            expect(state.previous(parseRecipe('{"h":{"subject":[]}}').value!).body).to.equal(state.body);
         });
 
         it('reads the m= and i= of a field with a syntax error elsewhere', () => {
