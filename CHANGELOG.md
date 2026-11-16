@@ -1,5 +1,12 @@
 # Changelog
 
+## [8.1.0](https://github.com/postalsys/mailauth/compare/v8.0.6...v8.1.0) (2026-11-16)
+
+
+### Features
+
+* **dkim2:** follow draft-ietf-dkim-dkim2-spec-09 ([#187](https://github.com/postalsys/mailauth/issues/187)) ([594e9f2](https://github.com/postalsys/mailauth/commit/594e9f213c8c254f50677592879c81faa25bff1e))
+
 ## [8.0.6](https://github.com/postalsys/mailauth/compare/v8.0.5...v8.0.6) (2026-11-10)
 
 
