@@ -76,8 +76,8 @@ describe('DKIM2 edge cases', () => {
         });
 
         it('rejects a Recipe that is null', () => {
-            expect(parseRecipe('null').error).to.equal('not a JSON object');
-            expect(parseRecipe('{"b":[{"d":["ok",null]}]}').error).to.equal('"b" Recipe has an invalid "d" step');
+            expect(parseRecipe('null').error).to.equal('contains invalid JSON: not a JSON object');
+            expect(parseRecipe('{"b":[{"d":["ok",null]}]}').error).to.equal('recipe {"d":["ok",null]} is invalid');
         });
     });
 
@@ -96,17 +96,17 @@ describe('DKIM2 edge cases', () => {
         it('expires a signature one second after the maximum age, not at it', async () => {
             let signed = await signMessage(message(), rsaOnly({ signTime: 1000000000000 }));
             expect((await verify(signed, { curTime: 1000000000000 + 1209600 * 1000 })).status.result).to.equal('pass');
-            expect((await verify(signed, { curTime: 1000000000000 + 1209601 * 1000 })).status.result).to.equal('permerror');
+            expect((await verify(signed, { curTime: 1000000000000 + 1209601 * 1000 })).status.result).to.equal('fail');
         });
 
         it('lists every signature as skipped when the header fields are invalid', async () => {
             let signed = await signMessage(message(), rsaOnly());
             let broken = Buffer.concat([Buffer.from('Message-Instance: m=1; h=sha256:AAAA:AAAA;\r\n'), signed]);
             let result = await verify(broken);
-            expect(result.status.comment).to.equal('Message-Instance m=1 appears more than once');
+            expect(result.status.comment).to.equal('Message-Instance m=1 is duplicated');
             expect(result.signatures[0].status).to.deep.equal({ result: 'skipped' });
-            expect(result.signatures[0].values).to.deep.equal([{ selector: 'rsa', algorithm: 'rsa-sha256' }]);
-            expect(result.info).to.equal('dkim2=permerror (i=1 example.com skipped; Message-Instance m=1 appears more than once) header.d=example.com');
+            expect(result.signatures[0].values).to.deep.equal([{ selector: 'rsa', algorithm: 'rsa-sha256', group: 1 }]);
+            expect(result.info).to.equal('dkim2=permerror (i=1 example.com skipped; Message-Instance m=1 is duplicated) header.d=example.com');
             expect(result).to.not.have.property('replay');
         });
 
@@ -126,8 +126,8 @@ describe('DKIM2 edge cases', () => {
         it('attributes a custody error to its hop in the comment', async () => {
             let signed = await signMessage(message(), rsaOnly());
             let result = await verify(signed, { mailFrom: 'x@example.com' });
-            expect(result.signatures[0].status).to.deep.equal({ result: 'permerror', comment: undefined });
-            expect(result.info).to.match(/^dkim2=permerror \(i=1 example\.com permerror;/);
+            expect(result.signatures[0].status).to.deep.equal({ result: 'fail', comment: 'DKIM2-Signature i=1 MAIL FROM x@example.com did not match' });
+            expect(result.info).to.match(/^dkim2=fail \(i=1 example\.com fail;/);
         });
 
         it('warns about the parts of the SMTP envelope that were not checked', async () => {
@@ -148,7 +148,7 @@ describe('DKIM2 edge cases', () => {
             expect(both.status).to.not.have.property('warnings');
 
             // a message without DKIM2 header fields has nothing to warn about
-            expect((await verify(message())).status).to.deep.equal({ result: 'none' });
+            expect((await verify(message())).status).to.deep.equal({ result: 'none', comment: 'No DKIM2 header fields found' });
 
             // and a message that could not be verified still says the envelope was not checked
             let broken = Buffer.concat([Buffer.from('DKIM2-Signature: broken\r\n'), signed]);
@@ -162,33 +162,13 @@ describe('DKIM2 edge cases', () => {
     });
 
     describe('multiple hops', () => {
-        it('checks donotexplode against every later hop', async () => {
-            let first = await signMessage(message(), hop('a@example.com', { flags: ['donotexplode'] }));
-            let second = await signMessage(first, hop('b@example.com'));
-            let third = await signMessage(second, hop('c@example.com', { flags: ['exploded'] }));
-            let result = await verify(third);
-            expect(result.status.comment).to.equal('Message has been exploded despite a donotexplode request');
-            expect(result.errors).to.have.length(1);
-
-            let quiet = await signMessage(second, hop('c@example.com'));
-            expect((await verify(quiet)).status.result).to.equal('pass');
-        });
-
-        it('reports a donotmodify failure once, and catches a removed header field', async () => {
-            let first = await signMessage(message(['Comments: keep me']), hop('a@example.com', { flags: ['donotmodify'] }));
-            let second = await signMessage(first, hop('b@example.com', { flags: ['donotmodify'] }));
-            let removed = Buffer.from(second.toString('binary').replace('Comments: keep me\r\n', ''), 'binary');
-            let third = await signMessage(removed, hop('c@example.com', { recipe: { h: { comments: [{ d: ['keep me'] }] } } }));
-            let result = await verify(third);
-            expect(result.status.result).to.equal('fail');
-            expect(result.errors.map((error: any) => error.message)).to.deep.equal(['Message has been modified despite a donotmodify request']);
-        });
-
-        it('catches a removed copy of a repeated header field despite donotmodify', async () => {
-            let first = await signMessage(message(['Comments: same', 'Comments: same']), hop('a@example.com', { flags: ['donotmodify'] }));
-            let removed = Buffer.from(first.toString('binary').replace('Comments: same\r\n', ''), 'binary');
-            let second = await signMessage(removed, hop('b@example.com', { recipe: { h: { comments: [{ c: [1, 1] }, { d: ['same'] }] } } }));
-            expect((await verify(second)).status.comment).to.equal('Message has been modified despite a donotmodify request');
+        it('ignores the donotexplode and donotmodify flags that draft-ietf-dkim-dkim2-spec-07 removed', async () => {
+            let first = await signMessage(message(['Comments: keep me']), hop('a@example.com', { flags: ['donotexplode', 'donotmodify'] }));
+            let removed = Buffer.from(first.toString('binary').replace('Comments: keep me\r\n', ''), 'binary');
+            let second = await signMessage(removed, hop('b@example.com', { flags: ['exploded'], recipe: { h: { comments: [{ d: ['keep me'] }] } } }));
+            let result = await verify(second);
+            expect(result.status.result).to.equal('pass');
+            expect(result.errors).to.deep.equal([]);
         });
 
         it('recreates a body that lost its last line and its final line break', async () => {
@@ -253,9 +233,9 @@ describe('DKIM2 edge cases', () => {
                 { lrsa: generated.rsa }
             );
             let result = await verify(forged, { mailFrom: '', rcptTo: 'target@example.org' });
-            expect(result.errors.map((error: any) => error.message)).to.deep.equal(['DKIM2-Signature i=2 MAIL FROM list.example.org did not match']);
-            expect(result.status.result).to.equal('permerror');
-            expect(result.status.comment).to.equal('DKIM2-Signature i=2 MAIL FROM list.example.org did not match');
+            expect(result.errors.map((error: any) => error.message)).to.deep.equal(['DKIM2-Signature i=2 d= does not match the rt= of i=1']);
+            expect(result.status.result).to.equal('fail');
+            expect(result.status.comment).to.equal('DKIM2-Signature i=2 d= does not match the rt= of i=1');
             expect(result.status.header).to.deep.equal({ d: 'example.com', i: 2 });
         });
 
@@ -294,21 +274,29 @@ describe('DKIM2 edge cases', () => {
             expect(err.message).to.include('duplicate');
         });
 
-        it('ignores Recipes for header fields that are not signed', async () => {
+        it('refuses and reports Recipes for header fields that are not signed (section 5.1)', async () => {
             let first = await signMessage(message(['X-Mailer: one']), originatorOptions({ rcptTo: 'list@list.example.org' }));
-            let changed = Buffer.from(
-                first.toString('binary').replace('Subject: Hello DKIM2', 'Subject: changed').replace('X-Mailer: one', 'X-Mailer: two'),
-                'binary'
-            );
-            let revised = await signMessage(changed, {
+            let changed = Buffer.from(first.toString('binary').replace('Subject: Hello DKIM2', 'Subject: changed'), 'binary');
+            let recipe = { h: { subject: [{ d: ['Hello DKIM2'] }], 'x-mailer': [{ d: ['something else'] }] } };
+            let options = {
                 signingDomain: 'list.example.org',
                 selector: 'lrsa',
                 privateKey: generated.rsa,
                 mailFrom: 'bounce@list.example.org',
-                rcptTo: 'member@example.net',
-                recipe: { h: { subject: [{ d: ['Hello DKIM2'] }], 'x-mailer': [{ d: ['something else'] }, { d: ['and more'] }] } }
-            });
-            expect((await verify(revised)).status.result).to.equal('pass');
+                rcptTo: 'member@example.net'
+            };
+            let err = await dkim2Sign(changed, Object.assign({ recipe }, options)).catch(err => err);
+            expect(err.code).to.equal('EINVALIDRECIPE');
+            expect(err.message).to.equal('Invalid recipe, it recipe "x-mailer" is invalid');
+
+            let forged = craftSignature(
+                Buffer.concat([Buffer.from(`Message-Instance: m=2; h=sha256:${instanceHash(changed)}; r=${b64(JSON.stringify(recipe))};\r\n`), changed]),
+                `DKIM2-Signature: i=2; m=2; t=${Math.floor(Date.now() / 1000)}; d=list.example.org; mf=${b64('<bounce@list.example.org>')}; rt=${b64('<member@example.net>')}; s=lrsa:rsa-sha256:;`,
+                { lrsa: generated.rsa }
+            );
+            let result = await verify(forged);
+            expect(result.status.result).to.equal('permerror');
+            expect(result.status.comment).to.equal('Message-Instance m=2 recipe "x-mailer" is invalid');
         });
     });
 
@@ -316,12 +304,13 @@ describe('DKIM2 edge cases', () => {
         const zoneFor = (txt: any) => ({ 'rsa._domainkey.example.com': { TXT: txt }, 'ed._domainkey.example.com': { TXT: txt } });
 
         for (let [label, txt, selector, comment] of [
-            ['an Ed25519 key that is not 32 bytes', [[`v=DKIM1; k=ed25519; p=${Buffer.alloc(33, 1).toString('base64')}`]], 'ed', 'has a syntax error'],
+            ['an Ed25519 key that is not 32 bytes', [[`v=DKIM1; k=ed25519; p=${Buffer.alloc(33, 1).toString('base64')}`]], 'ed', 'is malformed'],
+            ['an Ed25519 key of 31 bytes', [[`v=DKIM1; k=ed25519; p=${Buffer.alloc(31, 1).toString('base64')}`]], 'ed', 'is malformed'],
             [
                 'Ed25519 key data under k=rsa',
                 [[`v=DKIM1; k=rsa; p=${crypto.createPublicKey(ed25519Key).export({ format: 'der', type: 'spki' }).toString('base64')}`]],
                 'rsa',
-                'has a syntax error'
+                'is malformed'
             ],
             ['an empty answer', [], 'rsa', 'does not exist']
         ]) {
@@ -422,8 +411,8 @@ describe('DKIM2 edge cases', () => {
             let withoutOption = await dkim2Sign(message(), rsaOnly({ signTime: 1 }));
             expect(plain.messageInstance).to.equal(withoutOption.messageInstance);
 
-            let first = await signMessage(message(), rsaOnly({ recipe: { h: { 'x-entry': [] } } }));
-            expect((await verify(first)).instances[0].recipe).to.deep.equal({ headers: ['x-entry'], body: 'unchanged' });
+            let first = await signMessage(message(), rsaOnly({ recipe: { h: { comments: [] } } }));
+            expect((await verify(first)).instances[0].recipe).to.deep.equal({ headers: ['comments'], body: 'unchanged' });
         });
 
         it('signs with a raw 32 byte Ed25519 key and the next domain lower cased', async () => {

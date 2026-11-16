@@ -1,7 +1,7 @@
-// DKIM2 signer (draft-ietf-dkim-dkim2-spec-06 section 9)
+// DKIM2 signer (draft-ietf-dkim-dkim2-spec-09 section 12)
 
 import crypto from 'node:crypto';
-import { getPrivateKey, getCurTime, isSameOrSubdomain } from '../tools.js';
+import { getPrivateKey, getCurTime } from '../tools.js';
 import {
     MI_KEY,
     SIG_KEY,
@@ -14,24 +14,27 @@ import {
     canonicalSignatureField,
     formatMessageInstance,
     formatSignature,
-    parsePath,
-    continuesCustody,
     buildSignatureInput
 } from './fields.js';
+import { parsePath, relaxedMatch, custodyProblem } from './domains.js';
 import { parseRecipe } from './recipe.js';
 import { Dkim2Parser } from './dkim2-parser.js';
-import { ALGORITHM_KEY_TYPES, rsaKeyProblem, signatureData } from './key.js';
+import { rsaKeyProblem } from './key.js';
+import { ALGORITHM_KEY_TYPES, KEY_TYPES, createSignature } from './algorithms.js';
+import { createPolicyLookup } from './records.js';
+import { checkAuthentic, sameFields } from './from.js';
 import type { ChainInstance, ChainSignature, InstanceHash, SignatureFields } from './fields.js';
 import type { ParsedRecipe } from './recipe.js';
-import type { CurrentState } from './message-state.js';
+import type { CurrentState, MessageState } from './message-state.js';
 import type { HeaderRow, ParsedHeaders } from '../dkim/message-parser.js';
-import type { DKIM2Recipe, DKIM2SignOptions } from '../types.js';
+import type { DKIM2Recipe, DKIM2SignOptions, DKIM2SignatureKey, DNSResolver } from '../types.js';
 
-// A signing key, loaded and checked
+// A signing key, loaded and checked. `group` is the position of its "|" group in s=
 interface SigningKey {
     selector: string;
     algorithm: string;
     keyObject: crypto.KeyObject;
+    group: number;
 }
 
 // The signing options in the form the signer uses. There is either `nextDomain` or both
@@ -48,6 +51,7 @@ interface SignerOptions {
     recipe?: DKIM2Recipe | undefined;
     parsedRecipe?: ParsedRecipe | undefined;
     t: number;
+    resolver?: DNSResolver | undefined;
 }
 
 // A new Message-Instance to format
@@ -57,8 +61,10 @@ interface NewInstance {
     recipe: DKIM2Recipe | undefined;
 }
 
-// the signing algorithm of each key type
-const KEY_ALGORITHMS = new Map<string | undefined, string>(Array.from(ALGORITHM_KEY_TYPES, ([algorithm, keyType]): [string, string] => [keyType, algorithm]));
+// the signing algorithm of each Node.js key type
+const KEY_ALGORITHMS = new Map<string | undefined, string>(
+    Array.from(ALGORITHM_KEY_TYPES, ([algorithm, keyType]): [string, string] => [KEY_TYPES.get(keyType)!.nodeType, algorithm])
+);
 
 const signError = (message: string, code?: string): Error & { code?: string } => {
     let err: Error & { code?: string } = new Error(message);
@@ -66,7 +72,7 @@ const signError = (message: string, code?: string): Error & { code?: string } =>
     return err;
 };
 
-// Converts an address to an RFC 5321 path with the angle brackets (sections 8.5 and 8.6)
+// Converts an address to an RFC 5321 path with the angle brackets (sections 10.5 and 10.6)
 const toPath = (value: unknown, allowNull: boolean): string => {
     let path = String(value ?? '').trim();
     if (path && !/^<.*>$/.test(path)) {
@@ -85,15 +91,7 @@ const toPath = (value: unknown, allowNull: boolean): string => {
 };
 
 // Section 3: the signing algorithm follows the key type
-const loadKey = ({
-    selector,
-    privateKey,
-    algorithm
-}: {
-    selector?: string | undefined;
-    privateKey: string | Buffer;
-    algorithm?: string | undefined;
-}): SigningKey => {
+const loadKey = ({ selector, privateKey, algorithm }: Partial<DKIM2SignatureKey> & { privateKey: string | Buffer }, group: number): SigningKey => {
     if (!isDomain(selector)) {
         throw signError(`Invalid selector ${JSON.stringify(selector)}`, 'EINVALIDSELECTOR');
     }
@@ -113,10 +111,43 @@ const loadKey = ({
         throw signError(`The RSA key of selector ${selector} ${problem}`, problem === 'is too short' ? 'ESHORTKEY' : 'EINVALIDKEY');
     }
 
-    return { selector: selector.toLowerCase(), algorithm: keyAlgorithm, keyObject };
+    return { selector: selector.toLowerCase(), algorithm: keyAlgorithm, keyObject, group };
 };
 
-const createSignature = (algorithm: string, input: Buffer, keyObject: crypto.KeyObject): Buffer => crypto.sign(...signatureData(algorithm, input), keyObject);
+// The signing keys with the position of their "|" group: a list of keys is one group, a list of
+// lists is a group per list
+const loadKeys = (options: Partial<DKIM2SignOptions>): SigningKey[] => {
+    let keyList: (DKIM2SignatureKey | DKIM2SignatureKey[])[] =
+        options.signatureData || (options.privateKey ? [{ selector: options.selector!, privateKey: options.privateKey, algorithm: options.algorithm }] : []);
+
+    let keys: SigningKey[] = [];
+    if (keyList.length && keyList.every(entry => Array.isArray(entry))) {
+        keyList.forEach((group, index) => {
+            if (!group.length) {
+                throw signError('A group of signing keys is empty', 'ENOKEY');
+            }
+            keys.push(...group.map(key => loadKey(key, index)));
+        });
+    } else if (keyList.some(entry => Array.isArray(entry))) {
+        throw signError('signatureData is either a list of keys or a list of groups of keys', 'EINVALIDOPTS');
+    } else {
+        keys = (keyList as DKIM2SignatureKey[]).map(key => loadKey(key, 0));
+    }
+
+    if (!keys.length) {
+        throw signError('No signing keys provided', 'ENOKEY');
+    }
+
+    // section 10.9: no selector twice. The same algorithm may be used with several selectors
+    let selectors = new Set<string>();
+    for (let { selector } of keys) {
+        if (selectors.has(selector)) {
+            throw signError(`Selector ${selector} is listed more than once`, 'EINVALIDSELECTOR');
+        }
+        selectors.add(selector);
+    }
+    return keys;
+};
 
 // Validates the signing options and puts them into the form the signer uses
 const normalizeOptions = (options: Partial<DKIM2SignOptions> | undefined): SignerOptions => {
@@ -127,31 +158,10 @@ const normalizeOptions = (options: Partial<DKIM2SignOptions> | undefined): Signe
         throw signError(`Invalid signing domain ${JSON.stringify(options.signingDomain)}`, 'EINVALIDDOMAIN');
     }
 
-    let keyList =
-        options.signatureData || (options.privateKey ? [{ selector: options.selector, privateKey: options.privateKey, algorithm: options.algorithm }] : []);
-    if (!keyList.length) {
-        throw signError('No signing keys provided', 'ENOKEY');
-    }
-    let keys = keyList.map(loadKey);
-
-    // section 8.9: no selector twice, at most two signatures with the same algorithm
-    let selectors = new Set<string>();
-    let algorithmCounts = new Map<string, number>();
-    for (let { selector, algorithm } of keys) {
-        if (selectors.has(selector)) {
-            throw signError(`Selector ${selector} is listed more than once`, 'EINVALIDSELECTOR');
-        }
-        selectors.add(selector);
-        algorithmCounts.set(algorithm, (algorithmCounts.get(algorithm) || 0) + 1);
-        if (algorithmCounts.get(algorithm)! > 2) {
-            throw signError(`More than two signatures use ${algorithm}`, 'EINVALIDALGO');
-        }
-    }
-
-    let result = { signingDomain, keys } as SignerOptions;
+    let result = { signingDomain, keys: loadKeys(options), resolver: options.resolver } as SignerOptions;
 
     if (options.nextDomain) {
-        // section 8.7: nd= replaces both mf= and rt=
+        // section 10.7: nd= replaces both mf= and rt=
         if (options.mailFrom !== undefined || options.rcptTo !== undefined) {
             throw signError('nextDomain can not be used together with mailFrom or rcptTo', 'EINVALIDOPTS');
         }
@@ -160,7 +170,7 @@ const normalizeOptions = (options: Partial<DKIM2SignOptions> | undefined): Signe
             throw signError(`Invalid next domain ${JSON.stringify(options.nextDomain)}`, 'EINVALIDDOMAIN');
         }
     } else {
-        // section 9.2: the envelope MUST be available to the signer
+        // section 12.2: the envelope MUST be available to the signer
         if (options.mailFrom === undefined || options.rcptTo === undefined) {
             throw signError('mailFrom and rcptTo are required, unless nextDomain is set', 'EINVALIDOPTS');
         }
@@ -170,8 +180,8 @@ const normalizeOptions = (options: Partial<DKIM2SignOptions> | undefined): Signe
             throw signError('rcptTo needs at least one address', 'EINVALIDOPTS');
         }
 
-        // section 8.8: the d= domain is the MAIL FROM domain or a parent of it
-        if (result.mailFrom !== '<>' && !isSameOrSubdomain(parsePath(result.mailFrom).domain, signingDomain)) {
+        // section 10.8: the d= domain is the MAIL FROM domain or a parent of it
+        if (result.mailFrom !== '<>' && !relaxedMatch(parsePath(result.mailFrom).domain, signingDomain)) {
             throw signError(`The MAIL FROM domain does not match the signing domain ${signingDomain}`, 'EINVALIDDOMAIN');
         }
     }
@@ -202,13 +212,13 @@ const normalizeOptions = (options: Partial<DKIM2SignOptions> | undefined): Signe
     if (options.recipe !== undefined && options.recipe !== null) {
         let parsed = parseRecipe(JSON.stringify(options.recipe));
         if (parsed.error) {
-            throw signError(`Invalid recipe: ${parsed.error}`, 'EINVALIDRECIPE');
+            throw signError(`Invalid recipe, it ${parsed.error}`, 'EINVALIDRECIPE');
         }
         result.recipe = options.recipe;
         result.parsedRecipe = parsed.value;
     }
 
-    // section 8.4, the time is read once so that the signed and the emitted t= are the same
+    // section 12.6, the time is read once so that the signed and the emitted t= are the same
     result.t = Math.floor(getCurTime(options.signTime).getTime() / 1000);
 
     return result;
@@ -279,9 +289,10 @@ class Dkim2Signer extends Dkim2Parser {
         }
     }
 
-    // Section 9.1: a new Message-Instance when the message has no instance yet, or when it has
-    // changed since the top one, with a Recipe that recreates the top one
-    buildInstance(current: CurrentState): NewInstance | null {
+    // Section 12.1: a new Message-Instance when the message has no instance yet, or when it has
+    // changed since the top one, with a Recipe that recreates the top one. `previous` is the
+    // recreated top instance
+    buildInstance(current: CurrentState): (NewInstance & { previous?: MessageState | undefined }) | null {
         let options = this.options;
         let hashes = options.hashAlgorithms.map(algorithm => ({ algorithm, headerHash: current.headerHash(algorithm), bodyHash: current.bodyHash(algorithm) }));
 
@@ -308,7 +319,7 @@ class Dkim2Signer extends Dkim2Parser {
         try {
             previous = current.previous(options.parsedRecipe);
         } catch (err: any) {
-            throw signError(`Invalid recipe: ${err.message}`, 'EINVALIDRECIPE');
+            throw signError(`Invalid recipe, it ${err.message}`, 'EINVALIDRECIPE');
         }
 
         for (let { algorithm, headerHash, bodyHash } of comparable) {
@@ -319,10 +330,10 @@ class Dkim2Signer extends Dkim2Parser {
             }
         }
 
-        return { m: top.m + 1, hashes, recipe: options.recipe };
+        return { m: top.m + 1, hashes, recipe: options.recipe, previous };
     }
 
-    // Section 9.3: the new signature continues the chain of custody of the previous one
+    // Section 12.2: the new signature continues the chain of custody of the previous one
     checkCustody(): void {
         let options = this.options;
         let previous = this.signatures.get(this.signatures.size);
@@ -337,8 +348,37 @@ class Dkim2Signer extends Dkim2Parser {
             return;
         }
 
-        if (!continuesCustody(previous, options.mailFrom, options.signingDomain)) {
-            throw signError(`The signature would break the chain of custody, it does not match a RCPT TO of DKIM2-Signature i=${previous.i}`, 'ECUSTODY');
+        let problem = custodyProblem(previous, options);
+        if (problem) {
+            throw signError(
+                `The signature would break the chain of custody, its ${problem === 'mf' ? 'MAIL FROM' : 'signing'} domain does not match a RCPT TO of DKIM2-Signature i=${previous.i}`,
+                'ECUSTODY'
+            );
+        }
+    }
+
+    /**
+     * Section 12.4: when the original message is signed, or the From header field was changed,
+     * the signing domain has to make the From Authentic (section 11). A subdomain of the From
+     * domain does that unless the From domain has a Domain Policy Record with the "strict" flag
+     *
+     * @param {Object} current The message as it is signed
+     * @param {Object} [previous] The message as it was before the change this signer made
+     */
+    async checkFrom(current: MessageState, previous: MessageState | undefined): Promise<void> {
+        let fields = current.fields('from');
+        if (this.signatures.size && (!previous || sameFields(previous.fields('from'), fields))) {
+            // the From is still the one an earlier signature vouched for
+            return;
+        }
+
+        let domain = this.options.signingDomain;
+        let problem = await checkAuthentic(fields, domain, createPolicyLookup(this.options.resolver));
+        if (problem?.result === 'fail') {
+            throw signError(`The From header field can not be Authentic with the signing domain ${domain}: ${problem.message}`, 'EFROMNOTAUTHENTIC');
+        }
+        if (problem) {
+            throw signError(`Can not tell if the From header field is Authentic with the signing domain ${domain}: ${problem.message}`, 'EFROMPOLICY');
         }
     }
 
@@ -350,9 +390,17 @@ class Dkim2Signer extends Dkim2Parser {
         let instance = this.buildInstance(current);
         this.checkCustody();
 
+        let i = this.signatures.size + 1;
+        if (i === 1 && options.flags.includes('exploded')) {
+            // section 12.5: the flag MUST NOT be set on the first signature
+            throw signError('The exploded flag can not be set on the first DKIM2-Signature', 'EINVALIDOPTS');
+        }
+
+        await this.checkFrom(current, instance?.previous);
+
         let instanceHeader = instance ? formatMessageInstance(instance) : null;
         let signature: SignatureFields = {
-            i: this.signatures.size + 1,
+            i,
             m: instance ? instance.m : this.instances.size,
             t: options.t,
             signingDomain: options.signingDomain,
@@ -361,10 +409,10 @@ class Dkim2Signer extends Dkim2Parser {
             nextDomain: options.nextDomain,
             nonce: options.nonce,
             flags: options.flags,
-            signatures: options.keys.map(({ selector, algorithm }) => ({ selector, algorithm, signature: '' }))
+            signatures: options.keys.map(({ selector, algorithm, group }) => ({ selector, algorithm, group, signature: '' }))
         };
 
-        // section 9.6: every Message-Instance by m=, every DKIM2-Signature by i=, and the new
+        // section 12.8: every Message-Instance by m=, every DKIM2-Signature by i=, and the new
         // signature with empty signature values
         let inOrder = (map: Map<number, { line: Buffer }>): (Buffer | string)[] => Array.from({ length: map.size }, (v, index) => map.get(index + 1)!.line);
         let instanceLines = inOrder(this.instances).concat(instanceHeader || []);

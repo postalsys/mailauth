@@ -16,12 +16,33 @@ interface Dkim2SignArgv {
     nextDomain?: string | undefined;
     nonce?: string | undefined;
     flag?: string[] | undefined;
+    group?: string[] | undefined;
     // not validated here, the signer rejects unsupported algorithms
     hash?: string[] | undefined;
     recipe?: string | undefined;
     time?: number | undefined;
     headersOnly?: boolean | undefined;
 }
+
+// Splits the keys into the groups of --group, lists of key positions counted from 1. Every key
+// is in exactly one group
+const groupKeys = (keys: DKIM2SignatureKey[], groups: string[]): DKIM2SignatureKey[][] => {
+    let used = new Set<number>();
+    let result = groups.map(group =>
+        group.split(',').map(value => {
+            let position = Number(value.trim());
+            if (!Number.isSafeInteger(position) || position < 1 || position > keys.length || used.has(position)) {
+                throw new Error(`Invalid key position "${value.trim()}" in --group ${group}`);
+            }
+            used.add(position);
+            return keys[position - 1];
+        })
+    );
+    if (used.size !== keys.length) {
+        throw new Error('Every key has to be in one --group');
+    }
+    return result;
+};
 
 const cmd = async (argv: Dkim2SignArgv): Promise<void> => {
     let source = argv.email;
@@ -44,10 +65,11 @@ const cmd = async (argv: Dkim2SignArgv): Promise<void> => {
     stream.pipe(gatherer);
     stream.on('error', err => gatherer.emit('error', err));
 
-    let signatureData: DKIM2SignatureKey[] = [];
+    let keys: DKIM2SignatureKey[] = [];
     for (let i = 0; i < privateKeys.length; i++) {
-        signatureData.push({ selector: selectors[i], privateKey: await fs.promises.readFile(privateKeys[i], 'utf-8') });
+        keys.push({ selector: selectors[i], privateKey: await fs.promises.readFile(privateKeys[i], 'utf-8') });
     }
+    let signatureData = argv.group?.length ? groupKeys(keys, argv.group) : keys;
 
     let options: DKIM2SignOptions & { signTime: Date } = {
         signingDomain: argv.domain,

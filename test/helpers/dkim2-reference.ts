@@ -1,6 +1,6 @@
-// An independent, deliberately simple reading of draft-ietf-dkim-dkim2-spec-06, used as a test
+// An independent, deliberately simple reading of draft-ietf-dkim-dkim2-spec-09, used as a test
 // oracle for lib/dkim2. It works on whole strings, shares no code with the library and follows
-// the steps of sections 5, 6 and 9.6 literally.
+// the steps of sections 5, 6 and 12.8 literally.
 
 import crypto from 'node:crypto';
 
@@ -82,13 +82,13 @@ const bodyHash = (body: string, algorithm: string): string =>
         .update(Buffer.from(body.replace(/(\r\n)*$/, '') + '\r\n', 'binary'))
         .digest('base64');
 
-// section 9.6 for one field: lower case name, no WSP at all
+// section 12.8 for one field: lower case name, no WSP at all
 const signatureField = (name: string, value: string): string => `${name}:${value.replace(/[ \t]/g, '')}\r\n`;
 
 const getTag = (value: string, tag: string): string | null => {
     for (let part of value.replace(/[ \t]/g, '').split(';')) {
         let eq = part.indexOf('=');
-        if (eq > 0 && part.slice(0, eq).toLowerCase() === tag) {
+        if (eq > 0 && part.slice(0, eq) === tag) {
             return part.slice(eq + 1);
         }
     }
@@ -113,11 +113,11 @@ const signatureInput = (message: string, i: number): Buffer => {
         .sort((a, b) => Number(getTag(a.value, 'i')) - Number(getTag(b.value, 'i')))
         .forEach(field => (output += signatureField(field.name, field.value)));
 
-    // the signature values of s= emptied
+    // the signature values of s= emptied, the "," and "|" between them stay
     let blanked = target!.value
         .replace(/[ \t]/g, '')
         .split(';')
-        .map(part => (/^s=/i.test(part) ? part.replace(/:[A-Za-z0-9+/=]+(?=,|$)/g, ':') : part))
+        .map(part => (/^s=/.test(part) ? part.replace(/:[A-Za-z0-9+/=]+(?=[,|]|$)/g, ':') : part))
         .join(';');
     output += `dkim2-signature:${blanked}\r\n`;
     return Buffer.from(output, 'binary');
@@ -128,7 +128,7 @@ const verifySignatureValue = (message: string, i: number, selector: string, publ
     let { fields } = splitMessage(message);
     let target = fields.find(field => field.name === 'dkim2-signature' && Number(getTag(field.value, 'i')) === i);
     let set = getTag(target!.value, 's')!
-        .split(',')
+        .split(/[,|]/)
         .map(entry => entry.split(':'))
         .find(entry => entry[0] === selector);
     let input = signatureInput(message, i);
@@ -136,8 +136,16 @@ const verifySignatureValue = (message: string, i: number, selector: string, publ
     if (set![1] === 'ed25519-sha256') {
         return crypto.verify(null, crypto.createHash('sha256').update(input).digest(), publicKey, signature);
     }
+    if (set![1] === 'mldsa44') {
+        // section 3.4: pure ML-DSA over the input, with "DKIM2" as the context string
+        return crypto.verify(null, input, { key: publicKey, context: Buffer.from('DKIM2') } as crypto.VerifyKeyObjectInput, signature);
+    }
     return crypto.verify('sha256', input, publicKey, signature);
 };
+
+// The bytes of a "d" (UTF-8) or "u" (base64) step as 'binary' strings
+const stepLines = (step: Record<string, string[]>): string[] =>
+    step.d ? step.d.map(value => Buffer.from(value, 'utf8').toString('binary')) : step.u.map(value => Buffer.from(value, 'base64').toString('binary'));
 
 // Section 5: recreates the previous message from a Recipe. Header fields of one name are numbered
 // from the bottom, body lines from the top. Returns { fields, body }, body null when unrecoverable
@@ -150,7 +158,7 @@ const applyRecipe = ({ fields, body }: ParsedMessage, recipe: Record<string, any
             if (step.c) {
                 emitted.push(...current.slice(step.c[0] - 1, step.c[1]));
             } else {
-                emitted.push(...step.d.map((value: string) => ({ name, value })));
+                emitted.push(...stepLines(step).map(value => ({ name, value })));
             }
         }
         // later output goes above earlier output, so reverse it into top down order
@@ -170,7 +178,7 @@ const applyRecipe = ({ fields, body }: ParsedMessage, recipe: Record<string, any
             if (step.c) {
                 out.push(...lines.slice(step.c[0] - 1, step.c[1]));
             } else {
-                out.push(...step.d);
+                out.push(...stepLines(step));
             }
         }
         previousBody = out.map(line => line + '\r\n').join('');

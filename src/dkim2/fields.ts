@@ -1,18 +1,22 @@
 // Parsing, formatting and canonicalization of the two DKIM2 header fields, Message-Instance
-// and DKIM2-Signature (draft-ietf-dkim-dkim2-spec-06 sections 6, 7, 8 and 9.6)
+// and DKIM2-Signature (draft-ietf-dkim-dkim2-spec-09 sections 2.14, 4, 6, 7, 8, 9, 10 and 12.8)
 
 import { Buffer } from 'node:buffer';
-import { formatRelaxedLine, toLineBytes, isValidDnsName, isSameOrSubdomain } from '../tools.js';
-import { trimChars, trimEndChars } from '../trim.js';
+import { formatRelaxedLine, toLineBytes, isValidDnsName } from '../tools.js';
+import { parsePath, custodyProblem } from './domains.js';
+import { MI_KEY, SIG_KEY, isHashedField } from './signed-fields.js';
+import { trimChars } from '../trim.js';
 import { parseRecipe } from './recipe.js';
 import type { ParsedRecipe } from './recipe.js';
 import type { DKIM2Recipe } from '../types.js';
 
-// One hash-set of the h= tag of a Message-Instance
+// One hash-set of the h= tag of a Message-Instance. `group` is the position of its "|" group,
+// counted from 0 (section 9.3)
 interface InstanceHash {
     algorithm: string;
     headerHash: string;
     bodyHash: string;
+    group?: number | undefined;
 }
 
 // A parsed Message-Instance. Only `m` can be relied on when `error` is set
@@ -23,11 +27,13 @@ interface ParsedMessageInstance {
     error: string | null;
 }
 
-// One sig-set of the s= tag of a DKIM2-Signature
+// One sig-set of the s= tag of a DKIM2-Signature. `group` is the position of its "|" group,
+// counted from 0 (section 10.9)
 interface SignatureValue {
     selector: string;
     algorithm: string;
     signature: string;
+    group?: number | undefined;
 }
 
 // A parsed DKIM2-Signature. Only `i` can be relied on when `error` is set
@@ -78,61 +84,30 @@ interface SignatureFields {
     signingDomain: string;
     nonce?: string | undefined;
     flags?: string[] | undefined;
-    signatures: { selector: string; algorithm: string; signature?: string | undefined }[];
+    signatures: { selector: string; algorithm: string; signature?: string | undefined; group?: number | undefined }[];
 }
 
-// A piece of a header field that a fold can go in front of
-interface Atom {
-    text: string;
-    space: boolean;
-}
-
-const MI_KEY = 'message-instance';
-const SIG_KEY = 'dkim2-signature';
-
-// Section 4.1 of draft-ietf-dkim-dkim2-spec-08: header fields that are not signed, processed as if they
-// were not present
-const UNSIGNED_FIELDS = new Set([
-    'apparently-to',
-    'arc-authentication-results',
-    'arc-message-signature',
-    'arc-seal',
-    'authentication-results',
-    'delivered-to',
-    'dkim-signature',
-    'dl-expansion-history',
-    'original-recipient',
-    'received',
-    'return-path',
-    'sio-label-history',
-    'x400-received',
-    'x400-trace'
-]);
-
-const isUnsignedField = (key: string): boolean => UNSIGNED_FIELDS.has(key) || key.startsWith('received-') || key.startsWith('x-');
-
-// Section 6.2: the header hash leaves out the unsigned fields and the DKIM2 fields themselves
-const isHashedField = (key: string | null | undefined): key is string => !!key && key !== MI_KEY && key !== SIG_KEY && !isUnsignedField(key);
-
+// Section 3.1. Algorithm names are case-sensitive (section 2.14)
 const HASH_ALGORITHMS = new Set(['sha256', 'sha512']);
 
-// Section 8.3: at most 64 printable ASCII characters, no semicolon
+// Section 10.3: at most 64 printable ASCII characters, no semicolon
 const NONCE = /^[\x21-\x3a\x3c-\x7e]{0,64}$/;
 // Section 2.14 textstring, without the surrounding FWS
 const TEXTSTRING = /^[A-Za-z0-9_-]+$/;
-// RFC 5234 1*DIGIT. t= values up to 10^12 have to be accepted (section 8.4), 15 digits keep every
-// value a safe integer
+// RFC 5234 1*DIGIT for i= and m=. 15 digits keep every value a safe integer
 const NUMBER = /^[0-9]{1,15}$/;
 // Section 2.14 base64string with the FWS removed. It "MUST be padded", so the length is a multiple of 4
 const BASE64 = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
-// RFC 5321 Domain, also used for selectors (section 3.5). The underscore is accepted as it is
+// RFC 5321 Domain, also used for selectors (section 3.6). The underscore is accepted as it is
 // in DKIM1 key record names
 const DOMAIN_LABEL = '[A-Za-z0-9_](?:[A-Za-z0-9_-]{0,61}[A-Za-z0-9_])?';
 const DOMAIN = new RegExp(`^${DOMAIN_LABEL}(?:\\.${DOMAIN_LABEL})*$`);
-// Section 7 and 8 x-tag-name
+// Section 8 tag-name. Tag names are case-sensitive, and the DKIM2 tags are all in lower case
 const TAG_NAME = /^[A-Za-z][A-Za-z0-9_]*$/;
 
+const WSP = /[ \t\r\n]/;
 const WSP_ALL = /[ \t\r\n]+/g;
+const WSP_CHARS = ' \t\r\n';
 
 const isBase64 = (value: string | null | undefined): boolean => !!value && BASE64.test(value);
 const isDomain = (value: string | null | undefined): value is string => !!value && DOMAIN.test(value) && isValidDnsName(value);
@@ -140,8 +115,9 @@ const isDomain = (value: string | null | undefined): value is string => !!value 
 const toNumber = (value: string): number => (NUMBER.test(value) ? Number(value) : NaN);
 
 /**
- * Splits the value of a DKIM2 header field into its tags. Tag names are case insensitive
- * (sections 7 and 8), so they are returned in lower case. Semicolons never occur inside a value.
+ * Splits the value of a DKIM2 header field into its tags (section 8). Tag names are
+ * case-sensitive, so "M=1" is an unknown tag and not the m= tag. Semicolons never occur inside
+ * a value.
  *
  * @param {String} value Header field value as a 'binary' string
  * @returns {Object} { tags: Map of name to value with the FWS around it removed, error }
@@ -151,7 +127,7 @@ const parseTags = (value: string): { tags: Map<string, string>; error: string | 
     let segments = value.split(';');
 
     for (let i = 0; i < segments.length; i++) {
-        let segment = trimChars(segments[i], ' \t\r\n');
+        let segment = trimChars(segments[i], WSP_CHARS);
         if (!segment) {
             // the tag-list ends every tag with a semicolon, and a final one can be left out
             if (i < segments.length - 1) {
@@ -165,17 +141,17 @@ const parseTags = (value: string): { tags: Map<string, string>; error: string | 
             return { tags, error: 'tag without a value' };
         }
 
-        let name = trimEndChars(segment.substring(0, eqPos), ' \t\r\n');
+        let name = trimChars(segment.substring(0, eqPos), WSP_CHARS);
         if (!TAG_NAME.test(name)) {
             return { tags, error: 'invalid tag name' };
         }
-        name = name.toLowerCase();
 
+        // "if a tag name does occur more than once, the entire tag-list is invalid"
         if (tags.has(name)) {
             return { tags, error: `duplicate tag ${name}` };
         }
 
-        tags.set(name, segment.substring(eqPos + 1).replace(/^[ \t\r\n]+/, ''));
+        tags.set(name, trimChars(segment.substring(eqPos + 1), WSP_CHARS));
     }
 
     return { tags, error: null };
@@ -188,18 +164,52 @@ const getFieldValue = (line: Buffer | string): string => {
     return colonPos >= 0 ? str.substring(colonPos + 1) : '';
 };
 
-// A list of base64strings, each of which can contain FWS (section 2.14)
-const splitBase64List = (value: string): string[] => value.replace(WSP_ALL, '').split(',');
+/**
+ * Reads a section 2.14 base64string: FWS is allowed between its characters, but not in front of
+ * the first one or after the last one
+ *
+ * @param {String} value Text that has to be exactly one base64string
+ * @returns {String|null} The value with the FWS removed, or null when it is not a base64string
+ */
+const readBase64 = (value: string): string | null => {
+    if (!value || WSP.test(value.charAt(0)) || WSP.test(value.charAt(value.length - 1))) {
+        return null;
+    }
+    let plain = value.replace(WSP_ALL, '');
+    return isBase64(plain) ? plain : null;
+};
 
 // The value of a tag that can not contain whitespace, such as a number or a domain
-const plainValue = (value: string): string | null => (/[ \t\r\n]/.test(value) ? null : value);
+const plainValue = (value: string): string | null => (WSP.test(value) ? null : value);
 
 /**
- * Parses a Message-Instance header field (section 7)
+ * Splits an h= or s= value into its "|" groups of "," separated items (sections 9.3 and 10.9).
+ * FWS is allowed around both separators, so it is removed from both ends of every item
+ *
+ * @param {String} value Tag value
+ * @returns {Array|null} [{ item, group }], or null when an item is empty
+ */
+const splitGroups = (value: string): { item: string; group: number }[] | null => {
+    let items: { item: string; group: number }[] = [];
+    let groups = value.split('|');
+    for (let group = 0; group < groups.length; group++) {
+        for (let item of groups[group].split(',')) {
+            item = trimChars(item, WSP_CHARS);
+            if (!item) {
+                return null;
+            }
+            items.push({ item, group });
+        }
+    }
+    return items;
+};
+
+/**
+ * Parses a Message-Instance header field (section 9)
  *
  * @param {Buffer|String} line Header line
- * @returns {Object} { m, hashes: [{ algorithm, headerHash, bodyHash }], recipe, error }. `m` is
- *          NaN when the m= tag could not be read, `recipe` is undefined without an r= tag
+ * @returns {Object} { m, hashes: [{ algorithm, headerHash, bodyHash, group }], recipe, error }.
+ *          `m` is NaN when the m= tag could not be read, `recipe` is undefined without an r= tag
  */
 const parseMessageInstance = (line: Buffer | string): ParsedMessageInstance => {
     let result: ParsedMessageInstance = { m: NaN, hashes: [], recipe: undefined, error: null };
@@ -229,32 +239,40 @@ const parseMessageInstance = (line: Buffer | string): ParsedMessageInstance => {
         return fail('syntax error');
     }
 
-    // mi-h-tag: hash-set *("," hash-set), hash-set = hash-name ":" header-hash ":" body-hash
+    // hash-set = hash-name [FWS] ":" header-hash ":" body-hash, where hash-name is a textstring
+    // with optional FWS around it, and the base64strings neither start nor end with FWS
+    let sets = splitGroups(tags.get('h')!);
+    if (!sets) {
+        return fail('syntax error');
+    }
     let seen = new Set<string>();
-    for (let hashSet of tags.get('h')!.replace(WSP_ALL, '').split(',')) {
-        let parts = hashSet.split(':');
-        if (parts.length !== 3 || !TEXTSTRING.test(parts[0]) || !isBase64(parts[1]) || !isBase64(parts[2])) {
+    for (let { item, group } of sets) {
+        let parts = item.split(':');
+        let algorithm = trimChars(parts[0], WSP_CHARS);
+        let headerHash = parts.length === 3 ? readBase64(parts[1]) : null;
+        let bodyHash = parts.length === 3 ? readBase64(parts[2]) : null;
+        if (!TEXTSTRING.test(algorithm) || !headerHash || !bodyHash) {
             return fail('syntax error');
         }
 
-        let algorithm = parts[0].toLowerCase();
+        // section 9.3: an algorithm MUST NOT be present more than once, in any group
         if (seen.has(algorithm)) {
             return fail('has a duplicate hash algorithm');
         }
         seen.add(algorithm);
 
-        result.hashes.push({ algorithm, headerHash: parts[1], bodyHash: parts[2] });
+        result.hashes.push({ algorithm, headerHash, bodyHash, group });
     }
 
     if (tags.has('r')) {
-        let recipeValue = tags.get('r')!.replace(WSP_ALL, '');
-        if (!isBase64(recipeValue)) {
+        let recipeValue = readBase64(tags.get('r')!);
+        if (!recipeValue) {
             return fail('syntax error');
         }
 
-        let recipe = parseRecipe(Buffer.from(recipeValue, 'base64').toString('utf8'));
+        let recipe = parseRecipe(Buffer.from(recipeValue, 'base64'));
         if (recipe.error) {
-            return fail(`contains invalid JSON: ${recipe.error}`);
+            return fail(recipe.error);
         }
         result.recipe = recipe.value;
     }
@@ -263,20 +281,37 @@ const parseMessageInstance = (line: Buffer | string): ParsedMessageInstance => {
 };
 
 // Decodes an mf= or rt= path: the base64 encoded RFC 5321 reverse-path or Forward-path, angle
-// brackets included (sections 8.5 and 8.6). Returns false for a value that is not a path
+// brackets included (sections 10.5 and 10.6). Returns false for a value that is not a path
 const decodePath = (value: string, allowNull: boolean): string | false => {
-    if (!isBase64(value)) {
+    let plain = readBase64(value);
+    if (!plain) {
         return false;
     }
-    let path = Buffer.from(value, 'base64').toString('utf8');
+    let path = Buffer.from(plain, 'base64').toString('utf8');
     if (!/^<[^<>\r\n]*>$/.test(path) || (path === '<>' && !allowNull)) {
         return false;
     }
     return path;
 };
 
+// Section 10.9: sig-set = selector [FWS] ":" [FWS] sig-name [FWS] ":" message-sig
+const parseSigSet = (item: string): Omit<SignatureValue, 'group'> | null => {
+    let parts = item.split(':');
+    if (parts.length !== 3) {
+        return null;
+    }
+    let selector = trimChars(parts[0], WSP_CHARS);
+    let algorithm = trimChars(parts[1], WSP_CHARS);
+    let signature = readBase64(parts[2]);
+    if (!isDomain(selector) || !TEXTSTRING.test(algorithm) || !signature) {
+        return null;
+    }
+    // a selector is a DNS name, which is not case-sensitive
+    return { selector: selector.toLowerCase(), algorithm, signature };
+};
+
 /**
- * Parses a DKIM2-Signature header field (section 8)
+ * Parses a DKIM2-Signature header field (section 10)
  *
  * @param {Buffer|String} line Header line
  * @returns {Object} { i, m, t, nonce, mailFrom, rcptTo, nextDomain, signingDomain, signatures,
@@ -335,7 +370,10 @@ const parseSignature = (line: Buffer | string): ParsedSignature => {
     }
 
     result.m = toNumber(plainValue(tags.get('m')!) || '');
-    result.t = toNumber(plainValue(tags.get('t')!) || '');
+    // t= is any number of digits (section 10.4). One too large to be exact is still far in the
+    // future, which section 14.3 reports
+    let t = plainValue(tags.get('t')!) || '';
+    result.t = /^[0-9]+$/.test(t) ? Number(t) : NaN;
     if (!(result.i >= 1) || !(result.m >= 1) || isNaN(result.t)) {
         return fail('syntax error');
     }
@@ -353,15 +391,20 @@ const parseSignature = (line: Buffer | string): ParsedSignature => {
         }
         result.nextDomain = result.nextDomain.toLowerCase();
     } else {
-        result.mailFrom = decodePath(tags.get('mf')!.replace(WSP_ALL, ''), true);
-        result.rcptTo = splitBase64List(tags.get('rt')!).map(value => decodePath(value, false));
+        // sig-rt-tag = "rt" [FWS] "=" base64string *("," base64string), with no FWS around the
+        // commas
+        result.mailFrom = decodePath(tags.get('mf')!, true);
+        result.rcptTo = tags
+            .get('rt')!
+            .split(',')
+            .map(value => decodePath(value, false));
         if (!result.mailFrom || result.rcptTo.some(path => !path)) {
             return fail('syntax error');
         }
     }
 
     if (tags.has('n')) {
-        // section 8.3: implementations SHOULD reject a nonce longer than 64 characters
+        // section 10.3: at most 64 characters
         result.nonce = tags.get('n')!;
         if (!NONCE.test(result.nonce)) {
             return fail('syntax error');
@@ -370,40 +413,40 @@ const parseSignature = (line: Buffer | string): ParsedSignature => {
 
     if (tags.has('f')) {
         for (let flag of tags.get('f')!.split(',')) {
-            flag = trimChars(flag, ' \t\r\n');
+            flag = trimChars(flag, WSP_CHARS);
             if (!TEXTSTRING.test(flag)) {
                 return fail('syntax error');
             }
-            // flag values are case significant, and unknown ones are ignored
+            // flag values are case-sensitive, and unknown ones have no effect
             result.flags.push(flag);
         }
     }
 
-    // sig-s-tag: sig-set *("," sig-set), sig-set = selector ":" sig-name ":" message-sig
+    // sig-any = sig-all *("|" sig-all), sig-all = sig-set *("," sig-set)
+    let sets = splitGroups(tags.get('s')!);
+    if (!sets) {
+        return fail('syntax error');
+    }
     let selectors = new Set<string>();
-    let algorithmCounts = new Map<string, number>();
-    for (let sigSet of tags.get('s')!.replace(WSP_ALL, '').split(',')) {
-        let parts = sigSet.split(':');
-        if (parts.length !== 3 || !isDomain(parts[0]) || !TEXTSTRING.test(parts[1]) || !isBase64(parts[2])) {
+    for (let { item, group } of sets) {
+        let value = parseSigSet(item);
+        if (!value) {
             return fail('syntax error');
         }
 
-        let selector = parts[0].toLowerCase();
-        let algorithm = parts[1].toLowerCase();
-
-        if (selectors.has(selector)) {
+        // section 10.9: a selector MUST NOT be present more than once. The same algorithm may
+        // be used any number of times with different selectors
+        if (selectors.has(value.selector)) {
             return fail('has a duplicate selector');
         }
-        selectors.add(selector);
+        selectors.add(value.selector);
 
-        // section 8.9: one additional signature with the same algorithm is allowed
-        let count = (algorithmCounts.get(algorithm) || 0) + 1;
-        if (count > 2) {
-            return fail('has more selectors than allowed');
-        }
-        algorithmCounts.set(algorithm, count);
+        result.signatures.push({ ...value, group });
+    }
 
-        result.signatures.push({ selector, algorithm, signature: parts[2] });
+    // section 12.5: the first signature is never "exploded"
+    if (result.i === 1 && result.flags.includes('exploded')) {
+        return fail('has an exploded flag');
     }
 
     return result;
@@ -419,32 +462,33 @@ const parseSignature = (line: Buffer | string): ParsedSignature => {
 const canonicalHeaderField = (line: Buffer | string): Buffer => formatRelaxedLine(line, '\r\n');
 
 // Empties the signature values of the s= tag of a DKIM2-Signature value that has no whitespace
-// left in it, for the signature input (sections 9.6 and 11.6). Semicolons can not occur inside a
-// value, so splitting on them finds the tag the same way the parser does
+// left in it, for the signature input (section 12.8). The selectors, the algorithm names and the
+// ":", "," and "|" punctuation stay. Semicolons can not occur inside a value, so splitting on
+// them finds the tag the same way the parser does
 const blankSignatureValues = (value: string): string =>
     value
         .split(';')
         .map(segment => {
             let eqPos = segment.indexOf('=');
-            if (eqPos < 0 || segment.substring(0, eqPos).toLowerCase() !== 's') {
+            if (eqPos < 0 || segment.substring(0, eqPos) !== 's') {
                 return segment;
             }
             let sigSets = segment
                 .substring(eqPos + 1)
-                .split(',')
+                .split(/([,|])/)
                 .map(sigSet => {
-                    // selector:sig-name:value, only the value is emptied. Anything else is a syntax
-                    // error that is reported anyway, and is left as it is
+                    // selector:sig-name:value, only the value is emptied. Anything else is a
+                    // separator, or a syntax error that is reported anyway, and is left as it is
                     let parts = sigSet.split(':');
                     return parts.length === 3 ? `${parts[0]}:${parts[1]}:` : sigSet;
                 });
-            return `${segment.substring(0, eqPos + 1)}${sigSets.join(',')}`;
+            return `${segment.substring(0, eqPos + 1)}${sigSets.join('')}`;
         })
         .join(';');
 
 /**
  * Canonicalizes a Message-Instance or DKIM2-Signature header field for the signature input
- * (section 9.6): the name in lower case, the field unfolded and every WSP character removed
+ * (section 12.8): the name in lower case, the field unfolded and every WSP character removed
  *
  * @param {Buffer|String} line Header line
  * @param {Boolean} [blank] Empty the signature values of the s= tag
@@ -463,160 +507,189 @@ const canonicalSignatureField = (line: Buffer | string, blank?: boolean): Buffer
 
 // The longest a folded line gets, not counting the CRLF
 const LINE_LENGTH = 76;
-const BASE64_CHUNK = 64;
 
-// Splits a base64 value into pieces a fold can go between. FWS is allowed anywhere inside a
-// base64string (section 2.14) and is ignored when the value is used. `lead` is the text in front
-// of the value, such as "s=selector:rsa-sha256:", and `space` tells if it starts a new tag
-const base64Atoms = (lead: string, value: string, trail?: string, space?: boolean): Atom[] => {
-    let atoms: Atom[] = lead ? [{ text: lead, space: space !== false }] : [];
-    for (let pos = 0; pos < value.length; pos += BASE64_CHUNK) {
-        atoms.push({ text: value.substring(pos, pos + BASE64_CHUNK), space: false });
-    }
-    if (!atoms.length) {
-        atoms.push({ text: '', space: space !== false });
-    }
-    atoms[atoms.length - 1].text += trail || '';
-    return atoms;
-};
+/**
+ * Builds the value of a header field and records where the ABNF allows a fold: in the space
+ * between two tags, or between two characters of a base64string (section 2.14). Never next to
+ * the ":", "," or "|" that a base64string is joined to, as the ABNF of the hash-sets of h=, the
+ * sig-sets of s= and the paths of rt= has no FWS there
+ */
+class FieldBuilder {
+    declare text: string;
+    // the positions in `text` that a fold can go in front of
+    declare breaks: Set<number>;
 
-// Joins the atoms of a header field, folding between them when a line would get too long. An
-// atom with `space` set is a new tag and gets a space in front of it when it is not folded
-const foldAtoms = (name: string, atoms: Atom[]): string => {
-    let lines: string[] = [];
-    let line = `${name}:`;
-    for (let atom of atoms) {
-        let separator = atom.space ? ' ' : '';
-        if (line.length + separator.length + atom.text.length > LINE_LENGTH && line.length > name.length + 1) {
-            lines.push(line);
-            line = ` ${atom.text}`;
-        } else {
-            line += separator + atom.text;
+    constructor() {
+        this.text = '';
+        this.breaks = new Set();
+    }
+
+    // starts a new tag, separated from the previous one with a space
+    tag(text: string): this {
+        if (this.text) {
+            this.breaks.add(this.text.length);
+            this.text += ' ';
         }
+        this.text += text;
+        return this;
     }
-    lines.push(line);
-    return lines.join('\r\n');
-};
 
-const plainAtom = (text: string): Atom => ({ text, space: true });
+    // text that a fold can not go into or next to
+    fixed(text: string): this {
+        this.text += text;
+        return this;
+    }
+
+    // a base64string, a fold can go between any two of its characters
+    base64(value: string): this {
+        for (let pos = 1; pos < value.length; pos++) {
+            this.breaks.add(this.text.length + pos);
+        }
+        this.text += value;
+        return this;
+    }
+
+    // where the line that starts at `start` is folded: the last break that keeps it within
+    // `limit`, or the first one after that for a line that can not be kept short. -1 for none
+    nextBreak(start: number, limit: number): number {
+        for (let pos = Math.min(limit, this.text.length - 1); pos > start; pos--) {
+            if (this.breaks.has(pos)) {
+                return pos;
+            }
+        }
+        for (let pos = Math.max(limit, start) + 1; pos < this.text.length; pos++) {
+            if (this.breaks.has(pos)) {
+                return pos;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Formats the header field, folded so that lines stay within LINE_LENGTH wherever the ABNF
+     * allows a fold
+     *
+     * @param {String} name Header field name
+     * @returns {String} Folded header line, without the final CRLF
+     */
+    format(name: string): string {
+        let text = this.text;
+        let lines: string[] = [];
+        // the start of the current line, the rest comes from text[pos]
+        let prefix = `${name}: `;
+        let pos = 0;
+        while (prefix.length + text.length - pos > LINE_LENGTH) {
+            let at = this.nextBreak(pos, pos + LINE_LENGTH - prefix.length);
+            if (at < 0) {
+                break;
+            }
+            lines.push(prefix + text.substring(pos, at));
+            if (text.charAt(at) === ' ') {
+                // the space between two tags becomes the WSP of the fold
+                at++;
+            }
+            prefix = ' ';
+            pos = at;
+        }
+        lines.push(prefix + text.substring(pos));
+        return lines.join('\r\n');
+    }
+}
+
+// the separator in front of an h= or s= entry: "," within a group, "|" between groups
+const groupSeparator = (list: { group?: number | undefined }[], index: number): string =>
+    (list[index].group || 0) === (list[index - 1].group || 0) ? ',' : '|';
 
 /**
  * Formats a Message-Instance header field
  *
  * @param {Object} options
  * @param {Number} options.m Revision number
- * @param {Object[]} options.hashes [{ algorithm, headerHash, bodyHash }]
+ * @param {Object[]} options.hashes [{ algorithm, headerHash, bodyHash, group }]
  * @param {Object} [options.recipe] Recipe object for the r= tag
  * @returns {String} Folded header line, without the final CRLF
  */
 const formatMessageInstance = ({ m, hashes, recipe }: { m: number; hashes: InstanceHash[]; recipe?: DKIM2Recipe | undefined }): string => {
-    let atoms = [plainAtom(`m=${m};`)];
+    let field = new FieldBuilder().tag(`m=${m};`).tag('h=');
 
     hashes.forEach((hash, index) => {
-        // a fold can go before the "," as FWS at the end of the previous base64string
-        atoms.push(
-            ...base64Atoms(`${index ? ',' : 'h='}${hash.algorithm}:`, hash.headerHash, ':', !index),
-            ...base64Atoms('', hash.bodyHash, index === hashes.length - 1 ? ';' : '')
-        );
+        if (index) {
+            field.fixed(groupSeparator(hashes, index));
+        }
+        field.fixed(`${hash.algorithm}:`).base64(hash.headerHash).fixed(':').base64(hash.bodyHash);
     });
+    field.fixed(';');
 
     if (recipe) {
-        atoms.push(...base64Atoms('r=', Buffer.from(JSON.stringify(recipe)).toString('base64'), ';'));
+        field
+            .tag('r=')
+            .base64(Buffer.from(JSON.stringify(recipe)).toString('base64'))
+            .fixed(';');
     }
 
-    return foldAtoms('Message-Instance', atoms);
+    return field.format('Message-Instance');
 };
 
 const encodePath = (path: string): string => Buffer.from(path).toString('base64');
 
 /**
  * Formats a DKIM2-Signature header field. Signature values that are not known yet are written
- * as empty strings, which is the form the signature input uses (section 9.6)
+ * as empty strings, which is the form the signature input uses (section 12.8)
  *
  * @param {Object} options
  * @returns {String} Folded header line, without the final CRLF
  */
 const formatSignature = ({ i, m, t, mailFrom, rcptTo, nextDomain, signingDomain, nonce, flags, signatures }: SignatureFields): string => {
-    let atoms = [plainAtom(`i=${i};`), plainAtom(`m=${m};`), plainAtom(`t=${t};`), plainAtom(`d=${signingDomain};`)];
+    let field = new FieldBuilder().tag(`i=${i};`).tag(`m=${m};`).tag(`t=${t};`).tag(`d=${signingDomain};`);
 
     if (nextDomain) {
-        atoms.push(plainAtom(`nd=${nextDomain};`));
+        field.tag(`nd=${nextDomain};`);
     } else {
-        atoms.push(...base64Atoms('mf=', encodePath(mailFrom!), ';'));
+        field.tag('mf=').base64(encodePath(mailFrom!)).fixed(';');
+        field.tag('rt=');
         rcptTo!.forEach((path, index) => {
-            atoms.push(...base64Atoms(index ? ',' : 'rt=', encodePath(path), index === rcptTo!.length - 1 ? ';' : '', !index));
+            field.fixed(index ? ',' : '').base64(encodePath(path));
         });
+        field.fixed(';');
     }
 
     if (typeof nonce === 'string') {
-        atoms.push(plainAtom(`n=${nonce};`));
+        field.tag(`n=${nonce};`);
     }
 
     if (flags?.length) {
-        atoms.push(plainAtom(`f=${flags.join(',')};`));
+        field.tag(`f=${flags.join(',')};`);
     }
 
+    field.tag('s=');
     signatures.forEach((entry, index) => {
-        atoms.push(
-            ...base64Atoms(
-                `${index ? ',' : 's='}${entry.selector}:${entry.algorithm}:`,
-                entry.signature || '',
-                index === signatures.length - 1 ? ';' : '',
-                !index
-            )
-        );
+        if (index) {
+            field.fixed(groupSeparator(signatures, index));
+        }
+        field.fixed(`${entry.selector}:${entry.algorithm}:`);
+        if (entry.signature) {
+            field.base64(entry.signature);
+        }
     });
+    field.fixed(';');
 
-    return foldAtoms('DKIM2-Signature', atoms);
+    return field.format('DKIM2-Signature');
 };
 
 /**
- * Splits an RFC 5321 path into its address, with the domain in lower case as section 11.4
- * compares it. A source route in front of the mailbox is left out
- *
- * @param {String} path Path with or without the angle brackets
- * @returns {Object} { address, domain }, both empty for the null path
- */
-const parsePath = (path: string | null | undefined): { address: string; domain: string } => {
-    let address = (path || '').toString().trim().replace(/^<|>$/g, '');
-    if (address.charAt(0) === '@' && address.indexOf(':') > 0) {
-        address = address.substring(address.indexOf(':') + 1);
-    }
-    let atPos = address.lastIndexOf('@');
-    if (atPos < 0) {
-        return { address, domain: '' };
-    }
-    let domain = address.substring(atPos + 1).toLowerCase();
-    return { address: `${address.substring(0, atPos)}@${domain}`, domain };
-};
-
-/**
- * Section 9.4: whether a hop continues the chain of custody of the hop before it. Its MAIL FROM
- * domain has to match a RCPT TO of the previous hop after removing labels from the left, which is
- * the same as being that domain or one of its subdomains. A hop with nd= has no MAIL FROM, and the
- * null MAIL FROM has no domain, so the signing domain is matched instead: section 8.8 only waives
- * the match of d= and mf= for the null MAIL FROM, never the chain of custody. A previous hop with
- * nd= is checked against the d= of the next hop instead
+ * Section 7.1 item 1: whether a hop continues the chain of custody of the hop before it, see
+ * custodyProblem()
  *
  * @param {Object} previous Parsed previous DKIM2-Signature
  * @param {String} [mailFrom] MAIL FROM path of the hop
  * @param {String} signingDomain Signing domain of the hop
  * @returns {Boolean}
  */
-const continuesCustody = (
-    previous: Pick<ChainSignature, 'nextDomain' | 'rcptTo'> | undefined,
-    mailFrom: string | undefined,
-    signingDomain: string
-): boolean => {
-    if (!previous || previous.nextDomain) {
-        return true;
-    }
-    let domain = mailFrom && mailFrom !== '<>' ? parsePath(mailFrom).domain : signingDomain;
-    return previous.rcptTo!.some(path => isSameOrSubdomain(domain, parsePath(path).domain));
-};
+const continuesCustody = (previous: Pick<ChainSignature, 'nextDomain' | 'rcptTo'> | undefined, mailFrom: string | undefined, signingDomain: string): boolean =>
+    custodyProblem(previous, { mailFrom, signingDomain }) === null;
 
 /**
- * Builds the signature input of section 9.6: the Message-Instance fields by m=, the
+ * Builds the signature input of section 12.8: the Message-Instance fields by m=, the
  * DKIM2-Signature fields before the signature by i=, and the signature itself with its signature
  * values emptied
  *

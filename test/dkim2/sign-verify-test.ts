@@ -38,7 +38,8 @@ describe('DKIM2 signing and verification', () => {
         ]);
         expect(result.signatures[0].mailFrom).to.equal('<sender@example.com>');
         expect(result.signatures[0].rcptTo).to.deep.equal(['<rcpt@example.net>']);
-        expect(result.instances).to.deep.equal([{ m: 1, hashes: [{ algorithm: 'sha256', header: 'pass', body: 'pass' }] }]);
+        expect(result.instances).to.deep.equal([{ m: 1, hashes: [{ algorithm: 'sha256', header: 'pass', body: 'pass', group: 1 }] }]);
+        expect(result.signatures[0].values.map((entry: any) => entry.group)).to.deep.equal([1, 1]);
     });
 
     it('creates an m=1 Message-Instance and an i=1 DKIM2-Signature for a new message', async () => {
@@ -79,19 +80,20 @@ describe('DKIM2 signing and verification', () => {
         let input = Buffer.from(
             [
                 'Subject:  Hello\r\n   World  ',
-                'From: one@example.com',
+                'Cc: one@example.com',
                 'X-Spam: yes',
                 'Received: by host',
                 'Received-SPF: pass',
                 'Authentication-Results: mx; dkim=pass',
                 'DKIM-Signature: v=1; a=rsa-sha256',
-                'FROM :two@example.com',
+                'CC :two@example.com',
+                'FROM : one@example.com',
                 'To:\trcpt@example.net',
                 '',
                 'body'
             ].join('\r\n')
         );
-        let expected = 'from:two@example.com\r\nfrom:one@example.com\r\nsubject:Hello World\r\nto:rcpt@example.net\r\n';
+        let expected = 'cc:two@example.com\r\ncc:one@example.com\r\nfrom:one@example.com\r\nsubject:Hello World\r\nto:rcpt@example.net\r\n';
         let expectedHash = crypto.createHash('sha256').update(expected).digest('base64');
         let expectedBodyHash = crypto.createHash('sha256').update('body\r\n').digest('base64');
 
@@ -105,12 +107,12 @@ describe('DKIM2 signing and verification', () => {
         let hashSets = parseMessageInstance(signed.messageInstance!).hashes;
 
         let result = await dkim2Hash(input, { algorithms: ['SHA256', 'sha512', 'sha256'] as any });
-        expect(result.hashes).to.deep.equal(hashSets);
+        expect(result.hashes).to.deep.equal(hashSets.map(({ algorithm, headerHash, bodyHash }) => ({ algorithm, headerHash, bodyHash })));
         expect(result.headers).to.deep.equal(['date', 'from', 'message-id', 'subject', 'to']);
 
         // the DKIM2 header fields of a signed message are not hashed, and sha256 is the default
         let again = await dkim2Hash(Readable.from([Buffer.concat([Buffer.from(signed.signatures), input])]));
-        expect(again.hashes).to.deep.equal([hashSets[0]]);
+        expect(again.hashes).to.deep.equal([result.hashes[0]]);
 
         let err = await dkim2Hash(input, { algorithms: ['sha1'] as any }).catch(err => err);
         expect(err.code).to.equal('EINVALIDALGO');
@@ -120,7 +122,7 @@ describe('DKIM2 signing and verification', () => {
         let signed = await signMessage(message(), originatorOptions({ hashAlgorithms: ['sha512'] }));
         let result = await verify(signed, envelope);
         expect(result.status.result).to.equal('pass');
-        expect(result.instances[0].hashes).to.deep.equal([{ algorithm: 'sha512', header: 'pass', body: 'pass' }]);
+        expect(result.instances[0].hashes).to.deep.equal([{ algorithm: 'sha512', header: 'pass', body: 'pass', group: 1 }]);
     });
 
     it('verifies a message signed with a single key given with the shorthand options', async () => {
@@ -163,9 +165,9 @@ describe('DKIM2 signing and verification', () => {
         let signed = await signMessage(message(), originatorOptions());
         let result = await verify(tamper(signed, 'Hello world!', 'Hello World!'), envelope);
         expect(result.status.result).to.equal('fail');
-        expect(result.status.comment).to.equal('Message Instance m=1 body hash sha256 mismatch');
+        expect(result.status.comment).to.equal('Message-Instance m=1 body hash sha256 mismatch');
         expect(result.status.header).to.deep.equal({ d: 'example.com', i: 1 });
-        expect(result.info).to.equal('dkim2=fail (i=1 example.com fail; Message Instance m=1 body hash sha256 mismatch) header.d=example.com header.i=1');
+        expect(result.info).to.equal('dkim2=fail (i=1 example.com fail; Message-Instance m=1 body hash sha256 mismatch) header.d=example.com header.i=1');
     });
 
     it('fails when a signed header field is changed, removed or added', async () => {
@@ -179,7 +181,7 @@ describe('DKIM2 signing and verification', () => {
         ]) {
             let result = await verify(changed, envelope);
             expect(result.status.result).to.equal('fail');
-            expect(result.status.comment).to.equal('Message Instance m=1 header hash sha256 mismatch');
+            expect(result.status.comment).to.equal('Message-Instance m=1 header hash sha256 mismatch');
         }
     });
 
@@ -240,7 +242,8 @@ describe('DKIM2 signing and verification', () => {
         let signature = result.signature.replace(/(s=rsa:rsa-sha256:\s*)(.)/, (m: any, lead: any, c: any) => lead + (c === 'A' ? 'B' : 'A'));
         let verified = await verify(Buffer.concat([Buffer.from(`${signature}\r\n${result.messageInstance}\r\n`), message()]), envelope);
         expect(verified.status.result).to.equal('fail');
-        expect(verified.status.comment).to.equal('DKIM2-Signature i=1 ed signature passed, rsa signature failed');
+        // section 14.6: the signatures of a group all have to pass
+        expect(verified.status.comment).to.equal('DKIM2-Signature i=1 selector rsa incorrect signature');
         expect(verified.signatures[0].values.map((entry: any) => entry.result)).to.deep.equal(['fail', 'pass']);
     });
 
@@ -250,7 +253,7 @@ describe('DKIM2 signing and verification', () => {
         let changed = tamper(signed, /t=(\d+)/, (m: any, t: any) => `t=${Number(t) + 1}`);
         let verified = await verify(changed, envelope);
         expect(verified.status.result).to.equal('fail');
-        expect(verified.status.comment).to.equal('DKIM2-Signature i=1 rsa incorrect signature');
+        expect(verified.status.comment).to.equal('DKIM2-Signature i=1 selector rsa incorrect signature');
     });
 
     it('fails when the Message-Instance hashes are swapped for the hashes of another message', async () => {
@@ -266,7 +269,8 @@ describe('DKIM2 signing and verification', () => {
 
     it('returns none for a message without DKIM2 header fields', async () => {
         let result = await verify(message());
-        expect(result.status).to.deep.equal({ result: 'none' });
+        // section 14.2, the resinfo has no comment (draft-gondwana-dkim2-authres-01 section 3.1)
+        expect(result.status).to.deep.equal({ result: 'none', comment: 'No DKIM2 header fields found' });
         expect(result.info).to.equal('dkim2=none');
     });
 

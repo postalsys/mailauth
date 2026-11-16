@@ -73,7 +73,7 @@ The mailauth CLI offers several commands to perform different email authenticati
 Every command writes its result, the signed or sealed message or the JSON report, to standard output, so it can be redirected to a file or piped into the next command, for example `mailauth sign -k private.key -d example.com -s s1 message.eml | mailauth report`. Everything else, including `--verbose` diagnostics, warnings and error messages, goes to standard error. The exit status is 0 when the command ran, also when it reports a failed authentication check, and 1 when the command itself failed, for example because the message could not be read or an option was invalid.
 
 > [!WARNING]
-> DKIM2 is not a published RFC yet. The DKIM2 commands are experimental and built against draft-ietf-dkim-dkim2-spec-06, draft-ietf-dkim-dkim2-dns-00 and draft-ietf-dkim-dkim2-bcp-01, see [DKIM2](README.md#dkim2).
+> DKIM2 is not a published RFC yet. The DKIM2 commands are experimental and built against draft-ietf-dkim-dkim2-spec-09, draft-ietf-dkim-dkim2-dns-02 and draft-ietf-dkim-dkim2-bcp-01, see [DKIM2](README.md#dkim2).
 
 ### report
 
@@ -183,13 +183,14 @@ mailauth dkim2-sign [options] [email]
 
 #### Options
 
-- `--private-key /path/to/private.key`, `-k /path/to/private.key`: Path to a private key, RSA (at least 1024 bits) or Ed25519. Repeat it to sign with several keys, each with its own `--selector`.
-- `--selector selector`, `-s selector`: Selector of the private key in the same position. Can be repeated. At most two keys can use the same algorithm.
-- `--domain example.com`, `-d example.com`: Signing domain (`d=` tag). It has to be the MAIL FROM domain or a parent of it.
+- `--private-key /path/to/private.key`, `-k /path/to/private.key`: Path to a private key, RSA (at least 1024 bits), Ed25519, or ML-DSA-44 (Node.js 24 or later). Repeat it to sign with several keys, each with its own `--selector`.
+- `--selector selector`, `-s selector`: Selector of the private key in the same position. Can be repeated. Every key needs its own selector, several keys can use the same algorithm.
+- `--domain example.com`, `-d example.com`: Signing domain (`d=` tag). It has to be the MAIL FROM domain or a parent of it. When the message is signed for the first time, or the From header field was changed, the From address has to be in this domain or one of its subdomains. A subdomain can sign for a From in its parent domain unless the parent publishes a Domain Policy Record with `f=strict`, which is then looked up in DNS.
 - `--mail-from user@example.com`, `-f user@example.com`: MAIL FROM address the message is sent with (`mf=` tag), `<>` for the null sender.
 - `--rcpt-to user@example.net`, `-r user@example.net`: RCPT TO address the message is sent to (`rt=` tag). Can be repeated.
 - `--next-domain example.net`: For a hop across a trust boundary, the domain of the next DKIM2 signature (`nd=` tag). Used instead of `--mail-from` and `--rcpt-to`.
-- `--flag flag`: Flag to set (`f=` tag): `donotmodify`, `donotexplode`, `exploded`, `feedback` or `feedhere`. Can be repeated.
+- `--group 1,2`: Positions of the keys, counted from 1 in the order of `--private-key`, that form one group of signatures that all have to pass. Repeat it for groups of which one has to pass, joined with `|` in the `s=` tag, such as `--group 1,2 --group 3`. Every key is in exactly one group. Without it, every signature has to pass.
+- `--flag flag`: Flag to set (`f=` tag): `exploded` (not on the first signature), `feedback` or `feedhere`. Can be repeated.
 - `--nonce value`: A value for your own use (`n=` tag), at most 64 characters.
 - `--hash algorithm`: Hash algorithm of a new `Message-Instance`, `sha256` or `sha512`. Can be repeated. Defaults to `sha256`.
 - `--recipe /path/to/recipe.json`: For a forwarder that changed the message, a JSON file with the Recipe that recreates the previous instance (`r=` tag). It is checked before signing, and the command fails if it does not recreate the previous instance.
@@ -249,7 +250,7 @@ mailauth dkim2-verify [options] [email]
 - `--dns-cache /path/to/dns.json`, `-n /path/to/dns.json`: Path to a DNS cache file. When provided, DNS queries use cached responses.
 - `--time timestamp`, `-t timestamp`: Time to verify against as a Unix timestamp. Defaults to the current time.
 - `--max-age seconds`: Seconds after which a signature expires, `0` to not check. Defaults to 14 days.
-- `--max-future seconds`: Seconds a signature timestamp may be ahead of the current time, `0` to not check. Defaults to `300`.
+- `--max-future seconds`: Seconds a signature timestamp may be ahead of the current time, `0` to not check. Defaults to one day (`86400`).
 - `--max-instances number`: The most `Message-Instance`, and the most `DKIM2-Signature`, header fields to process. Defaults to `20`.
 - `--headers-only`, `-o`: Outputs only the Authentication-Results entry (`dkim2=...`) instead of the JSON report.
 - `--verbose`, `-v`: Shows the DNS queries, and the parts of the envelope that were not checked.
