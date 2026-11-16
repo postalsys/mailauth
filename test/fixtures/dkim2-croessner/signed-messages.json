@@ -1,0 +1,175 @@
+{
+    "dns": {
+        "ed._domainkey.example.net": [
+            "v=DKIM1; k=ed25519; p=c8NRb8lHFM+bb9NcvJRWMhSwOQA85ghK76/pLvnbt5I="
+        ],
+        "ed._domainkey.example.test": [
+            "v=DKIM1; k=ed25519; p=c8NRb8lHFM+bb9NcvJRWMhSwOQA85ghK76/pLvnbt5I="
+        ],
+        "pq._domainkey.example.test": [
+            "v=DKIM1; k=mldsa44; p=2yfr5GfFoT0R8K+n2jAR2gOHA/xK18uag6hvRO17f3TStEzJSl2UoWEe//GB7Y+1ytZ+yAoiN41k7yiD7qkr1FwOoy0wYALwGTz116T5DZgwLJW7Seg6ZBvNuniniyk8QKPCqpzs2JwEYSpifrh4Y+zLAvDRMju2jdY2q2TY0LalS7gdpTCEprIOkl+d56GqDGGmHDoadC+1jNKxCfDv99uqjTrUKL7HFuqYygjDlErGiwABrv/rQZw65LFJ3qWLqI/2z2S8KFKKOg3yj4KHFGI540RudiqqoGijtet6OlMeLb8zOZIFyGU//il9l+NMFGpl7mwKWPvGeO+/SyQU8quwiof9gQ4WXGQy9hYZxxJ7/iE+uB0xwJ1sBEb4JEP2ZveMCXTw14wGzTnzAKdjtKAywfTuNIJliL0o/MMQZJTQkBvm0s1wUpCL0/rxPMb81LZqB3iUr6SAJiJDYXW2fKqqcK6TsfC83qEbKpJeL7vZDCDcWNT1Q9NysklpuGWGXQZXZYqF2d0l6nttRSGT89aNrCujvMUZ+/MaOMpHLp6WmIUy9nHCTyLJVwM+cFaoMTUrcG1bjByYKRs9bhcUzGoYAFG6XcRbp7tDvBfF8xdraKTbtTiCzmnE7aCV7W6vt2ljud1F14Ya22NpEqyCST+THO8WMM+7Jg3RfRnqAP5g4IadWwP5dScwoxTFXA0Xh5VF/fzcE6SLlvS9squQhlwhnFsxJQ5cm4YBa3s0kVh6iD43CJPOfOD384rev80KlDnUnXIZVR3OUIy4ecsWY4bbyjVYUJdxpxj2717Pi+rmygSE6DcgRbKcBRLgD1fec8qxOGt8SVje942CBft3IqD2hD7qWkWnQHtxUzrDVqvDcUwMhMHDEQ6nTb+bPt/tq2BERiC9VReJsf8jh/9jCQ2+q26/OT6nPBCe3kOtBj7BesBKbh31ZAsYT77DcWxKjIudl8RNXlQPcJo8WVO7gw8UMmfDaLV86tN29wPE7vGj06bkQgtzIKlsWFfmUHoGDXC6p8J+6ySKdO2coI/AyiuzvKK5XJWSgeemEcNhuMNnNPQFeRjsSQzzIijnSfVcbYh5ypwiDnL80xUHEzUio2/9HkUhUfhLHaJ5neuMYBZ5EpY6iY1DchhBZ/312bo0Jmk68HJpYrKHHcx/AwrSsCHJ/ww2DWu99PDcbGTQ3oNtLstrgWac7pQ04m5oOk8qq4YrZE5VzKs7gkZdJSZPTNMKU0a35qxpDoXPSKhEYftgEEzj3aAW4+iviBF5utVf20pXPLtreo0aEY1VlUq04lL7n06zdK+tiw7b/p72Vd6JXLTFbHnGBZil114U1GuvxjZL5MW0d4FgBlvf4o4Qn2p4ut5sBhjI1wgx4ONhVMh4a2vAogYbqwlfo9uALqipRz71c16qaH15llPMwTFZwEG+Tr7D2STmBDBJFtbTrFZ7tjAI+X6kc2Xuv3/cGCFC/rkFGhkeKIOohkIiuG/H0xxeIOZiunSe96QJroBLpA4fj/+9x75Cf5AT5ldjhHuR+X96YkOcHOGbadLk3JTe+gqwDEHo9wtFzX/kFZCcD/Fc8M3aQjscRfqljUdNGy/ofwT3qlXAt+7BB0erklbIw+gT3WrvcjQNXMckSJ75kA1TQ0dxJtRJ+AjRjLP/4hUoOgXYDC9AfMnu3m76801z15TgxCbau8rPYbtLjRApBWD7sDhbUdD5oOFmAPsYwxl8JA2RQ2P9HyxtLf/XBHh0+w=="
+        ],
+        "rsa._domainkey.example.net": [
+            "v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxJtBmS2CUqvPjtVs8cM6vqykzKS2urvf4MuwMIWR/Kwt4sZXh87U4j0udFUrGSUOi8k7AfFDUzGam1Qv0B5HsykFgvgKIqn0o8AKoJRKwBGp20VTc5aYaR5obLHKkmIiu4WK4W1QUXxHg6DDYY9yVhyRcy/900rnrUcL9P55QTCQ49Jm8fo/ODoRraLi23J57h7Atj81Fj65U4LRnFlMldjyJSZt/BjhvdSQnUlPR99aa5CzZ/4uufrNONWCUxAI11l37UEJpZRDUPUBqXVoeJMZy5jJ4KhpOJAQQCYQHMv5/ZHOEdKhhiocvIjPEnDCU0UGz+Sa4vWlY1WIVjs16wIDAQAB"
+        ],
+        "rsa._domainkey.example.test": [
+            "v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxJtBmS2CUqvPjtVs8cM6vqykzKS2urvf4MuwMIWR/Kwt4sZXh87U4j0udFUrGSUOi8k7AfFDUzGam1Qv0B5HsykFgvgKIqn0o8AKoJRKwBGp20VTc5aYaR5obLHKkmIiu4WK4W1QUXxHg6DDYY9yVhyRcy/900rnrUcL9P55QTCQ49Jm8fo/ODoRraLi23J57h7Atj81Fj65U4LRnFlMldjyJSZt/BjhvdSQnUlPR99aa5CzZ/4uufrNONWCUxAI11l37UEJpZRDUPUBqXVoeJMZy5jJ4KhpOJAQQCYQHMv5/ZHOEdKhhiocvIjPEnDCU0UGz+Sa4vWlY1WIVjs16wIDAQAB"
+        ]
+    },
+    "messages": [
+        {
+            "name": "rsa",
+            "mailFrom": "\u003calice@example.test\u003e",
+            "rcptTo": [
+                "\u003cbob@example.net\u003e"
+            ],
+            "time": 1700000600,
+            "result": "pass",
+            "reason": "none",
+            "message": "Message-Instance: m=1;\r\n\th=sha256:t6KGwCOnbgsOY+WvaUAl3S9rsGDFY/znLYW/j2vLwtU=:ZG+wKfatENumUxPAEP8C4+hnbySoc4EUFJIIrgeldgg=;\r\nDKIM2-Signature: i=1;\r\n\tm=1;\r\n\tt=1700000000;\r\n\tmf=PGFsaWNlQGV4YW1wbGUudGVzdD4=;\r\n\trt=PGJvYkBleGFtcGxlLm5ldD4=;\r\n\td=example.test;\r\n\ts=rsa:rsa-sha256:V+TxYl4UICXz7CkdvtUkq8NjoaEvGsPL8Ypx3gA4quwKOMsZxToGWhjygD1qLv2m\r\n\tvnoKsgSYmm9/atkWVss3w+O48qZmFkAhLqRata1Jy1gyfGHnW87svuxNGapDn6zw\r\n\t5ks6/w3JQdiibdEGe7qBMK+vFxQnRdemgJc+UsLjN6G2Im4b2RnZNJG1TwPetRlF\r\n\tGPflwe/UjbLhyJJxpgoMZP+KvBWL6DZohOoucJmVPqRXuUae15YB7MZRquWSEDEf\r\n\tf7qzhTTpSC0oBZrxLT0DkKRtrTIX+PvQbIKdiRohkbgRKBJKds7BmmTf3u2bdW/S\r\n\tYZtMTmXbOASeR7E3sjwMgA==;\r\nFrom: Alice \u003calice@example.test\u003e\r\nTo: bob@example.net\r\nSubject: Interop\r\nDate: Tue, 14 Nov 2023 22:13:20 +0000\r\nMessage-ID: \u003cinterop@example.test\u003e\r\n\r\nHello world!\r\n\r\nSecond paragraph.\r\n"
+        },
+        {
+            "name": "ed25519",
+            "mailFrom": "\u003calice@example.test\u003e",
+            "rcptTo": [
+                "\u003cbob@example.net\u003e"
+            ],
+            "time": 1700000600,
+            "result": "pass",
+            "reason": "none",
+            "message": "Message-Instance: m=1;\r\n\th=sha256:t6KGwCOnbgsOY+WvaUAl3S9rsGDFY/znLYW/j2vLwtU=:ZG+wKfatENumUxPAEP8C4+hnbySoc4EUFJIIrgeldgg=;\r\nDKIM2-Signature: i=1;\r\n\tm=1;\r\n\tt=1700000000;\r\n\tmf=PGFsaWNlQGV4YW1wbGUudGVzdD4=;\r\n\trt=PGJvYkBleGFtcGxlLm5ldD4=;\r\n\td=example.test;\r\n\ts=ed:ed25519-sha256:a3dI58WxWAaBMW94TVo39D8deVxtB/p/W310dtnBT2nb0ZqKssJzWvh908zWygQL\r\n\tvH2Y4mSr+Ou56ixsoCL2Dg==;\r\nFrom: Alice \u003calice@example.test\u003e\r\nTo: bob@example.net\r\nSubject: Interop\r\nDate: Tue, 14 Nov 2023 22:13:20 +0000\r\nMessage-ID: \u003cinterop@example.test\u003e\r\n\r\nHello world!\r\n\r\nSecond paragraph.\r\n"
+        },
+        {
+            "name": "rsa+ed25519 dual",
+            "mailFrom": "\u003calice@example.test\u003e",
+            "rcptTo": [
+                "\u003cbob@example.net\u003e"
+            ],
+            "time": 1700000600,
+            "result": "pass",
+            "reason": "none",
+            "message": "Message-Instance: m=1;\r\n\th=sha256:t6KGwCOnbgsOY+WvaUAl3S9rsGDFY/znLYW/j2vLwtU=:ZG+wKfatENumUxPAEP8C4+hnbySoc4EUFJIIrgeldgg=;\r\nDKIM2-Signature: i=1;\r\n\tm=1;\r\n\tt=1700000000;\r\n\tmf=PGFsaWNlQGV4YW1wbGUudGVzdD4=;\r\n\trt=PGJvYkBleGFtcGxlLm5ldD4=;\r\n\td=example.test;\r\n\ts=rsa:rsa-sha256:j+Eu1XSan7ukJIH2eX5diOanlayt+nsJQJWPe+t5ZL3Gsp1vcpAN71UHTL9jD33f\r\n\tza1V+PGKSlHVutaoMlKt083FKzj4SfJYy0UBGgrRmNyX0gUJwvE/Zizvp4dKe7r9\r\n\tHzOmu/UfVL7q/j7WgS8C0LbN2DNMTqvXHDnFkl6M8wy+eCTT0M36WdE6tpotj8ZL\r\n\twxwMBVqztJwiIsjoiGsCLE+YV46DPo6owIECXmxLEet2D+0H1MNxt2l9fz5kcp47\r\n\t2g8tUqo//Go3bQDxddx6JczHJ5ApKAlb6lpOwVNjNt2FoD2coaOe1wth7idLyMUF\r\n\tSyzrv/mXwNNX2DHrOZZubw==,\r\n\ted:ed25519-sha256:L135DuJJwCIGdUg7NROzn4QtKxLqDOUQeIQjhHq6qagnPEbt1lV/MpCied6EKG31\r\n\tedbcGKHakEf2oEw9EOjVAA==;\r\nFrom: Alice \u003calice@example.test\u003e\r\nTo: bob@example.net\r\nSubject: Interop\r\nDate: Tue, 14 Nov 2023 22:13:20 +0000\r\nMessage-ID: \u003cinterop@example.test\u003e\r\n\r\nHello world!\r\n\r\nSecond paragraph.\r\n"
+        },
+        {
+            "name": "mldsa44",
+            "mailFrom": "\u003calice@example.test\u003e",
+            "rcptTo": [
+                "\u003cbob@example.net\u003e"
+            ],
+            "time": 1700000600,
+            "result": "pass",
+            "reason": "none",
+            "message": "Message-Instance: m=1;\r\n\th=sha256:t6KGwCOnbgsOY+WvaUAl3S9rsGDFY/znLYW/j2vLwtU=:ZG+wKfatENumUxPAEP8C4+hnbySoc4EUFJIIrgeldgg=;\r\nDKIM2-Signature: i=1;\r\n\tm=1;\r\n\tt=1700000000;\r\n\tmf=PGFsaWNlQGV4YW1wbGUudGVzdD4=;\r\n\trt=PGJvYkBleGFtcGxlLm5ldD4=;\r\n\td=example.test;\r\n\ts=pq:mldsa44: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\r\n\t6AAAAAAAAAAAAAAAAAAAABYmMkE=;\r\nFrom: Alice \u003calice@example.test\u003e\r\nTo: bob@example.net\r\nSubject: Interop\r\nDate: Tue, 14 Nov 2023 22:13:20 +0000\r\nMessage-ID: \u003cinterop@example.test\u003e\r\n\r\nHello world!\r\n\r\nSecond paragraph.\r\n"
+        },
+        {
+            "name": "classical group or mldsa44",
+            "mailFrom": "\u003calice@example.test\u003e",
+            "rcptTo": [
+                "\u003cbob@example.net\u003e"
+            ],
+            "time": 1700000600,
+            "result": "pass",
+            "reason": "none",
+            "message": "Message-Instance: m=1;\r\n\th=sha256:t6KGwCOnbgsOY+WvaUAl3S9rsGDFY/znLYW/j2vLwtU=:ZG+wKfatENumUxPAEP8C4+hnbySoc4EUFJIIrgeldgg=;\r\nDKIM2-Signature: i=1;\r\n\tm=1;\r\n\tt=1700000000;\r\n\tmf=PGFsaWNlQGV4YW1wbGUudGVzdD4=;\r\n\trt=PGJvYkBleGFtcGxlLm5ldD4=;\r\n\td=example.test;\r\n\ts=rsa:rsa-sha256:Ayq9RHdq9XKJT4+RRbHBqDbJp6MeEH/dRypdR84Exlfxdu0/7FDnnwSp1x2mG5+c\r\n\tI5oQ9lrRJhk451b6IWgMpML2nqqf8BDKGWawPor03rbsf9xSbZnOIfeY+uy7DSMh\r\n\tjLb4Wikkn7+7OEofg83sxvdS/GiMBcit8Qb8UknW/4L2BmFFoOB/NtEFvbsTr36p\r\n\t5q3ExXHLWNscVhrdG2OXEvclRQVYU3lsJPvxCPS6UqwuW3afh7DEf+oaBx3XxRmj\r\n\tV8Fw7bBqiJeDqES00kzKhTXimVAVVGQK02J+PDM5zrm6kc7csH2zzBcMrjc4iAPz\r\n\tJmFsy1jUjqKA8I8DS56H1w==,\r\n\ted:ed25519-sha256:0v4hsDz1iuCP2+li0QIJons6Sr2JlRh2Am9OBitVazkSTm16F9SsX8Z+yVYQXtrw\r\n\to8y28tcBMIsN3DEAoAz6Dg==|\r\n\tpq:mldsa44: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\r\n\t8vkAAAAAAAAAAAAAAAAAAA8fLUI=;\r\nFrom: Alice \u003calice@example.test\u003e\r\nTo: bob@example.net\r\nSubject: Interop\r\nDate: Tue, 14 Nov 2023 22:13:20 +0000\r\nMessage-ID: \u003cinterop@example.test\u003e\r\n\r\nHello world!\r\n\r\nSecond paragraph.\r\n"
+        },
+        {
+            "name": "nonce and feedback flag",
+            "mailFrom": "\u003calice@example.test\u003e",
+            "rcptTo": [
+                "\u003cbob@example.net\u003e"
+            ],
+            "time": 1700000600,
+            "result": "pass",
+            "reason": "none",
+            "message": "Message-Instance: m=1;\r\n\th=sha256:t6KGwCOnbgsOY+WvaUAl3S9rsGDFY/znLYW/j2vLwtU=:ZG+wKfatENumUxPAEP8C4+hnbySoc4EUFJIIrgeldgg=;\r\nDKIM2-Signature: i=1;\r\n\tm=1;\r\n\tt=1700000000;\r\n\tmf=PGFsaWNlQGV4YW1wbGUudGVzdD4=;\r\n\trt=PGJvYkBleGFtcGxlLm5ldD4=;\r\n\td=example.test;\r\n\ts=rsa:rsa-sha256:ql3KQ393+Y/PARPK748h+HdqCmLU2hmHRoAI9GKXMhkfJCV70vHXDuZwbijb8KCI\r\n\t/j9w+GN+82AgPyB/CVMFuL8yXtZA9oT8Fp8/r7doM1ZouByddz8RGt7FER6XhXjQ\r\n\tY4h8sM/qmDPutxbhYxMTnL8PDcXmbJ8T7KaPD5w7Kq2/Scu41guK6PsQPxOobhsP\r\n\thFRNpbw+dJ728yi06M1aaLtq/BbYtVH63Ujcdmql1vwNdHyXLyQ6W3yWmd8Ini9G\r\n\tX6hSCxll30ep8UIYhXFmmbGYM+6pYWFaDXpOYI5y22yTO7FYj3p630kbMhGDS9MD\r\n\toPIGSiByheLQCsNzZZjLUQ==;\r\n\tn=abc123;\r\n\tf=feedback;\r\nFrom: Alice \u003calice@example.test\u003e\r\nTo: bob@example.net\r\nSubject: Interop\r\nDate: Tue, 14 Nov 2023 22:13:20 +0000\r\nMessage-ID: \u003cinterop@example.test\u003e\r\n\r\nHello world!\r\n\r\nSecond paragraph.\r\n"
+        },
+        {
+            "name": "empty body",
+            "mailFrom": "\u003calice@example.test\u003e",
+            "rcptTo": [
+                "\u003cbob@example.net\u003e"
+            ],
+            "time": 1700000600,
+            "result": "pass",
+            "reason": "none",
+            "message": "Message-Instance: m=1;\r\n\th=sha256:9vwweFlmtK0dMU8BVS5vNNfxXl2pQ6Lt/RcJZgFQxZ0=:frcCV1k9oG9oKj3dpUqdJg1PxRT2RSN/XKdLCPjaYaY=;\r\nDKIM2-Signature: i=1;\r\n\tm=1;\r\n\tt=1700000000;\r\n\tmf=PGFsaWNlQGV4YW1wbGUudGVzdD4=;\r\n\trt=PGJvYkBleGFtcGxlLm5ldD4=;\r\n\td=example.test;\r\n\ts=rsa:rsa-sha256:RI7367UQOkdQq3VltZORmtochk5HGsMoZV9GHx/gBaQ1nhedLuhcansZDqp4R0pb\r\n\ttvn3xFjFz0C/Otuy20lsquTt3+rzp9oPsgW1cKI+ybThyEHZcId4xX4QtVniGSPX\r\n\tX9m4VhZqtXac0xa0sOGh+5uEtsrtLpK5lvx9MQ9GyOfvcXEJQo6Wt9HFhUmqFbok\r\n\tAksnT8noYMyScGHBJwNTvveLmvRhFCB19TWa0i/TotpX3OOzmCCIDv5vgNqZCHhy\r\n\t5EvM+BqG7hn2U2IEWfLcpqmehCfnhtjjqzeP+RbArt7D2h14fq/bMtUWoGmhzQNY\r\n\tUvsRxPLcIebVxjh6oSMSew==;\r\nFrom: alice@example.test\r\nSubject: none\r\n\r\n"
+        },
+        {
+            "name": "forward unchanged",
+            "mailFrom": "\u003crelay@example.net\u003e",
+            "rcptTo": [
+                "\u003ccarol@next.test\u003e"
+            ],
+            "time": 1700000600,
+            "result": "pass",
+            "reason": "none",
+            "message": "DKIM2-Signature: i=2;\r\n\tm=1;\r\n\tt=1700000000;\r\n\tmf=PHJlbGF5QGV4YW1wbGUubmV0Pg==;\r\n\trt=PGNhcm9sQG5leHQudGVzdD4=;\r\n\td=example.net;\r\n\ts=rsa:rsa-sha256:B/it74vscLhetcU0bfOAbKpj5jgeQ7d9XG3SrOQOCB+x7sZp8hvtnR3bdhaBF6Jo\r\n\tO+Y5SHPcNNt82o1gswpaEA6rz494JFj3TK33GbMOAm0rkc2ZlXeL1UOM+FjdDbmG\r\n\tgMVLhg+z0h9sEr/g2Q+h6m2IWX12EEf3dZ79umNYS9J8fdXynN3amt/Fr3rKLlYo\r\n\ti5WZBH56kP9CQZbueUNA6MbMOQU6Txzl02m7q7OtBvAfC4jA0fA/RLEhtxA2JeVy\r\n\tVVcQMAMaZSVtxw9qNv17D67I79FJFKm1Xu3wUyKOU60gcnZlVdpjxKctuvKTymQE\r\n\tCBTNaB1dM8kO2e7AZ9HjgA==;\r\nMessage-Instance: m=1;\r\n\th=sha256:t6KGwCOnbgsOY+WvaUAl3S9rsGDFY/znLYW/j2vLwtU=:ZG+wKfatENumUxPAEP8C4+hnbySoc4EUFJIIrgeldgg=;\r\nDKIM2-Signature: i=1;\r\n\tm=1;\r\n\tt=1700000000;\r\n\tmf=PGFsaWNlQGV4YW1wbGUudGVzdD4=;\r\n\trt=PGJvYkBleGFtcGxlLm5ldD4=;\r\n\td=example.test;\r\n\ts=rsa:rsa-sha256:V+TxYl4UICXz7CkdvtUkq8NjoaEvGsPL8Ypx3gA4quwKOMsZxToGWhjygD1qLv2m\r\n\tvnoKsgSYmm9/atkWVss3w+O48qZmFkAhLqRata1Jy1gyfGHnW87svuxNGapDn6zw\r\n\t5ks6/w3JQdiibdEGe7qBMK+vFxQnRdemgJc+UsLjN6G2Im4b2RnZNJG1TwPetRlF\r\n\tGPflwe/UjbLhyJJxpgoMZP+KvBWL6DZohOoucJmVPqRXuUae15YB7MZRquWSEDEf\r\n\tf7qzhTTpSC0oBZrxLT0DkKRtrTIX+PvQbIKdiRohkbgRKBJKds7BmmTf3u2bdW/S\r\n\tYZtMTmXbOASeR7E3sjwMgA==;\r\nFrom: Alice \u003calice@example.test\u003e\r\nTo: bob@example.net\r\nSubject: Interop\r\nDate: Tue, 14 Nov 2023 22:13:20 +0000\r\nMessage-ID: \u003cinterop@example.test\u003e\r\n\r\nHello world!\r\n\r\nSecond paragraph.\r\n"
+        },
+        {
+            "name": "revision copy-only (new header, footer)",
+            "mailFrom": "\u003crelay@example.net\u003e",
+            "rcptTo": [
+                "\u003ccarol@next.test\u003e"
+            ],
+            "time": 1700000600,
+            "result": "pass",
+            "reason": "none",
+            "message": "Message-Instance: m=2;\r\n\th=sha256:Lq3PiP9F9fWJwXAw5vSlyBEL35gt6M/sjBcIlgsQ6sk=:THqIysdGySFDzoDe+QvFjqbB2xYZxDSevb38jYwRJYI=;\r\n\tr=eyJoIjp7Imxpc3QtaWQiOltdfSwiYiI6W3siYyI6WzEsM119XX0=;\r\nDKIM2-Signature: i=2;\r\n\tm=2;\r\n\tt=1700000000;\r\n\tmf=PHJlbGF5QGV4YW1wbGUubmV0Pg==;\r\n\trt=PGNhcm9sQG5leHQudGVzdD4=;\r\n\td=example.net;\r\n\ts=rsa:rsa-sha256:o+ggja2MZaibKJ8EJmf4OJ4vAkctpRg5NGUPFOr2Q6fKulnKAWXLx4uBfhd1w7Y/\r\n\t18TK5wCyXneNK0avZipQaZsSmG40iCu1KeghoK1pnczOQeNwfSkklEkOdzH5j7xw\r\n\tq4g9mVs+uOICzHQBJ3oc9J02dyl7sQXO0ASdBszT6HsOWIboGC3yg/Ey+28I1kZ7\r\n\tYSuPaMJCMwdcczvI6YPoup5DrlDgt9amwkRpvYHnY69PMNCaSBLg+fHmVQUusHSF\r\n\t2ydbYb4u9ozkfSJtGfryUjTD+cFu5H3VGi1OnYTiCFCehnXzCWUr0UHcJuMMDPFL\r\n\tHZzS0w6k96SqMhWFYYbyMw==;\r\nMessage-Instance: m=1;\r\n\th=sha256:t6KGwCOnbgsOY+WvaUAl3S9rsGDFY/znLYW/j2vLwtU=:ZG+wKfatENumUxPAEP8C4+hnbySoc4EUFJIIrgeldgg=;\r\nDKIM2-Signature: i=1;\r\n\tm=1;\r\n\tt=1700000000;\r\n\tmf=PGFsaWNlQGV4YW1wbGUudGVzdD4=;\r\n\trt=PGJvYkBleGFtcGxlLm5ldD4=;\r\n\td=example.test;\r\n\ts=rsa:rsa-sha256:V+TxYl4UICXz7CkdvtUkq8NjoaEvGsPL8Ypx3gA4quwKOMsZxToGWhjygD1qLv2m\r\n\tvnoKsgSYmm9/atkWVss3w+O48qZmFkAhLqRata1Jy1gyfGHnW87svuxNGapDn6zw\r\n\t5ks6/w3JQdiibdEGe7qBMK+vFxQnRdemgJc+UsLjN6G2Im4b2RnZNJG1TwPetRlF\r\n\tGPflwe/UjbLhyJJxpgoMZP+KvBWL6DZohOoucJmVPqRXuUae15YB7MZRquWSEDEf\r\n\tf7qzhTTpSC0oBZrxLT0DkKRtrTIX+PvQbIKdiRohkbgRKBJKds7BmmTf3u2bdW/S\r\n\tYZtMTmXbOASeR7E3sjwMgA==;\r\nFrom: Alice \u003calice@example.test\u003e\r\nTo: bob@example.net\r\nSubject: Interop\r\nList-Id: \u003clist.example.net\u003e\r\nDate: Tue, 14 Nov 2023 22:13:20 +0000\r\nMessage-ID: \u003cinterop@example.test\u003e\r\n\r\nHello world!\r\n\r\nSecond paragraph.\r\n--\r\nfooter\r\n"
+        },
+        {
+            "name": "revision with literals (subject tag, new header, footer)",
+            "mailFrom": "\u003crelay@example.net\u003e",
+            "rcptTo": [
+                "\u003ccarol@next.test\u003e"
+            ],
+            "time": 1700000600,
+            "result": "pass",
+            "reason": "none",
+            "message": "Message-Instance: m=2;\r\n\th=sha256:XFJlp7yn0H6K4Pm2bDdXY5cZinxAAZWnGGaGIsHdhGE=:THqIysdGySFDzoDe+QvFjqbB2xYZxDSevb38jYwRJYI=;\r\n\tr=eyJoIjp7Imxpc3QtaWQiOltdLCJzdWJqZWN0IjpbeyJkIjpbIiBJbnRlcm9wIl19\r\n\tXX0sImIiOlt7ImMiOlsxLDNdfV19;\r\nDKIM2-Signature: i=2;\r\n\tm=2;\r\n\tt=1700000000;\r\n\tmf=PHJlbGF5QGV4YW1wbGUubmV0Pg==;\r\n\trt=PGNhcm9sQG5leHQudGVzdD4=;\r\n\td=example.net;\r\n\ts=rsa:rsa-sha256:umKyIusjNVX4oV2kKz0DiGiIDDHwC++dlzXRgtyF+SSxQJcm8+NGfspgBpFCtUR/\r\n\tVIUEbFnIuuEKn8I6PxRBO3NIsc9aP3gQnaNATVVDPeBBOo2W4gidBJsvIiQtBNiF\r\n\tU6jQO5RGd3HALMbHC5Hsl8/t4KVC6PHLddjigCksdk2NZPc8q11JGf8nrDlMgKyC\r\n\tAPbiX2SmHvJSuU3HkI6b1L2520zPB0GPV24ouQ52N0GAI5ubm3gHv+OfFeCdFM5n\r\n\t+wbCJncMQ6N7Z5RQvun+a6lWb+f1UnIpGS5pLs8pmOc+7FbHJK+ZkMTP2RiDNyEh\r\n\tcn0eJ+HjzIGMXybuXwhdUw==;\r\nMessage-Instance: m=1;\r\n\th=sha256:t6KGwCOnbgsOY+WvaUAl3S9rsGDFY/znLYW/j2vLwtU=:ZG+wKfatENumUxPAEP8C4+hnbySoc4EUFJIIrgeldgg=;\r\nDKIM2-Signature: i=1;\r\n\tm=1;\r\n\tt=1700000000;\r\n\tmf=PGFsaWNlQGV4YW1wbGUudGVzdD4=;\r\n\trt=PGJvYkBleGFtcGxlLm5ldD4=;\r\n\td=example.test;\r\n\ts=rsa:rsa-sha256:V+TxYl4UICXz7CkdvtUkq8NjoaEvGsPL8Ypx3gA4quwKOMsZxToGWhjygD1qLv2m\r\n\tvnoKsgSYmm9/atkWVss3w+O48qZmFkAhLqRata1Jy1gyfGHnW87svuxNGapDn6zw\r\n\t5ks6/w3JQdiibdEGe7qBMK+vFxQnRdemgJc+UsLjN6G2Im4b2RnZNJG1TwPetRlF\r\n\tGPflwe/UjbLhyJJxpgoMZP+KvBWL6DZohOoucJmVPqRXuUae15YB7MZRquWSEDEf\r\n\tf7qzhTTpSC0oBZrxLT0DkKRtrTIX+PvQbIKdiRohkbgRKBJKds7BmmTf3u2bdW/S\r\n\tYZtMTmXbOASeR7E3sjwMgA==;\r\nFrom: Alice \u003calice@example.test\u003e\r\nTo: bob@example.net\r\nSubject: [list] Interop\r\nList-Id: \u003clist.example.net\u003e\r\nDate: Tue, 14 Nov 2023 22:13:20 +0000\r\nMessage-ID: \u003cinterop@example.test\u003e\r\n\r\nHello world!\r\n\r\nSecond paragraph.\r\n--\r\nfooter\r\n"
+        },
+        {
+            "name": "body line rewritten, literal Recipe, ed+rsa forwarder",
+            "mailFrom": "\u003crelay@example.net\u003e",
+            "rcptTo": [
+                "\u003ccarol@next.test\u003e"
+            ],
+            "time": 1700000600,
+            "result": "pass",
+            "reason": "none",
+            "message": "Message-Instance: m=2;\r\n\th=sha256:t6KGwCOnbgsOY+WvaUAl3S9rsGDFY/znLYW/j2vLwtU=:v9Nbeh2YNa4ClzIHyuvqZzoCMgRq+hfAij/HpbfZCgs=;\r\n\tr=eyJiIjpbeyJjIjpbMSwyXX0seyJkIjpbIlNlY29uZCBwYXJhZ3JhcGguIl19XX0=;\r\nDKIM2-Signature: i=2;\r\n\tm=2;\r\n\tt=1700000000;\r\n\tmf=PHJlbGF5QGV4YW1wbGUubmV0Pg==;\r\n\trt=PGNhcm9sQG5leHQudGVzdD4=;\r\n\td=example.net;\r\n\ts=rsa:rsa-sha256:xAeWjoIcVfDL3ITrPS1AZynpr/aVp6NSvXR14qFpyKLB0w+9avNFdKtaEHxC3Wvo\r\n\tbK9MoxLqDHhiUTfpAVHobRusthjnzj6xXAgu54kWndgXt3sqxsmIleG5LLxURoL9\r\n\t/DiaLnJHbcFkqhZhzX/tFWBbNKmuuZD1cmAWoy4fJDQOuThclULd5fuhXZPbCAxv\r\n\trAH7PZF4TbR4PZEuK6+L83h+QptQZ0AkNWCA+h6CecOd7DfD1FYTsqtmTat7C6/U\r\n\twE9pl1j6c030kYl6oTvK3r9dn3LC/Tka8/kWQz6V91XOjs25E11MtWeDjo38fW2h\r\n\tcdYFw9/9eQrRUQrdv1uOCA==,\r\n\ted:ed25519-sha256:WFBdpHvdyKW2n2GhiYkAsc6VEEqtHzR0BsH9VZq1/KjGi0i/9AOXAJsR8LKQ/cKH\r\n\tmKw5nB5q9cmMQFCE7KBWCw==;\r\nMessage-Instance: m=1;\r\n\th=sha256:t6KGwCOnbgsOY+WvaUAl3S9rsGDFY/znLYW/j2vLwtU=:ZG+wKfatENumUxPAEP8C4+hnbySoc4EUFJIIrgeldgg=;\r\nDKIM2-Signature: i=1;\r\n\tm=1;\r\n\tt=1700000000;\r\n\tmf=PGFsaWNlQGV4YW1wbGUudGVzdD4=;\r\n\trt=PGJvYkBleGFtcGxlLm5ldD4=;\r\n\td=example.test;\r\n\ts=rsa:rsa-sha256:V+TxYl4UICXz7CkdvtUkq8NjoaEvGsPL8Ypx3gA4quwKOMsZxToGWhjygD1qLv2m\r\n\tvnoKsgSYmm9/atkWVss3w+O48qZmFkAhLqRata1Jy1gyfGHnW87svuxNGapDn6zw\r\n\t5ks6/w3JQdiibdEGe7qBMK+vFxQnRdemgJc+UsLjN6G2Im4b2RnZNJG1TwPetRlF\r\n\tGPflwe/UjbLhyJJxpgoMZP+KvBWL6DZohOoucJmVPqRXuUae15YB7MZRquWSEDEf\r\n\tf7qzhTTpSC0oBZrxLT0DkKRtrTIX+PvQbIKdiRohkbgRKBJKds7BmmTf3u2bdW/S\r\n\tYZtMTmXbOASeR7E3sjwMgA==;\r\nFrom: Alice \u003calice@example.test\u003e\r\nTo: bob@example.net\r\nSubject: Interop\r\nDate: Tue, 14 Nov 2023 22:13:20 +0000\r\nMessage-ID: \u003cinterop@example.test\u003e\r\n\r\nHello world!\r\n\r\nSecond paragraph, edited.\r\n"
+        },
+        {
+            "name": "body changed",
+            "mailFrom": "\u003calice@example.test\u003e",
+            "rcptTo": [
+                "\u003cbob@example.net\u003e"
+            ],
+            "time": 1700000600,
+            "result": "fail",
+            "reason": "hash_mismatch",
+            "message": "Message-Instance: m=1;\r\n\th=sha256:t6KGwCOnbgsOY+WvaUAl3S9rsGDFY/znLYW/j2vLwtU=:ZG+wKfatENumUxPAEP8C4+hnbySoc4EUFJIIrgeldgg=;\r\nDKIM2-Signature: i=1;\r\n\tm=1;\r\n\tt=1700000000;\r\n\tmf=PGFsaWNlQGV4YW1wbGUudGVzdD4=;\r\n\trt=PGJvYkBleGFtcGxlLm5ldD4=;\r\n\td=example.test;\r\n\ts=rsa:rsa-sha256:V+TxYl4UICXz7CkdvtUkq8NjoaEvGsPL8Ypx3gA4quwKOMsZxToGWhjygD1qLv2m\r\n\tvnoKsgSYmm9/atkWVss3w+O48qZmFkAhLqRata1Jy1gyfGHnW87svuxNGapDn6zw\r\n\t5ks6/w3JQdiibdEGe7qBMK+vFxQnRdemgJc+UsLjN6G2Im4b2RnZNJG1TwPetRlF\r\n\tGPflwe/UjbLhyJJxpgoMZP+KvBWL6DZohOoucJmVPqRXuUae15YB7MZRquWSEDEf\r\n\tf7qzhTTpSC0oBZrxLT0DkKRtrTIX+PvQbIKdiRohkbgRKBJKds7BmmTf3u2bdW/S\r\n\tYZtMTmXbOASeR7E3sjwMgA==;\r\nFrom: Alice \u003calice@example.test\u003e\r\nTo: bob@example.net\r\nSubject: Interop\r\nDate: Tue, 14 Nov 2023 22:13:20 +0000\r\nMessage-ID: \u003cinterop@example.test\u003e\r\n\r\nHello World!\r\n\r\nSecond paragraph.\r\n"
+        },
+        {
+            "name": "wrong RCPT TO",
+            "mailFrom": "\u003calice@example.test\u003e",
+            "rcptTo": [
+                "\u003ceve@example.net\u003e"
+            ],
+            "time": 1700000600,
+            "result": "fail",
+            "reason": "envelope_mismatch",
+            "message": "Message-Instance: m=1;\r\n\th=sha256:t6KGwCOnbgsOY+WvaUAl3S9rsGDFY/znLYW/j2vLwtU=:ZG+wKfatENumUxPAEP8C4+hnbySoc4EUFJIIrgeldgg=;\r\nDKIM2-Signature: i=1;\r\n\tm=1;\r\n\tt=1700000000;\r\n\tmf=PGFsaWNlQGV4YW1wbGUudGVzdD4=;\r\n\trt=PGJvYkBleGFtcGxlLm5ldD4=;\r\n\td=example.test;\r\n\ts=rsa:rsa-sha256:V+TxYl4UICXz7CkdvtUkq8NjoaEvGsPL8Ypx3gA4quwKOMsZxToGWhjygD1qLv2m\r\n\tvnoKsgSYmm9/atkWVss3w+O48qZmFkAhLqRata1Jy1gyfGHnW87svuxNGapDn6zw\r\n\t5ks6/w3JQdiibdEGe7qBMK+vFxQnRdemgJc+UsLjN6G2Im4b2RnZNJG1TwPetRlF\r\n\tGPflwe/UjbLhyJJxpgoMZP+KvBWL6DZohOoucJmVPqRXuUae15YB7MZRquWSEDEf\r\n\tf7qzhTTpSC0oBZrxLT0DkKRtrTIX+PvQbIKdiRohkbgRKBJKds7BmmTf3u2bdW/S\r\n\tYZtMTmXbOASeR7E3sjwMgA==;\r\nFrom: Alice \u003calice@example.test\u003e\r\nTo: bob@example.net\r\nSubject: Interop\r\nDate: Tue, 14 Nov 2023 22:13:20 +0000\r\nMessage-ID: \u003cinterop@example.test\u003e\r\n\r\nHello world!\r\n\r\nSecond paragraph.\r\n"
+        },
+        {
+            "name": "revision footer changed",
+            "mailFrom": "\u003crelay@example.net\u003e",
+            "rcptTo": [
+                "\u003ccarol@next.test\u003e"
+            ],
+            "time": 1700000600,
+            "result": "fail",
+            "reason": "hash_mismatch",
+            "message": "Message-Instance: m=2;\r\n\th=sha256:XFJlp7yn0H6K4Pm2bDdXY5cZinxAAZWnGGaGIsHdhGE=:THqIysdGySFDzoDe+QvFjqbB2xYZxDSevb38jYwRJYI=;\r\n\tr=eyJoIjp7Imxpc3QtaWQiOltdLCJzdWJqZWN0IjpbeyJkIjpbIiBJbnRlcm9wIl19\r\n\tXX0sImIiOlt7ImMiOlsxLDNdfV19;\r\nDKIM2-Signature: i=2;\r\n\tm=2;\r\n\tt=1700000000;\r\n\tmf=PHJlbGF5QGV4YW1wbGUubmV0Pg==;\r\n\trt=PGNhcm9sQG5leHQudGVzdD4=;\r\n\td=example.net;\r\n\ts=rsa:rsa-sha256:umKyIusjNVX4oV2kKz0DiGiIDDHwC++dlzXRgtyF+SSxQJcm8+NGfspgBpFCtUR/\r\n\tVIUEbFnIuuEKn8I6PxRBO3NIsc9aP3gQnaNATVVDPeBBOo2W4gidBJsvIiQtBNiF\r\n\tU6jQO5RGd3HALMbHC5Hsl8/t4KVC6PHLddjigCksdk2NZPc8q11JGf8nrDlMgKyC\r\n\tAPbiX2SmHvJSuU3HkI6b1L2520zPB0GPV24ouQ52N0GAI5ubm3gHv+OfFeCdFM5n\r\n\t+wbCJncMQ6N7Z5RQvun+a6lWb+f1UnIpGS5pLs8pmOc+7FbHJK+ZkMTP2RiDNyEh\r\n\tcn0eJ+HjzIGMXybuXwhdUw==;\r\nMessage-Instance: m=1;\r\n\th=sha256:t6KGwCOnbgsOY+WvaUAl3S9rsGDFY/znLYW/j2vLwtU=:ZG+wKfatENumUxPAEP8C4+hnbySoc4EUFJIIrgeldgg=;\r\nDKIM2-Signature: i=1;\r\n\tm=1;\r\n\tt=1700000000;\r\n\tmf=PGFsaWNlQGV4YW1wbGUudGVzdD4=;\r\n\trt=PGJvYkBleGFtcGxlLm5ldD4=;\r\n\td=example.test;\r\n\ts=rsa:rsa-sha256:V+TxYl4UICXz7CkdvtUkq8NjoaEvGsPL8Ypx3gA4quwKOMsZxToGWhjygD1qLv2m\r\n\tvnoKsgSYmm9/atkWVss3w+O48qZmFkAhLqRata1Jy1gyfGHnW87svuxNGapDn6zw\r\n\t5ks6/w3JQdiibdEGe7qBMK+vFxQnRdemgJc+UsLjN6G2Im4b2RnZNJG1TwPetRlF\r\n\tGPflwe/UjbLhyJJxpgoMZP+KvBWL6DZohOoucJmVPqRXuUae15YB7MZRquWSEDEf\r\n\tf7qzhTTpSC0oBZrxLT0DkKRtrTIX+PvQbIKdiRohkbgRKBJKds7BmmTf3u2bdW/S\r\n\tYZtMTmXbOASeR7E3sjwMgA==;\r\nFrom: Alice \u003calice@example.test\u003e\r\nTo: bob@example.net\r\nSubject: [list] Interop\r\nList-Id: \u003clist.example.net\u003e\r\nDate: Tue, 14 Nov 2023 22:13:20 +0000\r\nMessage-ID: \u003cinterop@example.test\u003e\r\n\r\nHello world!\r\n\r\nSecond paragraph.\r\n--\r\nevil\r\n"
+        }
+    ]
+}

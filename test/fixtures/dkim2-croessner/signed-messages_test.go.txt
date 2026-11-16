@@ -1,0 +1,176 @@
+// Generator of signed-messages.json, a test of the croessner/dkim2 package. It signs messages with
+// the signer of croessner/dkim2 (the keys and helpers of its own tests) and records the verdict of
+// its own verifier. To regenerate, copy this file into the root of a croessner/dkim2 checkout as
+// zz_interop_export_test.go and run:
+//
+//   INTEROP_OUT=<directory> go test -run TestInteropExport -count=1 .
+//
+// The keys are fixed (the RSA key of testdata/vectors/draft-ietf-dkim-dkim2-spec-09 and seeded
+// Ed25519 and ML-DSA-44 keys), and only the ML-DSA-44 signatures are randomized (hedged signing), so a new
+// run changes those bytes but none of the verdicts.
+package dkim2
+
+import (
+	"context"
+	"crypto/ed25519"
+	"crypto/mldsa"
+	"crypto/sha256"
+	"crypto/x509"
+	"encoding/base64"
+	"encoding/json"
+	"os"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/croessner/dkim2/internal/routeplan"
+)
+
+type exportCase struct {
+	Name     string   `json:"name"`
+	MailFrom string   `json:"mailFrom"`
+	RcptTo   []string `json:"rcptTo"`
+	Time     int64    `json:"time"`
+	Result   string   `json:"result"`
+	Reason   string   `json:"reason"`
+	Message  string   `json:"message"`
+}
+
+// TestInteropExport writes croessner-signed messages for verification by mailauth
+func TestInteropExport(t *testing.T) {
+	out := os.Getenv("INTEROP_OUT")
+	if out == "" {
+		t.Skip("INTEROP_OUT not set")
+	}
+	rsaKey := loadPublicSigningRSAKey(t)
+	edSeed := sha256.Sum256([]byte("interop-ed25519"))
+	edKey := ed25519.NewKeyFromSeed(edSeed[:])
+	mlSeed := sha256.Sum256([]byte("interop-mldsa44"))
+	mlKey, err := mldsa.NewPrivateKey(mldsa.MLDSA44(), mlSeed[:])
+	if err != nil {
+		t.Fatal(err)
+	}
+	provider := &publicSigningProvider{rsaKey: rsaKey, edKey: edKey, mlKey: mlKey}
+	const now = int64(1_700_000_000)
+	facade, err := NewSigner(provider, publicRouteMemoryAuthority{value: routeplan.NewMemoryAuthority()}, &authorizeOrdinary{}, provider,
+		WithSigningClock(func() time.Time { return time.Unix(now, 0) }), WithoutSignerSubdomainFromAuthorization())
+	if err != nil {
+		t.Fatal(err)
+	}
+	handle := func(name string) PrivateKeyHandle { h, _ := NewPrivateKeyHandle([]byte(name)); return h }
+	rsaCred, _ := NewRSASigningCredential("rsa", &rsaKey.PublicKey, handle("rsa"))
+	edCred, _ := NewEd25519SigningCredential("ed", edKey.Public().(ed25519.PublicKey), handle("ed"))
+	mlCred, _ := NewMLDSA44SigningCredential("pq", mlKey.PublicKey(), handle("pq"))
+	profile := func(domain string, creds ...SigningCredential) SigningProfile {
+		p, err := NewSigningProfile(domain, creds...)
+		if err != nil {
+			t.Fatalf("profile %s: %v", domain, err)
+		}
+		return p
+	}
+	fixture := publicSigningFixture{facade: facade, provider: provider}
+
+	alice, bob := []byte("<alice@example.test>"), [][]byte{[]byte("<bob@example.net>")}
+	origin := func(raw []byte, p SigningProfile, meta SigningMetadata) []byte {
+		res, rec, err := facade.SignOriginator(context.Background(), NewOriginatorSigningRequest(
+			raw, alice, bob, fixture.originTicket(t, raw, RouteDisclosureSingle), p, meta, SigningTransportFinalNetworkPreDotStuffing))
+		out, ok := res.Unrestricted()
+		if err != nil || rec.Valid() || !ok {
+			t.Fatalf("SignOriginator: %v", err)
+		}
+		return out.Bytes()
+	}
+	existing := func(signed, revised []byte, p SigningProfile, literals RecipeLiteralPolicy) []byte {
+		_, capability, err := facade.VerifyForRevision(context.Background(), NewVerifyRequest(signed, alice, bob))
+		if err != nil || !capability.Valid() {
+			t.Fatalf("VerifyForRevision: %v", err)
+		}
+		res, rec, err := facade.SignExisting(context.Background(), NewExistingSigningRequest(
+			capability, revised, []byte("<relay@example.net>"), [][]byte{[]byte("<carol@next.test>")},
+			fixture.existingTicket(t, capability, revised, RouteDisclosureSingle), p, SigningMetadata{},
+			SigningTransportFinalNetworkPreDotStuffing, RejectUnavailableBody, literals))
+		out, ok := res.Unrestricted()
+		if err != nil || rec.Valid() || !ok {
+			t.Fatalf("SignExisting: %v", err)
+		}
+		return out.Bytes()
+	}
+
+	raw := []byte("From: Alice <alice@example.test>\r\nTo: bob@example.net\r\nSubject: Interop\r\nDate: Tue, 14 Nov 2023 22:13:20 +0000\r\nMessage-ID: <interop@example.test>\r\n\r\nHello world!\r\n\r\nSecond paragraph.\r\n")
+	var cases []exportCase
+	verifier, err := NewVerifier(provider, WithVerificationClock(func() time.Time { return time.Unix(now+600, 0) }), WithoutSubdomainFromAuthorization())
+	if err != nil {
+		t.Fatal(err)
+	}
+	// records the verdict of this library, which must be the expected one
+	add := func(name string, msg []byte, mf string, rt []string, expect string) {
+		forward := make([][]byte, 0, len(rt))
+		for _, rcpt := range rt {
+			forward = append(forward, []byte(rcpt))
+		}
+		result, err := verifier.Verify(context.Background(), NewVerifyRequest(msg, []byte(mf), forward))
+		if err != nil {
+			t.Fatalf("%s: Verify: %v", name, err)
+		}
+		state := strings.ToLower(string(result.State()))
+		if state != expect {
+			t.Fatalf("%s: verified as %s (%s), expected %s", name, state, result.PrimaryReason(), expect)
+		}
+		cases = append(cases, exportCase{name, mf, rt, now + 600, state, string(result.PrimaryReason()), string(msg)})
+	}
+	toBob := []string{"<bob@example.net>"}
+	toCarol := []string{"<carol@next.test>"}
+
+	rsaOnly := origin(raw, profile("example.test", rsaCred), SigningMetadata{})
+	add("rsa", rsaOnly, "<alice@example.test>", toBob, "pass")
+	add("ed25519", origin(raw, profile("example.test", edCred), SigningMetadata{}), "<alice@example.test>", toBob, "pass")
+	add("rsa+ed25519 dual", origin(raw, profile("example.test", rsaCred, edCred), SigningMetadata{}), "<alice@example.test>", toBob, "pass")
+	add("mldsa44", origin(raw, profile("example.test", mlCred), SigningMetadata{}), "<alice@example.test>", toBob, "pass")
+	add("classical group or mldsa44", origin(raw, profile("example.test", mlCred, edCred, rsaCred), SigningMetadata{}), "<alice@example.test>", toBob, "pass")
+	meta, err := NewSigningMetadata([]byte("abc123"), true, []SigningFlag{SigningFlagFeedback})
+	if err != nil {
+		t.Fatal(err)
+	}
+	add("nonce and feedback flag", origin(raw, profile("example.test", rsaCred), meta), "<alice@example.test>", toBob, "pass")
+	add("empty body", origin([]byte("From: alice@example.test\r\nSubject: none\r\n\r\n"), profile("example.test", rsaCred), SigningMetadata{}), "<alice@example.test>", toBob, "pass")
+
+	// forwarder, unchanged
+	add("forward unchanged", existing(rsaOnly, rsaOnly, profile("example.net", rsaCred), RecipeCopyOnly), "<relay@example.net>", toCarol, "pass")
+	// list style revision: subject tag, new header, footer
+	revised := []byte(strings.Replace(string(rsaOnly), "Subject: Interop", "Subject: [list] Interop\r\nList-Id: <list.example.net>", 1) + "--\r\nfooter\r\n")
+	appended := []byte(strings.Replace(string(rsaOnly), "Subject: Interop", "Subject: Interop\r\nList-Id: <list.example.net>", 1) + "--\r\nfooter\r\n")
+	add("revision copy-only (new header, footer)", existing(rsaOnly, appended, profile("example.net", rsaCred), RecipeCopyOnly), "<relay@example.net>", toCarol, "pass")
+	add("revision with literals (subject tag, new header, footer)", existing(rsaOnly, revised, profile("example.net", rsaCred), RecipeAllowLiterals), "<relay@example.net>", toCarol, "pass")
+	// body rewritten in the middle, needs a literal
+	rewritten := []byte(strings.Replace(string(rsaOnly), "Second paragraph.", "Second paragraph, edited.", 1))
+	revisedWithLiterals := existing(rsaOnly, rewritten, profile("example.net", edCred, rsaCred), RecipeAllowLiterals)
+	add("body line rewritten, literal Recipe, ed+rsa forwarder", revisedWithLiterals, "<relay@example.net>", toCarol, "pass")
+
+	// failures
+	add("body changed", []byte(strings.Replace(string(rsaOnly), "Hello world!", "Hello World!", 1)), "<alice@example.test>", toBob, "fail")
+	add("wrong RCPT TO", rsaOnly, "<alice@example.test>", []string{"<eve@example.net>"}, "fail")
+	add("revision footer changed", []byte(strings.Replace(string(existing(rsaOnly, revised, profile("example.net", rsaCred), RecipeAllowLiterals)), "footer", "evil", 1)), "<relay@example.net>", toCarol, "fail")
+
+	spki := func(key any) string {
+		der, err := x509.MarshalPKIXPublicKey(key)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return base64.StdEncoding.EncodeToString(der)
+	}
+	rsaRecord := "v=DKIM1; k=rsa; p=" + spki(&rsaKey.PublicKey)
+	dns := map[string][]string{
+		"rsa._domainkey.example.test": {rsaRecord},
+		"rsa._domainkey.example.net":  {rsaRecord},
+		"ed._domainkey.example.test":  {"v=DKIM1; k=ed25519; p=" + base64.StdEncoding.EncodeToString(edKey.Public().(ed25519.PublicKey))},
+		"ed._domainkey.example.net":   {"v=DKIM1; k=ed25519; p=" + base64.StdEncoding.EncodeToString(edKey.Public().(ed25519.PublicKey))},
+		"pq._domainkey.example.test":  {"v=DKIM1; k=mldsa44; p=" + base64.StdEncoding.EncodeToString(mlKey.PublicKey().Bytes())},
+	}
+	data, err := json.MarshalIndent(map[string]any{"messages": cases, "dns": dns}, "", "    ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(out+"/signed-messages.json", append(data, '\n'), 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
