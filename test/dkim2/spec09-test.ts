@@ -585,8 +585,13 @@ describe('DKIM2 draft-ietf-dkim-dkim2-spec-09', () => {
                 undefined,
                 { mailFrom: 'sender@example.com' },
                 { rcptTo: 'list@list.example.org' },
-                { mailFrom: 'sender@example.com', rcptTo: [] }
-            ]) {
+                { mailFrom: 'sender@example.com', rcptTo: [] },
+                { mailFrom: 'sender@example.com', rcptTo: '' },
+                // the verifier only reads strings, so these name no recipient
+                { mailFrom: 'sender@example.com', rcptTo: [null] },
+                { mailFrom: 'sender@example.com', rcptTo: [123] },
+                { mailFrom: null, rcptTo: 'list@list.example.org' }
+            ] as any[]) {
                 let err = await dkim2Sign(first, listOptions({ strict: true, received })).catch(err => err);
                 expect(err.code, JSON.stringify(received)).to.equal('EINVALIDOPTS');
                 expect(err.message).to.equal('The envelope the message arrived with (received) is required to verify it in strict mode');
@@ -601,6 +606,22 @@ describe('DKIM2 draft-ietf-dkim-dkim2-spec-09', () => {
             // a new message has nothing to verify, and out-of-band signing needs no envelope
             expect((await dkim2Sign(message(), originatorOptions({ strict: true }))).i).to.equal(1);
             expect((await dkim2Sign(first, listOptions({ strict: true, outOfBand: true }))).i).to.equal(2);
+        });
+
+        it('does not require the arrival envelope in strict mode from the signer that completes an nd= hop', async () => {
+            let first = await toList();
+            let withNd = await signMessage(first, listOptions({ mailFrom: undefined, rcptTo: undefined, nextDomain: 'fwd.example.net' }));
+            let completing = await dkim2Sign(withNd, {
+                signingDomain: 'fwd.example.net',
+                selector: 'frsa',
+                privateKey: generated.rsa,
+                mailFrom: 'bounce@fwd.example.net',
+                rcptTo: 'member@example.net',
+                signTime: new Date('2026-10-01T00:02:00Z'),
+                resolver: resolver(),
+                strict: true
+            });
+            expect(completing.i).to.equal(3);
         });
 
         it('compares the arrival envelope only when it is given', async () => {

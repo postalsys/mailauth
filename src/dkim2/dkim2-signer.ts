@@ -235,6 +235,11 @@ const normalizeOptions = (options: Partial<DKIM2SignOptions> | undefined): Signe
     return result;
 };
 
+// Whether `received` names a MAIL FROM ("" for the null sender) and at least one RCPT TO, counted
+// the way the verifier reads them: strings only
+const hasEnvelope = (received: DKIM2SignOptions['received']): boolean =>
+    typeof received?.mailFrom === 'string' && ([] as unknown[]).concat(received.rcptTo || []).some(value => typeof value === 'string');
+
 // Reads the DKIM2 header fields that are already on the message. They have to be valid and
 // numbered without gaps, otherwise the next numbers are not known
 const readChain = <F extends 'm' | 'i', T extends { error: string | null } & Record<F, number>>(
@@ -293,8 +298,9 @@ class Dkim2Signer extends Dkim2Parser {
             // The verifier gets the message from this signer, so the body is hashed with every
             // algorithm of every instance, and kept when a Recipe copies lines from it
             let { resolver, received, t, strict } = this.options;
-            if (strict && (typeof received?.mailFrom !== 'string' || !([] as string[]).concat(received.rcptTo || []).length)) {
-                // section 13: the envelope is part of a Fully Verified DKIM2 Message
+            if (strict && !this.completesNextDomain() && !hasEnvelope(received)) {
+                // section 13: the envelope is part of a Fully Verified DKIM2 Message. A signer that
+                // completes an nd= hop has no envelope to compare (section 12.3)
                 throw signError('The envelope the message arrived with (received) is required to verify it in strict mode', 'EINVALIDOPTS');
             }
             this.verifier = new Dkim2Verifier({ resolver, mailFrom: received?.mailFrom, rcptTo: received?.rcptTo, curTime: new Date(t * 1000) });
@@ -415,6 +421,11 @@ class Dkim2Signer extends Dkim2Parser {
         if (problem) {
             throw signError(`Can not tell if the From header field is Authentic with the signing domain ${domain}: ${problem.message}`, 'EFROMPOLICY');
         }
+    }
+
+    // Whether the highest signature names this signer in nd=, so this signature completes that hop
+    completesNextDomain(): boolean {
+        return this.signatures.get(this.signatures.size)?.nextDomain === this.options.signingDomain;
     }
 
     // Section 12: refuses to sign over DKIM2 header fields that do not verify. `arrived` is the

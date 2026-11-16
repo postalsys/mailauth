@@ -1506,9 +1506,11 @@ export interface DKIM2SignOptions {
     outOfBand?: boolean | undefined;
 
     /**
-     * Refuse to sign a message that already has DKIM2 header fields when `received` is not given: a
-     * Fully Verified DKIM2 Message includes that its highest DKIM2-Signature names the envelope it
-     * arrived with (section 13). Default: false, the envelope is then not compared
+     * Refuse to sign a message that already has DKIM2 header fields unless `received` names a MAIL
+     * FROM and at least one RCPT TO: a Fully Verified DKIM2 Message includes that its highest
+     * DKIM2-Signature names the envelope it arrived with (section 13). Not needed with `outOfBand`,
+     * or for the signer that completes an nd= hop, which has no envelope to compare. Default: false,
+     * a missing envelope is then not compared
      */
     strict?: boolean | undefined;
 }
