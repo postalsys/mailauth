@@ -611,6 +611,11 @@ describe('DKIM2 draft-ietf-dkim-dkim2-spec-09', () => {
             expect(alone.status.result).to.equal('permerror');
             expect(alone.status.comment).to.equal('DKIM2-Signature i=1 selector pq algorithm unknown');
 
+            // the key of an algorithm that can not be used is never looked up, even when it is published
+            let lookups = failing({}, { 'pq._domainkey.example.com': { TXT: [[`v=DKIM1; k=mldsa44; p=${b64(Buffer.alloc(1312))}`]] } });
+            await dkim2Verify(signedWith(`pq:mldsa44:${b64(Buffer.alloc(2420))}`), { resolver: lookups });
+            expect(lookups.queries).to.not.include('pq._domainkey.example.com');
+
             // an RSA alternative still passes
             let either = await dkim2Verify(signedWith(`rsa:rsa-sha256:|pq:mldsa44:${b64(Buffer.alloc(2420))}`), { resolver: resolver() });
             expect(either.status.result).to.equal('pass');
