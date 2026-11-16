@@ -19,10 +19,11 @@ interface InstanceHash {
     group?: number | undefined;
 }
 
-// A parsed Message-Instance. Only `m` can be relied on when `error` is set
+// A parsed Message-Instance. Only `m` can be relied on when `error` is set. Parsed hash-sets
+// always have their group
 interface ParsedMessageInstance {
     m: number;
-    hashes: InstanceHash[];
+    hashes: (InstanceHash & { group: number })[];
     recipe: ParsedRecipe | undefined;
     error: string | null;
 }
@@ -46,7 +47,7 @@ interface ParsedSignature {
     rcptTo: (string | false)[] | undefined;
     nextDomain: string | null | undefined;
     signingDomain: string | null | undefined;
-    signatures: SignatureValue[];
+    signatures: (SignatureValue & { group: number })[];
     flags: string[];
     error: string | null;
 }
@@ -68,7 +69,7 @@ interface ChainSignature {
     rcptTo: string[] | undefined;
     nextDomain: string | undefined;
     signingDomain: string;
-    signatures: SignatureValue[];
+    signatures: (SignatureValue & { group: number })[];
     flags: string[];
     error: null;
 }
@@ -596,7 +597,8 @@ class FieldBuilder {
     }
 }
 
-// the separator in front of an h= or s= entry: "," within a group, "|" between groups
+// the separator in front of an h= or s= entry: "," within a group, "|" between groups. A value
+// to format without a group is in the first one
 const groupSeparator = (list: { group?: number | undefined }[], index: number): string =>
     (list[index].group || 0) === (list[index - 1].group || 0) ? ',' : '|';
 

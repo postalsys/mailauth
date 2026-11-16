@@ -9,7 +9,7 @@ import { createKeyLookup, KeyError } from './key.js';
 import { isSupportedAlgorithm, verifySignature } from './algorithms.js';
 import { createPolicyLookup } from './records.js';
 import { checkAuthentic, sameFields } from './from.js';
-import type { ChainInstance, ChainSignature, InstanceHash, ParsedMessageInstance, ParsedSignature } from './fields.js';
+import type { ChainInstance, ChainSignature, ParsedMessageInstance, ParsedSignature } from './fields.js';
 import type { DKIM2Key, KeyLookup } from './key.js';
 import type { MessageState } from './message-state.js';
 import type { ParsedHeaders } from '../dkim/message-parser.js';
@@ -375,8 +375,8 @@ class Dkim2Verifier extends Dkim2Parser {
     // Section 14.7 for one Message-Instance
     checkInstance(m: number, instance: ChainInstance, state: MessageState, addError: AddError): DKIM2InstanceResult {
         let hashResults: DKIM2InstanceResult['hashes'] = [];
-        let entries = instance.hashes.map((hash: InstanceHash): Intermediate => {
-            let group = hash.group || 0;
+        let entries = instance.hashes.map((hash): Intermediate => {
+            let group = hash.group;
             if (!HASH_ALGORITHMS.has(hash.algorithm)) {
                 // section 14.7 step 2: an algorithm that is not implemented is a PERMERROR
                 return { result: 'permerror', group, messages: [`algorithm ${hash.algorithm} unknown`] };
@@ -581,7 +581,7 @@ class Dkim2Verifier extends Dkim2Parser {
 
         let values: DKIM2SignatureValueResult[] = [];
         let entries: Intermediate[] = [];
-        for (let [index, { selector, algorithm, signature: value, group = 0 }] of signature.signatures.entries()) {
+        for (let [index, { selector, algorithm, signature: value, group }] of signature.signatures.entries()) {
             let entry: DKIM2SignatureValueResult = { selector, algorithm, group: group + 1 };
             values.push(entry);
 
@@ -667,7 +667,7 @@ class Dkim2Verifier extends Dkim2Parser {
                 signTime: signTime(signature.t),
                 flags: signature.flags,
                 status,
-                values: hop ? hop.values : signature.signatures.map(({ selector, algorithm, group = 0 }) => ({ selector, algorithm, group: group + 1 }))
+                values: hop ? hop.values : signature.signatures.map(({ selector, algorithm, group }) => ({ selector, algorithm, group: group + 1 }))
             };
             for (let key of ['mailFrom', 'rcptTo', 'nextDomain', 'nonce'] as const) {
                 if (signature[key] !== undefined) {
