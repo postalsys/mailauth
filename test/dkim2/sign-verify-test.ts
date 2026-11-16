@@ -196,6 +196,36 @@ describe('DKIM2 signing and verification', () => {
         ]);
         let result = await verify(changed, envelope);
         expect(result.status.result).to.equal('pass');
+
+        // every field of section 4.1, with names in any case
+        let every = Buffer.concat([
+            Buffer.from(
+                [
+                    'Apparently-To: a@example.net',
+                    'ARC-Authentication-Results: i=1; mx.example.net; dkim=pass',
+                    'ARC-Message-Signature: i=1; a=rsa-sha256',
+                    'ARC-Seal: i=1; cv=none',
+                    'Authentication-Results: mx.example.net; dkim2=pass',
+                    'Delivered-To: rcpt@example.net',
+                    'DKIM-Signature: v=1',
+                    'DL-Expansion-History: list@example.net; Sat, 10 Oct 2026 10:00:00 +0000',
+                    'Original-Recipient: rfc822;rcpt@example.net',
+                    'Received: from x by y',
+                    'Received-Foo: anything',
+                    'Return-Path: <a@b>',
+                    'SIO-Label-History: x',
+                    'x-anything: 1',
+                    'X400-Received: x',
+                    'X400-Trace: x',
+                    ''
+                ].join('\r\n')
+            ),
+            signed
+        ]);
+        expect((await verify(every, envelope)).status.result).to.equal('pass');
+
+        // a field that only looks like one of them is signed: "XReceived" is not an "X-" field
+        expect((await verify(Buffer.concat([Buffer.from('XReceived: x\r\n'), signed]), envelope)).status.result).to.equal('fail');
     });
 
     it('signs Auto-Submitted and VBR-Info, which draft-ietf-dkim-dkim2-spec-08 section 4.1 no longer ignores', async () => {

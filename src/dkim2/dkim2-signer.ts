@@ -16,7 +16,7 @@ import {
     formatSignature,
     buildSignatureInput
 } from './fields.js';
-import { parsePath, relaxedMatch, custodyProblem } from './domains.js';
+import { parsePath, isSmtpPath, relaxedMatch, custodyProblem } from './domains.js';
 import { parseRecipe } from './recipe.js';
 import { Dkim2Parser } from './dkim2-parser.js';
 import { rsaKeyProblem } from './key.js';
@@ -84,7 +84,7 @@ const toPath = (value: unknown, allowNull: boolean): string => {
         }
         return '<>';
     }
-    if (!/^<[^<>\r\n]+>$/.test(path)) {
+    if (!isSmtpPath(path)) {
         throw signError(`Invalid SMTP path ${JSON.stringify(path)}`, 'EINVALIDPATH');
     }
     return path;

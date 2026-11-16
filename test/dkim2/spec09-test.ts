@@ -826,9 +826,31 @@ describe('DKIM2 draft-ietf-dkim-dkim2-spec-09', () => {
                 `DKIM2-Signature: i=2; m=1; t=${t}; d=example.com; mf=${b64('<rcpt@example.com>')}; rt=${b64('<x@example.net>')}; s=rsa:rsa-sha256:;`,
                 { rsa: rsaKey }
             );
+            // the highest signature does not cover the highest instance, and m= went down
             let result = await dkim2Verify(second, { resolver: resolver() });
             expect(result.status.result).to.equal('permerror');
-            expect(result.status.comment).to.equal('Message-Instance m=2 is not signed');
+            expect(result.status.comment).to.equal('DKIM2-Signature i=2 m= is below the m= of i=1');
+
+            // a third hop that covers m=2 again does not repair it (section 10.2)
+            let third = craftSignature(
+                second,
+                `DKIM2-Signature: i=3; m=2; t=${t}; d=example.net; mf=${b64('<x@example.net>')}; rt=${b64('<y@example.org>')}; s=frsa:rsa-sha256:;`,
+                { frsa: generated.rsa }
+            );
+            let again = await dkim2Verify(third, { resolver: resolver() });
+            expect(again.status.result).to.equal('permerror');
+            expect(again.errors.map(error => error.message)).to.deep.equal(['DKIM2-Signature i=2 m= is below the m= of i=1']);
+        });
+
+        it('accepts m= that stays the same from one signature to the next', async () => {
+            let signed = await signMessage(
+                message(),
+                originatorOptions({ rcptTo: 'rcpt@example.com', signatureData: [{ selector: 'rsa', privateKey: rsaKey }] })
+            );
+            let forwarded = await signMessage(signed, rsaOnly({ mailFrom: 'rcpt@example.com', rcptTo: 'x@example.org' }));
+            let result = await dkim2Verify(forwarded, { resolver: resolver() });
+            expect(result.status.result, result.status.comment).to.equal('pass');
+            expect(result.signatures.map(entry => entry.m)).to.deep.equal([1, 1]);
         });
     });
 });

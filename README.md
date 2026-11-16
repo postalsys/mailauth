@@ -389,6 +389,8 @@ const signedMessage = signatures + message;
 - **signTime** (`Date`): The signing time (`t=`). Defaults to now.
 - **resolver** (`async function`): DNS resolver for the Domain Policy Record, see **signingDomain**.
 
+A message that already has DKIM2 header fields may only be signed when it is a Fully Verified DKIM2 Message (section 12). That needs the SMTP envelope the message arrived with, so verify it with `dkim2Verify()` first and sign only on `pass`; `dkim2Sign` does not verify the existing signatures itself.
+
 `dkim2Sign` resolves with `{ signatures, signature, messageInstance, i, m }` and rejects for invalid options, an invalid DKIM2 chain on the message, or a Recipe that does not fit. A new `Message-Instance` is only added when the message has no instance yet or has changed since the last one. `Dkim2SignStream` is a Transform stream that outputs the signed message, like `DkimSignStream`.
 
 A forwarder that changes the message passes a Recipe. This mailing list replaced the `Subject` header field, added a `List-Id` header field, and added a footer after the first 3 body lines:

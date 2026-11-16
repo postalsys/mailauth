@@ -3,7 +3,7 @@
 
 import { Buffer } from 'node:buffer';
 import { formatRelaxedLine, toLineBytes, isValidDnsName } from '../tools.js';
-import { parsePath, custodyProblem } from './domains.js';
+import { parsePath, isSmtpPath, custodyProblem } from './domains.js';
 import { MI_KEY, SIG_KEY, isHashedField } from './signed-fields.js';
 import { trimChars } from '../trim.js';
 import { parseRecipe } from './recipe.js';
@@ -289,7 +289,7 @@ const decodePath = (value: string, allowNull: boolean): string | false => {
         return false;
     }
     let path = Buffer.from(plain, 'base64').toString('utf8');
-    if (!/^<[^<>\r\n]*>$/.test(path) || (path === '<>' && !allowNull)) {
+    if (!isSmtpPath(path) || (path === '<>' && !allowNull)) {
         return false;
     }
     return path;

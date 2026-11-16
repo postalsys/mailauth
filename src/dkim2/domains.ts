@@ -28,6 +28,22 @@ const parsePath = (path: string | null | undefined): { address: string; domain: 
 };
 
 /**
+ * Whether a value is an RFC 5321 path in angle brackets with nothing after it: sections 10.5 and
+ * 10.6 record the reverse-path and the Forward-path without their SMTP parameters. Whitespace and
+ * control characters can only be in a quoted local part
+ *
+ * @param {String} path Path with the angle brackets
+ * @returns {Boolean}
+ */
+const isSmtpPath = (path: string): boolean => {
+    if (!/^<[^<>]*>$/.test(path)) {
+        return false;
+    }
+    let unquoted = path.slice(1, -1).replace(/"(?:[^"\\\r\n]|\\[^\r\n])*"/g, '""');
+    return !/[\s\x00-\x1f\x7f]/.test(unquoted);
+};
+
+/**
  * The relaxed domain match of section 7.2: Parameter1 is Parameter2, or becomes it once labels
  * are removed from its left. A domain literal never matches
  *
@@ -65,4 +81,4 @@ const custodyProblem = (
     return recipients.some(recipient => relaxedMatch(recipient, current.signingDomain)) ? null : 'd';
 };
 
-export { parsePath, relaxedMatch, custodyProblem };
+export { parsePath, isSmtpPath, relaxedMatch, custodyProblem };

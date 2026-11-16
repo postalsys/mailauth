@@ -25,6 +25,24 @@ config.includeStack = true;
 const verify = (input: any, options?: any) => dkim2Verify(input, Object.assign({ resolver: resolver() }, options || {}));
 
 const H = 'AAAA';
+
+// section 4.1, typed in again from the draft
+const UNSIGNED = [
+    'apparently-to',
+    'arc-authentication-results',
+    'arc-message-signature',
+    'arc-seal',
+    'authentication-results',
+    'delivered-to',
+    'dkim-signature',
+    'dl-expansion-history',
+    'original-recipient',
+    'received',
+    'return-path',
+    'sio-label-history',
+    'x400-received',
+    'x400-trace'
+];
 const sig = (tags: any) => `DKIM2-Signature: ${tags}`;
 const validTags = `i=1; m=1; t=1; d=example.com; mf=${b64('<a@example.com>')}; rt=${b64('<b@example.net>')}; s=rsa:rsa-sha256:${H};`;
 
@@ -155,6 +173,15 @@ describe('DKIM2 validation', () => {
             ]);
         });
 
+        it('accepts a quoted local part with a space in mf= and rt=', () => {
+            let parsed = parseSignature(
+                sig(validTags.replace(/mf=[^;]+/, `mf=${b64('<"a b"@example.com>')}`).replace(/rt=[^;]+/, `rt=${b64('<"c\\" d"@example.net>')}`))
+            );
+            expect(parsed.error).to.equal(null);
+            expect(parsed.mailFrom).to.equal('<"a b"@example.com>');
+            expect(parsed.rcptTo).to.deep.equal(['<"c\\" d"@example.net>']);
+        });
+
         it('allows several signatures with one algorithm, each with its own selector (section 10.9)', () => {
             let parsed = parseSignature(sig(validTags.replace(/s=.*$/, `s=a:rsa-sha256:${H},b:rsa-sha256:${H},c:rsa-sha256:${H};`)));
             expect(parsed.error).to.equal(null);
@@ -193,6 +220,12 @@ describe('DKIM2 validation', () => {
             [validTags.replace(/rt=[^;]+/, `rt=${b64('<b@example.net>')}, ${b64('<c@example.net>')}`), 'syntax error'],
             [validTags.replace(/rt=[^;]+/, `rt=${b64('<b@example.net>')} ,${b64('<c@example.net>')}`), 'syntax error'],
             [validTags.replace(/rt=[^;]+/, `rt=${b64('<b@example.net>')},`), 'syntax error'],
+            // sections 10.5 and 10.6: the paths are recorded without SMTP parameters
+            [validTags.replace(/rt=[^;]+/, `rt=${b64('<b@example.net> NOTIFY=NEVER')}`), 'syntax error'],
+            [validTags.replace(/rt=[^;]+/, `rt=${b64('<b@example.net NOTIFY=NEVER>')}`), 'syntax error'],
+            [validTags.replace(/mf=[^;]+/, `mf=${b64('<a@example.com SIZE=1000>')}`), 'syntax error'],
+            [validTags.replace(/mf=[^;]+/, `mf=${b64('<a@exam\tple.com>')}`), 'syntax error'],
+            [validTags.replace(/mf=[^;]+/, `mf=${b64('<a@example.com>\u0000')}`), 'syntax error'],
             [validTags.replace(/s=.*$/, `s=rsa:rsa-sha256: ${H};`), 'syntax error'],
             [validTags.replace(/s=.*$/, `s=rsa:rsa-sha256:${H}|;`), 'syntax error'],
             [validTags.replace(/s=.*$/, `s=rsa:rsa-sha256:${H},,b:rsa-sha256:${H};`), 'syntax error'],
@@ -402,7 +435,7 @@ describe('DKIM2 validation', () => {
         });
 
         it('reports a Recipe for a header field that is not signed (section 5.1)', () => {
-            for (let name of ['received', 'x-mailer', 'received-spf', 'authentication-results', 'dkim2-signature', 'message-instance']) {
+            for (let name of [...UNSIGNED, 'received-spf', 'x-mailer', 'dkim2-signature', 'message-instance']) {
                 let instance = `Message-Instance: m=2; h=sha256:${H}:${H}; r=${b64(JSON.stringify({ h: { [name]: [] } }))}`;
                 expect(parseMessageInstance(instance).error).to.equal(`recipe ${JSON.stringify(name)} is invalid`);
             }

@@ -293,6 +293,14 @@ class Dkim2Verifier extends Dkim2Parser {
             }
         }
 
+        // section 10.2: m= is the highest instance when a signature was added, so it never goes down
+        for (let i = 2; i <= maxI; i++) {
+            if (signatures.get(i)!.m < signatures.get(i - 1)!.m) {
+                addError('permerror', `DKIM2-Signature i=${i} m= is below the m= of i=${i - 1}`, { i });
+                return finish();
+            }
+        }
+
         // section 13.2 item 1: the highest signature covers the highest instance
         if (signatures.get(maxI)!.m !== maxM) {
             addError('permerror', `Message-Instance m=${maxM} is not signed`);

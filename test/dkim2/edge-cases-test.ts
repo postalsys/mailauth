@@ -380,6 +380,10 @@ describe('DKIM2 edge cases', () => {
                 [{ rcptTo: '<>' }, 'EINVALIDPATH'],
                 [{ rcptTo: null }, 'EINVALIDPATH'],
                 [{ mailFrom: 'a<b@example.com' }, 'EINVALIDPATH'],
+                // sections 10.5 and 10.6: no SMTP parameters in the paths
+                [{ rcptTo: 'rcpt@example.net NOTIFY=NEVER' }, 'EINVALIDPATH'],
+                [{ rcptTo: '<rcpt@example.net> NOTIFY=NEVER' }, 'EINVALIDPATH'],
+                [{ mailFrom: '<sender@example.com> SIZE=1000' }, 'EINVALIDPATH'],
                 [{ rcptTo: undefined }, 'EINVALIDOPTS'],
                 [{ mailFrom: undefined, nextDomain: 'example.net' }, 'EINVALIDOPTS'],
                 [{ algorithm: 'rsa-sha256', signatureData: undefined, selector: 'rsa', privateKey: ed25519Key }, 'EINVALIDALGO'],
