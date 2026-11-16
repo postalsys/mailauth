@@ -57,6 +57,16 @@ describe('DKIM2 edge cases', () => {
             expect(parseSignature(`DKIM2-Signature: ${tags.replace(/rt=[^;]+/, `rt=${b64('<b@example.net>')},${b64('bad')}`)}`).error).to.equal('syntax error');
         });
 
+        it('reports a field without a colon, and an m= with whitespace inside, as syntax errors', () => {
+            expect(parseMessageInstance('Message-Instance').error).to.equal('tag=m missing');
+            expect(parseSignature('DKIM2-Signature').error).to.equal('tag=i missing');
+            let instance = parseMessageInstance(`Message-Instance: m=1 2; h=sha256:${H}:${H}`);
+            expect(instance.m).to.be.NaN;
+            expect(instance.error).to.equal('syntax error');
+            let tags = `i=1; t=1; d=example.com; mf=${b64('<a@example.com>')}; rt=${b64('<b@example.net>')}; s=sel:rsa-sha256:${H}`;
+            expect(parseSignature(`DKIM2-Signature: m=1 2; ${tags}`).error).to.equal('syntax error');
+        });
+
         it('reads the m= and i= of a field with a syntax error elsewhere', () => {
             expect(parseMessageInstance('Message-Instance: m=4; h=bad').m).to.equal(4);
             expect(parseSignature('DKIM2-Signature: i=3; m=x').i).to.equal(3);
