@@ -11,8 +11,9 @@ import { expect, config } from 'chai';
 import { dkim2Sign } from '../../src/dkim2/sign.js';
 import { dkim2Verify } from '../../src/dkim2/verify.js';
 import { parseSignature, parseMessageInstance, formatSignature, formatMessageInstance } from '../../src/dkim2/fields.js';
-import { matchFrom } from '../../src/dkim2/from.js';
-import { supportsMlDsa } from '../../src/dkim2/algorithms.js';
+import { matchFrom, checkAuthentic } from '../../src/dkim2/from.js';
+import { Dkim2Verifier } from '../../src/dkim2/dkim2-verifier.js';
+import { supportsMlDsa, verifySignature } from '../../src/dkim2/algorithms.js';
 import { canonicalHeaderField } from '../../src/dkim2/fields.js';
 import { rsaKey, ed25519Key, generated, keyRecord, resolver, message, originatorOptions, signMessage, craftSignature, b64 } from '../helpers/dkim2.js';
 import * as reference from '../helpers/dkim2-reference.js';
@@ -739,6 +740,30 @@ describe('DKIM2 draft-ietf-dkim-dkim2-spec-09', () => {
             });
             expect(result.status.result).to.equal('fail');
             expect(result.errors.map(error => error.message)).to.deep.equal(['DKIM2-Signature i=2 d= does not match the rt= of i=1']);
+        });
+    });
+
+    describe('unexpected errors', () => {
+        it('treats a signature that crypto.verify() can not check as incorrect', () => {
+            // an Ed25519 key for an RSA signature makes crypto.verify() throw
+            let input = Buffer.from('input');
+            let signature = crypto.sign('sha256', input, crypto.createPrivateKey(rsaKey));
+            expect(verifySignature('rsa-sha256', input, crypto.createPublicKey(ed25519Key), signature)).to.be.false;
+            expect(verifySignature('rsa-sha256', input, crypto.createPublicKey(rsaKey), signature)).to.be.true;
+        });
+
+        it('passes on errors that are not DNS results, instead of reading them as a policy or a key', async () => {
+            let broken = async () => {
+                throw new TypeError('resolver bug');
+            };
+            let err = await checkAuthentic(fromFields('a@example.org'), 'mail.example.org', broken).catch(err => err);
+            expect(err).to.be.an.instanceOf(TypeError);
+
+            let entry: any = { selector: 'rsa', algorithm: 'rsa-sha256' };
+            let lookup = Promise.reject(new TypeError('lookup bug'));
+            let keyErr = await new Dkim2Verifier().checkValue(entry, lookup, 'rsa-sha256', Buffer.from('x'), 'AAAA').catch(err => err);
+            expect(keyErr).to.be.an.instanceOf(TypeError);
+            expect(entry).to.not.have.property('result');
         });
     });
 
