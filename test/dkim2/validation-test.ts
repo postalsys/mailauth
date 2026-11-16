@@ -6,7 +6,14 @@ import { expect, config } from 'chai';
 
 import { dkim2Sign } from '../../src/dkim2/sign.js';
 import { dkim2Verify } from '../../src/dkim2/verify.js';
-import { parseMessageInstance, parseSignature, canonicalSignatureField, formatSignature, formatMessageInstance } from '../../src/dkim2/fields.js';
+import {
+    parseMessageInstance,
+    parseSignature,
+    canonicalSignatureField,
+    formatSignature,
+    formatMessageInstance,
+    continuesCustody
+} from '../../src/dkim2/fields.js';
 import { custodyProblem } from '../../src/dkim2/domains.js';
 import { parseRecipe } from '../../src/dkim2/recipe.js';
 import { rsaKeyProblem } from '../../src/dkim2/key.js';
@@ -285,6 +292,16 @@ describe('DKIM2 validation', () => {
         it('never matches a domain literal (section 7.2 step 2)', () => {
             expect(custodyProblem({ rcptTo: ['<a@[192.0.2.1]>'] }, { mailFrom: '<b@[192.0.2.1]>', signingDomain: 'example.com' })).to.equal('mf');
             expect(custodyProblem({ rcptTo: ['<a@[192.0.2.1]>'] }, { mailFrom: '<>', signingDomain: 'example.com' })).to.equal('d');
+        });
+
+        it('keeps continuesCustody() of 7.x as a boolean form of the same rules', () => {
+            expect(continuesCustody(previous, '<a@example.org>', 'x.example')).to.be.true;
+            expect(continuesCustody(previous, '<a@notexample.com>', 'x.example')).to.be.false;
+            expect(continuesCustody(previous, '<>', 'example.org')).to.be.true;
+            expect(continuesCustody(previous, undefined, 'mail.example.org')).to.be.false;
+            expect(continuesCustody(undefined, '<a@example.org>', 'x.example')).to.be.true;
+            // a previous hop without rt= has no recipient to match
+            expect(custodyProblem({}, { mailFrom: '<a@example.org>', signingDomain: 'example.org' })).to.equal('mf');
         });
 
         it('has nothing to match without a previous hop, or after an nd= hop', () => {

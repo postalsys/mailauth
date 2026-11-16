@@ -84,7 +84,11 @@ describe('DKIM2 draft-ietf-dkim-dkim2-spec-09', () => {
             ['no From header field', [], 'matching From is not authentic'],
             ['an empty group', fromFields('undisclosed-recipients:;'), 'matching From is not authentic'],
             ['a From that is not RFC 5322 syntax', fromFields('<a@example.com> trailing text'), 'matching From is not authentic'],
-            ['a From without an address', fromFields('just a name'), 'matching From is not authentic']
+            ['a From without an address', fromFields('just a name'), 'matching From is not authentic'],
+            ['a From whose domain is only the root', fromFields('a@.'), 'matching From is not authentic'],
+            ['a From whose domain has a space', fromFields('"a"@exa mple.com'), 'matching From is not authentic'],
+            // the parser accepts the zero width space as atom text, it is not valid in a domain
+            ['a From whose domain has an invisible character', [Buffer.from('from:a@exa\u200bmple.com\r\n', 'utf8')], 'matching From is not authentic']
         ] as [string, Buffer[], string][]) {
             it(`can never make ${label} Authentic (section 11)`, () => {
                 expect(matchFrom(fields, 'example.com')).to.deep.equal({ status: 'fail', message });
@@ -581,6 +585,15 @@ describe('DKIM2 draft-ietf-dkim-dkim2-spec-09', () => {
                 expect(result.status.comment).to.equal(`DKIM2-Signature i=1 ${comment}`);
             });
         }
+
+        it('fails a signature value that is not an ML-DSA-44 signature at all', async () => {
+            let pq = mlDsa();
+            let signed = await signMessage(message(), originatorOptions({ signatureData: [{ selector: 'pq', privateKey: pq }] }));
+            let short = Buffer.from(signed.toString('binary').replace(/s=pq:mldsa44:[^;]+;/, `s=pq:mldsa44:${b64('short')};`), 'binary');
+            let result = await dkim2Verify(short, { resolver: resolver({ 'pq._domainkey.example.com': { TXT: [[keyRecord(pq)]] } }) });
+            expect(result.status.result).to.equal('fail');
+            expect(result.status.comment).to.equal('DKIM2-Signature i=1 selector pq incorrect signature');
+        });
 
         it('fails a signature made without the "DKIM2" context', async () => {
             let pq = mlDsa();
