@@ -54,8 +54,8 @@ describe('DKIM2 in authenticate()', () => {
     it('reports a chain of custody mismatch with the SMTP envelope', async () => {
         let signed = await signMessage(message(), originatorOptions());
         let result = await authenticate(signed, Object.assign(baseOptions(), { dkim2: true, sender: 'other@example.com' }));
-        expect((result.dkim2 as any).status.result).to.equal('permerror');
-        expect(result.headers).to.include('dkim2=permerror');
+        expect((result.dkim2 as any).status.result).to.equal('fail');
+        expect(result.headers).to.include('dkim2=fail');
         expect(result.headers).to.include('header.i=1');
     });
 

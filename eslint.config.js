@@ -150,5 +150,12 @@ export default defineConfig([
             '@typescript-eslint/no-unused-expressions': 'off'
         }
     },
+    {
+        files: ['src/dkim2/mldsa44.ts', 'test/dkim2/mldsa44-test.ts'],
+        rules: {
+            // FIPS 204 ML-DSA works on bits and bytes: bit packing, rejection sampling, hint encoding
+            'no-bitwise': 'off'
+        }
+    },
     prettier
 ]);

@@ -5,7 +5,9 @@ import type { DKIM2SignOptions, DKIM2SignResult, MessageInput } from '../types.j
 
 /**
  * Signs a message with DKIM2: adds a DKIM2-Signature header field and, when needed, a
- * Message-Instance header field (draft-ietf-dkim-dkim2-spec-06 section 9)
+ * Message-Instance header field (draft-ietf-dkim-dkim2-spec-09 section 12). A message that already
+ * has DKIM2 header fields is verified first and only signed when it is a Fully Verified DKIM2
+ * Message, unless `outOfBand` is set
  *
  * @param {ReadableStream|Buffer|String} input RFC 5322 message
  * @param {Object} options Signing options, see README

@@ -60,7 +60,7 @@ The CommonJS shapes are public API (`require('mailauth/lib/...')` deep imports a
 ### Protocol Modules
 
 - **`src/dkim/`** - DKIM signing (`sign.ts`, `dkim-signer.ts`, `DkimSignStream`) and verification (`verify.ts`, `dkim-verifier.ts`). Body canonicalization in `body/`, header canonicalization in `header/`. `message-parser.ts` is the streaming RFC 5322 parser that signing, verification and DKIM2 build on.
-- **`src/dkim2/`** - DKIM2 (experimental, draft-ietf-dkim-dkim2-spec-06) signing, verification and hashing.
+- **`src/dkim2/`** - DKIM2 (experimental, draft-ietf-dkim-dkim2-spec-09) signing, verification and hashing.
 - **`src/spf/`** - SPF verification (`spf-verify.ts`), macro expansion (`macro.ts`), record syntax (`syntax.ts`). Entry point `index.ts`.
 - **`src/dmarc/`** - DMARC verification (`verify.ts`), DNS record discovery (`get-dmarc-record.ts`), Author Domain extraction (`author-domain.ts`).
 - **`src/arc/`** - ARC chain validation and sealing. `trustlist.ts` lists commonly trusted ARC sealers.

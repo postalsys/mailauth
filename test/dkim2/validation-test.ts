@@ -14,6 +14,7 @@ import {
     formatMessageInstance,
     continuesCustody
 } from '../../src/dkim2/fields.js';
+import { custodyProblem } from '../../src/dkim2/domains.js';
 import { parseRecipe } from '../../src/dkim2/recipe.js';
 import { rsaKeyProblem } from '../../src/dkim2/key.js';
 import { rsaKey, ed25519Key, keyRecord, resolver, message, originatorOptions, signMessage, craftSignature, b64 } from '../helpers/dkim2.js';
@@ -24,6 +25,24 @@ config.includeStack = true;
 const verify = (input: any, options?: any) => dkim2Verify(input, Object.assign({ resolver: resolver() }, options || {}));
 
 const H = 'AAAA';
+
+// section 4.1, typed in again from the draft
+const UNSIGNED = [
+    'apparently-to',
+    'arc-authentication-results',
+    'arc-message-signature',
+    'arc-seal',
+    'authentication-results',
+    'delivered-to',
+    'dkim-signature',
+    'dl-expansion-history',
+    'original-recipient',
+    'received',
+    'return-path',
+    'sio-label-history',
+    'x400-received',
+    'x400-trace'
+];
 const sig = (tags: any) => `DKIM2-Signature: ${tags}`;
 const validTags = `i=1; m=1; t=1; d=example.com; mf=${b64('<a@example.com>')}; rt=${b64('<b@example.net>')}; s=rsa:rsa-sha256:${H};`;
 
@@ -55,15 +74,36 @@ const header = (tags?: any) => {
 const prepend = (input: any, ...lines: any[]) => Buffer.concat([Buffer.from(lines.join('\r\n') + '\r\n'), Buffer.from(input)]);
 
 describe('DKIM2 validation', () => {
-    describe('Message-Instance syntax (sections 7 and 11.2)', () => {
-        it('parses the tags in any order and case, ignoring unknown tags', () => {
-            let parsed = parseMessageInstance(`Message-Instance: X=unknown value; H = sha256 : ${H}\r\n :${H} , foo:${H}:${H} ; M = 3`);
+    describe('Message-Instance syntax (sections 8, 9 and 14.2)', () => {
+        it('parses the tags in any order, ignoring unknown tags', () => {
+            let parsed = parseMessageInstance(`Message-Instance: X=unknown value; h = sha256 :${H}:A\r\n AAA , foo:${H}:${H} ; m = 3`);
             expect(parsed.error).to.equal(null);
             expect(parsed.m).to.equal(3);
             expect(parsed.hashes).to.deep.equal([
-                { algorithm: 'sha256', headerHash: H, bodyHash: H },
-                { algorithm: 'foo', headerHash: H, bodyHash: H }
+                { algorithm: 'sha256', headerHash: H, bodyHash: H, group: 0 },
+                { algorithm: 'foo', headerHash: H, bodyHash: H, group: 0 }
             ]);
+        });
+
+        it('reads "," groups separated by "|" (section 9.3)', () => {
+            let parsed = parseMessageInstance(`Message-Instance: m=1; h=sha256:${H}:${H}, foo:${H}:${H} |\r\n sha512:${H}:${H}|bar:${H}:${H}`);
+            expect(parsed.error).to.equal(null);
+            expect(parsed.hashes.map(hash => [hash.algorithm, hash.group])).to.deep.equal([
+                ['sha256', 0],
+                ['foo', 0],
+                ['sha512', 1],
+                ['bar', 2]
+            ]);
+        });
+
+        it('treats tag names and algorithm names as case-sensitive (sections 2.14 and 8)', () => {
+            // "M=" and "H=" are unknown tags, not m= and h=
+            expect(parseMessageInstance(`Message-Instance: M=1; h=sha256:${H}:${H}`).error).to.equal('tag=m missing');
+            expect(parseMessageInstance(`Message-Instance: m=1; H=sha256:${H}:${H}`).error).to.equal('tag=h missing');
+            // "SHA256" is an algorithm of its own, not a second sha256
+            let parsed = parseMessageInstance(`Message-Instance: m=1; h=sha256:${H}:${H},SHA256:${H}:${H}`);
+            expect(parsed.error).to.equal(null);
+            expect(parsed.hashes.map(hash => hash.algorithm)).to.deep.equal(['sha256', 'SHA256']);
         });
 
         for (let [value, error] of [
@@ -74,10 +114,25 @@ describe('DKIM2 validation', () => {
             [`m=1; m=2; h=sha256:${H}:${H};`, 'syntax error'],
             [`m=1; h=sha256:${H};`, 'syntax error'],
             [`m=1; h=sha256:AAA:${H};`, 'syntax error'],
-            [`m=1; h=sha256:${H}:${H},SHA256:${H}:${H};`, 'has a duplicate hash algorithm'],
+            [`m=1; h=sha256:${H}:${H},sha256:${H}:${H};`, 'has a duplicate hash algorithm'],
+            // section 9.3: once in the whole field, in any group
+            [`m=1; h=sha256:${H}:${H}|sha256:${H}:${H};`, 'has a duplicate hash algorithm'],
+            // section 2.14: no FWS at the start or the end of a base64string
+            [`m=1; h=sha256: ${H}:${H};`, 'syntax error'],
+            [`m=1; h=sha256:${H} :${H};`, 'syntax error'],
+            [`m=1; h=sha256:${H}: ${H};`, 'syntax error'],
+            [`m=1; h=sha256:${H}:${H},;`, 'syntax error'],
+            [`m=1; h=sha256:${H}:${H}||sha512:${H}:${H};`, 'syntax error'],
+            [`m=1; h=|sha256:${H}:${H};`, 'syntax error'],
+            [`m=1; h=sha 256:${H}:${H};`, 'syntax error'],
             [`m=1; h=sha256:${H}:${H}; r=!!!!;`, 'syntax error'],
-            [`m=1; h=sha256:${H}:${H}; r=${b64('{not json')};`, 'contains invalid JSON: not valid JSON'],
-            [`m=1; h=sha256:${H}:${H}; r=${b64('{}')};`, 'contains invalid JSON: neither "h" nor "b" is present'],
+            // section 2.14: padded with zero bits, so "AB==" (bits left over) is not a base64string
+            [`m=1; h=sha256:AB==:${H};`, 'syntax error'],
+            [`m=1; h=sha256:${H}:AAB=;`, 'syntax error'],
+            [`m=1; h=sha256:${H}:${H}; r=eyJiIjpudWxsfQ;`, 'syntax error'],
+            [`m=1; h=sha256:${H}:${H}; r= ${b64('{"b":null}')} x;`, 'syntax error'],
+            [`m=1; h=sha256:${H}:${H}; r=${b64('{not json')};`, 'contains invalid JSON'],
+            [`m=1; h=sha256:${H}:${H}; r=${b64('{}')};`, 'recipe {} is invalid'],
             [`m=1; h=sha256:${H}:${H};; x=1`, 'syntax error'],
             [`m=1; novalue; h=sha256:${H}:${H}`, 'syntax error']
         ]) {
@@ -87,11 +142,11 @@ describe('DKIM2 validation', () => {
         }
     });
 
-    describe('DKIM2-Signature syntax (sections 8 and 11.2)', () => {
+    describe('DKIM2-Signature syntax (sections 8, 10 and 14.2)', () => {
         it('parses every tag', () => {
             let parsed = parseSignature(
                 sig(
-                    `I=2; m=1; t=1000000000000; d=Example.COM; mf=${b64('<>')}; rt=${b64('<b@example.net>')}, ${b64('<c@example.org>')}; n=abc:123; f=exploded , future-flag; s=sel.one:rsa-sha256:${H},sel2:ed25519-sha256:${H},x:new-algo:${H};`
+                    `i=2; m=1; t=1000000000000; d=Example.COM; mf=${b64('<>')}; rt=${b64('<b@example.net>')},${b64('<c@example.org>')}; n=abc:123; f=exploded , future-flag; s=sel.one :rsa-sha256:${H},sel2:ed25519-sha256:${H}|x:new-algo:${H};`
                 )
             );
             expect(parsed).to.deep.include({
@@ -105,7 +160,69 @@ describe('DKIM2 validation', () => {
                 nonce: 'abc:123',
                 flags: ['exploded', 'future-flag']
             });
-            expect(parsed.signatures.map(entry => entry.selector)).to.deep.equal(['sel.one', 'sel2', 'x']);
+            expect(parsed.signatures.map(entry => [entry.selector, entry.algorithm, entry.group])).to.deep.equal([
+                ['sel.one', 'rsa-sha256', 0],
+                ['sel2', 'ed25519-sha256', 0],
+                ['x', 'new-algo', 1]
+            ]);
+        });
+
+        it('allows FWS around the separators of s= and inside, but not around, a base64string (sections 2.14 and 10.9)', () => {
+            let parsed = parseSignature(sig(validTags.replace(/s=.*$/, `s= a \r\n : rsa-sha256 :AA\r\n AA ,\r\n b:ed25519-sha256:${H} | c:mldsa44:${H} ;`)));
+            expect(parsed.error).to.equal(null);
+            expect(parsed.signatures).to.deep.equal([
+                { selector: 'a', algorithm: 'rsa-sha256', signature: H, group: 0 },
+                { selector: 'b', algorithm: 'ed25519-sha256', signature: H, group: 0 },
+                { selector: 'c', algorithm: 'mldsa44', signature: H, group: 1 }
+            ]);
+        });
+
+        it('accepts the paths RFC 5321 allows: quoted local parts, a source route, <Postmaster>', () => {
+            for (let [mailFrom, rcptTo] of [
+                ['<"a>b"@example.com>', '<"c<d"@example.net>'],
+                ['<@relay.example:a@example.com>', '<Postmaster>'],
+                ['<a@[192.0.2.1]>', '<b@example.net>']
+            ]) {
+                let parsed = parseSignature(sig(validTags.replace(/mf=[^;]+/, `mf=${b64(mailFrom)}`).replace(/rt=[^;]+/, `rt=${b64(rcptTo)}`)));
+                expect(parsed.error, `${mailFrom} ${rcptTo}`).to.equal(null);
+                expect(parsed.mailFrom).to.equal(mailFrom);
+                expect(parsed.rcptTo).to.deep.equal([rcptTo]);
+            }
+        });
+
+        it('reads leading zeros of m= and i= as the same number (RFC 5234 1*DIGIT)', () => {
+            expect(parseSignature(sig(validTags.replace('i=1', 'i=001').replace('m=1', 'm=01'))).i).to.equal(1);
+            expect(parseMessageInstance(`Message-Instance: m=0002; h=sha256:${H}:${H}`).m).to.equal(2);
+            // up to 15 digits, so every value stays an exact integer
+            expect(parseMessageInstance(`Message-Instance: m=${'9'.repeat(15)}; h=sha256:${H}:${H}`).error).to.equal(null);
+            expect(parseMessageInstance(`Message-Instance: m=${'1'.repeat(16)}; h=sha256:${H}:${H}`).error).to.equal('syntax error');
+        });
+
+        it('accepts a quoted local part with a space in mf= and rt=', () => {
+            let parsed = parseSignature(
+                sig(validTags.replace(/mf=[^;]+/, `mf=${b64('<"a b"@example.com>')}`).replace(/rt=[^;]+/, `rt=${b64('<"c\\" d"@example.net>')}`))
+            );
+            expect(parsed.error).to.equal(null);
+            expect(parsed.mailFrom).to.equal('<"a b"@example.com>');
+            expect(parsed.rcptTo).to.deep.equal(['<"c\\" d"@example.net>']);
+        });
+
+        it('allows several signatures with one algorithm, each with its own selector (section 10.9)', () => {
+            let parsed = parseSignature(sig(validTags.replace(/s=.*$/, `s=a:rsa-sha256:${H},b:rsa-sha256:${H},c:rsa-sha256:${H};`)));
+            expect(parsed.error).to.equal(null);
+            expect(parsed.signatures).to.have.length(3);
+        });
+
+        it('treats tag names as case-sensitive (section 8)', () => {
+            expect(parseSignature(sig(validTags.replace('i=1', 'I=1'))).error).to.equal('tag=i missing');
+            // an unknown tag that only differs in case is not a duplicate
+            expect(parseSignature(sig(`D=other.example; ${validTags}`)).error).to.equal(null);
+        });
+
+        it('reports the exploded flag on the first signature (section 12.5)', () => {
+            expect(parseSignature(sig(`f=feedback,exploded; ${validTags}`)).error).to.equal('has an exploded flag');
+            expect(parseSignature(sig(`f=Exploded; ${validTags}`)).error).to.equal(null);
+            expect(parseSignature(sig(`f=exploded; ${validTags.replace('i=1', 'i=2')}`)).error).to.equal(null);
         });
 
         for (let [value, error] of [
@@ -124,11 +241,34 @@ describe('DKIM2 validation', () => {
             [validTags.replace('d=example.com', 'd=example..com'), 'syntax error'],
             [validTags.replace(/mf=[^;]+/, `mf=${b64('a@example.com')}`), 'syntax error'],
             [validTags.replace(/rt=[^;]+/, `rt=${b64('<>')}`), 'syntax error'],
+            // section 10.6: no FWS around the commas of rt=, nor at the edges of a base64string
+            [validTags.replace(/rt=[^;]+/, `rt=${b64('<b@example.net>')}, ${b64('<c@example.net>')}`), 'syntax error'],
+            [validTags.replace(/rt=[^;]+/, `rt=${b64('<b@example.net>')} ,${b64('<c@example.net>')}`), 'syntax error'],
+            [validTags.replace(/rt=[^;]+/, `rt=${b64('<b@example.net>')},`), 'syntax error'],
+            // section 2.14: padding bits that are not zero
+            [validTags.replace(/s=.*$/, `s=rsa:rsa-sha256:AB==;`), 'syntax error'],
+            [validTags.replace(/mf=[^;]+/, `mf=${b64('<a@example.com>').slice(0, -2)}B=`), 'syntax error'],
+            // sections 10.5 and 10.6: a path is a mailbox, with a local part and a domain
+            [validTags.replace(/mf=[^;]+/, `mf=${b64('<foo>')}`), 'syntax error'],
+            [validTags.replace(/rt=[^;]+/, `rt=${b64('<@@>')}`), 'syntax error'],
+            [validTags.replace(/rt=[^;]+/, `rt=${b64('<@example.net>')}`), 'syntax error'],
+            [validTags.replace(/rt=[^;]+/, `rt=${b64('<b@>')}`), 'syntax error'],
+            [validTags.replace(/rt=[^;]+/, `rt=${b64('<b@x@example.net>')}`), 'syntax error'],
+            // sections 10.5 and 10.6: the paths are recorded without SMTP parameters
+            [validTags.replace(/rt=[^;]+/, `rt=${b64('<b@example.net> NOTIFY=NEVER')}`), 'syntax error'],
+            [validTags.replace(/rt=[^;]+/, `rt=${b64('<b@example.net NOTIFY=NEVER>')}`), 'syntax error'],
+            [validTags.replace(/mf=[^;]+/, `mf=${b64('<a@example.com SIZE=1000>')}`), 'syntax error'],
+            [validTags.replace(/mf=[^;]+/, `mf=${b64('<a@exam\tple.com>')}`), 'syntax error'],
+            [validTags.replace(/mf=[^;]+/, `mf=${b64('<a@example.com>\u0000')}`), 'syntax error'],
+            [validTags.replace(/s=.*$/, `s=rsa:rsa-sha256: ${H};`), 'syntax error'],
+            [validTags.replace(/s=.*$/, `s=rsa:rsa-sha256:${H}|;`), 'syntax error'],
+            [validTags.replace(/s=.*$/, `s=rsa:rsa-sha256:${H},,b:rsa-sha256:${H};`), 'syntax error'],
+            [validTags.replace(/s=.*$/, `s=r sa:rsa-sha256:${H};`), 'syntax error'],
+            [validTags.replace(/s=.*$/, `s=rsa:rsa-sha256:${H}|RSA:mldsa44:${H};`), 'has a duplicate selector'],
             [`n=${'x'.repeat(65)}; ${validTags}`, 'syntax error'],
             [`n=has space; ${validTags}`, 'syntax error'],
             [`f=bad flag; ${validTags}`, 'syntax error'],
             [validTags.replace(/s=.*$/, `s=rsa:rsa-sha256:${H},RSA:ed25519-sha256:${H};`), 'has a duplicate selector'],
-            [validTags.replace(/s=.*$/, `s=a:rsa-sha256:${H},b:rsa-sha256:${H},c:rsa-sha256:${H};`), 'has more selectors than allowed'],
             [validTags.replace(/s=.*$/, `s=a:rsa-sha256;`), 'syntax error']
         ]) {
             it(`reports "${error}" for ${value.slice(0, 60)}`, () => {
@@ -137,11 +277,17 @@ describe('DKIM2 validation', () => {
         }
     });
 
-    describe('signature input (section 9.6)', () => {
+    describe('signature input (section 12.8)', () => {
         it('removes all whitespace, lowercases the name and empties the signature values', () => {
-            let line = Buffer.from(`DKIM2-Signature :  i=1; m=1;\r\n\tS = a : rsa-sha256 : AB\r\n CD== , b:ed25519-sha256:EF==; x=s=1`);
-            expect(canonicalSignatureField(line, true).toString()).to.equal('dkim2-signature:i=1;m=1;S=a:rsa-sha256:,b:ed25519-sha256:;x=s=1\r\n');
-            expect(canonicalSignatureField(line).toString()).to.equal('dkim2-signature:i=1;m=1;S=a:rsa-sha256:ABCD==,b:ed25519-sha256:EF==;x=s=1\r\n');
+            let line = Buffer.from(
+                `DKIM2-Signature :  i=1; m=1;\r\n\ts = a : rsa-sha256 : AB\r\n CD== , b:ed25519-sha256:EF== | c:mldsa44:GH==; x=s=1; S=a:b:c`
+            );
+            expect(canonicalSignatureField(line, true).toString()).to.equal(
+                'dkim2-signature:i=1;m=1;s=a:rsa-sha256:,b:ed25519-sha256:|c:mldsa44:;x=s=1;S=a:b:c\r\n'
+            );
+            expect(canonicalSignatureField(line).toString()).to.equal(
+                'dkim2-signature:i=1;m=1;s=a:rsa-sha256:ABCD==,b:ed25519-sha256:EF==|c:mldsa44:GH==;x=s=1;S=a:b:c\r\n'
+            );
             // an s= that is not selector:sig-name:value is left as it is, it is a syntax error anyway
             expect(canonicalSignatureField('DKIM2-Signature: i=1; s=', true).toString()).to.equal('dkim2-signature:i=1;s=\r\n');
             expect(canonicalSignatureField('DKIM2-Signature: i=1; s=a:b', true).toString()).to.equal('dkim2-signature:i=1;s=a:b\r\n');
@@ -156,10 +302,11 @@ describe('DKIM2 validation', () => {
                 mailFrom: `<${'x'.repeat(100)}@example.com>`,
                 rcptTo: ['<a@example.net>', `<${'y'.repeat(80)}@example.org>`],
                 nonce: 'n'.repeat(64),
-                flags: ['donotmodify', 'feedback'],
+                flags: ['feedhere', 'feedback'],
                 signatures: [
-                    { selector: 'selector-one', algorithm: 'rsa-sha256', signature: crypto.randomBytes(256).toString('base64') },
-                    { selector: 'selector-two', algorithm: 'ed25519-sha256', signature: crypto.randomBytes(64).toString('base64') }
+                    { selector: 'selector-one', algorithm: 'rsa-sha256', signature: crypto.randomBytes(256).toString('base64'), group: 0 },
+                    { selector: 'selector-two', algorithm: 'ed25519-sha256', signature: crypto.randomBytes(64).toString('base64'), group: 0 },
+                    { selector: 'selector-three', algorithm: 'mldsa44', signature: crypto.randomBytes(2420).toString('base64'), group: 1 }
                 ]
             };
             let folded = formatSignature(fields);
@@ -183,73 +330,164 @@ describe('DKIM2 validation', () => {
             let parsedInstance = parseMessageInstance(instance);
             expect(parsedInstance.error).to.equal(null);
             expect(parsedInstance.hashes).to.have.length(2);
-            expect(parsedInstance.recipe!.h.get('subject')).to.deep.equal([{ d: ['x'.repeat(200)] }]);
+            expect(parsedInstance.recipe!.h.get('subject')).to.deep.equal([{ lines: ['x'.repeat(200)], source: { d: ['x'.repeat(200)] } }]);
         });
     });
 
-    describe('relaxed domain match (section 9.4)', () => {
-        it('removes labels from the left of the MAIL FROM domain until it matches a previous RCPT TO', () => {
-            const previous: any = { rcptTo: ['<list@Example.com>', '<other@example.org>'] };
-            expect(continuesCustody(previous, '<bounce@bounces.mail.example.com>', 'x.example')).to.be.true;
+    describe('chain of custody between hops (section 7.1 item 1)', () => {
+        const previous: any = { rcptTo: ['<list@Example.com>', '<other@example.org>'] };
+
+        it('matches a mf= domain (Parameter1) with a previous rt= domain (Parameter2)', () => {
+            expect(custodyProblem(previous, { mailFrom: '<bounce@bounces.mail.example.com>', signingDomain: 'x.example' })).to.equal(null);
+            expect(custodyProblem(previous, { mailFrom: '<a@example.org>', signingDomain: 'x.example' })).to.equal(null);
+            expect(custodyProblem(previous, { mailFrom: '<a@notexample.com>', signingDomain: 'x.example' })).to.equal('mf');
+            // a parent of the recipient domain is not a match
+            expect(custodyProblem({ rcptTo: ['<list@mail.example.com>'] }, { mailFrom: '<a@example.com>', signingDomain: 'x.example' })).to.equal('mf');
+        });
+
+        it('matches a previous rt= domain (Parameter1) with d= (Parameter2) for the null mf= and for nd=', () => {
+            for (let mailFrom of ['<>', undefined]) {
+                // the recipient domain is d= or a subdomain of it
+                expect(custodyProblem(previous, { mailFrom, signingDomain: 'example.org' })).to.equal(null);
+                expect(custodyProblem({ rcptTo: ['<list@lists.example.com>'] }, { mailFrom, signingDomain: 'example.com' })).to.equal(null);
+                // d= may not be a subdomain of the recipient domain, nor an unrelated domain
+                expect(custodyProblem(previous, { mailFrom, signingDomain: 'mail.example.org' })).to.equal('d');
+                expect(custodyProblem(previous, { mailFrom, signingDomain: 'example.net' })).to.equal('d');
+            }
+        });
+
+        it('never matches a domain literal (section 7.2 step 2)', () => {
+            expect(custodyProblem({ rcptTo: ['<a@[192.0.2.1]>'] }, { mailFrom: '<b@[192.0.2.1]>', signingDomain: 'example.com' })).to.equal('mf');
+            expect(custodyProblem({ rcptTo: ['<a@[192.0.2.1]>'] }, { mailFrom: '<>', signingDomain: 'example.com' })).to.equal('d');
+        });
+
+        it('keeps continuesCustody() of 7.x as a boolean form of the same rules', () => {
             expect(continuesCustody(previous, '<a@example.org>', 'x.example')).to.be.true;
             expect(continuesCustody(previous, '<a@notexample.com>', 'x.example')).to.be.false;
-            expect(continuesCustody({ rcptTo: ['<list@mail.example.com>'] } as any, '<a@example.com>', 'x.example')).to.be.false;
-            // a hop with nd= is matched by its signing domain
-            expect(continuesCustody(previous, undefined, 'example.org')).to.be.true;
-            expect(continuesCustody(previous, undefined, 'example.net')).to.be.false;
-            // the null MAIL FROM is matched by the signing domain too
             expect(continuesCustody(previous, '<>', 'example.org')).to.be.true;
-            expect(continuesCustody(previous, '<>', 'example.net')).to.be.false;
-            // without a previous hop, or after a previous nd= hop, there is nothing to match here
-            expect(continuesCustody(undefined, '<a@example.net>', 'example.net')).to.be.true;
-            expect(continuesCustody({ nextDomain: 'example.net' } as any, '<a@example.net>', 'example.net')).to.be.true;
+            expect(continuesCustody(previous, undefined, 'mail.example.org')).to.be.false;
+            expect(continuesCustody(undefined, '<a@example.org>', 'x.example')).to.be.true;
+            // a previous hop without rt= has no recipient to match
+            expect(custodyProblem({}, { mailFrom: '<a@example.org>', signingDomain: 'example.org' })).to.equal('mf');
+        });
+
+        it('has nothing to match without a previous hop, or after an nd= hop', () => {
+            expect(custodyProblem(undefined, { mailFrom: '<a@example.net>', signingDomain: 'example.net' })).to.equal(null);
+            expect(custodyProblem({ nextDomain: 'example.net' }, { mailFrom: '<a@example.org>', signingDomain: 'example.org' })).to.equal(null);
         });
     });
 
     describe('Recipe JSON (section 5)', () => {
         for (let [json, error] of [
-            ['[]', 'not a JSON object'],
-            ['{"h":{}}', '"h" is not an object with header field names'],
-            ['{"h":{"Subject":[]}}', 'invalid header field name "Subject"'],
-            ['{"h":{"sub ject":[]}}', 'invalid header field name "sub ject"'],
-            ['{"h":{"subject":{}}}', '"h" Recipe for subject is not an array'],
-            ['{"b":[{"c":[1]}]}', '"b" Recipe has an invalid "c" range'],
-            ['{"b":[{"c":[0,1]}]}', '"b" Recipe has an invalid "c" range'],
-            ['{"b":[{"c":[1.5,2]}]}', '"b" Recipe has an invalid "c" range'],
-            ['{"b":[{"c":[2,1]}]}', '"b" Recipe has "c" ranges out of order'],
-            ['{"b":[{"c":[1,2]},{"c":[2,3]}]}', '"b" Recipe has "c" ranges out of order'],
-            ['{"b":[{"c":[1,2],"d":["x"]}]}', '"b" Recipe has a step that is not a "c" or a "d" step'],
-            ['{"b":[{}]}', '"b" Recipe has a step that is not a "c" or a "d" step'],
-            ['{"b":[{"d":[]}]}', '"b" Recipe has an invalid "d" step'],
-            ['{"b":[{"d":["a\\r\\nb"]}]}', '"b" Recipe has an invalid "d" step'],
-            ['{"b":[{"d":[1]}]}', '"b" Recipe has an invalid "d" step'],
-            ['{"b":"x"}', '"b" Recipe is not an array']
+            ['{not json', 'contains invalid JSON'],
+            ['', 'contains invalid JSON'],
+            ['[]', 'contains invalid JSON: not a JSON object'],
+            ['null', 'contains invalid JSON: not a JSON object'],
+            // section 5: the keys are unique within every object, JSON.parse() would keep the last one
+            ['{"b":null,"b":[{"c":[1,1]}]}', 'contains invalid JSON: duplicate key "b"'],
+            ['{"h":{"subject":[],"subject":[{"c":[1,1]}]}}', 'contains invalid JSON: duplicate key "subject"'],
+            ['{"h":{"subject":[{"c":[1,1],"c":[2,2]}]}}', 'contains invalid JSON: duplicate key "c"'],
+            ['{"h":{"subject":[],"\\u0073ubject":[]}}', 'contains invalid JSON: duplicate key "subject"'],
+            // and in lower case
+            ['{"H":{"subject":[]}}', 'recipe "H" is invalid'],
+            ['{"h":{"Subject":[]}}', 'recipe "Subject" is invalid'],
+            ['{"b":[{"C":[1,1]}]}', 'recipe "C" is invalid'],
+            ['{}', 'recipe {} is invalid'],
+            ['{"x":1}', 'recipe {"x":1} is invalid'],
+            ['{"h":{}}', 'recipe {"h":{}} is invalid'],
+            ['{"h":[]}', 'recipe {"h":[]} is invalid'],
+            ['{"h":{"sub ject":[]}}', 'recipe "sub ject" is invalid'],
+            ['{"h":{"subject":{}}}', 'recipe {} is invalid'],
+            ['{"b":"x"}', 'recipe "x" is invalid'],
+            ['{"b":[{"c":[1]}]}', 'recipe {"c":[1]} is invalid'],
+            ['{"b":[{"c":[0,1]}]}', 'recipe {"c":[0,1]} is invalid'],
+            ['{"b":[{"c":[1.5,2]}]}', 'recipe {"c":[1.5,2]} is invalid'],
+            ['{"b":[{"c":["1",2]}]}', 'recipe {"c":["1",2]} is invalid'],
+            ['{"b":[{"c":[2,1]}]}', 'recipe {"c":[2,1]} is invalid'],
+            ['{"b":[{"c":[1,2]},{"c":[2,3]}]}', 'recipe {"c":[2,3]} is invalid'],
+            ['{"b":[{"c":[3,4]},{"d":["x"]},{"c":[1,2]}]}', 'recipe {"c":[1,2]} is invalid'],
+            // section 5: exactly one key per step, and no other keys
+            ['{"b":[{"c":[1,2],"d":["x"]}]}', 'recipe {"c":[1,2],"d":["x"]} is invalid'],
+            ['{"b":[{"c":[1,1],"note":"x"}]}', 'recipe {"c":[1,1],"note":"x"} is invalid'],
+            ['{"b":[{}]}', 'recipe {} is invalid'],
+            ['{"b":[{"x":["a"]}]}', 'recipe {"x":["a"]} is invalid'],
+            ['{"b":[["c",1]]}', 'recipe ["c",1] is invalid'],
+            ['{"b":[{"d":[]}]}', 'recipe {"d":[]} is invalid'],
+            ['{"b":[{"d":"x"}]}', 'recipe {"d":"x"} is invalid'],
+            ['{"b":[{"d":["a\\r\\nb"]}]}', 'recipe {"d":["a\\r\\nb"]} is invalid'],
+            ['{"b":[{"d":["a\\nb"]}]}', 'recipe {"d":["a\\nb"]} is invalid'],
+            ['{"b":[{"d":[1]}]}', 'recipe {"d":[1]} is invalid'],
+            // a lone surrogate is not UTF-8
+            ['{"b":[{"d":["\\ud800"]}]}', `recipe ${JSON.stringify({ d: ['\ud800'] })} is invalid`],
+            // "u" values are canonical base64 that does not decode to CR or LF
+            ['{"b":[{"u":[]}]}', 'recipe {"u":[]} is invalid'],
+            ['{"b":[{"u":["/w"]}]}', 'recipe {"u":["/w"]} is invalid'],
+            ['{"b":[{"u":["/x=="]}]}', 'recipe {"u":["/x=="]} is invalid'],
+            ['{"b":[{"u":["/w= ="]}]}', 'recipe {"u":["/w= ="]} is invalid'],
+            ['{"b":[{"u":["/w==="]}]}', 'recipe {"u":["/w==="]} is invalid'],
+            ['{"b":[{"u":["/w-="]}]}', 'recipe {"u":["/w-="]} is invalid'],
+            [`{"b":[{"u":["${b64('a\r')}"]}]}`, `recipe {"u":["${b64('a\r')}"]} is invalid`],
+            [`{"b":[{"u":["${b64('\n')}"]}]}`, `recipe {"u":["${b64('\n')}"]} is invalid`]
         ]) {
             it(`rejects ${json}`, () => {
                 expect(parseRecipe(json).error).to.equal(error);
             });
         }
 
-        it('ignores unknown fields (section 2)', () => {
-            let parsed = parseRecipe('{"h":{"subject":[{"c":[1,1],"note":"x"}]},"b":null,"z":1,"__proto__":{"polluted":true}}');
+        it('rejects JSON that is not UTF-8, or starts with a byte order mark', () => {
+            expect(parseRecipe(Buffer.from([0x7b, 0x22, 0x62, 0x22, 0x3a, 0xff, 0x7d])).error).to.equal('contains invalid JSON');
+            expect(parseRecipe(Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from('{"b":null}')])).error).to.equal('contains invalid JSON');
+            expect(parseRecipe(Buffer.from('{"b":null}')).error).to.equal(undefined);
+        });
+
+        it('quotes at most 100 characters of the invalid part', () => {
+            let error = parseRecipe(JSON.stringify({ b: [{ d: ['x'.repeat(500)], z: 1 }] })).error!;
+            expect(error).to.equal(`recipe ${JSON.stringify({ d: ['x'.repeat(500)], z: 1 }).slice(0, 100)}... is invalid`);
+        });
+
+        it('reads "d" and "u" steps into the bytes of their lines', () => {
+            let parsed = parseRecipe(JSON.stringify({ b: [{ d: ['', 'hé'] }, { u: ['', '/w==', 'gA=='] }, { c: [1, 2] }] }));
+            expect(parsed.error).to.equal(undefined);
+            expect(parsed.value!.b!.map(step => step.lines || step.c)).to.deep.equal([
+                ['', 'hÃ©'],
+                ['', 'ÿ', '\u0080'],
+                [1, 2]
+            ]);
+        });
+
+        it('ignores unknown top-level fields, and does not pollute prototypes', () => {
+            let parsed = parseRecipe('{"h":{"subject":[{"c":[1,1]}]},"b":null,"z":1,"__proto__":{"polluted":true}}');
             expect(parsed.error).to.equal(undefined);
             expect(parsed.value!.b).to.equal(null);
             expect(({} as any).polluted).to.equal(undefined);
         });
 
-        it('reports a "c" range past the end of the message as invalid JSON', async () => {
+        it('treats strings that look like JSON structure as strings', () => {
+            let parsed = parseRecipe('{"h":{"subject":[{"d":["{\\"b\\":1,\\"b\\":2}","\\"","\\\\"]}]}}');
+            expect(parsed.error).to.equal(undefined);
+            expect(parsed.value!.h.get('subject')![0].lines).to.deep.equal(['{"b":1,"b":2}', '"', '\\']);
+        });
+
+        it('reports a Recipe for a header field that is not signed (section 5.1)', () => {
+            for (let name of [...UNSIGNED, 'received-spf', 'x-mailer', 'dkim2-signature', 'message-instance']) {
+                let instance = `Message-Instance: m=2; h=sha256:${H}:${H}; r=${b64(JSON.stringify({ h: { [name]: [] } }))}`;
+                expect(parseMessageInstance(instance).error).to.equal(`recipe ${JSON.stringify(name)} is invalid`);
+            }
+        });
+
+        it('reports a "c" range past the end of the message as an invalid Recipe', async () => {
             let input = message();
             let instance1 = instanceOf(input);
             let instance2 = `Message-Instance: m=2; h=sha256:${H}:${H}; r=${b64('{"b":[{"c":[1,99]}]}')};`;
             let crafted = craftSignature(prepend(input, instance2, instance1), header({ m: '2' }), { rsa: rsaKey });
             let result = await verify(crafted);
             expect(result.status.result).to.equal('permerror');
-            expect(result.status.comment).to.equal('Message-Instance m=2 contains invalid JSON: "c" range 1-99 is past the last of 3');
+            expect(result.status.comment).to.equal('Message-Instance m=2 recipe {"c":[1,99]} is invalid');
             expect(result.status.header!.i).to.equal(1);
         });
     });
 
-    describe('header field set (section 11.2)', () => {
+    describe('header field set (section 14.2)', () => {
         let input = message();
         let instance = instanceOf(input);
 
@@ -277,22 +515,18 @@ describe('DKIM2 validation', () => {
                 () => craftSignature(prepend(input, instance), header({ m: '2' }), { rsa: rsaKey }),
                 'Message-Instance m=2 missing'
             ],
-            [
-                'a repeated instance',
-                () => craftSignature(prepend(input, instance, instance), header(), { rsa: rsaKey }),
-                'Message-Instance m=1 appears more than once'
-            ],
+            ['a repeated instance', () => craftSignature(prepend(input, instance, instance), header(), { rsa: rsaKey }), 'Message-Instance m=1 is duplicated'],
             [
                 'a repeated signature',
                 () => prepend(craftSignature(prepend(input, instance), header(), { rsa: rsaKey }), header({ s: `rsa:rsa-sha256:${H}` })),
-                'DKIM2-Signature i=1 appears more than once'
+                'DKIM2-Signature i=1 is duplicated'
             ],
             ['a broken signature', () => prepend(input, instance, header({ d: null })), 'DKIM2-Signature i=1 tag=d missing'],
             ['a broken instance', () => prepend(input, instance.replace(/h=/, 'x='), header()), 'Message-Instance m=1 tag=h missing'],
             [
                 'an instance with only unknown hashes',
                 () => craftSignature(prepend(input, instance.replace(/sha256/, 'sha3')), header(), { rsa: rsaKey }),
-                'Message-Instance m=1 has no supported hash algorithm'
+                'Message-Instance m=1 algorithm sha3 unknown'
             ]
         ] as any[][]) {
             it(`reports ${label}`, async () => {
@@ -302,19 +536,43 @@ describe('DKIM2 validation', () => {
             });
         }
 
-        it('reports a signature with only unknown signature algorithms as a PERMERROR (sections 3.4 and 11.1)', async () => {
+        it('reports a signature with only unknown signature algorithms as a PERMERROR (section 14.6 step 4)', async () => {
             let result = await verify(prepend(input, instance, header({ s: `rsa:rsa-sha3:${H},x:future-sig:${H}` })));
             expect(result.status.result).to.equal('permerror');
-            expect(result.status.comment).to.equal('DKIM2-Signature i=1 has no supported signature algorithm');
-            expect(result.signatures[0].values.map((entry: any) => entry.result)).to.deep.equal(['none', 'none']);
+            expect(result.status.comment).to.equal('DKIM2-Signature i=1 selector rsa algorithm unknown');
+            expect(result.signatures[0].values.map((entry: any) => [entry.result, entry.comment])).to.deep.equal([
+                ['permerror', 'selector rsa algorithm unknown'],
+                ['permerror', 'selector x algorithm unknown']
+            ]);
+            // algorithm names are case-sensitive
+            let upper = await verify(prepend(input, instance, header({ s: `rsa:RSA-SHA256:${H}` })));
+            expect(upper.status.comment).to.equal('DKIM2-Signature i=1 selector rsa algorithm unknown');
         });
 
-        it('ignores unknown hash and signature algorithms next to known ones (section 3.4)', async () => {
+        it('requires every hash and signature of a "," group, unknown algorithms included (sections 14.6 and 14.7)', async () => {
             let mixed = instance.replace(/;$/, `,sha3:${H}:${H};`);
             let crafted = craftSignature(prepend(input, mixed), header({ s: `rsa:rsa-sha256:,new:future-sig:${H}` }), { rsa: rsaKey });
             let result = await verify(crafted);
+            expect(result.status.result).to.equal('permerror');
+            expect(result.errors.map((error: any) => error.message)).to.deep.equal([
+                'Message-Instance m=1 algorithm sha3 unknown',
+                'DKIM2-Signature i=1 selector new algorithm unknown'
+            ]);
+            expect(result.signatures[0].values.map((entry: any) => entry.result)).to.deep.equal(['pass', 'permerror']);
+            expect(result.instances[0].hashes).to.deep.equal([{ algorithm: 'sha256', header: 'pass', body: 'pass', group: 1 }]);
+        });
+
+        it('passes with one passing "|" group next to groups with unknown algorithms (sections 14.6 and 14.7)', async () => {
+            let mixed = instance.replace(/h=/, `h=sha3:${H}:${H}|`);
+            let crafted = craftSignature(prepend(input, mixed), header({ s: `new:future-sig:${H}|rsa:rsa-sha256:` }), { rsa: rsaKey });
+            let result = await verify(crafted);
             expect(result.status.result).to.equal('pass');
-            expect(result.signatures[0].values.map((entry: any) => entry.result)).to.deep.equal(['pass', 'none']);
+            expect(result.errors).to.deep.equal([]);
+            expect(result.signatures[0].values.map((entry: any) => [entry.selector, entry.group, entry.result])).to.deep.equal([
+                ['new', 1, 'permerror'],
+                ['rsa', 2, 'pass']
+            ]);
+            expect(result.instances[0].hashes).to.deep.equal([{ algorithm: 'sha256', header: 'pass', body: 'pass', group: 2 }]);
         });
 
         it('enforces a ceiling on the number of DKIM2 header fields', async () => {
@@ -333,20 +591,22 @@ describe('DKIM2 validation', () => {
         });
     });
 
-    describe('timestamps (section 11.3)', () => {
-        it('rejects a timestamp more than 5 minutes, or maxFutureTime, in the future', async () => {
-            let signed = await signMessage(message(), originatorOptions({ signTime: new Date('2026-09-01T00:10:00Z') }));
-            let curTime = new Date('2026-09-01T00:00:00Z');
+    describe('timestamps (section 14.3)', () => {
+        it('fails a timestamp more than one day, or maxFutureTime, in the future', async () => {
+            let signed = await signMessage(message(), originatorOptions({ signTime: new Date('2026-09-02T00:10:00Z') }));
+            let curTime = new Date('2026-09-02T00:00:00Z');
 
-            expect((await verify(signed, { curTime: new Date('2026-09-01T00:05:00Z') })).status.result).to.equal('pass');
-            let defaultLimit = await verify(signed, { curTime: new Date('2026-09-01T00:04:59Z') });
-            expect(defaultLimit.status.comment).to.equal('DKIM2-Signature i=1 signature timestamp is in the future');
-            expect((await verify(signed, { curTime, maxFutureTime: false })).status.result).to.equal('pass');
+            expect((await verify(signed, { curTime: new Date('2026-09-01T00:10:00Z') })).status.result).to.equal('pass');
+            let defaultLimit = await verify(signed, { curTime: new Date('2026-09-01T00:09:59Z') });
+            expect(defaultLimit.status.result).to.equal('fail');
+            expect(defaultLimit.status.comment).to.equal('DKIM2-Signature i=1 signature is from the future');
+            expect((await verify(signed, { curTime: new Date('2026-08-01T00:00:00Z'), maxFutureTime: false })).status.result).to.equal('pass');
             expect((await verify(signed, { curTime, maxFutureTime: 600 })).status.result).to.equal('pass');
+            expect((await verify(signed, { curTime, maxFutureTime: 0 })).status.result).to.equal('fail');
 
             let future = await verify(signed, { curTime, maxFutureTime: 599 });
-            expect(future.status.result).to.equal('permerror');
-            expect(future.status.comment).to.equal('DKIM2-Signature i=1 signature timestamp is in the future');
+            expect(future.status.result).to.equal('fail');
+            expect(future.status.comment).to.equal('DKIM2-Signature i=1 signature is from the future');
         });
 
         it('expires signatures after 14 days', async () => {
@@ -356,15 +616,15 @@ describe('DKIM2 validation', () => {
             expect(fresh.status.result).to.equal('pass');
 
             let expired = await verify(signed, { curTime: new Date('2026-09-16T00:00:00Z') });
-            expect(expired.status.result).to.equal('permerror');
+            expect(expired.status.result).to.equal('fail');
             expect(expired.status.comment).to.equal('DKIM2-Signature i=1 signature expired');
 
             expect((await verify(signed, { curTime: new Date('2026-09-16T00:00:00Z'), maxSignatureAge: false })).status.result).to.equal('pass');
-            expect((await verify(signed, { curTime: new Date('2026-09-03T00:00:00Z'), maxSignatureAge: 86400 })).status.result).to.equal('permerror');
+            expect((await verify(signed, { curTime: new Date('2026-09-03T00:00:00Z'), maxSignatureAge: 86400 })).status.result).to.equal('fail');
         });
     });
 
-    describe('public keys (section 11.5 and draft-ietf-dkim-dkim2-dns-00)', () => {
+    describe('public keys (sections 3.7 and 14.5, draft-ietf-dkim-dkim2-dns-02)', () => {
         const rsaOnly = originatorOptions({ signatureData: [{ selector: 'rsa', privateKey: rsaKey }] });
         const record = keyRecord(rsaKey);
         const errorFor = (code: any) => async () => {
@@ -376,13 +636,31 @@ describe('DKIM2 validation', () => {
         for (let [label, zone, result, comment] of [
             ['a missing key', { 'rsa._domainkey.example.com': { TXT: [] } }, 'permerror', 'public key rsa does not exist'],
             ['multiple records', { 'rsa._domainkey.example.com': { TXT: [[record], [record]] } }, 'permerror', 'public key rsa has multiple records'],
+            [
+                'multiple records, one without v=',
+                { 'rsa._domainkey.example.com': { TXT: [[record], [record.replace('v=DKIM1; ', '')]] } },
+                'permerror',
+                'public key rsa has multiple records'
+            ],
+            [
+                'only records with another version',
+                { 'rsa._domainkey.example.com': { TXT: [[record.replace('DKIM1', 'DKIM2')], ['v=spf1 -all']] } },
+                'permerror',
+                'public key rsa does not exist'
+            ],
             ['a revoked key', { 'rsa._domainkey.example.com': { TXT: [['v=DKIM1; k=rsa; p=']] } }, 'permerror', 'public key rsa has been revoked'],
             ['a record without p=', { 'rsa._domainkey.example.com': { TXT: [['v=DKIM1; k=rsa']] } }, 'permerror', 'public key rsa has a syntax error'],
             [
                 'an unknown version',
                 { 'rsa._domainkey.example.com': { TXT: [[record.replace('DKIM1', 'DKIM2')]] } },
                 'permerror',
-                'public key rsa has a syntax error'
+                'public key rsa does not exist'
+            ],
+            [
+                'a v= in another case',
+                { 'rsa._domainkey.example.com': { TXT: [[record.replace('v=DKIM1', 'v=dkim1')]] } },
+                'permerror',
+                'public key rsa does not exist'
             ],
             [
                 'v= that is not first',
@@ -391,7 +669,13 @@ describe('DKIM2 validation', () => {
                 'public key rsa has a syntax error'
             ],
             ['a duplicate tag', { 'rsa._domainkey.example.com': { TXT: [[record + '; k=rsa']] } }, 'permerror', 'public key rsa has a syntax error'],
-            ['bad key data', { 'rsa._domainkey.example.com': { TXT: [['v=DKIM1; k=rsa; p=AAAA']] } }, 'permerror', 'public key rsa has a syntax error'],
+            ['bad key data', { 'rsa._domainkey.example.com': { TXT: [['v=DKIM1; k=rsa; p=AAAA']] } }, 'permerror', 'public key rsa is malformed'],
+            [
+                'p= that is not base64',
+                { 'rsa._domainkey.example.com': { TXT: [['v=DKIM1; k=rsa; p=A!A=']] } },
+                'permerror',
+                'public key rsa has a syntax error'
+            ],
             [
                 'an ed25519 key for rsa-sha256',
                 { 'rsa._domainkey.example.com': { TXT: [[keyRecord(ed25519Key)]] } },
@@ -435,27 +719,77 @@ describe('DKIM2 validation', () => {
             expect((await dkim2Verify(signed, { resolver: resolver(zone as any) })).status.result).to.equal('pass');
         });
 
-        it('passes on the key that works when another key is missing, and reports it', async () => {
+        it('ignores records that begin with another v= before counting them (section 3.7)', async () => {
+            let signed = await signMessage(message(), rsaOnly);
+            let zone = { 'rsa._domainkey.example.com': { TXT: [['v=spf1 -all'], [record], [' v = DKIM2; p=AAAA']] } };
+            expect((await dkim2Verify(signed, { resolver: resolver(zone as any) })).status.result).to.equal('pass');
+            // a record with v= after other tags is not dropped, and is a syntax error
+            let late = { 'rsa._domainkey.example.com': { TXT: [['k=rsa; v=DKIM2; p=AAAA'], [record]] } };
+            expect((await dkim2Verify(signed, { resolver: resolver(late as any) })).status.comment).to.equal(
+                'DKIM2-Signature i=1 public key rsa has multiple records'
+            );
+        });
+
+        it('requires both signatures of a "," group, so a missing key is a PERMERROR (section 14.6 step 6)', async () => {
             let signed = await signMessage(message(), originatorOptions());
             let verified = await dkim2Verify(signed, { resolver: resolver({ 'ed._domainkey.example.com': { TXT: [] } }) });
-            expect(verified.status.result).to.equal('pass');
+            expect(verified.status.result).to.equal('permerror');
+            expect(verified.status.comment).to.equal('DKIM2-Signature i=1 public key ed does not exist');
             expect(verified.signatures[0].values.map((entry: any) => [entry.result, entry.comment])).to.deep.equal([
                 ['pass', undefined],
                 ['permerror', 'public key ed does not exist']
             ]);
         });
 
-        it('prefers TEMPERROR over PERMERROR when no key could be used, and FAIL over both', async () => {
-            let signed = await signMessage(message(), originatorOptions());
-            let verified = await dkim2Verify(signed, {
-                resolver: async (name: any) => {
-                    let err: any = new Error('x');
-                    err.code = name.startsWith('rsa.') ? 'ENOTFOUND' : 'ETIMEOUT';
-                    throw err;
+        it('passes on one "|" group when the key of another is missing (section 14.6 step 7)', async () => {
+            let signed = await signMessage(
+                message(),
+                originatorOptions({ signatureData: [[{ selector: 'rsa', privateKey: rsaKey }], [{ selector: 'ed', privateKey: ed25519Key }]] })
+            );
+            expect(signed.toString()).to.match(/s=rsa:rsa-sha256:[^;]*\|ed:ed25519-sha256:/);
+            let verified = await dkim2Verify(signed, { resolver: resolver({ 'ed._domainkey.example.com': { TXT: [] } }) });
+            expect(verified.status.result).to.equal('pass');
+            expect(verified.signatures[0].values.map((entry: any) => [entry.group, entry.result])).to.deep.equal([
+                [1, 'pass'],
+                [2, 'permerror']
+            ]);
+        });
+
+        it('gives TEMPERROR only when every result that is not a PASS is a TEMPERROR (section 14.6)', async () => {
+            const failing = (codes: Record<string, string>) => async (name: any) => {
+                let err: any = new Error('x');
+                err.code = codes[name.split('.')[0]];
+                if (!err.code) {
+                    return resolver()(name, 'TXT');
                 }
-            });
+                throw err;
+            };
+
+            let signed = await signMessage(message(), originatorOptions());
+            // a PERMERROR and a TEMPERROR in one group are a PERMERROR
+            let verified = await dkim2Verify(signed, { resolver: failing({ rsa: 'ENOTFOUND', ed: 'ETIMEOUT' }) });
+            expect(verified.status.result).to.equal('permerror');
+            expect(verified.status.comment).to.equal('DKIM2-Signature i=1 public key rsa does not exist');
+
+            // a PASS and a TEMPERROR in one group are a TEMPERROR
+            verified = await dkim2Verify(signed, { resolver: failing({ ed: 'ETIMEOUT' }) });
             expect(verified.status.result).to.equal('temperror');
             expect(verified.status.comment).to.equal('DKIM2-Signature i=1 public key ed could not be fetched');
+
+            // a TEMPERROR group wins over a PERMERROR group, it may still pass
+            let grouped = await signMessage(
+                message(),
+                originatorOptions({ signatureData: [[{ selector: 'rsa', privateKey: rsaKey }], [{ selector: 'ed', privateKey: ed25519Key }]] })
+            );
+            verified = await dkim2Verify(grouped, { resolver: failing({ rsa: 'ENOTFOUND', ed: 'ETIMEOUT' }) });
+            expect(verified.status.result).to.equal('temperror');
+            expect(verified.status.comment).to.equal('DKIM2-Signature i=1 public key ed could not be fetched');
+
+            // and a FAIL group over a PERMERROR group
+            let tampered = Buffer.from(grouped.toString().replace(/(\|ed:ed25519-sha256:)(.)/, (m, lead, c) => lead + (c === 'A' ? 'B' : 'A')));
+            verified = await dkim2Verify(tampered, { resolver: failing({ rsa: 'ENOTFOUND' }) });
+            expect(verified.status.result).to.equal('fail');
+            expect(verified.status.comment).to.equal('DKIM2-Signature i=1 no group of signatures passed');
 
             let expired = await dkim2Verify(Buffer.from(signed.toString().replace('Hello world', 'Hello there')), {
                 resolver: async () => {
@@ -467,11 +801,11 @@ describe('DKIM2 validation', () => {
             expect(expired.status.result).to.equal('fail');
         });
 
-        it('reports the t=y testing flag', async () => {
+        it('ignores the retired t= flags (section 14.5)', async () => {
             let signed = await signMessage(message(), rsaOnly);
-            let verified = await dkim2Verify(signed, { resolver: resolver({ 'rsa._domainkey.example.com': { TXT: [[keyRecord(rsaKey, 't=y')]] } }) });
+            let verified = await dkim2Verify(signed, { resolver: resolver({ 'rsa._domainkey.example.com': { TXT: [[keyRecord(rsaKey, 't=y:s')]] } }) });
             expect(verified.status.result).to.equal('pass');
-            expect(verified.signatures[0].values[0].testing).to.be.true;
+            expect(verified.signatures[0].values[0]).to.not.have.property('testing');
         });
 
         it('rejects short RSA keys and other exponents', async () => {
@@ -488,7 +822,7 @@ describe('DKIM2 validation', () => {
 
             let input = message();
             for (let [key, comment] of [
-                [short, 'is too short'],
+                [short, 'too short'],
                 [exponent3, 'has an unsupported exponent']
             ]) {
                 let crafted = craftSignature(prepend(input, instanceOf(input)), header(), { rsa: key });
@@ -529,7 +863,20 @@ describe('DKIM2 validation', () => {
                 },
                 'EINVALIDSELECTOR'
             ],
-            ['three keys of one algorithm', { signatureData: ['a', 'b', 'c'].map(selector => ({ selector, privateKey: rsaKey })) }, 'EINVALIDALGO'],
+            [
+                'a repeated selector in another group',
+                { signatureData: [[{ selector: 'rsa', privateKey: rsaKey }], [{ selector: 'RSA', privateKey: ed25519Key }]] },
+                'EINVALIDSELECTOR'
+            ],
+            ['an empty group', { signatureData: [[{ selector: 'rsa', privateKey: rsaKey }], []] }, 'ENOKEY'],
+            [
+                'keys mixed with groups',
+                { signatureData: [{ selector: 'rsa', privateKey: rsaKey }, [{ selector: 'ed', privateKey: ed25519Key }]] },
+                'EINVALIDOPTS'
+            ],
+            ['the exploded flag on the first signature', { flags: ['exploded'] }, 'EINVALIDOPTS'],
+            ['a Recipe for an unsigned header field', { recipe: { h: { received: [] } } }, 'EINVALIDRECIPE'],
+            ['a Recipe with an unknown step key', { recipe: { b: [{ c: [1, 1], x: 1 }] } }, 'EINVALIDRECIPE'],
             [
                 'an algorithm that does not fit the key',
                 { signatureData: [{ selector: 'rsa', privateKey: rsaKey, algorithm: 'ed25519-sha256' }] },
@@ -560,10 +907,25 @@ describe('DKIM2 validation', () => {
         });
 
         it('writes the nonce and the flags', async () => {
-            let result = await dkim2Sign(message(), originatorOptions({ nonce: 'id-42', flags: ['feedback', 'donotmodify'] }));
+            let result = await dkim2Sign(message(), originatorOptions({ nonce: 'id-42', flags: ['feedback', 'future-flag'] }));
             let parsed = parseSignature(result.signature);
             expect(parsed.nonce).to.equal('id-42');
-            expect(parsed.flags).to.deep.equal(['feedback', 'donotmodify']);
+            expect(parsed.flags).to.deep.equal(['feedback', 'future-flag']);
+        });
+
+        it('signs with several keys of one algorithm (section 10.9)', async () => {
+            let other = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 }).privateKey.export({ type: 'pkcs8', format: 'pem' });
+            let options = originatorOptions({
+                signatureData: ['rsa', 'rsa2', 'rsa3'].map(selector => ({ selector, privateKey: selector === 'rsa' ? rsaKey : other }))
+            });
+            let signed = await signMessage(message(), options);
+            let zone = resolver({
+                'rsa2._domainkey.example.com': { TXT: [[keyRecord(other)]] },
+                'rsa3._domainkey.example.com': { TXT: [[keyRecord(other)]] }
+            });
+            let verified = await dkim2Verify(signed, { resolver: zone });
+            expect(verified.status.result).to.equal('pass');
+            expect(verified.signatures[0].values.map((entry: any) => entry.selector)).to.deep.equal(['rsa', 'rsa2', 'rsa3']);
         });
     });
 });

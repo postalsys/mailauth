@@ -50,7 +50,7 @@ export type * from './types.js';
  * @param {Boolean} [opts.disableDmarc=false] If true then do not perform DMARC check
  * @param {Boolean} [opts.disableBimi=false] If true then do not perform BIMI check
  * @param {Boolean} [opts.strict=false] If true then every check follows its RFC exactly instead of the lenient defaults
- * @param {Boolean} [opts.dkim2=false] If true then DKIM2 header fields are verified as well (draft-ietf-dkim-dkim2-spec-06)
+ * @param {Boolean} [opts.dkim2=false] If true then DKIM2 header fields are verified as well (draft-ietf-dkim-dkim2-spec-09)
  * @param {String|String[]} [opts.rcptTo] RCPT TO addresses of the delivery, checked against the DKIM2 chain of custody
  * @param {Object} [opts.dkim2Options] Extra options for the DKIM2 verifier (maxSignatureAge, maxFutureTime, maxInstances, checkReplay, curTime)
  * @returns Authentication result
@@ -170,7 +170,7 @@ const authenticate = async (input: MessageInput, opts?: AuthenticateOptions): Pr
     });
 
     if ((dkim2Result as DKIM2VerifyResult | undefined)?.info) {
-        // draft-gondwana-dkim2-authres-00: the method is not registered yet. DKIM2 results do not
+        // draft-gondwana-dkim2-authres-01: the method is not registered yet. DKIM2 results do not
         // take part in DMARC, that is an open question (draft-ietf-dkim-dkim2-bcp-01 section 7.2)
         arHeader.push(libmime.foldLines((dkim2Result as DKIM2VerifyResult).info, 160));
     }

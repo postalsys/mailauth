@@ -1,5 +1,5 @@
 {
-  "draft": "draft-ietf-dkim-dkim2-spec-06",
+  "draft": "draft-ietf-dkim-dkim2-spec-09",
   "rsa_modulus_base64": "yv1p6Xhd2D5jhixXgBrmUNw2N3JmBGcm1va4/bDG+SodlGuaAI4ZFidmqO4+hQwJt7TiDZzcNM7GpuJ9javcClFMoXwO135PGtGFHgG3yDv7AZEo1cLvbwank0/X3MnkK+dJktHQpaiEeGTf+s0Mt2xta0V2hCXezGhoBcEVae8=",
   "rsa_exponent": 65537,
   "ed25519_public_base64": "IClZTFkgcVVuQpqSIcMJ98ohgPBzN3SrWTX3gbhSofw=",

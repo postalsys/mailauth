@@ -6,6 +6,7 @@ import { expect } from 'chai';
 import { dkim2Sign } from '../../src/dkim2/sign.js';
 import { dkim2Verify } from '../../src/dkim2/verify.js';
 import * as reference from '../helpers/dkim2-reference.js';
+import { formatSignature, canonicalSignatureField, parseSignature } from '../../src/dkim2/fields.js';
 import { ed25519Key, generated, resolver } from '../helpers/dkim2.js';
 import { fc, check, timeout, bytesFrom, chunkBuffer } from './helper.js';
 
@@ -25,7 +26,9 @@ const list = {
     selector: 'led',
     privateKey: generated.ed25519,
     mailFrom: 'bounce@list.example.org',
-    rcptTo: 'member@example.net'
+    rcptTo: 'member@example.net',
+    // the originator's signature is verified before the list signs (section 12)
+    resolver: zone
 };
 
 // header field names, including ones DKIM2 does not sign, in mixed case
@@ -58,6 +61,42 @@ const sign = async (input: any, options: any) => {
 };
 
 describe('Property: DKIM2', { timeout: timeout(100, 40) }, () => {
+    it('a DKIM2-Signature has the same signature input with and without its signature values', () => {
+        // the invariant that the signer's "signed and emitted DKIM2-Signature differ" check guards:
+        // folding long base64 values never changes the canonical form of section 12.8
+        const base64 = fc.uint8Array({ minLength: 1, maxLength: 2420 }).map(bytes => Buffer.from(bytes).toString('base64'));
+        const selector = fc.stringMatching(/^[a-z](?:[a-z0-9-]{0,18}[a-z0-9])?(?:\.[a-z0-9]{1,10})?$/);
+        const path = fc.stringMatching(/^[a-z0-9.+_-]{1,80}@[a-z0-9]{1,30}\.example$/).map(address => `<${address}>`);
+        return check(
+            fc.property(
+                fc.uniqueArray(fc.tuple(selector, fc.constantFrom('rsa-sha256', 'ed25519-sha256', 'mldsa44'), base64, fc.nat(2)), {
+                    minLength: 1,
+                    maxLength: 4,
+                    selector: entry => entry[0]
+                }),
+                fc.oneof(fc.constant('<>'), path),
+                fc.array(path, { minLength: 1, maxLength: 6 }),
+                fc.option(fc.stringMatching(/^[a-z0-9:.-]{0,64}$/), { nil: undefined }),
+                fc.array(fc.constantFrom('exploded', 'feedback', 'feedhere'), { maxLength: 3 }),
+                (entries, mailFrom, rcptTo, nonce, flags) => {
+                    // the groups in order, as the signer writes them
+                    let signatures = entries
+                        .map(([sel, algorithm, signature, group]) => ({ selector: sel, algorithm, signature, group }))
+                        .sort((a, b) => a.group - b.group);
+                    let fields = { i: 2, m: 1, t: 1790812800, signingDomain: 'example.com', mailFrom, rcptTo, nonce, flags, signatures };
+                    let signed = formatSignature(fields);
+                    let unsigned = formatSignature({ ...fields, signatures: signatures.map(entry => ({ ...entry, signature: '' })) });
+                    expect(canonicalSignatureField(signed, true).equals(canonicalSignatureField(unsigned, true))).to.be.true;
+                    // and the signed field reads back with the same values
+                    let parsed = parseSignature(signed);
+                    expect(parsed.error).to.equal(null);
+                    expect(parsed.signatures.map(entry => entry.signature)).to.deep.equal(signatures.map(entry => entry.signature));
+                }
+            ),
+            200
+        );
+    });
+
     it('the hashes equal those of the reference implementation and the signature verifies', () =>
         check(
             fc.asyncProperty(messageArb, async input => {

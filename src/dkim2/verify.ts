@@ -3,7 +3,7 @@ import { Dkim2Verifier } from './dkim2-verifier.js';
 import type { DKIM2VerifyOptions, DKIM2VerifyResult, MessageInput } from '../types.js';
 
 /**
- * Verifies the DKIM2 header fields of a message (draft-ietf-dkim-dkim2-spec-06 section 11)
+ * Verifies the DKIM2 header fields of a message (draft-ietf-dkim-dkim2-spec-09 section 14)
  *
  * @param {ReadableStream|Buffer|String} input RFC 5322 message
  * @param {Object} [options] Verification options, see Dkim2Verifier

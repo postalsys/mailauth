@@ -11,15 +11,21 @@ import type { Zone } from './dns-zone.js';
 const rsaKey = privateKey('private-rsa.pem');
 const ed25519Key = privateKey('private-ed25519.pem');
 
-// the base64 key data of a key record: SubjectPublicKeyInfo for RSA, the bare key for Ed25519
+// the bare key lengths of the key types that publish one
+const RAW_KEY_LENGTHS: Record<string, number> = { ed25519: 32, 'ml-dsa-44': 1312 };
+// the k= value of each Node.js key type
+const KEY_TYPES: Record<string, string> = { rsa: 'rsa', ed25519: 'ed25519', 'ml-dsa-44': 'mldsa44' };
+
+// the base64 key data of a key record: SubjectPublicKeyInfo for RSA, the bare key for Ed25519 and ML-DSA-44
 const publicKeyData = (key: crypto.KeyLike): string => {
     let publicKey = crypto.createPublicKey(key);
     let spki = publicKey.export({ format: 'der', type: 'spki' });
-    return (publicKey.asymmetricKeyType === 'ed25519' ? spki.subarray(-32) : spki).toString('base64');
+    let length = RAW_KEY_LENGTHS[publicKey.asymmetricKeyType!];
+    return (length ? spki.subarray(-length) : spki).toString('base64');
 };
 
 const keyRecord = (key: crypto.KeyLike, extra?: string): string => {
-    let type = crypto.createPublicKey(key).asymmetricKeyType;
+    let type = KEY_TYPES[crypto.createPublicKey(key).asymmetricKeyType!];
     return `v=DKIM1; k=${type}; ${extra ? extra + '; ' : ''}p=${publicKeyData(key)}`;
 };
 
@@ -65,14 +71,17 @@ const originatorOptions = (extra?: Record<string, any> | null): DKIM2SignOptions
                 { selector: 'ed', privateKey: ed25519Key }
             ],
             mailFrom: 'sender@example.com',
-            rcptTo: 'rcpt@example.net'
+            rcptTo: 'rcpt@example.net',
+            // a message that is already DKIM2 signed is verified against the test zone first
+            resolver: resolver()
         },
         extra || {}
     );
 
-// signs and returns the message with the new header fields on top
+// signs and returns the message with the new header fields on top. A message that is already DKIM2
+// signed is verified first, against the test zone unless the options name another resolver
 const signMessage = async (input: Buffer | string, options: DKIM2SignOptions) => {
-    let result = await dkim2Sign(input, options);
+    let result = await dkim2Sign(input, Object.assign({ resolver: resolver() }, options));
     return Buffer.concat([Buffer.from(result.signatures), Buffer.from(input)]);
 };
 
@@ -86,10 +95,16 @@ const craftSignature = (input: Buffer | string, header: string, keys: Record<str
     let str = `${header}\r\n${Buffer.from(input).toString('binary')}`;
     let i = Number(reference.getTag(header.slice(header.indexOf(':') + 1), 'i'));
     let data = reference.signatureInput(str, i);
-    let signed = header.replace(/([A-Za-z0-9._-]+):(rsa-sha256|ed25519-sha256):(?=[,;]|$)/g, (m: string, selector: string, algorithm: string) => {
+    let signed = header.replace(/([A-Za-z0-9._-]+):(rsa-sha256|ed25519-sha256|mldsa44):(?=[,;|]|$)/g, (m: string, selector: string, algorithm: string) => {
         let key = crypto.createPrivateKey(keys[selector]);
-        let signature =
-            algorithm === 'ed25519-sha256' ? crypto.sign(null, crypto.createHash('sha256').update(data).digest(), key) : crypto.sign('sha256', data, key);
+        let signature: Buffer;
+        if (algorithm === 'ed25519-sha256') {
+            signature = crypto.sign(null, crypto.createHash('sha256').update(data).digest(), key);
+        } else if (algorithm === 'mldsa44') {
+            signature = crypto.sign(null, data, { key, context: Buffer.from('DKIM2') } as crypto.SignKeyObjectInput);
+        } else {
+            signature = crypto.sign('sha256', data, key);
+        }
         return `${selector}:${algorithm}:${signature.toString('base64')}`;
     });
     return Buffer.from(`${signed}\r\n${Buffer.from(input).toString('binary')}`, 'binary');

@@ -1,11 +1,14 @@
-// DKIM2 verifier (draft-ietf-dkim-dkim2-spec-06 sections 10 and 11)
+// DKIM2 verifier (draft-ietf-dkim-dkim2-spec-09 sections 13 and 14)
 
 import { Buffer } from 'node:buffer';
-import crypto from 'node:crypto';
-import { formatAuthHeaderRow, getCurTime, isSameOrSubdomain } from '../tools.js';
-import { MI_KEY, SIG_KEY, HASH_ALGORITHMS, parseMessageInstance, parseSignature, parsePath, continuesCustody, buildSignatureInput } from './fields.js';
+import { formatAuthHeaderRow, getCurTime } from '../tools.js';
+import { MI_KEY, SIG_KEY, HASH_ALGORITHMS, parseMessageInstance, parseSignature, buildSignatureInput } from './fields.js';
+import { parsePath, relaxedMatch, custodyProblem } from './domains.js';
 import { Dkim2Parser } from './dkim2-parser.js';
-import { createKeyLookup, KeyError, ALGORITHM_KEY_TYPES, signatureData } from './key.js';
+import { createKeyLookup, KeyError } from './key.js';
+import { isSupportedAlgorithm, verifySignature } from './algorithms.js';
+import { createPolicyLookup } from './records.js';
+import { checkAuthentic, sameFields } from './from.js';
 import type { ChainInstance, ChainSignature, ParsedMessageInstance, ParsedSignature } from './fields.js';
 import type { DKIM2Key, KeyLookup } from './key.js';
 import type { MessageState } from './message-state.js';
@@ -41,6 +44,13 @@ interface HopResult {
     values: DKIM2SignatureValueResult[];
 }
 
+// The intermediate result of one hash-set or signature, with the text that explains it
+interface Intermediate {
+    result: DKIM2Result;
+    group: number;
+    messages: string[];
+}
+
 type Replay = NonNullable<DKIM2VerifyResult['replay']>;
 
 type AddError = (result: DKIM2Result, message: string, ref?: { i?: number | undefined; m?: number | undefined }) => void;
@@ -59,27 +69,62 @@ type FormatInput =
 // draft-ietf-dkim-dkim2-bcp-01 section 7.5 recommends a local ceiling on the number of
 // Message-Instance and DKIM2-Signature header fields, with a PERMERROR above it
 const DEFAULT_MAX_INSTANCES = 20;
-// section 11.3: a failure when a signature is more than 14 days old
+// section 14.3: not Fully Verified when a signature is more than 14 days old
 const DEFAULT_MAX_SIGNATURE_AGE = 14 * 24 * 3600;
-// section 8.4: signatures from the future MAY be ignored. Five minutes allows for clock skew
-const DEFAULT_MAX_FUTURE_TIME = 5 * 60;
+// section 14.3: nor when a timestamp is more than one day ahead
+const DEFAULT_MAX_FUTURE_TIME = 24 * 3600;
 
-// the order in which a result wins over the others, FAIL first so that a cryptographic failure is
-// never reported as a TEMPERROR (section 10.4)
-const RESULT_ORDER: DKIM2Result[] = ['fail', 'permerror', 'temperror', 'pass'];
+// The order in which the result of one check wins over the others when all of them have to
+// pass, the "sig-all" rule of section 14.6 step 6: FAIL, then PERMERROR, and TEMPERROR only when
+// every result that is not a PASS is a TEMPERROR, so that a failure is never reported as temporary
+const ALL_ORDER: DKIM2Result[] = ['fail', 'permerror', 'temperror', 'pass'];
+// The "sig-any" rule of section 14.6 step 7, when one group has to pass: a PASS, then a
+// TEMPERROR that a later attempt may turn into a PASS, then FAIL
+const ANY_ORDER: DKIM2Result[] = ['pass', 'temperror', 'fail', 'permerror'];
 
-const pickResult = (results: readonly string[]): DKIM2Result => RESULT_ORDER.find(result => results.includes(result)) || 'pass';
+const pickResult = (results: readonly string[]): DKIM2Result => ALL_ORDER.find(result => results.includes(result)) || 'pass';
+
+/**
+ * Combines intermediate results with the AND/OR rules of sections 14.6 and 14.7: the entries of
+ * a group all have to pass, and one group has to pass. Hash-sets never have a TEMPERROR, so the
+ * same rules give the result of section 14.7
+ *
+ * @param {Object[]} entries [{ result, group, messages }]
+ * @param {String} noGroup The message for a FAIL when there are several groups and none passed
+ * @returns {Object} { result, messages } where `messages` explain a result other than PASS
+ */
+const combine = (entries: Intermediate[], noGroup: string): { result: DKIM2Result; messages: string[] } => {
+    let groups = new Map<number, Intermediate[]>();
+    for (let entry of entries) {
+        groups.set(entry.group, (groups.get(entry.group) || []).concat(entry));
+    }
+
+    let groupResults = Array.from(groups.values(), list => ({ result: pickResult(list.map(entry => entry.result)), list }));
+    let result = ANY_ORDER.find(candidate => groupResults.some(group => group.result === candidate))!;
+    if (result === 'pass') {
+        return { result, messages: [] };
+    }
+
+    if (result === 'fail' && groupResults.length > 1) {
+        return { result, messages: [noGroup] };
+    }
+
+    // the entries that gave the result, in the groups that have it
+    let messages = groupResults
+        .filter(group => group.result === result)
+        .flatMap(group => group.list.filter(entry => entry.result === result))
+        .flatMap(entry => entry.messages);
+    return { result, messages };
+};
+
+// t= as an ISO 8601 string, empty for a time a Date can not hold
+const signTime = (t: number): string => {
+    let date = new Date(t * 1000);
+    return Number.isNaN(date.getTime()) ? '' : date.toISOString();
+};
 
 // a number from a header field for an error string, "?" when it could not be read
 const ordinal = (value: number): number | '?' => (Number.isSafeInteger(value) ? value : '?');
-
-const verifySignature = (algorithm: string, input: Buffer, publicKey: crypto.KeyObject, signature: Buffer): boolean => {
-    try {
-        return crypto.verify(...signatureData(algorithm, input), publicKey, signature);
-    } catch {
-        return false;
-    }
-};
 
 // the first index from 1 that is missing from a map keyed by numbers
 const firstGap = (map: Map<number, unknown>): number => {
@@ -96,23 +141,25 @@ class Dkim2Verifier extends Dkim2Parser {
     declare maxInstances: number;
     declare instanceRows: InstanceRow[];
     declare signatureRows: SignatureRow[];
+    // set by the signer that completes an nd= hop: the d= it signs with (section 12.3)
+    declare nextSigner: string | undefined;
 
     /**
      * @param {Object} [options]
      * @param {Function} [options.resolver] DNS resolver
      * @param {String} [options.mailFrom] SMTP MAIL FROM of the delivery, "" for the null path. When
-     *        set, it is checked against the mf= of the highest DKIM2-Signature (section 11.4)
+     *        set, it is checked against the mf= of the highest DKIM2-Signature (section 14.4)
      * @param {String|String[]} [options.rcptTo] SMTP RCPT TO addresses of the delivery, each of
      *        which has to be listed in rt= of the highest DKIM2-Signature
      * @param {Number|Boolean} [options.maxSignatureAge=1209600] Seconds after t= when a signature
-     *        expires (section 11.3), false to not check
-     * @param {Number|Boolean} [options.maxFutureTime=300] Seconds a t= may be ahead of the current
-     *        time (section 8.4), false to not check
+     *        expires (section 14.3), false to not check
+     * @param {Number|Boolean} [options.maxFutureTime=86400] Seconds a t= may be ahead of the
+     *        current time (section 14.3), false to not check
      * @param {Date|Number|String} [options.curTime] Time to verify against, defaults to now
      * @param {Number} [options.maxInstances=20] Most Message-Instance, and most DKIM2-Signature,
      *        header fields processed for one message
-     * @param {Function} [options.checkReplay] async ({ key, exploded }) => true when a message with
-     *        the same m=1 hashes was seen before (section 11.9)
+     * @param {Function} [options.checkReplay] async ({ key, exploded, intermediary }) => true when
+     *        a message with the same m=1 hashes was seen before (section 15.1)
      */
     constructor(options?: DKIM2VerifyOptions | undefined) {
         super();
@@ -162,7 +209,14 @@ class Dkim2Verifier extends Dkim2Parser {
         this.result = await this.verify();
     }
 
-    async verify(): Promise<DKIM2VerifyResult> {
+    /**
+     * Verifies the DKIM2 header fields of the message
+     *
+     * @param {MessageState} [arrived] The message to start from instead of the one that was read,
+     *        used by the signer for a message it changed: the instance its Recipe recreates
+     * @returns {Object} Verification result
+     */
+    async verify(arrived?: MessageState): Promise<DKIM2VerifyResult> {
         let errors: DKIM2Error[] = [];
         let instances = new Map<number, ChainInstance>();
         let signatures = new Map<number, ChainSignature>();
@@ -170,15 +224,8 @@ class Dkim2Verifier extends Dkim2Parser {
         let signatureResults = new Map<number, HopResult>();
 
         // the DKIM2-Signature a failure of a Message-Instance is reported against, the one with
-        // the lowest i= that covers it (draft-gondwana-dkim2-authres-00 section 3.2.2)
-        const signatureFor = (m: number): number | undefined => {
-            for (let i = 1; signatures.has(i); i++) {
-                if (signatures.get(i)!.m === m) {
-                    return i;
-                }
-            }
-            return undefined;
-        };
+        // the lowest i= that covers it (draft-gondwana-dkim2-authres-01 section 3.2.2)
+        const signatureFor = (m: number): number | undefined => Array.from(signatures.values()).find(signature => signature.m >= m)?.i;
 
         const addError: AddError = (result, message, ref) => {
             let entry: DKIM2Error = { result, message };
@@ -206,12 +253,12 @@ class Dkim2Verifier extends Dkim2Parser {
             return finish();
         }
 
-        // section 11.2: every field is valid, numbered without gaps, and every instance is signed
+        // section 14.2: every field is valid, numbered without gaps, and every instance is signed
         for (let { line, parsed } of this.instanceRows as Required<InstanceRow>[]) {
             if (parsed.error) {
                 addError('permerror', `Message-Instance m=${ordinal(parsed.m)} ${parsed.error}`);
             } else if (instances.has(parsed.m)) {
-                addError('permerror', `Message-Instance m=${parsed.m} appears more than once`);
+                addError('permerror', `Message-Instance m=${parsed.m} is duplicated`);
             } else {
                 instances.set(parsed.m, Object.assign({ line }, parsed));
             }
@@ -221,7 +268,7 @@ class Dkim2Verifier extends Dkim2Parser {
             if (parsed.error) {
                 addError('permerror', `DKIM2-Signature i=${ordinal(parsed.i)} ${parsed.error}`, { i: parsed.i });
             } else if (signatures.has(parsed.i)) {
-                addError('permerror', `DKIM2-Signature i=${parsed.i} appears more than once`, { i: parsed.i });
+                addError('permerror', `DKIM2-Signature i=${parsed.i} is duplicated`, { i: parsed.i });
             } else {
                 signatures.set(parsed.i, Object.assign({ line }, parsed) as ChainSignature);
             }
@@ -255,93 +302,44 @@ class Dkim2Verifier extends Dkim2Parser {
             }
         }
 
-        let maxSignedM = Math.max(...Array.from(signatures.values()).map(signature => signature.m));
-        if (maxM > maxSignedM) {
+        // section 10.2: m= is the highest instance when a signature was added, so it never goes down
+        for (let i = 2; i <= maxI; i++) {
+            if (signatures.get(i)!.m < signatures.get(i - 1)!.m) {
+                addError('permerror', `DKIM2-Signature i=${i} m= is below the m= of i=${i - 1}`, { i });
+                return finish();
+            }
+        }
+
+        // section 13.2 item 1: the highest signature covers the highest instance
+        if (signatures.get(maxI)!.m !== maxM) {
             addError('permerror', `Message-Instance m=${maxM} is not signed`);
             return finish();
         }
 
-        // recreate every instance of the message by applying the Recipes from the top down
-        let current = this.currentState();
-
-        let states = new Map<number, MessageState>([[maxM, current]]);
-        for (let m = maxM; m > 1; m--) {
-            let state = states.get(m)!;
-            let recipe = instances.get(m)!.recipe;
-            if (recipe) {
-                try {
-                    state = state.previous(recipe);
-                } catch (err: any) {
-                    addError('permerror', `Message-Instance m=${m} contains invalid JSON: ${err.message}`, { m });
-                    return finish();
-                }
-            }
-            states.set(m - 1, state);
+        let states = this.recreateStates(instances, maxM, addError, arrived);
+        if (!states) {
+            return finish();
         }
 
-        // section 11.7: the hashes of every instance
+        // section 14.7: the hashes of every instance
         for (let m = 1; m <= maxM; m++) {
-            let instance = instances.get(m)!;
-            let state = states.get(m)!;
-            let hashResults: DKIM2InstanceResult['hashes'] = [];
-
-            for (let { algorithm, headerHash, bodyHash } of instance.hashes) {
-                if (!HASH_ALGORITHMS.has(algorithm)) {
-                    // section 3.4: hashes with an unknown algorithm are ignored
-                    continue;
-                }
-
-                let headerResult: 'pass' | 'fail' = state.headerHash(algorithm) === headerHash ? 'pass' : 'fail';
-                if (headerResult === 'fail') {
-                    addError('fail', `Message Instance m=${m} header hash ${algorithm} mismatch`, { m });
-                }
-
-                // a body before a null body Recipe can not be checked
-                let computedBodyHash = state.bodyHash(algorithm);
-                let bodyResult: 'pass' | 'fail' | 'unknown' = computedBodyHash === null ? 'unknown' : computedBodyHash === bodyHash ? 'pass' : 'fail';
-                if (bodyResult === 'fail') {
-                    addError('fail', `Message Instance m=${m} body hash ${algorithm} mismatch`, { m });
-                }
-
-                hashResults.push({ algorithm, header: headerResult, body: bodyResult });
-            }
-
-            if (!hashResults.length) {
-                addError('permerror', `Message-Instance m=${m} has no supported hash algorithm`, { m });
-            }
-
-            let entry: DKIM2InstanceResult = { m, hashes: hashResults };
-            if (instance.recipe) {
-                entry.recipe = {
-                    headers: Array.from(instance.recipe.h.keys()),
-                    body: instance.recipe.b === undefined ? 'unchanged' : instance.recipe.b === null ? 'unrecoverable' : 'recipe'
-                };
-            }
-            instanceResults.push(entry);
+            instanceResults.push(this.checkInstance(m, instances.get(m)!, states.get(m)!, addError));
         }
 
-        // section 11.3
-        let maxAge = this.options.maxSignatureAge === undefined ? DEFAULT_MAX_SIGNATURE_AGE : this.options.maxSignatureAge;
-        let now = Math.floor(getCurTime(this.options.curTime).getTime() / 1000);
-        let maxFuture = this.options.maxFutureTime === undefined ? DEFAULT_MAX_FUTURE_TIME : this.options.maxFutureTime;
-        for (let [i, signature] of signatures) {
-            if (maxAge && now - signature.t > maxAge) {
-                addError('permerror', `DKIM2-Signature i=${i} signature expired`, { i });
-            }
-            // section 8.4: signatures from the future MAY be ignored, and draft-ietf-dkim-dkim2-bcp-01
-            // section 3.6 lets verifiers treat them with suspicion
-            if (typeof maxFuture === 'number' && signature.t - now > maxFuture) {
-                addError('permerror', `DKIM2-Signature i=${i} signature timestamp is in the future`, { i });
-            }
-        }
-
+        this.checkTimestamps(signatures, addError);
         this.checkCustody(signatures, maxI, addError);
 
-        // sections 11.5 and 11.6, from the most recent signature down (section 10.1)
-        // the key lookups of every hop run at the same time, the results are recorded in order
+        // sections 14.5 and 14.6, from the most recent signature down. The key lookups of every
+        // hop run at the same time, the results are recorded in order
         let keyLookup = createKeyLookup(this.options.resolver);
         let hopOrder = Array.from({ length: maxI }, (v, index) => maxI - index);
-        let hopResults = await Promise.all(hopOrder.map(i => this.verifyHop(signatures.get(i)!, instances, signatures, keyLookup)));
+        // the From checks and the replay hook do not depend on the signatures, so they run
+        // alongside them
+        let [hopResults, fromErrors, replay] = await Promise.all([
+            Promise.all(hopOrder.map(i => this.verifyHop(signatures.get(i)!, instances, signatures, keyLookup))),
+            this.checkFrom(states, signatures, maxM),
+            this.replayInfo(instances, signatures)
+        ]);
         hopOrder.forEach((i, index) => {
             let result = hopResults[index];
             signatureResults.set(i, result);
@@ -350,92 +348,207 @@ class Dkim2Verifier extends Dkim2Parser {
             }
         });
 
-        // section 11.8
-        let compareAlgorithm = this.bodyHashers.keys().next().value;
-        let lastExploded = 0;
-        for (let [i, signature] of signatures) {
-            if (signature.flags.includes('exploded')) {
-                lastExploded = Math.max(lastExploded, i);
-            }
-        }
-
-        let donotmodify = Array.from(signatures.values()).filter(signature => signature.flags.includes('donotmodify'));
-        if (compareAlgorithm && donotmodify.some(signature => !states.get(signature.m)!.isPreservedIn(current, compareAlgorithm))) {
-            addError('fail', 'Message has been modified despite a donotmodify request');
-        }
-
-        if (Array.from(signatures.values()).some(signature => signature.flags.includes('donotexplode') && signature.i < lastExploded)) {
-            addError('fail', 'Message has been exploded despite a donotexplode request');
-        }
-
-        // section 11.9: the m=1 hashes identify the message, the exploded flag allows copies
-        let firstHashes = instances.get(1)!.hashes;
-        let replayHash = firstHashes.find(hash => HASH_ALGORITHMS.has(hash.algorithm)) || firstHashes[0];
-        let replay: Replay = {
-            key: `${replayHash.algorithm}:${replayHash.headerHash}:${replayHash.bodyHash}`,
-            exploded: lastExploded > 0
-        };
-
-        if (typeof this.options.checkReplay === 'function') {
-            let duplicate = await this.options.checkReplay(Object.assign({}, replay));
-            if (duplicate && !replay.exploded) {
-                addError('fail', 'Duplicate message with no exploded flag');
-            }
+        for (let error of fromErrors) {
+            addError(error.result, error.message, { i: error.i });
         }
 
         return finish(replay);
     }
 
-    // Section 11.4 and the links between the signatures described in section 9.4
+    /**
+     * Recreates every instance of the message by applying the Recipes from the top down
+     *
+     * @returns {Map|null} m to message state, null when a Recipe could not be applied
+     */
+    recreateStates(instances: Map<number, ChainInstance>, maxM: number, addError: AddError, arrived?: MessageState): Map<number, MessageState> | null {
+        let states = new Map<number, MessageState>([[maxM, arrived || this.currentState()]]);
+        if (instances.get(1)!.recipe?.b === null) {
+            // section 14.2: a null Recipe is a PERMERROR. On m=1 it only describes the message
+            // before it was first signed, but the draft makes no exception for it
+            addError('permerror', 'Message-Instance m=1 has a null recipe', { m: 1 });
+        }
+        for (let m = maxM; m > 1; m--) {
+            let state = states.get(m)!;
+            let recipe = instances.get(m)!.recipe;
+            if (recipe) {
+                if (recipe.b === null) {
+                    // section 14.2: the body hashes below a null Recipe can not be checked
+                    addError('permerror', `Message-Instance m=${m} has a null recipe`, { m });
+                }
+                try {
+                    state = state.previous(recipe);
+                } catch (err: any) {
+                    addError('permerror', `Message-Instance m=${m} ${err.message}`, { m });
+                    return null;
+                }
+            }
+            states.set(m - 1, state);
+        }
+        return states;
+    }
+
+    // Section 14.7 for one Message-Instance
+    checkInstance(m: number, instance: ChainInstance, state: MessageState, addError: AddError): DKIM2InstanceResult {
+        let hashResults: DKIM2InstanceResult['hashes'] = [];
+        let entries = instance.hashes.map((hash): Intermediate => {
+            let group = hash.group;
+            if (!HASH_ALGORITHMS.has(hash.algorithm)) {
+                // section 14.7 step 2: an algorithm that is not implemented is a PERMERROR
+                return { result: 'permerror', group, messages: [`algorithm ${hash.algorithm} unknown`] };
+            }
+
+            let header: 'pass' | 'fail' = state.headerHash(hash.algorithm) === hash.headerHash ? 'pass' : 'fail';
+            // a body below a null Recipe can not be checked, which is reported once for the Recipe
+            let computedBodyHash = state.bodyHash(hash.algorithm);
+            let body: 'pass' | 'fail' | 'unknown' = computedBodyHash === null ? 'unknown' : computedBodyHash === hash.bodyHash ? 'pass' : 'fail';
+            hashResults.push({ algorithm: hash.algorithm, header, body, group: group + 1 });
+
+            let messages: string[] = [];
+            if (header === 'fail') {
+                messages.push(`header hash ${hash.algorithm} mismatch`);
+            }
+            if (body === 'fail') {
+                messages.push(`body hash ${hash.algorithm} mismatch`);
+            }
+            return { result: messages.length ? 'fail' : 'pass', group, messages };
+        });
+
+        let { messages, result } = combine(entries, 'no group of hashes passed');
+        for (let message of messages) {
+            addError(result, `Message-Instance m=${m} ${message}`, { m });
+        }
+
+        let entry: DKIM2InstanceResult = { m, hashes: hashResults };
+        if (instance.recipe) {
+            entry.recipe = {
+                headers: Array.from(instance.recipe.h.keys()),
+                body: instance.recipe.b === undefined ? 'unchanged' : instance.recipe.b === null ? 'unrecoverable' : 'recipe'
+            };
+        }
+        return entry;
+    }
+
+    // Section 14.3
+    checkTimestamps(signatures: Map<number, ChainSignature>, addError: AddError): void {
+        let maxAge = this.options.maxSignatureAge === undefined ? DEFAULT_MAX_SIGNATURE_AGE : this.options.maxSignatureAge;
+        let maxFuture = this.options.maxFutureTime === undefined ? DEFAULT_MAX_FUTURE_TIME : this.options.maxFutureTime;
+        let now = Math.floor(getCurTime(this.options.curTime).getTime() / 1000);
+        for (let [i, signature] of signatures) {
+            if (typeof maxAge === 'number' && now - signature.t > maxAge) {
+                addError('fail', `DKIM2-Signature i=${i} signature expired`, { i });
+            }
+            if (typeof maxFuture === 'number' && signature.t - now > maxFuture) {
+                addError('fail', `DKIM2-Signature i=${i} signature is from the future`, { i });
+            }
+        }
+    }
+
+    // Section 14.4, with the relaxed domain matches of section 7.1 items 1 and 2
     checkCustody(signatures: Map<number, ChainSignature>, maxI: number, addError: AddError): void {
         for (let i = 1; i <= maxI; i++) {
             let signature = signatures.get(i)!;
 
-            // section 8.8: the d= domain is the mf= domain or a parent of it, unless mf= is null
-            if (signature.mailFrom && signature.mailFrom !== '<>' && !isSameOrSubdomain(parsePath(signature.mailFrom).domain, signature.signingDomain)) {
-                addError('permerror', `DKIM2-Signature i=${i} MAIL FROM and d= do not match`, { i });
+            // section 7.1 item 2: the mf= domain is the d= domain or one of its subdomains, unless
+            // mf= is null or there is nd= instead
+            if (signature.mailFrom && signature.mailFrom !== '<>' && !relaxedMatch(parsePath(signature.mailFrom).domain, signature.signingDomain)) {
+                addError('fail', `DKIM2-Signature i=${i} mf= and d= do not match`, { i });
             }
 
-            // section 8.7: nd= names the d= of the next signature exactly
-            let next = signatures.get(i + 1);
-            if (signature.nextDomain && next && next.signingDomain !== signature.nextDomain) {
-                addError('permerror', `DKIM2-Signature i=${i} MAIL nd= does not match`, { i });
+            let previous = signatures.get(i - 1);
+            if (previous?.nextDomain) {
+                // section 10.7: nd= names the d= of the next signature exactly
+                if (signature.signingDomain !== previous.nextDomain) {
+                    addError('fail', `DKIM2-Signature i=${i - 1} nd= does not match`, { i: i - 1 });
+                }
+                continue;
             }
 
-            // section 9.4: the MAIL FROM of every hop matches a RCPT TO of the hop before it
-            if (!continuesCustody(signatures.get(i - 1), signature.mailFrom, signature.signingDomain)) {
-                addError(
-                    'permerror',
-                    `DKIM2-Signature i=${i} MAIL FROM ${signature.mailFrom && signature.mailFrom !== '<>' ? signature.mailFrom : signature.signingDomain} did not match`,
-                    { i }
-                );
+            // section 7.1 item 1
+            let problem = custodyProblem(previous, signature);
+            if (problem) {
+                addError('fail', `DKIM2-Signature i=${i} ${problem}= does not match the rt= of i=${i - 1}`, { i });
             }
-        }
-
-        let { mailFrom, rcptList, hasMailFrom } = this.envelope();
-        if (!hasMailFrom && !rcptList.length) {
-            // the delivery is not known, so it can not be compared
-            return;
         }
 
         let top = signatures.get(maxI)!;
+        if (top.nextDomain && top.nextDomain === this.nextSigner) {
+            // section 12.3: the system that signs with the nd= domain is adding the signature that
+            // completes the hop, so there is no envelope to compare yet
+            return;
+        }
         if (top.nextDomain) {
-            // section 9.3: without mf= and rt= the delivery can only be accepted on out-of-band information
-            addError('permerror', `DKIM2-Signature i=${maxI} unexpected nd= tag`, { i: maxI });
+            // sections 12.3 and 13.2: a message whose highest signature has nd= is not verified
+            // unless out-of-band arrangements are in place, and the signature that completes it,
+            // which the receiving system adds, is not there yet
+            addError('fail', `DKIM2-Signature i=${maxI} unexpected nd= tag`, { i: maxI });
             return;
         }
 
-        // section 11.4: an exact match, domains in lower case, local parts as they are
+        let { mailFrom, rcptList, hasMailFrom } = this.envelope();
+
+        // section 14.4: an exact match, domains without regard to case, local parts as they are
         if (hasMailFrom && parsePath(mailFrom).address !== parsePath(top.mailFrom).address) {
-            addError('permerror', `DKIM2-Signature i=${maxI} MAIL FROM ${mailFrom} did not match`, { i: maxI });
+            addError('fail', `DKIM2-Signature i=${maxI} MAIL FROM ${mailFrom} did not match`, { i: maxI });
         }
 
         let listed = new Set(top.rcptTo!.map(path => parsePath(path).address));
         for (let rcpt of rcptList) {
             if (!listed.has(parsePath(rcpt).address)) {
-                addError('permerror', `DKIM2-Signature i=${maxI} RCPT TO ${rcpt} did not match`, { i: maxI });
+                addError('fail', `DKIM2-Signature i=${maxI} RCPT TO ${rcpt} did not match`, { i: maxI });
             }
         }
+    }
+
+    /**
+     * Section 14.8: the From of the first instance, and every From that a later Recipe shows was
+     * put into the message, matches the signing domain of the lowest DKIM2-Signature that covers
+     * the instance where that From first appears (section 11)
+     */
+    async checkFrom(states: Map<number, MessageState>, signatures: Map<number, ChainSignature>, maxM: number): Promise<DKIM2Error[]> {
+        // one Domain Policy Record query per domain
+        let policyLookup = createPolicyLookup(this.options.resolver);
+        let checks: Promise<DKIM2Error | null>[] = [];
+        let previous: Buffer[] | null = null;
+        for (let m = 1; m <= maxM; m++) {
+            let fields = states.get(m)!.fields('from');
+            if (previous && sameFields(previous, fields)) {
+                continue;
+            }
+            previous = fields;
+
+            // the highest signature covers maxM, so there always is one
+            let i = 1;
+            while (signatures.get(i)!.m < m) {
+                i++;
+            }
+
+            checks.push(
+                checkAuthentic(fields, signatures.get(i)!.signingDomain, policyLookup).then(problem =>
+                    problem ? { result: problem.result, message: `DKIM2-Signature i=${i} ${problem.message}`, i } : null
+                )
+            );
+        }
+        return (await Promise.all(checks)).filter(error => error !== null);
+    }
+
+    /**
+     * Section 15.1: the m=1 hashes identify the message. A message seen before that came through
+     * an intermediary (more than one DKIM2-Signature) without an exploded flag may be a DKIM
+     * Replay. That is for the receiver to judge, it does not change the result
+     */
+    async replayInfo(instances: Map<number, ChainInstance>, signatures: Map<number, ChainSignature>): Promise<Replay> {
+        let firstHashes = instances.get(1)!.hashes;
+        let replayHash = firstHashes.find(hash => HASH_ALGORITHMS.has(hash.algorithm)) || firstHashes[0];
+        let replay: Replay = {
+            key: `${replayHash.algorithm}:${replayHash.headerHash}:${replayHash.bodyHash}`,
+            exploded: Array.from(signatures.values()).some(signature => signature.flags.includes('exploded')),
+            intermediary: signatures.size > 1
+        };
+
+        if (typeof this.options.checkReplay === 'function') {
+            replay.duplicate = !!(await this.options.checkReplay(Object.assign({}, replay)));
+        }
+        return replay;
     }
 
     // the SMTP envelope of the delivery, as far as the caller gave it
@@ -449,7 +562,7 @@ class Dkim2Verifier extends Dkim2Parser {
     }
 
     // Without the envelope the highest DKIM2-Signature can not be compared with the delivery
-    // (section 11.4), and an unchanged copy of the message sent to anyone else passes as well
+    // (section 14.4), and an unchanged copy of the message sent to anyone else passes as well
     envelopeWarnings(): DKIM2Warning[] {
         let { hasMailFrom, rcptList } = this.envelope();
         let warnings: DKIM2Warning[] = [];
@@ -462,7 +575,7 @@ class Dkim2Verifier extends Dkim2Parser {
         return warnings;
     }
 
-    // Sections 9.6, 11.5 and 11.6 for one DKIM2-Signature
+    // Sections 12.8, 14.5 and 14.6 for one DKIM2-Signature
     async verifyHop(
         signature: ChainSignature,
         instances: Map<number, ChainInstance>,
@@ -480,88 +593,71 @@ class Dkim2Verifier extends Dkim2Parser {
 
         // start every key lookup before waiting for any of them
         let lookups = signature.signatures.map(({ selector, algorithm }) =>
-            ALGORITHM_KEY_TYPES.has(algorithm) ? keyLookup(signature.signingDomain, selector, algorithm) : null
+            isSupportedAlgorithm(algorithm) ? keyLookup(signature.signingDomain, selector, algorithm) : null
         );
         for (let lookup of lookups) {
             void lookup?.catch(() => false);
         }
 
         let values: DKIM2SignatureValueResult[] = [];
-        for (let [index, { selector, algorithm, signature: value }] of signature.signatures.entries()) {
-            let entry: DKIM2SignatureValueResult = { selector, algorithm };
+        let entries: Intermediate[] = [];
+        for (let [index, { selector, algorithm, signature: value, group }] of signature.signatures.entries()) {
+            let entry: DKIM2SignatureValueResult = { selector, algorithm, group: group + 1 };
             values.push(entry);
 
             if (!lookups[index]) {
-                // section 3.4: unknown algorithms are ignored
-                entry.result = 'none';
-                continue;
+                // section 14.6 step 4: an algorithm that is not implemented is a PERMERROR
+                entry.result = 'permerror';
+                entry.comment = `selector ${selector} algorithm unknown`;
+            } else {
+                await this.checkValue(entry, lookups[index], algorithm, input, value);
             }
 
-            let key: DKIM2Key;
-            try {
-                key = await lookups[index];
-            } catch (err) {
-                if (!(err instanceof KeyError)) {
-                    throw err;
-                }
-                entry.result = err.result;
-                entry.comment = `public key ${selector} ${err.message}`;
-                if (err.rr) {
-                    entry.rr = err.rr;
-                }
-                continue;
-            }
-
-            entry.result = verifySignature(algorithm, input, key.publicKey!, Buffer.from(value, 'base64')) ? 'pass' : 'fail';
-            entry.rr = key.rr;
-            if (key.modulusLength) {
-                entry.modulusLength = key.modulusLength;
-            }
-            if (key.testing) {
-                // draft-ietf-dkim-dkim2-dns-00 section 3.4.1 t=y: the signer is testing DKIM2
-                entry.testing = true;
-            }
+            entries.push({ result: entry.result as DKIM2Result, group, messages: [entry.comment || ''] });
         }
 
-        let selectorsWith = (result: string): string =>
-            values
-                .filter(entry => entry.result === result)
-                .map(entry => entry.selector)
-                .join(', ');
-
-        let status: HopStatus;
-        let passed = selectorsWith('pass');
-        let failed = selectorsWith('fail');
-        let keyErrors = values.filter(entry => (['permerror', 'temperror'] as (string | undefined)[]).includes(entry.result));
-
-        if (failed) {
-            // section 11.6: every signature that can be checked is checked, and any failure fails
-            status = {
-                result: 'fail',
-                comment: passed
-                    ? `DKIM2-Signature i=${i} ${passed} signature passed, ${failed} signature failed`
-                    : `DKIM2-Signature i=${i} ${failed} incorrect signature`
-            };
-        } else if (passed) {
-            status = { result: 'pass' };
-        } else if (keyErrors.length) {
-            // a TEMPERROR may pass on a later attempt, so it is reported before a PERMERROR
-            let keyError = keyErrors.find(entry => entry.result === 'temperror') || keyErrors[0];
-            status = { result: keyError.result as 'permerror' | 'temperror', comment: `DKIM2-Signature i=${i} ${keyError.comment}` };
-        } else {
-            // Section 3.4 has the unknown algorithms ignored, so nothing could be verified and nothing
-            // was found incorrect: a PERMERROR by the definitions of section 11.1. The FAIL of section
-            // 11.6 step 3 is about the signatures that can be checked
-            status = { result: 'permerror', comment: `DKIM2-Signature i=${i} has no supported signature algorithm` };
-        }
-
+        let { result, messages } = combine(entries, 'no group of signatures passed');
+        let status: HopStatus = result === 'pass' ? { result } : { result, comment: `DKIM2-Signature i=${i} ${messages[0]}` };
         return { status, values };
+    }
+
+    // Checks one signature value with its key and records the outcome in `entry`
+    async checkValue(entry: DKIM2SignatureValueResult, lookup: Promise<DKIM2Key>, algorithm: string, input: Buffer, value: string): Promise<void> {
+        let key: DKIM2Key;
+        try {
+            key = await lookup;
+        } catch (err) {
+            if (!(err instanceof KeyError)) {
+                throw err;
+            }
+            entry.result = err.result;
+            entry.comment = `public key ${entry.selector} ${err.message}`;
+            if (err.rr) {
+                entry.rr = err.rr;
+            }
+            return;
+        }
+
+        entry.rr = key.rr;
+        if (key.modulusLength) {
+            entry.modulusLength = key.modulusLength;
+        }
+        if (verifySignature(algorithm, input, key.publicKey!, Buffer.from(value, 'base64'))) {
+            entry.result = 'pass';
+        } else {
+            entry.result = 'fail';
+            entry.comment = `selector ${entry.selector} incorrect signature`;
+        }
     }
 
     formatResult({ none, errors, signatures, signatureResults, instanceResults, replay }: FormatInput): DKIM2VerifyResult {
         if (none) {
+            // section 14.2 "NONE: No DKIM2 header fields found". The Authentication-Results
+            // resinfo is a plain dkim2=none (draft-gondwana-dkim2-authres-01 section 3.1)
             let status: DKIM2VerifyResult['status'] = { result: 'none' };
-            return { status, info: formatAuthHeaderRow('dkim2', status), errors: [], instances: [], signatures: [] };
+            let info = formatAuthHeaderRow('dkim2', status);
+            status.comment = 'No DKIM2 header fields found';
+            return { status, info, errors: [], instances: [], signatures: [] };
         }
 
         let result = pickResult(errors.map(error => error.result));
@@ -574,20 +670,24 @@ class Dkim2Verifier extends Dkim2Parser {
             let hop = signatureResults.get(i);
 
             // the outcome of a hop includes the errors that are reported against it
-            let hopResult: DKIM2Result | 'skipped' = hop
-                ? pickResult([hop.status.result, ...errors.filter(error => error.i === i).map(error => error.result)])
-                : 'skipped';
+            let hopErrors = errors.filter(error => error.i === i);
+            let hopResult: DKIM2Result | 'skipped' = hop ? pickResult([hop.status.result, ...hopErrors.map(error => error.result)]) : 'skipped';
             hops.push(`i=${i} ${signature.signingDomain} ${hopResult}`);
+
+            let status: DKIM2SignatureResult['status'] = { result: hopResult };
+            if (hop && hopResult !== 'pass') {
+                status.comment = hop.status.result === hopResult ? hop.status.comment : hopErrors.find(error => error.result === hopResult)?.message;
+            }
 
             let entry: DKIM2SignatureResult = {
                 i,
                 m: signature.m,
                 signingDomain: signature.signingDomain,
                 timestamp: signature.t,
-                signTime: new Date(signature.t * 1000).toISOString(),
+                signTime: signTime(signature.t),
                 flags: signature.flags,
-                status: hop ? { result: hopResult, comment: hop.status.comment } : { result: 'skipped' },
-                values: hop ? hop.values : signature.signatures.map(({ selector, algorithm }) => ({ selector, algorithm }))
+                status,
+                values: hop ? hop.values : signature.signatures.map(({ selector, algorithm, group }) => ({ selector, algorithm, group: group + 1 }))
             };
             for (let key of ['mailFrom', 'rcptTo', 'nextDomain', 'nonce'] as const) {
                 if (signature[key] !== undefined) {
@@ -610,7 +710,7 @@ class Dkim2Verifier extends Dkim2Parser {
             status.warnings = warnings;
         }
 
-        // draft-gondwana-dkim2-authres-00 section 3: one resinfo for the message, the hops and the
+        // draft-gondwana-dkim2-authres-01 section 3: one resinfo for the message, the hops and the
         // diagnostic in a comment, header.d of the originator, header.i of the failing signature
         let header: { d?: string | undefined; i?: number | undefined } = {};
         if (signatures.has(1)) {

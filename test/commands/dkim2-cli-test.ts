@@ -17,12 +17,27 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CLI_PATH = path.join(__dirname, '..', 'helpers', 'cli-entry.ts');
 const DENY_DNS_PATH = path.join(__dirname, '..', 'fixtures', 'deny-dns.cjs');
 const FIXTURES_PATH = path.join(__dirname, '..', 'fixtures');
-const MESSAGE = path.join(FIXTURES_PATH, 'message1.eml');
+// message1.eml with a From in example.com, so that example.com can sign it (draft-ietf-dkim-dkim2-spec-09
+// section 12.4). Written into the test directory by the before() hook
+let messagePath = '';
+const messageFile = () => messagePath;
 
 const runCli = async (args: any) =>
     execFile('node', ['-r', DENY_DNS_PATH, '--import', 'tsx', CLI_PATH].concat(args), {
         env: Object.assign({}, process.env, { DENY_DNS: '1' }),
         maxBuffer: 10 * 1024 * 1024
+    });
+
+// runs the CLI with `input` on standard input
+const runCliStdin = (args: any, input: Buffer | string): Promise<{ stdout: string; stderr: string }> =>
+    new Promise((resolve, reject) => {
+        let child = childProcess.execFile(
+            'node',
+            ['-r', DENY_DNS_PATH, '--import', 'tsx', CLI_PATH].concat(args),
+            { env: Object.assign({}, process.env, { DENY_DNS: '1' }), maxBuffer: 10 * 1024 * 1024 },
+            (err, stdout, stderr) => (err ? reject(err) : resolve({ stdout, stderr }))
+        );
+        child.stdin!.end(input);
     });
 
 const keyArgs = [
@@ -52,6 +67,9 @@ describe('CLI dkim2-sign and report --dkim2', () => {
                 })
             );
             await fs.promises.writeFile(path.join(dir, 'list.key'), generated.rsa);
+            messagePath = path.join(dir, 'message.eml');
+            let original = await fs.promises.readFile(path.join(FIXTURES_PATH, 'message1.eml'), 'binary');
+            await fs.promises.writeFile(messagePath, original.replace(/^From: .*$/m, 'From: Sender <sender@example.com>'), 'binary');
         },
         { timeout: 15000 }
     );
@@ -75,7 +93,7 @@ describe('CLI dkim2-sign and report --dkim2', () => {
             'two@example.org',
             '--flag',
             'feedback',
-            MESSAGE
+            messageFile()
         ]);
         expect(stdout).to.match(/^DKIM2-Signature: i=1;/);
         let signedPath = path.join(dir, 'signed.eml');
@@ -116,7 +134,18 @@ describe('CLI dkim2-sign and report --dkim2', () => {
     });
 
     it('prints only the header fields with --headers-only', { timeout: 15000 }, async () => {
-        let { stdout } = await runCli(['dkim2-sign', ...keyArgs, '-f', 'sender@example.com', '-r', 'rcpt@example.net', '-o', '-t', '1791626400', MESSAGE]);
+        let { stdout } = await runCli([
+            'dkim2-sign',
+            ...keyArgs,
+            '-f',
+            'sender@example.com',
+            '-r',
+            'rcpt@example.net',
+            '-o',
+            '-t',
+            '1791626400',
+            messageFile()
+        ]);
         expect(stdout).to.match(/^DKIM2-Signature: i=1; m=1; t=1791626400;/);
         expect(stdout).to.match(/Message-Instance: m=1;[^]*\r\n$/);
         expect(stdout).to.not.include('Subject:');
@@ -128,7 +157,17 @@ describe('CLI dkim2-sign and report --dkim2', () => {
 
         before(
             async () => {
-                let { stdout } = await runCli(['dkim2-sign', ...keyArgs, '-f', 'sender@example.com', '-r', 'rcpt@example.net', '-t', '1791626400', MESSAGE]);
+                let { stdout } = await runCli([
+                    'dkim2-sign',
+                    ...keyArgs,
+                    '-f',
+                    'sender@example.com',
+                    '-r',
+                    'rcpt@example.net',
+                    '-t',
+                    '1791626400',
+                    messageFile()
+                ]);
                 signedPath = path.join(dir, 'verify.eml');
                 await fs.promises.writeFile(signedPath, stdout);
             },
@@ -156,13 +195,13 @@ describe('CLI dkim2-sign and report --dkim2', () => {
         it('expires signatures by --time and --max-age', { timeout: 15000 }, async () => {
             // 14 days and one second after t=
             let expired = await runCli(['dkim2-verify', ...dnsArgs(), '-o', '-t', String(1791626400 + 1209601), signedPath]);
-            expect(expired.stdout).to.match(/^dkim2=permerror .*signature expired/);
+            expect(expired.stdout).to.match(/^dkim2=fail .*signature expired/);
 
             let unlimited = await runCli(['dkim2-verify', ...dnsArgs(), '-o', '-t', String(1791626400 + 1209601), '--max-age', '0', signedPath]);
             expect(unlimited.stdout).to.match(/^dkim2=pass/);
 
             let short = await runCli(['dkim2-verify', ...dnsArgs(), '-o', '-t', '1791630000', '--max-age', '60', signedPath]);
-            expect(short.stdout).to.match(/^dkim2=permerror .*signature expired/);
+            expect(short.stdout).to.match(/^dkim2=fail .*signature expired/);
         });
 
         it('rejects a timestamp too far in the future with --max-future', { timeout: 15000 }, async () => {
@@ -171,12 +210,14 @@ describe('CLI dkim2-sign and report --dkim2', () => {
             expect(ok.stdout).to.match(/^dkim2=pass/);
 
             let future = await runCli(['dkim2-verify', ...dnsArgs(), '-o', '-t', '1791626300', '--max-future', '99', signedPath]);
-            expect(future.stdout).to.include('DKIM2-Signature i=1 signature timestamp is in the future');
+            expect(future.stdout).to.match(/^dkim2=fail .*DKIM2-Signature i=1 signature is from the future/);
 
-            // 5 minutes by default, 0 turns the check off
-            let defaultLimit = await runCli(['dkim2-verify', ...dnsArgs(), '-o', '-t', '1791626000', signedPath]);
-            expect(defaultLimit.stdout).to.include('signature timestamp is in the future');
-            let off = await runCli(['dkim2-verify', ...dnsArgs(), '-o', '-t', '1791626000', '--max-future', '0', signedPath]);
+            // one day by default, 0 turns the check off
+            let withinDay = await runCli(['dkim2-verify', ...dnsArgs(), '-o', '-t', String(1791626400 - 86400), signedPath]);
+            expect(withinDay.stdout).to.match(/^dkim2=pass/);
+            let defaultLimit = await runCli(['dkim2-verify', ...dnsArgs(), '-o', '-t', String(1791626400 - 86401), signedPath]);
+            expect(defaultLimit.stdout).to.include('signature is from the future');
+            let off = await runCli(['dkim2-verify', ...dnsArgs(), '-o', '-t', String(1791626400 - 86401), '--max-future', '0', signedPath]);
             expect(off.stdout).to.match(/^dkim2=pass/);
         });
 
@@ -186,16 +227,17 @@ describe('CLI dkim2-sign and report --dkim2', () => {
         });
 
         it('reports none for a message without DKIM2', { timeout: 15000 }, async () => {
-            let { stdout } = await runCli(['dkim2-verify', '-o', MESSAGE]);
+            let { stdout } = await runCli(['dkim2-verify', '-o', messageFile()]);
             expect(stdout).to.equal('dkim2=none\n');
         });
     });
 
     describe('dkim2-sign as a forwarder', () => {
-        const listArgs = () => ['-k', path.join(dir, 'list.key'), '-s', 'list', '-d', 'list.example.org'];
+        // the existing DKIM2 header fields are verified before signing, with the keys of dns.json
+        const listArgs = () => ['-k', path.join(dir, 'list.key'), '-s', 'list', '-d', 'list.example.org', '-n', path.join(dir, 'dns.json')];
 
         it('signs a revision with --recipe that dkim2-verify accepts', { timeout: 15000 }, async () => {
-            let { stdout: original } = await runCli(['dkim2-sign', ...keyArgs, '-f', 'sender@example.com', '-r', 'list@list.example.org', MESSAGE]);
+            let { stdout: original } = await runCli(['dkim2-sign', ...keyArgs, '-f', 'sender@example.com', '-r', 'list@list.example.org', messageFile()]);
             let revised = original.replace(/^Subject: /m, 'Subject: [list] ');
             let revisedPath = path.join(dir, 'revised.eml');
             await fs.promises.writeFile(revisedPath, revised);
@@ -207,6 +249,10 @@ describe('CLI dkim2-sign and report --dkim2', () => {
             let { stdout: forwarded } = await runCli([
                 'dkim2-sign',
                 ...listArgs(),
+                '--received-mail-from',
+                'sender@example.com',
+                '--received-rcpt-to',
+                'list@list.example.org',
                 '-f',
                 'bounce@list.example.org',
                 '-r',
@@ -239,10 +285,89 @@ describe('CLI dkim2-sign and report --dkim2', () => {
             );
             expect(err.code).to.equal(1);
             expect(err.stderr).to.include('a recipe is required');
+
+            // a message that arrived with another envelope is not Fully Verified (section 12)
+            let wrongEnvelope = ['--received-mail-from', 'sender@example.com', '--received-rcpt-to', 'someone@list.example.org'];
+            let args = [...listArgs(), ...wrongEnvelope, '-f', 'bounce@list.example.org', '-r', 'member@example.net', '--recipe', recipePath, revisedPath];
+            err = await runCli(['dkim2-sign', ...args]).then(
+                () => null,
+                err => err
+            );
+            expect(err.code).to.equal(1);
+            expect(err.stderr).to.include('Can not sign a message that is not a Fully Verified DKIM2 Message');
+            expect(err.stderr).to.include('RCPT TO someone@list.example.org did not match');
+
+            // unless an out-of-band arrangement covers it
+            let { stdout: outOfBand } = await runCli(['dkim2-sign', '--out-of-band', ...args]);
+            expect(outOfBand).to.match(/^DKIM2-Signature: i=2; m=2;/);
+
+            // --strict needs the arrival envelope
+            err = await runCli([
+                'dkim2-sign',
+                '--strict',
+                ...listArgs(),
+                '-f',
+                'bounce@list.example.org',
+                '-r',
+                'member@example.net',
+                '--recipe',
+                recipePath,
+                revisedPath
+            ]).then(
+                () => null,
+                err => err
+            );
+            expect(err.stderr).to.include('is required to verify it in strict mode');
+            // and not with --out-of-band, or for a message that is not DKIM2 signed yet
+            let { stdout: strictOutOfBand } = await runCli([
+                'dkim2-sign',
+                '--strict',
+                '--out-of-band',
+                ...listArgs(),
+                '-f',
+                'bounce@list.example.org',
+                '-r',
+                'member@example.net',
+                '--recipe',
+                recipePath,
+                revisedPath
+            ]);
+            expect(strictOutOfBand).to.match(/^DKIM2-Signature: i=2; m=2;/);
+            let { stdout: strictNew } = await runCli([
+                'dkim2-sign',
+                '--strict',
+                ...keyArgs,
+                '-f',
+                'sender@example.com',
+                '-r',
+                'list@list.example.org',
+                messageFile()
+            ]);
+            expect(strictNew).to.match(/^DKIM2-Signature: i=1; m=1;/);
+
+            // without --received-* the arrival envelope is not compared
+            let unknown = [...listArgs(), '-f', 'bounce@list.example.org', '-r', 'member@example.net', '--recipe', recipePath, revisedPath];
+            let { stdout: noEnvelope } = await runCli(['dkim2-sign', ...unknown]);
+            expect(noEnvelope).to.match(/^DKIM2-Signature: i=2; m=2;/);
+
+            // a broken signature is refused with the DNS cache too, and signed with --out-of-band
+            let broken = path.join(dir, 'broken.eml');
+            await fs.promises.writeFile(
+                broken,
+                revised.replace(/(s=rsa:rsa-sha256:\s*)(.)/, (m: string, lead: string, c: string) => lead + (c === 'A' ? 'B' : 'A'))
+            );
+            let brokenArgs = [...listArgs(), '-f', 'bounce@list.example.org', '-r', 'member@example.net', '--recipe', recipePath, broken];
+            err = await runCli(['dkim2-sign', ...brokenArgs]).then(
+                () => null,
+                err => err
+            );
+            expect(err.stderr).to.include('selector rsa incorrect signature');
+            let { stdout: brokenSigned } = await runCli(['dkim2-sign', '--out-of-band', ...brokenArgs]);
+            expect(brokenSigned).to.match(/^DKIM2-Signature: i=2; m=2;/);
         });
 
         it('signs an imaginary hop with --next-domain', { timeout: 15000 }, async () => {
-            let { stdout: original } = await runCli(['dkim2-sign', ...keyArgs, '-f', 'sender@example.com', '-r', 'list@list.example.org', MESSAGE]);
+            let { stdout: original } = await runCli(['dkim2-sign', ...keyArgs, '-f', 'sender@example.com', '-r', 'list@list.example.org', messageFile()]);
             let originalPath = path.join(dir, 'nd.eml');
             await fs.promises.writeFile(originalPath, original);
 
@@ -277,12 +402,12 @@ describe('CLI dkim2-sign and report --dkim2', () => {
                 'sha256',
                 '--hash',
                 'sha512',
-                MESSAGE
+                messageFile()
             ]);
             let instance = signed.match(/^Message-Instance:[^]*?(?=\r\n[^ \t])/m)![0].replace(/\s/g, '');
             let hashSets = instance.match(/h=([^;]+)/)![1].split(',');
 
-            let { stdout } = await runCli(['dkim2-hash', '-a', 'sha256', '-a', 'SHA512', MESSAGE]);
+            let { stdout } = await runCli(['dkim2-hash', '-a', 'sha256', '-a', 'SHA512', messageFile()]);
             expect(stdout.trim().split('\n')).to.deep.equal(hashSets);
 
             // DKIM2 header fields on the message are not part of the hashes
@@ -293,11 +418,11 @@ describe('CLI dkim2-sign and report --dkim2', () => {
         });
 
         it('defaults to sha256, lists the hashed header fields with --verbose, and rejects other algorithms', { timeout: 15000 }, async () => {
-            let { stdout, stderr } = await runCli(['dkim2-hash', '-v', MESSAGE]);
+            let { stdout, stderr } = await runCli(['dkim2-hash', '-v', messageFile()]);
             expect(stdout).to.match(/^sha256:[A-Za-z0-9+/]+=*:[A-Za-z0-9+/]+=*\n$/);
             expect(stderr).to.include('Hashed header fields: content-type, date, from, message-id, mime-version, subject, to');
 
-            let err = await runCli(['dkim2-hash', '-a', 'sha1', MESSAGE]).then(
+            let err = await runCli(['dkim2-hash', '-a', 'sha1', messageFile()]).then(
                 () => null,
                 err => err
             );
@@ -306,10 +431,65 @@ describe('CLI dkim2-sign and report --dkim2', () => {
         });
     });
 
+    it('signs groups of signatures with --group, one of which has to pass', { timeout: 15000 }, async () => {
+        let { stdout } = await runCli([
+            'dkim2-sign',
+            ...keyArgs,
+            '--group',
+            '2',
+            '--group',
+            '1',
+            '-f',
+            'sender@example.com',
+            '-r',
+            'rcpt@example.net',
+            messageFile()
+        ]);
+        // the groups are written in the order of --group
+        expect(stdout.replace(/\r?\n[ \t]+/g, '')).to.match(/s=ed:ed25519-sha256:[^;|]+\|rsa:rsa-sha256:[^;|]+;/);
+
+        for (let groups of [['1'], ['1,2', '2'], ['3', '1,2'], ['0,1,2'], ['x', '1,2']]) {
+            let err = await runCli([
+                'dkim2-sign',
+                ...keyArgs,
+                ...groups.flatMap(group => ['--group', group]),
+                '-f',
+                'sender@example.com',
+                '-r',
+                'rcpt@example.net',
+                messageFile()
+            ]).then(
+                () => null,
+                err => err
+            );
+            expect(err, groups.join(' ')).to.be.an('error');
+            expect(err.stderr).to.match(/--group/);
+        }
+    });
+
+    it('reads the message from standard input, and reports its steps with --verbose', { timeout: 15000 }, async () => {
+        let input = await fs.promises.readFile(messageFile());
+        let signed = await runCliStdin(['dkim2-sign', '-v', ...keyArgs, '-f', 'sender@example.com', '-r', 'rcpt@example.net', '-t', '1791626400'], input);
+        expect(signed.stdout).to.match(/^DKIM2-Signature: i=1;/);
+        expect(signed.stderr).to.include('Reading email message from standard input');
+        expect(signed.stderr).to.include('Signing domain: example.com');
+        expect(signed.stderr).to.include('Selectors:      rsa, ed');
+        expect(signed.stderr).to.include('Signing time:   2026-10-10T10:00:00.000Z');
+
+        let verified = await runCliStdin(['dkim2-verify', '-v', '-n', path.join(dir, 'dns.json'), '-o', '-t', '1791630000'], signed.stdout);
+        expect(verified.stdout).to.match(/^dkim2=pass /);
+        expect(verified.stderr).to.include('Reading email message from standard input');
+
+        let hashed = await runCliStdin(['dkim2-hash', '-v'], input);
+        expect(hashed.stdout).to.match(/^sha256:/);
+        expect(hashed.stderr).to.include('Reading email message from standard input');
+        expect(hashed.stderr).to.match(/Hashed header fields: .*from/);
+    });
+
     it('requires either an envelope or --next-domain, and a selector for every key', { timeout: 15000 }, async () => {
         for (let args of [
-            ['dkim2-sign', ...keyArgs, MESSAGE],
-            ['dkim2-sign', ...keyArgs, '-f', 'sender@example.com', '-r', 'a@example.net', '--next-domain', 'example.net', MESSAGE],
+            ['dkim2-sign', ...keyArgs, messageFile()],
+            ['dkim2-sign', ...keyArgs, '-f', 'sender@example.com', '-r', 'a@example.net', '--next-domain', 'example.net', messageFile()],
             [
                 'dkim2-sign',
                 '-k',
@@ -324,7 +504,7 @@ describe('CLI dkim2-sign and report --dkim2', () => {
                 'sender@example.com',
                 '-r',
                 'a@example.net',
-                MESSAGE
+                messageFile()
             ]
         ]) {
             let err = await runCli(args).then(

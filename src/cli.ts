@@ -123,7 +123,7 @@ export function run(argv: string[], opts: RunOptions): void {
             '--reject-rsa-sha1',
             'Report rsa-sha1 DKIM signatures as dkim=policy and do not count them for DMARC, while keeping the other lenient defaults.'
         )
-        .option('--dkim2', 'Verify DKIM2 header fields as well (experimental, built against draft-ietf-dkim-dkim2-spec-06).')
+        .option('--dkim2', 'Verify DKIM2 header fields as well (experimental, built against draft-ietf-dkim-dkim2-spec-09).')
         .option('-r, --rcpt-to <address>', 'Email address from a RCPT TO command, checked against the DKIM2 chain of custody. Can be repeated.', collect)
         .action(runCommand(commandReport, 'Failed to generate report for the input message.'));
 
@@ -152,7 +152,7 @@ export function run(argv: string[], opts: RunOptions): void {
 
     program
         .command('dkim2-sign')
-        .description('Sign an email with DKIM2 (experimental, built against draft-ietf-dkim-dkim2-spec-06)')
+        .description('Sign an email with DKIM2 (experimental, built against draft-ietf-dkim-dkim2-spec-09)')
         .argument('[email]', emailArgDescription)
         .helpOption('--help', 'Show help.')
         .requiredOption('-k, --private-key <file>', 'Path to a private key file. Repeat it together with --selector to sign with several keys.', collect)
@@ -162,9 +162,25 @@ export function run(argv: string[], opts: RunOptions): void {
         .option('-r, --rcpt-to <address>', 'RCPT TO address the message is sent to (rt= tag). Can be repeated.', collect)
         .option('--next-domain <domain>', 'Domain of the next DKIM2 signature, instead of --mail-from and --rcpt-to (nd= tag).')
         .option('--nonce <value>', 'Nonce value (n= tag).')
-        .option('--flag <flag>', 'Flag to set, such as "donotmodify" or "exploded" (f= tag). Can be repeated.', collect)
+        .option(
+            '--group <keys>',
+            'Positions of the keys, counted from 1, that form one group of signatures that all have to pass, such as "1,2". Repeat it for groups of which one has to pass (joined with "|" in s=). Without it, every signature has to pass.',
+            collect
+        )
+        .option('--flag <flag>', 'Flag to set, such as "exploded" or "feedback" (f= tag). Can be repeated.', collect)
         .option('--hash <algorithm>', 'Hash algorithm for the Message-Instance, "sha256" or "sha512". Can be repeated. Defaults to "sha256".', collect)
         .option('--recipe <file>', 'Path to a JSON file with the Recipe that recreates the previous instance of a changed message.')
+        .option(
+            '--received-mail-from <address>',
+            'MAIL FROM address the message arrived with. A message that is already DKIM2 signed is verified before it is signed again, against this envelope.'
+        )
+        .option('--received-rcpt-to <address>', 'RCPT TO address the message arrived with, see --received-mail-from. Can be repeated.', collect)
+        .option('--out-of-band', 'Sign a message that is already DKIM2 signed without verifying it first, because an out-of-band arrangement covers it.')
+        .option('--strict', 'Refuse to sign a message that is already DKIM2 signed without --received-mail-from and --received-rcpt-to.')
+        .option(
+            '-n, --dns-cache <file>',
+            'Path to a JSON file with cached DNS responses, used to verify a message that is already DKIM2 signed and for Domain Policy Records.'
+        )
         .option('-t, --time <timestamp>', 'Signing time as a UNIX timestamp (t= tag). Defaults to the current time.', numberArg)
         .option('-o, --headers-only', 'If set, outputs only the DKIM2 header fields without the message.')
         .hook('preAction', command => {
@@ -177,7 +193,7 @@ export function run(argv: string[], opts: RunOptions): void {
 
     program
         .command('dkim2-verify')
-        .description('Verify the DKIM2 signatures of an email and return a JSON report (experimental, built against draft-ietf-dkim-dkim2-spec-06)')
+        .description('Verify the DKIM2 signatures of an email and return a JSON report (experimental, built against draft-ietf-dkim-dkim2-spec-09)')
         .argument('[email]', emailArgDescription)
         .helpOption('--help', 'Show help.')
         .option(
@@ -195,7 +211,11 @@ export function run(argv: string[], opts: RunOptions): void {
         )
         .option('-t, --time <timestamp>', 'Time to verify against as a UNIX timestamp. Defaults to the current time.', numberArg)
         .option('--max-age <seconds>', 'Seconds after which a signature expires, 0 to not check. Defaults to 14 days.', numberArg)
-        .option('--max-future <seconds>', 'Seconds a signature timestamp may be ahead of the current time, 0 to not check. Defaults to 300.', numberArg)
+        .option(
+            '--max-future <seconds>',
+            'Seconds a signature timestamp may be ahead of the current time, 0 to not check. Defaults to one day (86400).',
+            numberArg
+        )
         .option('--max-instances <number>', 'Most Message-Instance, and most DKIM2-Signature, header fields to process. Defaults to 20.', numberArg)
         .option('-o, --headers-only', 'If set, outputs only the Authentication-Results entry (dkim2=...) instead of the JSON report.')
         .action(runCommand(commandDkim2Verify, 'Failed to verify DKIM2 for the input message.'));

@@ -125,8 +125,8 @@ export interface AuthenticateOptions {
 
     /**
      * Verify DKIM2 header fields as well (default: false). Experimental, built against
-     * draft-ietf-dkim-dkim2-spec-06. The result is added to Authentication-Results with the
-     * `dkim2` method of draft-gondwana-dkim2-authres-00 and does not take part in DMARC
+     * draft-ietf-dkim-dkim2-spec-09. The result is added to Authentication-Results with the
+     * `dkim2` method of draft-gondwana-dkim2-authres-01 and does not take part in DMARC
      */
     dkim2?: boolean | undefined;
 
@@ -1371,14 +1371,15 @@ export interface DKIMVerifyOptions {
 }
 
 // ============================================================================
-// DKIM2 (experimental, draft-ietf-dkim-dkim2-spec-06, draft-ietf-dkim-dkim2-dns-00)
+// DKIM2 (experimental, draft-ietf-dkim-dkim2-spec-09, draft-ietf-dkim-dkim2-dns-02)
 // ============================================================================
 
 /**
- * A DKIM2 Recipe (draft-ietf-dkim-dkim2-spec-06 section 5). Each step either copies a range of
- * header fields (numbered from the bottom) or body lines (numbered from the top), or emits data
+ * A DKIM2 Recipe (draft-ietf-dkim-dkim2-spec-09 section 5). Each step either copies a range of
+ * header fields (numbered from the bottom) or body lines (numbered from the top), or emits data:
+ * UTF-8 strings with "d", or canonical base64 of bytes that are not valid UTF-8 with "u"
  */
-export type DKIM2RecipeStep = { c: [number, number] } | { d: string[] };
+export type DKIM2RecipeStep = { c: [number, number] } | { d: string[] } | { u: string[] };
 
 export interface DKIM2Recipe {
     /**
@@ -1404,9 +1405,10 @@ export interface DKIM2SignatureKey {
     privateKey: string | Buffer;
 
     /**
-     * "rsa-sha256" or "ed25519-sha256", follows the key type when not set
+     * "rsa-sha256", "ed25519-sha256" or "mldsa44", follows the key type when not set. ML-DSA-44
+     * needs Node.js 24 or later to sign with, verifying works on every supported version
      */
-    algorithm?: 'rsa-sha256' | 'ed25519-sha256' | undefined;
+    algorithm?: 'rsa-sha256' | 'ed25519-sha256' | 'mldsa44' | undefined;
 }
 
 /**
@@ -1419,9 +1421,11 @@ export interface DKIM2SignOptions {
     signingDomain: string;
 
     /**
-     * Signing keys. At most two keys per algorithm, each with its own selector
+     * Signing keys, each with its own selector. A list of keys gives signatures that all have to
+     * pass (joined with "," in s=). A list of lists gives groups of signatures, of which one group
+     * has to pass (joined with "|", section 10.9), such as [[rsaKey, ed25519Key], [mlDsaKey]]
      */
-    signatureData?: DKIM2SignatureKey[] | undefined;
+    signatureData?: DKIM2SignatureKey[] | DKIM2SignatureKey[][] | undefined;
 
     /**
      * Selector of a single key, used with `privateKey` when `signatureData` is not set
@@ -1436,7 +1440,7 @@ export interface DKIM2SignOptions {
     /**
      * Algorithm of the single key
      */
-    algorithm?: 'rsa-sha256' | 'ed25519-sha256' | undefined;
+    algorithm?: 'rsa-sha256' | 'ed25519-sha256' | 'mldsa44' | undefined;
 
     /**
      * SMTP MAIL FROM the message is sent with (mf= tag), "" or "<>" for the null sender.
@@ -1460,7 +1464,8 @@ export interface DKIM2SignOptions {
     nonce?: string | undefined;
 
     /**
-     * Flags (f= tag), such as "donotmodify", "donotexplode", "exploded", "feedback" or "feedhere"
+     * Flags (f= tag), such as "exploded", "feedback" or "feedhere". "exploded" can not be set on
+     * the first signature (i=1)
      */
     flags?: string[] | undefined;
 
@@ -1479,6 +1484,35 @@ export interface DKIM2SignOptions {
      * Signing time (t= tag), defaults to now
      */
     signTime?: Date | string | number | undefined;
+
+    /**
+     * DNS resolver, for verifying a message that already has DKIM2 header fields, and for the Domain
+     * Policy Record of the From domain when the signing domain is a subdomain of it
+     * (draft-ietf-dkim-dkim2-spec-09 section 11.1)
+     */
+    resolver?: DNSResolver | undefined;
+
+    /**
+     * The SMTP envelope the message arrived with. A message that already has DKIM2 header fields is
+     * only signed when it is a Fully Verified DKIM2 Message (section 12), which includes that its
+     * highest DKIM2-Signature names this envelope. Without it the envelope is not compared
+     */
+    received?: { mailFrom?: string | undefined; rcptTo?: string | string[] | undefined } | undefined;
+
+    /**
+     * Sign a message that already has DKIM2 header fields without verifying it first, because an
+     * out-of-band arrangement covers it (section 12). Default: false
+     */
+    outOfBand?: boolean | undefined;
+
+    /**
+     * Refuse to sign a message that already has DKIM2 header fields unless `received` names a MAIL
+     * FROM and at least one RCPT TO: a Fully Verified DKIM2 Message includes that its highest
+     * DKIM2-Signature names the envelope it arrived with (section 13). Not needed with `outOfBand`,
+     * or for the signer that completes an nd= hop, which has no envelope to compare. Default: false,
+     * a missing envelope is then not compared
+     */
+    strict?: boolean | undefined;
 }
 
 /**
@@ -1538,8 +1572,7 @@ export interface DKIM2VerifyOptions {
     maxSignatureAge?: number | false | undefined;
 
     /**
-     * Seconds a t= may be ahead of the current time (default: 300), false to not check. Section 8.4
-     * allows ignoring signatures from the future
+     * Seconds a t= may be ahead of the current time (default: 86400, one day), false to not check
      */
     maxFutureTime?: number | false | undefined;
 
@@ -1555,9 +1588,10 @@ export interface DKIM2VerifyOptions {
 
     /**
      * Called with the replay key (the m=1 hashes) of the message. Return true when a message with
-     * the same key was seen before; without an exploded flag the result is then FAIL
+     * the same key was seen before, which is reported as `replay.duplicate`. It does not change the
+     * result, the draft leaves judging a possible DKIM Replay to the receiver
      */
-    checkReplay?: ((replay: { key: string; exploded: boolean }) => Promise<boolean> | boolean) | undefined;
+    checkReplay?: ((replay: { key: string; exploded: boolean; intermediary?: boolean | undefined }) => Promise<boolean> | boolean) | undefined;
 }
 
 export type DKIM2Result = 'pass' | 'fail' | 'permerror' | 'temperror';
@@ -1568,7 +1602,7 @@ export interface DKIM2Error {
     result: DKIM2Result;
 
     /**
-     * Human-readable string of draft-ietf-dkim-dkim2-spec-06 section 11
+     * Human-readable string of draft-ietf-dkim-dkim2-spec-09 section 14
      */
     message: string;
 
@@ -1585,7 +1619,10 @@ export interface DKIM2Error {
 
 export interface DKIM2InstanceResult {
     m: number;
-    hashes: { algorithm: string; header: 'pass' | 'fail'; body: 'pass' | 'fail' | 'unknown' }[];
+    /**
+     * The hash-sets with a known algorithm. `group` is the position of the "|" group, from 1
+     */
+    hashes: { algorithm: string; header: 'pass' | 'fail'; body: 'pass' | 'fail' | 'unknown'; group?: number | undefined }[];
     recipe?: { headers: string[]; body: 'unchanged' | 'recipe' | 'unrecoverable' } | undefined;
 }
 
@@ -1594,7 +1631,13 @@ export interface DKIM2SignatureValueResult {
     algorithm: string;
 
     /**
-     * "none" for an algorithm that is not supported and ignored
+     * Position of the "|" group of the signature, from 1
+     */
+    group?: number | undefined;
+
+    /**
+     * The intermediate result of section 14.6. An algorithm that is not implemented is a
+     * PERMERROR, "none" is no longer used
      */
     result?: DKIM2Result | 'none' | undefined;
     comment?: string | undefined;
@@ -1602,7 +1645,8 @@ export interface DKIM2SignatureValueResult {
     modulusLength?: number | undefined;
 
     /**
-     * The key record has the t=y testing flag
+     * No longer set: draft-ietf-dkim-dkim2-dns-02 retired the t= flags of key records
+     * @deprecated
      */
     testing?: boolean | undefined;
 }
@@ -1652,9 +1696,11 @@ export interface DKIM2VerifyResult {
     signatures: DKIM2SignatureResult[];
 
     /**
-     * The key for replay detection and whether a signature allows copies
+     * The key for replay detection (the m=1 hashes), whether a signature has the exploded flag,
+     * whether the message came through an intermediary (more than one DKIM2-Signature), and, when
+     * `checkReplay` is given, whether the message was seen before (section 15.1)
      */
-    replay?: { key: string; exploded: boolean } | undefined;
+    replay?: { key: string; exploded: boolean; intermediary?: boolean | undefined; duplicate?: boolean | undefined } | undefined;
 }
 
 /**

@@ -344,17 +344,17 @@ dkim=policy policy.dkim-rules=weak-key header.i=@tahvel.info header.s=test.small
 > [!WARNING]
 > DKIM2 is not a published RFC yet. This implementation is experimental and follows these Internet-Drafts, which can still change in ways that break compatibility:
 >
-> - [draft-ietf-dkim-dkim2-spec-06](https://www.ietf.org/archive/id/draft-ietf-dkim-dkim2-spec-06.txt), "DomainKeys Identified Mail Signatures v2 (DKIM2)", 28 August 2026
-> - [draft-ietf-dkim-dkim2-dns-00](https://www.ietf.org/archive/id/draft-ietf-dkim-dkim2-dns-00.txt), "Domain Name Specification for DKIM2", 20 July 2026
+> - [draft-ietf-dkim-dkim2-spec-09](https://www.ietf.org/archive/id/draft-ietf-dkim-dkim2-spec-09.txt), "DomainKeys Identified Mail Signatures v2 (DKIM2)", 1 November 2026
+> - [draft-ietf-dkim-dkim2-dns-02](https://www.ietf.org/archive/id/draft-ietf-dkim-dkim2-dns-02.txt), "Domain Name Specification for DKIM2", 21 October 2026
 > - [draft-ietf-dkim-dkim2-bcp-01](https://www.ietf.org/archive/id/draft-ietf-dkim-dkim2-bcp-01.txt), "DKIM2 Best Practices", 9 September 2026
 >
-> The `dkim2` Authentication-Results method follows the individual draft [draft-gondwana-dkim2-authres-00](https://datatracker.ietf.org/doc/html/draft-gondwana-dkim2-authres-00), as no method name is registered yet.
+> The `dkim2` Authentication-Results method follows the individual draft [draft-gondwana-dkim2-authres-01](https://datatracker.ietf.org/doc/html/draft-gondwana-dkim2-authres-01), as no method name is registered yet.
 
-DKIM2 adds a `Message-Instance` header field with hashes of the message, and a `DKIM2-Signature` header field per hop that signs the DKIM2 header fields and records the SMTP envelope (MAIL FROM and RCPT TO) of that hop. Forwarders that change a message describe their changes with Recipes, so that a verifier can recreate every earlier instance of the message and check every signature. DKIM2 uses the same DNS key records as DKIM1 (`selector._domainkey.domain`, `v=DKIM1`), so existing RSA and Ed25519 keys work as they are.
+DKIM2 adds a `Message-Instance` header field with hashes of the message, and a `DKIM2-Signature` header field per hop that signs the DKIM2 header fields and records the SMTP envelope (MAIL FROM and RCPT TO) of that hop. Forwarders that change a message describe their changes with Recipes, so that a verifier can recreate every earlier instance of the message and check every signature. The domain of the From address has to match the signing domain of the hop that put it into the message. DKIM2 uses the same DNS key records as DKIM1 (`selector._domainkey.domain`, `v=DKIM1`), so existing RSA and Ed25519 keys work as they are. ML-DSA-44 signatures (`k=mldsa44` keys) are verified on every supported Node.js version, signing with ML-DSA-44 needs Node.js 24 or later.
 
 DKIM1 and DKIM2 do not sign each other's header fields, so a message can carry both, added in any order. The best practices draft recommends signing with both while DKIM2 is being deployed.
 
-DKIM2 is opt-in in `authenticate()` with the `dkim2` option. Its result is reported in `result.dkim2` and in Authentication-Results, and it is not used for DMARC (whether DMARC will use DKIM2 is still an open question of the working group). Delivery Status Notification handling (section 12 of the specification) is left to the MTA.
+DKIM2 is opt-in in `authenticate()` with the `dkim2` option. Its result is reported in `result.dkim2` and in Authentication-Results, and it is not used for DMARC (whether DMARC will use DKIM2 is still an open question of the working group). Delivery Status Notification handling (section 16 of the specification) is left to the MTA.
 
 #### DKIM2 Signing
 
@@ -363,12 +363,12 @@ const { dkim2Sign } = require('mailauth');
 
 const { signatures } = await dkim2Sign(message, {
     signingDomain: 'example.com',
-    // one key per algorithm is recommended, at most two keys per algorithm
+    // both signatures have to pass
     signatureData: [
         { selector: 'rsa2026', privateKey: rsaPrivateKeyPem },
         { selector: 'ed2026', privateKey: ed25519PrivateKeyPem }
     ],
-    // the SMTP envelope the message is sent with, required (section 9.2)
+    // the SMTP envelope the message is sent with, required (section 12.2)
     mailFrom: 'bounces@example.com',
     rcptTo: ['user@example.net']
 });
@@ -377,16 +377,22 @@ const { signatures } = await dkim2Sign(message, {
 const signedMessage = signatures + message;
 ```
 
-- **signingDomain** (`string`): The signing domain (`d=`). It has to be the MAIL FROM domain or a parent of it.
-- **signatureData** (`array`): Keys to sign with, `{ selector, privateKey, algorithm }`. The algorithm (`rsa-sha256` or `ed25519-sha256`) follows the key type. RSA keys need at least 1024 bits and the public exponent 65537. For a single key, `selector` and `privateKey` can be given directly instead.
+- **signingDomain** (`string`): The signing domain (`d=`). It has to be the MAIL FROM domain or a parent of it. When the message is signed for the first time, or this hop changes the From header field, the From address has to be in the signing domain or one of its subdomains (section 12.4). A subdomain can also sign for a From in its parent domain unless the parent publishes a Domain Policy Record with `f=strict` at `_domainkey.<parent>`, which the signer then looks up with **resolver**.
+- **signatureData** (`array`): Keys to sign with, `{ selector, privateKey, algorithm }`. The algorithm (`rsa-sha256`, `ed25519-sha256` or `mldsa44`) follows the key type. RSA keys need at least 1024 bits and the public exponent 65537. Every selector is used once, the same algorithm can be used with several selectors. A list of keys gives signatures that all have to pass (joined with `,` in `s=`). A list of lists gives groups, one of which has to pass (joined with `|`), so that verifiers that do not know a newer algorithm can still verify the message: `[[rsaKey, ed25519Key], [mlDsaKey]]`. For a single key, `selector` and `privateKey` can be given directly instead.
 - **mailFrom** (`string`): MAIL FROM address (`mf=`), `''` or `'<>'` for the null sender.
 - **rcptTo** (`string|string[]`): RCPT TO addresses (`rt=`).
-- **nextDomain** (`string`): For a hop across a trust boundary (section 9.3), the domain of the next signature (`nd=`), used instead of `mailFrom` and `rcptTo`.
-- **flags** (`string[]`): Flags (`f=`): `donotmodify`, `donotexplode`, `exploded`, `feedback`, `feedhere`.
+- **nextDomain** (`string`): For a hop across a trust boundary (section 12.3), the domain of the next signature (`nd=`), used instead of `mailFrom` and `rcptTo`.
+- **flags** (`string[]`): Flags (`f=`): `exploded` (not allowed on the first signature), `feedback`, `feedhere`.
 - **nonce** (`string`): A value for your own use (`n=`), at most 64 characters.
 - **hashAlgorithms** (`string[]`): `sha256` (default) and/or `sha512`.
 - **recipe** (`object`): When the message was changed since it was last signed, a Recipe that recreates the previous instance (section 5). The signer checks that the Recipe really recreates it before signing.
 - **signTime** (`Date`): The signing time (`t=`). Defaults to now.
+- **resolver** (`async function`): DNS resolver, for verifying a message that is already DKIM2 signed and for the Domain Policy Record, see **signingDomain**.
+- **received** (`object`): `{ mailFrom, rcptTo }`, the SMTP envelope the message arrived with. A message that already has DKIM2 header fields is verified before it is signed again, see below, and its highest signature has to name this envelope.
+- **outOfBand** (`boolean`): Sign a message that already has DKIM2 header fields without verifying it, because an out-of-band arrangement covers it (section 12). Defaults to `false`.
+- **strict** (`boolean`): Refuse to sign a message that already has DKIM2 header fields unless `received` names a MAIL FROM and at least one RCPT TO, since a Fully Verified DKIM2 Message includes the envelope it arrived with. Not needed with `outOfBand`, or for the signer that completes an `nd=` hop. Defaults to `false`, a missing envelope is then not compared.
+
+A message that already has DKIM2 header fields may only be signed when it is a Fully Verified DKIM2 Message (section 12), so `dkim2Sign` verifies it first, as it arrived (before the changes the `recipe` documents), at `signTime`, with `resolver` and against the `received` envelope. When the result is not `pass` it rejects with the code `ENOTVERIFIED`, or `ETEMPNOTVERIFIED` for a temporary DNS failure, unless `outOfBand` is set.
 
 `dkim2Sign` resolves with `{ signatures, signature, messageInstance, i, m }` and rejects for invalid options, an invalid DKIM2 chain on the message, or a Recipe that does not fit. A new `Message-Instance` is only added when the message has no instance yet or has changed since the last one. `Dkim2SignStream` is a Transform stream that outputs the signed message, like `DkimSignStream`.
 
@@ -411,7 +417,7 @@ const { signatures } = await dkim2Sign(revisedMessage, {
 const { dkim2Verify } = require('mailauth');
 
 const result = await dkim2Verify(message, {
-    // the SMTP envelope of the delivery, checked against the highest DKIM2-Signature (section 11.4)
+    // the SMTP envelope of the delivery, checked against the highest DKIM2-Signature (section 14.4)
     mailFrom: 'bounce@list.example.org',
     rcptTo: ['member@example.net']
 });
@@ -422,13 +428,13 @@ console.log(result.info); // dkim2=pass (i=1 example.com pass, i=2 list.example.
 
 - **resolver** (`async function`): Custom DNS resolver function.
 - **mailFrom** / **rcptTo**: The SMTP envelope. The chain of custody check against the envelope, which is what stops DKIM2 replay, is only done for what is set here, as a library can not know the envelope otherwise. A missing part is reported in `status.warnings` as `mail-from-not-checked` or `rcpt-to-not-checked`, without changing the result. In `authenticate()` these come from the `sender` and `rcptTo` options.
-- **maxSignatureAge** (`number|false`): Seconds after which a signature expires (section 11.3). Defaults to 14 days, `false` disables the check.
-- **maxFutureTime** (`number|false`): Seconds a signature timestamp may be ahead of the current time, a later one is a PERMERROR (section 8.4). Defaults to `300` (5 minutes, for clock skew), `false` disables the check.
+- **maxSignatureAge** (`number|false`): Seconds after which a signature expires, which is a FAIL (section 14.3). Defaults to 14 days, `false` disables the check.
+- **maxFutureTime** (`number|false`): Seconds a signature timestamp may be ahead of the current time, a later one is a FAIL (section 14.3). Defaults to one day (`86400`), `false` disables the check.
 - **curTime** (`Date`): The time to check against. Defaults to now.
 - **maxInstances** (`number`): The most `Message-Instance`, and the most `DKIM2-Signature`, header fields processed for one message. Defaults to `20`, more is a PERMERROR (BCP section 7.5).
-- **checkReplay** (`async function`): Called with `{ key, exploded }`, where `key` identifies the message by its `m=1` hashes. Return `true` when a message with the same key was seen before, and the result is FAIL unless a signature has the `exploded` flag (section 11.9). Storing the keys is up to you.
+- **checkReplay** (`async function`): Called with `{ key, exploded, intermediary }`, where `key` identifies the message by its `m=1` hashes and `intermediary` is true when the message has more than one `DKIM2-Signature`. Return `true` when a message with the same key was seen before, which is reported as `replay.duplicate`. A duplicate that came through an intermediary without an `exploded` flag may be a DKIM Replay (section 15.1), but the draft leaves judging that to the receiver, so the result does not change. Storing the keys is up to you.
 
-The verifier recreates every instance of the message with the Recipes, checks every hash and signature, the chain of custody between the hops, the timestamps, and the `donotmodify` and `donotexplode` requests. Failures use the human-readable strings of section 11 of the specification. See [DKIM2 Result Reference](docs/dkim2.md) for the result object and for how ambiguities of the drafts are handled.
+The verifier recreates every instance of the message with the Recipes, checks every hash and signature, the chain of custody between the hops, the timestamps, and that every From header field is Authentic. Failures use the human-readable strings of section 14 of the specification. See [DKIM2 Result Reference](docs/dkim2.md) for the result object and for how ambiguities of the drafts are handled.
 
 `dkim2Hash(message, { algorithms })` computes the header and body hashes of a message as they go into the `h=` tag of a `Message-Instance` header field, which helps when writing or checking a Recipe. It resolves with `{ headers, hashes }`, the names of the hashed header fields and `[{ algorithm, headerHash, bodyHash }]`.
 

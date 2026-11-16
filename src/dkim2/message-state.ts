@@ -1,6 +1,6 @@
 // One instance of a message as DKIM2 hashes it: the hashed header fields grouped by name, and
 // the body. Applying the Recipe of a Message-Instance gives the previous instance
-// (draft-ietf-dkim-dkim2-spec-06 sections 5, 6 and 11)
+// (draft-ietf-dkim-dkim2-spec-09 sections 5, 6 and 14)
 
 import { Buffer } from 'node:buffer';
 import crypto from 'node:crypto';
@@ -19,9 +19,6 @@ interface MessageBody {
 
 // how much body text is handed to the hash at a time when a body is hashed from its lines
 const HASH_CHUNK_SIZE = 64 * 1024;
-
-// "d" values are JSON strings, the message is handled as 'binary' strings of its bytes
-const utf8ToBinary = (value: string): string => Buffer.from(value, 'utf8').toString('binary');
 
 /**
  * Splits a body into lines numbered top down (section 5.2), without the line terminators
@@ -129,18 +126,18 @@ class MessageState {
      *
      * @param {Object} recipe Parsed Recipe ({ h: Map, b })
      * @returns {MessageState}
-     * @throws {Error} When the Recipe does not fit this instance
+     * @throws {RecipeError} When the Recipe does not fit this instance
      */
     previous(recipe: ParsedRecipe): MessageState {
         let headers = new Map(this.headers);
         for (let [name, steps] of recipe.h) {
-            // section 5.1: Recipes SHOULD NOT name the fields that are not signed, and the
-            // hash does not see them anyway
-            if (!isHashedField(name)) {
-                continue;
+            // the lines of "d" and "u" steps are 'binary' strings of their bytes
+            let fields = applySteps(this.headers.get(name) || [], steps, value => canonicalHeaderField(Buffer.from(`${name}:${value}`, 'binary')));
+            if (fields.length) {
+                headers.set(name, fields);
+            } else {
+                headers.delete(name);
             }
-            let fields = applySteps(this.headers.get(name) || [], steps, value => canonicalHeaderField(Buffer.from(`${name}:${value}`, 'utf8')));
-            headers.set(name, fields);
         }
 
         let body = this.body;
@@ -151,41 +148,15 @@ class MessageState {
             if (!body!.lines) {
                 throw new Error('The message body was not kept for the body Recipe');
             }
-            body = { lines: applySteps(body!.lines, recipe.b, utf8ToBinary), hashes: new Map() };
+            body = { lines: applySteps(body!.lines, recipe.b, line => line), hashes: new Map() };
         }
 
         return new MessageState(headers, body);
     }
 
-    /**
-     * Whether `later` only added header fields to this instance and kept the body, which is what a
-     * donotmodify request allows (section 8.10)
-     *
-     * @param {MessageState} later A later instance of the message
-     * @param {String} algorithm Hash algorithm for comparing the bodies
-     * @returns {Boolean}
-     */
-    isPreservedIn(later: MessageState, algorithm: string): boolean {
-        let bodyHash = this.bodyHash(algorithm);
-        if (!bodyHash || bodyHash !== later.bodyHash(algorithm)) {
-            return false;
-        }
-
-        for (let [name, fields] of this.headers) {
-            // every field of this instance is still there, in the same order
-            let laterFields = later.headers.get(name) || [];
-            let pos = 0;
-            for (let field of fields) {
-                while (pos < laterFields.length && !laterFields[pos].equals(field)) {
-                    pos++;
-                }
-                if (pos >= laterFields.length) {
-                    return false;
-                }
-                pos++;
-            }
-        }
-        return true;
+    // the canonicalized header fields of one name, numbered bottom up
+    fields(name: string): Buffer[] {
+        return this.headers.get(name) || [];
     }
 }
 

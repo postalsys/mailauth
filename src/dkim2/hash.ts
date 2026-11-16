@@ -24,7 +24,7 @@ class HashParser extends Dkim2Parser {
 
 /**
  * Computes the DKIM2 header and body hashes of a message as they go into the h= tag of a
- * Message-Instance header field (draft-ietf-dkim-dkim2-spec-06 sections 6 and 7.3)
+ * Message-Instance header field (draft-ietf-dkim-dkim2-spec-09 sections 6 and 9.3)
  *
  * @param {ReadableStream|Buffer|String} input RFC 5322 message
  * @param {Object} [options]
