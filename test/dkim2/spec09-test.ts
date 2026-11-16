@@ -902,7 +902,7 @@ describe('DKIM2 draft-ietf-dkim-dkim2-spec-09', () => {
                     t: 1,
                     signingDomain: 'example.com',
                     mailFrom: `<${'s'.repeat(n * 3)}@example.com>`,
-                    rcptTo: Array.from({ length: n }, (v, index) => `<${'r'.repeat(index * 5)}@example.net>`),
+                    rcptTo: Array.from({ length: n }, (v, index) => `<${'r'.repeat(index * 5 + 1)}@example.net>`),
                     signatures: Array.from({ length: n % 5 }, (v, index) => ({
                         selector: `sel${index}`,
                         algorithm: index % 2 ? 'ed25519-sha256' : 'rsa-sha256',
@@ -1046,6 +1046,49 @@ describe('DKIM2 draft-ietf-dkim-dkim2-spec-09', () => {
             expect(comment.replace(/\\./g, '')).to.not.match(/[()]/);
             // the text is still there, as text inside the comment
             expect(comment).to.include('\\)').and.to.include('dkim2=pass header.d=bank.example');
+        });
+    });
+
+    describe('more edge cases', () => {
+        it('reports a null body Recipe on m=1 as a PERMERROR too (section 14.2)', async () => {
+            let signed = await signMessage(message(), rsaOnly({ recipe: { b: null } }));
+            let result = await dkim2Verify(signed, { resolver: resolver() });
+            expect(result.status.result).to.equal('permerror');
+            expect(result.errors.map(error => error.message)).to.deep.equal(['Message-Instance m=1 has a null recipe']);
+            expect(result.instances[0].recipe).to.deep.equal({ headers: [], body: 'unrecoverable' });
+        });
+
+        it('adds no Message-Instance for an unchanged message, even when a Recipe is given', async () => {
+            let first = await signMessage(
+                message(),
+                originatorOptions({ rcptTo: 'rcpt@example.com', signatureData: [{ selector: 'rsa', privateKey: rsaKey }] })
+            );
+            let result = await dkim2Sign(first, rsaOnly({ mailFrom: 'rcpt@example.com', rcptTo: 'x@example.org', recipe: { h: { subject: [] } } }));
+            expect(result.messageInstance).to.equal(null);
+            expect(result.m).to.equal(1);
+        });
+
+        it('signs and verifies with an RSA key longer than 4096 bits (section 3.2)', { timeout: 60000 }, async () => {
+            let long = crypto.generateKeyPairSync('rsa', { modulusLength: 4608 }).privateKey.export({ type: 'pkcs8', format: 'pem' });
+            let signed = await signMessage(message(), originatorOptions({ signatureData: [{ selector: 'big', privateKey: long }] }));
+            let result = await dkim2Verify(signed, { resolver: resolver({ 'big._domainkey.example.com': { TXT: [[keyRecord(long)]] } }) });
+            expect(result.status.result).to.equal('pass');
+            expect(result.signatures[0].values[0].modulusLength).to.equal(4608);
+        });
+
+        it('does not fold a base64string before its padding', () => {
+            for (let length = 1; length < 200; length += 7) {
+                let field = formatSignature({
+                    i: 1,
+                    m: 1,
+                    t: 1,
+                    signingDomain: 'example.com',
+                    nextDomain: 'example.net',
+                    signatures: [{ selector: 'a', algorithm: 'rsa-sha256', signature: crypto.randomBytes(length).toString('base64') }]
+                });
+                expect(field).to.not.match(/\r\n[ \t]+=|=\r\n[ \t]+=/);
+                expect(parseSignature(field).error).to.equal(null);
+            }
         });
     });
 

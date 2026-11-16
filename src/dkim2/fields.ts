@@ -99,6 +99,8 @@ const TEXTSTRING = /^[A-Za-z0-9_-]+$/;
 const NUMBER = /^[0-9]{1,15}$/;
 // Section 2.14 base64string with the FWS removed. It "MUST be padded", so the length is a multiple of 4
 const BASE64 = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
+// ... and "padded with zero bits": the bits the padding leaves over are zero, so a value has one form
+const CANONICAL_BASE64 = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/][AQgw]==|[A-Za-z0-9+/]{2}[AEIMQUYcgkosw048]=)?$/;
 // RFC 5321 Domain, also used for selectors (section 3.6). The underscore is accepted as it is
 // in DKIM1 key record names
 const DOMAIN_LABEL = '[A-Za-z0-9_](?:[A-Za-z0-9_-]{0,61}[A-Za-z0-9_])?';
@@ -177,7 +179,7 @@ const readBase64 = (value: string): string | null => {
         return null;
     }
     let plain = value.replace(WSP_ALL, '');
-    return isBase64(plain) ? plain : null;
+    return plain && CANONICAL_BASE64.test(plain) ? plain : null;
 };
 
 // The value of a tag that can not contain whitespace, such as a number or a domain
@@ -543,7 +545,8 @@ class FieldBuilder {
 
     // a base64string, a fold can go between any two of its characters
     base64(value: string): this {
-        for (let pos = 1; pos < value.length; pos++) {
+        // the ABNF allows FWS before the padding too, but a fold there trips careless readers
+        for (let pos = 1; pos < value.length && value.charAt(pos) !== '='; pos++) {
             this.breaks.add(this.text.length + pos);
         }
         this.text += value;

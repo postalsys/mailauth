@@ -395,6 +395,8 @@ describe('DKIM2 edge cases', () => {
                 [{ rcptTo: 'rcpt@example.net NOTIFY=NEVER' }, 'EINVALIDPATH'],
                 [{ rcptTo: '<rcpt@example.net> NOTIFY=NEVER' }, 'EINVALIDPATH'],
                 [{ mailFrom: '<sender@example.com> SIZE=1000' }, 'EINVALIDPATH'],
+                [{ rcptTo: '@example.net' }, 'EINVALIDPATH'],
+                [{ rcptTo: 'nobody' }, 'EINVALIDPATH'],
                 [{ rcptTo: undefined }, 'EINVALIDOPTS'],
                 [{ mailFrom: undefined, nextDomain: 'example.net' }, 'EINVALIDOPTS'],
                 [{ algorithm: 'rsa-sha256', signatureData: undefined, selector: 'rsa', privateKey: ed25519Key }, 'EINVALIDALGO'],

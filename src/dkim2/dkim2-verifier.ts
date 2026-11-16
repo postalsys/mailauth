@@ -362,6 +362,11 @@ class Dkim2Verifier extends Dkim2Parser {
      */
     recreateStates(instances: Map<number, ChainInstance>, maxM: number, addError: AddError, arrived?: MessageState): Map<number, MessageState> | null {
         let states = new Map<number, MessageState>([[maxM, arrived || this.currentState()]]);
+        if (instances.get(1)!.recipe?.b === null) {
+            // section 14.2: a null Recipe is a PERMERROR. On m=1 it only describes the message
+            // before it was first signed, but the draft makes no exception for it
+            addError('permerror', 'Message-Instance m=1 has a null recipe', { m: 1 });
+        }
         for (let m = maxM; m > 1; m--) {
             let state = states.get(m)!;
             let recipe = instances.get(m)!.recipe;

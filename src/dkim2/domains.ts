@@ -29,18 +29,28 @@ const parsePath = (path: string | null | undefined): { address: string; domain: 
 
 /**
  * Whether a value is an RFC 5321 path in angle brackets with nothing after it: sections 10.5 and
- * 10.6 record the reverse-path and the Forward-path without their SMTP parameters. Whitespace and
- * control characters can only be in a quoted local part
+ * 10.6 record the reverse-path and the Forward-path without their SMTP parameters. It is the null
+ * path, "<Postmaster>", or a mailbox with a local part and a domain, after an obsolete source
+ * route. Whitespace, control characters and angle brackets can only be in a quoted local part
  *
  * @param {String} path Path with the angle brackets
  * @returns {Boolean}
  */
 const isSmtpPath = (path: string): boolean => {
-    if (!/^<[^<>]*>$/.test(path)) {
+    if (path === '<>') {
+        return true;
+    }
+    if (path.length < 3 || path.charAt(0) !== '<' || path.charAt(path.length - 1) !== '>') {
         return false;
     }
-    let unquoted = path.slice(1, -1).replace(/"(?:[^"\\\r\n]|\\[^\r\n])*"/g, '""');
-    return !/[\s\x00-\x1f\x7f]/.test(unquoted);
+    let mailbox = path
+        .slice(1, -1)
+        .replace(/"(?:[^"\\\r\n]|\\[^\r\n])*"/g, '""')
+        .replace(/^@[^:]*:/, '');
+    if (/[\s\x00-\x1f\x7f<>]/.test(mailbox)) {
+        return false;
+    }
+    return /^postmaster$/i.test(mailbox) || /^[^@]+@[^@]+$/.test(mailbox);
 };
 
 /**

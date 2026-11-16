@@ -23,7 +23,7 @@ const cmd = async (argv: Dkim2HashArgv): Promise<void> => {
         console.error('--------');
     }
 
-    // the hash-sets of the h= tag of a Message-Instance (section 7.3)
+    // the hash-sets of the h= tag of a Message-Instance (draft-ietf-dkim-dkim2-spec-09 section 9.3)
     for (let { algorithm, headerHash, bodyHash } of hashes) {
         process.stdout.write(`${algorithm}:${headerHash}:${bodyHash}\n`);
     }

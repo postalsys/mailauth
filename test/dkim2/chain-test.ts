@@ -256,7 +256,7 @@ describe('DKIM2 chains', () => {
             expect((await verify(signed, { mailFrom: 'sender@example.com' })).status.result).to.equal('fail');
         });
 
-        it('accepts a MAIL FROM in a subdomain of d= (section 9.4)', async () => {
+        it('accepts a MAIL FROM in a subdomain of d= (section 10.8)', async () => {
             let signed = await signMessage(message(), originatorOptions({ mailFrom: 'bounces+123@mail.example.com' }));
             expect((await verify(signed, { mailFrom: 'bounces+123@mail.example.com' })).status.result).to.equal('pass');
         });
@@ -313,7 +313,7 @@ describe('DKIM2 chains', () => {
             ]);
         });
 
-        it('follows an imaginary hop documented with nd= (section 9.3)', async () => {
+        it('follows an imaginary hop documented with nd= (section 12.3)', async () => {
             let signed = await signMessage(message(), originatorToList());
             let withNd = await signMessage(signed, listOptions({ mailFrom: undefined, rcptTo: undefined, nextDomain: 'fwd.example.net' }));
             let forwarded = await signMessage(withNd, {

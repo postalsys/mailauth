@@ -126,6 +126,10 @@ describe('DKIM2 validation', () => {
             [`m=1; h=|sha256:${H}:${H};`, 'syntax error'],
             [`m=1; h=sha 256:${H}:${H};`, 'syntax error'],
             [`m=1; h=sha256:${H}:${H}; r=!!!!;`, 'syntax error'],
+            // section 2.14: padded with zero bits, so "AB==" (bits left over) is not a base64string
+            [`m=1; h=sha256:AB==:${H};`, 'syntax error'],
+            [`m=1; h=sha256:${H}:AAB=;`, 'syntax error'],
+            [`m=1; h=sha256:${H}:${H}; r=eyJiIjpudWxsfQ;`, 'syntax error'],
             [`m=1; h=sha256:${H}:${H}; r= ${b64('{"b":null}')} x;`, 'syntax error'],
             [`m=1; h=sha256:${H}:${H}; r=${b64('{not json')};`, 'contains invalid JSON'],
             [`m=1; h=sha256:${H}:${H}; r=${b64('{}')};`, 'recipe {} is invalid'],
@@ -171,6 +175,27 @@ describe('DKIM2 validation', () => {
                 { selector: 'b', algorithm: 'ed25519-sha256', signature: H, group: 0 },
                 { selector: 'c', algorithm: 'mldsa44', signature: H, group: 1 }
             ]);
+        });
+
+        it('accepts the paths RFC 5321 allows: quoted local parts, a source route, <Postmaster>', () => {
+            for (let [mailFrom, rcptTo] of [
+                ['<"a>b"@example.com>', '<"c<d"@example.net>'],
+                ['<@relay.example:a@example.com>', '<Postmaster>'],
+                ['<a@[192.0.2.1]>', '<b@example.net>']
+            ]) {
+                let parsed = parseSignature(sig(validTags.replace(/mf=[^;]+/, `mf=${b64(mailFrom)}`).replace(/rt=[^;]+/, `rt=${b64(rcptTo)}`)));
+                expect(parsed.error, `${mailFrom} ${rcptTo}`).to.equal(null);
+                expect(parsed.mailFrom).to.equal(mailFrom);
+                expect(parsed.rcptTo).to.deep.equal([rcptTo]);
+            }
+        });
+
+        it('reads leading zeros of m= and i= as the same number (RFC 5234 1*DIGIT)', () => {
+            expect(parseSignature(sig(validTags.replace('i=1', 'i=001').replace('m=1', 'm=01'))).i).to.equal(1);
+            expect(parseMessageInstance(`Message-Instance: m=0002; h=sha256:${H}:${H}`).m).to.equal(2);
+            // up to 15 digits, so every value stays an exact integer
+            expect(parseMessageInstance(`Message-Instance: m=${'9'.repeat(15)}; h=sha256:${H}:${H}`).error).to.equal(null);
+            expect(parseMessageInstance(`Message-Instance: m=${'1'.repeat(16)}; h=sha256:${H}:${H}`).error).to.equal('syntax error');
         });
 
         it('accepts a quoted local part with a space in mf= and rt=', () => {
@@ -220,6 +245,15 @@ describe('DKIM2 validation', () => {
             [validTags.replace(/rt=[^;]+/, `rt=${b64('<b@example.net>')}, ${b64('<c@example.net>')}`), 'syntax error'],
             [validTags.replace(/rt=[^;]+/, `rt=${b64('<b@example.net>')} ,${b64('<c@example.net>')}`), 'syntax error'],
             [validTags.replace(/rt=[^;]+/, `rt=${b64('<b@example.net>')},`), 'syntax error'],
+            // section 2.14: padding bits that are not zero
+            [validTags.replace(/s=.*$/, `s=rsa:rsa-sha256:AB==;`), 'syntax error'],
+            [validTags.replace(/mf=[^;]+/, `mf=${b64('<a@example.com>').slice(0, -2)}B=`), 'syntax error'],
+            // sections 10.5 and 10.6: a path is a mailbox, with a local part and a domain
+            [validTags.replace(/mf=[^;]+/, `mf=${b64('<foo>')}`), 'syntax error'],
+            [validTags.replace(/rt=[^;]+/, `rt=${b64('<@@>')}`), 'syntax error'],
+            [validTags.replace(/rt=[^;]+/, `rt=${b64('<@example.net>')}`), 'syntax error'],
+            [validTags.replace(/rt=[^;]+/, `rt=${b64('<b@>')}`), 'syntax error'],
+            [validTags.replace(/rt=[^;]+/, `rt=${b64('<b@x@example.net>')}`), 'syntax error'],
             // sections 10.5 and 10.6: the paths are recorded without SMTP parameters
             [validTags.replace(/rt=[^;]+/, `rt=${b64('<b@example.net> NOTIFY=NEVER')}`), 'syntax error'],
             [validTags.replace(/rt=[^;]+/, `rt=${b64('<b@example.net NOTIFY=NEVER>')}`), 'syntax error'],
@@ -453,7 +487,7 @@ describe('DKIM2 validation', () => {
         });
     });
 
-    describe('header field set (section 11.2)', () => {
+    describe('header field set (section 14.2)', () => {
         let input = message();
         let instance = instanceOf(input);
 
