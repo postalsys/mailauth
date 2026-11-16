@@ -292,7 +292,8 @@ describe('DKIM2 interoperability with the croessner/dkim2 draft-09 vectors', () 
         });
     }
 
-    it('reads the ML-DSA-44 key and checks both signatures of the vector (section 3.4)', { skip: !supportsMlDsa() && 'Node.js has no ML-DSA' }, async () => {
+    // node:crypto where Node.js has ML-DSA, src/dkim2/mldsa44.ts where it does not
+    it('reads the ML-DSA-44 key and checks both signatures of the vector (section 3.4)', async () => {
         let vector = croessnerCrypto.mldsa44_vector;
         expect(Buffer.from(vector.public_raw_base64, 'base64')).to.have.length(1312);
         let lookup = createKeyLookup(async () => [[`v=DKIM1; k=mldsa44; p=${vector.public_raw_base64}`]]);
@@ -303,11 +304,14 @@ describe('DKIM2 interoperability with the croessner/dkim2 draft-09 vectors', () 
             // the signature covers the input exactly
             expect(verifySignature('mldsa44', Buffer.concat([input, Buffer.from(' ')]), key.publicKey!, Buffer.from(signature, 'base64'))).to.be.false;
         }
-        // the context string is part of the signature, without it the same signature does not verify
-        let signature = Buffer.from(vector.deterministic_signature_base64, 'base64');
-        expect(crypto.verify(null, input, key.publicKey!, signature)).to.be.false;
-        // our SubjectPublicKeyInfo of the raw key is the one of the vector
-        expect(key.publicKey!.export({ type: 'spki', format: 'der' }).toString('base64')).to.equal(vector.public_spki_base64);
+        if (supportsMlDsa()) {
+            let keyObject = key.publicKey as crypto.KeyObject;
+            // the context string is part of the signature, without it the same signature does not verify
+            let signature = Buffer.from(vector.deterministic_signature_base64, 'base64');
+            expect(crypto.verify(null, input, keyObject, signature)).to.be.false;
+            // our SubjectPublicKeyInfo of the raw key is the one of the vector
+            expect(keyObject.export({ type: 'spki', format: 'der' }).toString('base64')).to.equal(vector.public_spki_base64);
+        }
     });
 
     describe('chain of custody cases', () => {

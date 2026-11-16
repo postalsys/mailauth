@@ -1406,7 +1406,7 @@ export interface DKIM2SignatureKey {
 
     /**
      * "rsa-sha256", "ed25519-sha256" or "mldsa44", follows the key type when not set. ML-DSA-44
-     * needs Node.js 24 or later
+     * needs Node.js 24 or later to sign with, verifying works on every supported version
      */
     algorithm?: 'rsa-sha256' | 'ed25519-sha256' | 'mldsa44' | undefined;
 }

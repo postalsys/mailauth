@@ -9,14 +9,15 @@ import crypto from 'node:crypto';
 import { promises as dns } from 'node:dns';
 import { parseTagList, isBareRsaPublicKey } from '../tools.js';
 import { isBase64 } from './fields.js';
-import { ALGORITHM_KEY_TYPES, KEY_TYPES, rawPublicKey, isSupportedKeyType, signatureData } from './algorithms.js';
+import { ALGORITHM_KEY_TYPES, KEY_TYPES, rawPublicKey, supportsMlDsa, signatureData } from './algorithms.js';
 import { KeyError, permerror, leadingVersion, fetchRecords } from './records.js';
 import type { DNSResolver } from '../types.js';
 
 // A key record. `publicKey` is null for a key type that is not used, the lookup never returns
 // such a key for a signature
 interface DKIM2Key {
-    publicKey: crypto.KeyObject | null;
+    // the bare ML-DSA-44 key where Node.js has no ML-DSA, verified with mldsa44.ts
+    publicKey: crypto.KeyObject | Buffer | null;
     keyType: string;
     modulusLength?: number | undefined;
     rr: string;
@@ -133,11 +134,20 @@ const fetchKey = async (name: string, resolver: DNSResolver): Promise<DKIM2Key> 
     // k= defaults to "rsa". Unknown key types are ignored, so they never match an algorithm. The
     // retired t= flags are ignored as well (section 14.5)
     let keyType = tags.k ? tags.k.value : 'rsa';
-    if (!isSupportedKeyType(keyType)) {
+    if (!KEY_TYPES.has(keyType)) {
         return { publicKey: null, keyType, rr };
     }
 
-    let publicKey = createPublicKey(keyType, Buffer.from(tags.p.value, 'base64'), rr);
+    let rawKey = Buffer.from(tags.p.value, 'base64');
+    if (keyType === 'mldsa44' && !supportsMlDsa()) {
+        // section 14.5: a key that is not exactly 1312 octets is malformed
+        if (rawKey.length !== KEY_TYPES.get(keyType)!.rawLength) {
+            throw permerror('is malformed', rr);
+        }
+        return { publicKey: rawKey, keyType, rr };
+    }
+
+    let publicKey = createPublicKey(keyType, rawKey, rr);
 
     let modulusLength: number | undefined;
     if (keyType === 'rsa') {

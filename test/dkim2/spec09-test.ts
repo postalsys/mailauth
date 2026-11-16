@@ -723,33 +723,26 @@ describe('DKIM2 draft-ietf-dkim-dkim2-spec-09', () => {
         });
     });
 
-    it(
-        'reports ML-DSA-44 as an unknown algorithm where Node.js has no ML-DSA (section 14.6 step 4)',
-        { skip: supportsMlDsa() && 'Node.js has ML-DSA' },
-        async () => {
-            let input = message();
-            let { fields, body } = reference.splitMessage(input.toString('binary'));
-            let instance = `Message-Instance: m=1; h=sha256:${reference.headerHash(fields, 'sha256')}:${reference.bodyHash(body, 'sha256')}\r\n`;
-            const signedWith = (s: string) =>
-                craftSignature(
-                    Buffer.concat([Buffer.from(instance), input]),
-                    `DKIM2-Signature: i=1; m=1; t=${Math.floor(Date.now() / 1000)}; d=example.com; mf=${b64('<sender@example.com>')}; rt=${b64('<rcpt@example.net>')}; s=${s};`,
-                    { rsa: rsaKey }
-                );
-            let alone = await dkim2Verify(signedWith(`pq:mldsa44:${b64(Buffer.alloc(2420))}`), { resolver: resolver() });
-            expect(alone.status.result).to.equal('permerror');
-            expect(alone.status.comment).to.equal('DKIM2-Signature i=1 selector pq algorithm unknown');
+    it('reports a signature value that is not ML-DSA-44 as incorrect on every Node.js version (section 3)', async () => {
+        // section 3: verifiers implement every algorithm, Node.js 20 and 22 through mldsa44.ts
+        let input = message();
+        let { fields, body } = reference.splitMessage(input.toString('binary'));
+        let instance = `Message-Instance: m=1; h=sha256:${reference.headerHash(fields, 'sha256')}:${reference.bodyHash(body, 'sha256')}\r\n`;
+        const signedWith = (s: string) =>
+            craftSignature(
+                Buffer.concat([Buffer.from(instance), input]),
+                `DKIM2-Signature: i=1; m=1; t=${Math.floor(Date.now() / 1000)}; d=example.com; mf=${b64('<sender@example.com>')}; rt=${b64('<rcpt@example.net>')}; s=${s};`,
+                { rsa: rsaKey }
+            );
+        let zone = resolver({ 'pq._domainkey.example.com': { TXT: [[`v=DKIM1; k=mldsa44; p=${b64(Buffer.alloc(1312, 7))}`]] } });
+        let alone = await dkim2Verify(signedWith(`pq:mldsa44:${b64(Buffer.alloc(2420))}`), { resolver: zone });
+        expect(alone.status.result).to.equal('fail');
+        expect(alone.status.comment).to.equal('DKIM2-Signature i=1 selector pq incorrect signature');
 
-            // the key of an algorithm that can not be used is never looked up, even when it is published
-            let lookups = failing({}, { 'pq._domainkey.example.com': { TXT: [[`v=DKIM1; k=mldsa44; p=${b64(Buffer.alloc(1312))}`]] } });
-            await dkim2Verify(signedWith(`pq:mldsa44:${b64(Buffer.alloc(2420))}`), { resolver: lookups });
-            expect(lookups.queries).to.not.include('pq._domainkey.example.com');
-
-            // an RSA alternative still passes
-            let either = await dkim2Verify(signedWith(`rsa:rsa-sha256:|pq:mldsa44:${b64(Buffer.alloc(2420))}`), { resolver: resolver() });
-            expect(either.status.result).to.equal('pass');
-        }
-    );
+        // an RSA alternative still passes
+        let either = await dkim2Verify(signedWith(`rsa:rsa-sha256:|pq:mldsa44:${b64(Buffer.alloc(2420))}`), { resolver: zone });
+        expect(either.status.result).to.equal('pass');
+    });
 
     describe('folding (sections 2.14, 9.3, 10.6 and 10.9)', () => {
         // no WSP next to the ":", "," and "|" of a hash-set, a sig-set or an rt= list, and none at

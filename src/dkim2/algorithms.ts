@@ -3,6 +3,7 @@
 
 import { Buffer } from 'node:buffer';
 import crypto from 'node:crypto';
+import { mlDsa44Verify } from './mldsa44.js';
 
 // Section 3.4: the ML-DSA context string
 const MLDSA_CONTEXT = Buffer.from('DKIM2');
@@ -55,21 +56,14 @@ const supportsMlDsa = (): boolean => {
 };
 
 /**
- * Whether a key type can be used on this Node.js version
- *
- * @param {String} keyType k= value
- * @returns {Boolean}
- */
-const isSupportedKeyType = (keyType: string): boolean => KEY_TYPES.has(keyType) && (keyType !== 'mldsa44' || supportsMlDsa());
-
-/**
- * Whether a signing algorithm is implemented. An algorithm that is not is a PERMERROR for its
- * signature (section 14.6 step 4)
+ * Whether a signing algorithm can be verified. Section 3 has verifiers implement all of them:
+ * ML-DSA-44 is verified with node:crypto where Node.js has it, and with mldsa44.ts where it does
+ * not. An algorithm that is not implemented is a PERMERROR for its signature (section 14.6 step 4)
  *
  * @param {String} algorithm sig-name, case-sensitive
  * @returns {Boolean}
  */
-const isSupportedAlgorithm = (algorithm: string): boolean => ALGORITHM_KEY_TYPES.has(algorithm) && isSupportedKeyType(ALGORITHM_KEY_TYPES.get(algorithm)!);
+const isSupportedAlgorithm = (algorithm: string): boolean => ALGORITHM_KEY_TYPES.has(algorithm);
 
 // Sections 3.2 to 3.4: the hash name and the data for crypto.sign() and crypto.verify(). RSA
 // PKCS#1 v1.5 hashes the input itself, Ed25519 (PureEdDSA) signs the SHA-256 hash of it, ML-DSA-44
@@ -106,11 +100,16 @@ const createSignature = (algorithm: string, input: Buffer, privateKey: crypto.Ke
  *
  * @param {String} algorithm Signing algorithm
  * @param {Buffer} input Signature input
- * @param {KeyObject} publicKey Public key of the algorithm
+ * @param {KeyObject|Buffer} publicKey Public key of the algorithm, or the bare ML-DSA-44 key where
+ *        Node.js has no ML-DSA
  * @param {Buffer} signature Signature value
  * @returns {Boolean}
  */
-const verifySignature = (algorithm: string, input: Buffer, publicKey: crypto.KeyObject, signature: Buffer): boolean => {
+const verifySignature = (algorithm: string, input: Buffer, publicKey: crypto.KeyObject | Buffer, signature: Buffer): boolean => {
+    if (Buffer.isBuffer(publicKey)) {
+        // the bare ML-DSA-44 key, on a Node.js version without ML-DSA
+        return algorithm === 'mldsa44' && mlDsa44Verify(publicKey, input, signature, MLDSA_CONTEXT);
+    }
     try {
         return crypto.verify(...signatureData(algorithm, input), keyInput(algorithm, publicKey), signature);
     } catch {
@@ -118,14 +117,4 @@ const verifySignature = (algorithm: string, input: Buffer, publicKey: crypto.Key
     }
 };
 
-export {
-    ALGORITHM_KEY_TYPES,
-    KEY_TYPES,
-    rawPublicKey,
-    supportsMlDsa,
-    isSupportedKeyType,
-    isSupportedAlgorithm,
-    signatureData,
-    createSignature,
-    verifySignature
-};
+export { ALGORITHM_KEY_TYPES, KEY_TYPES, rawPublicKey, supportsMlDsa, isSupportedAlgorithm, signatureData, createSignature, verifySignature };
