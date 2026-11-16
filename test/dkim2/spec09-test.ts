@@ -500,6 +500,36 @@ describe('DKIM2 draft-ietf-dkim-dkim2-spec-09', () => {
             expect(err.code).to.equal('EINVALIDRECIPE');
         });
 
+        it('verifies an earlier body Recipe before signing, and refuses when the body was changed again', async () => {
+            let first = await toList();
+            // the list added a footer, which its body Recipe removes
+            let footer = Buffer.from(first.toString('binary') + '--\r\nlist footer\r\n', 'binary');
+            let listed = await signMessage(footer, listOptions({ recipe: { b: [{ c: [1, 3] }] }, rcptTo: 'next@example.com' }));
+            const nextHop = (extra?: any) =>
+                Object.assign(
+                    {
+                        signingDomain: 'example.com',
+                        selector: 'rsa',
+                        privateKey: rsaKey,
+                        mailFrom: 'next@example.com',
+                        rcptTo: 'final@example.org',
+                        signTime: new Date('2026-10-01T00:02:00Z'),
+                        resolver: resolver()
+                    },
+                    extra || {}
+                );
+            expect((await dkim2Sign(listed, nextHop())).i).to.equal(3);
+
+            // a change to the original part of the body: without a Recipe, or with one that does not
+            // recreate the list's instance, the next hop refuses
+            let changed = Buffer.from(listed.toString('binary').replace('Hello world!', 'Hello there!'), 'binary');
+            expect((await dkim2Sign(changed, nextHop()).catch(err => err)).code).to.equal('ENORECIPE');
+            expect((await dkim2Sign(changed, nextHop({ recipe: { b: [{ c: [1, 5] }] } })).catch(err => err)).code).to.equal('EINVALIDRECIPE');
+            // with a Recipe that does, both Recipes recreate the original and the next hop signs
+            let declared = await dkim2Sign(changed, nextHop({ recipe: { b: [{ d: ['Hello world!'] }, { c: [2, 5] }] } }));
+            expect(declared.m).to.equal(3);
+        });
+
         it('completes an nd= hop only with the nd= domain', async () => {
             let first = await toList();
             let withNd = await signMessage(first, listOptions({ mailFrom: undefined, rcptTo: undefined, nextDomain: 'fwd.example.net' }));
