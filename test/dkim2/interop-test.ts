@@ -19,12 +19,14 @@ import { Dkim2Verifier } from '../../src/dkim2/dkim2-verifier.js';
 import { createKeyLookup } from '../../src/dkim2/key.js';
 import { supportsMlDsa, verifySignature } from '../../src/dkim2/algorithms.js';
 import { zoneResolver } from '../helpers/dns-zone.js';
+import { generated, keyRecord } from '../helpers/dkim2.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const vectors = JSON.parse(fs.readFileSync(path.join(__dirname, '../fixtures/dkim2tests/vectors.json'), 'utf8'));
 const stalwart = JSON.parse(fs.readFileSync(path.join(__dirname, '../fixtures/dkim2-stalwart/messages.json'), 'utf8'));
 const croessner = JSON.parse(fs.readFileSync(path.join(__dirname, '../fixtures/dkim2-croessner/public-golden.json'), 'utf8'));
 const croessnerCrypto = JSON.parse(fs.readFileSync(path.join(__dirname, '../fixtures/dkim2-croessner/custody-crypto-golden.json'), 'utf8'));
+const croessnerSigned = JSON.parse(fs.readFileSync(path.join(__dirname, '../fixtures/dkim2-croessner/signed-messages.json'), 'utf8'));
 
 config.includeStack = true;
 
@@ -342,5 +344,87 @@ describe('DKIM2 interoperability with the croessner/dkim2 draft-09 vectors', () 
                 }
             });
         }
+    });
+});
+
+describe('DKIM2 interoperability with messages signed by croessner/dkim2', () => {
+    const resolver = resolverFor(croessnerSigned.dns);
+    // the comment of each failure reason of croessner/dkim2
+    const comments: Record<string, RegExp> = {
+        hash_mismatch: /^Message-Instance m=\d+ body hash sha256 mismatch$/,
+        envelope_mismatch: /^DKIM2-Signature i=1 RCPT TO <eve@example\.net> did not match$/
+    };
+    const verify = (entry: any) =>
+        dkim2Verify(Buffer.from(entry.message), { resolver, mailFrom: entry.mailFrom, rcptTo: entry.rcptTo, curTime: new Date(entry.time * 1000) });
+
+    it('has the messages', () => {
+        expect(croessnerSigned.messages.length).to.be.at.least(14);
+        let algorithms = new Set(
+            croessnerSigned.messages.flatMap((entry: any) =>
+                headerRows(Buffer.from(entry.message))
+                    .filter(row => row.key === 'dkim2-signature')
+                    .flatMap(row => parseSignature(row.line).signatures.map((signature: any) => signature.algorithm))
+            )
+        );
+        expect([...algorithms].sort()).to.deep.equal(['ed25519-sha256', 'mldsa44', 'rsa-sha256']);
+    });
+
+    for (let entry of croessnerSigned.messages) {
+        it(`verifies ${entry.name} as ${entry.result}`, async () => {
+            let result = await verify(entry);
+            expect(result.status.result, result.status.comment).to.equal(entry.result);
+            if (entry.result === 'fail') {
+                expect(result.status.comment).to.match(comments[entry.reason]!);
+            }
+            expect(result.status).to.not.have.property('warnings');
+        });
+    }
+
+    // a revision by croessner/dkim2 is a Fully Verified DKIM2 Message, which mailauth signs as the next hop
+    for (let entry of croessnerSigned.messages.filter((entry: any) => entry.result === 'pass' && /revision|rewritten/.test(entry.name))) {
+        it(`adds a hop to ${entry.name}`, async () => {
+            let hopResolver = resolverFor(Object.assign({ 'next._domainkey.next.test': keyRecord(generated.rsa) }, croessnerSigned.dns));
+            let message = Buffer.from(entry.message);
+            let signed = await dkim2Sign(message, {
+                signingDomain: 'next.test',
+                selector: 'next',
+                privateKey: generated.rsa,
+                mailFrom: 'bounces@next.test',
+                rcptTo: 'final@example.org',
+                received: { mailFrom: entry.mailFrom, rcptTo: entry.rcptTo },
+                strict: true,
+                resolver: hopResolver,
+                signTime: new Date(entry.time * 1000)
+            });
+            // a refusal throws, an accepted chain gets the next i= and no new Message-Instance
+            expect(signed.signature).to.match(/\bi=3;.*\bd=next\.test;/s);
+            expect(signed.messageInstance).to.equal(null);
+            let result = await dkim2Verify(Buffer.concat([Buffer.from(signed.signatures), message]), {
+                resolver: hopResolver,
+                mailFrom: '<bounces@next.test>',
+                rcptTo: ['<final@example.org>'],
+                curTime: new Date((entry.time + 60) * 1000)
+            });
+            expect(result.status.result, result.status.comment).to.equal('pass');
+            expect(result.signatures.map((signature: any) => signature.signingDomain)).to.include.members(['example.test', 'example.net', 'next.test']);
+        });
+    }
+
+    it('refuses to add a hop when the message did not arrive by the envelope croessner/dkim2 signed', async () => {
+        let entry = croessnerSigned.messages.find((entry: any) => entry.name.startsWith('revision copy-only'));
+        let hopResolver = resolverFor(Object.assign({ 'next._domainkey.next.test': keyRecord(generated.rsa) }, croessnerSigned.dns));
+        let error = await dkim2Sign(Buffer.from(entry.message), {
+            signingDomain: 'next.test',
+            selector: 'next',
+            privateKey: generated.rsa,
+            mailFrom: 'bounces@next.test',
+            rcptTo: 'final@example.org',
+            received: { mailFrom: entry.mailFrom, rcptTo: '<other@next.test>' },
+            strict: true,
+            resolver: hopResolver,
+            signTime: new Date(entry.time * 1000)
+        }).catch(err => err);
+        expect(error).to.have.property('code', 'ENOTVERIFIED');
+        expect(error.message).to.include('DKIM2-Signature i=2 RCPT TO <other@next.test> did not match');
     });
 });
